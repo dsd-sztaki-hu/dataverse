@@ -6,6 +6,7 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
+import edu.harvard.iq.dataverse.authorization.providers.shib.ShibUtil;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 
@@ -22,6 +23,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -246,8 +248,16 @@ public class DataverseHeaderFragment implements java.io.Serializable {
             redirectPage = redirectToRoot();
         }
 
+		redirectPage += (!redirectPage.contains("?") ? "?" : "&") + "faces-redirect=true";
+		
+		// If we have a shibboleth session, so we should log out of it
+		HttpServletRequest req = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+		if (req.getAttribute(ShibUtil.uniquePersistentIdentifier)!=null) {
+			redirectPage = "/Shibboleth.sso/Logout?return="+systemConfig.getDataverseSiteUrl()+"/"+redirectPage;
+		}
+		
         logger.log(Level.INFO, "Sending user to = " + redirectPage);
-        return redirectPage + (!redirectPage.contains("?") ? "?" : "&") + "faces-redirect=true";
+        return redirectPage;
     }
 
     private Boolean signupAllowed = null;
