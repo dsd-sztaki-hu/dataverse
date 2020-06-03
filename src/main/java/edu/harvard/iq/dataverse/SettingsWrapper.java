@@ -210,7 +210,8 @@ public class SettingsWrapper implements java.io.Serializable {
     private Map<String, String> configuredLocales;
     
     public boolean isLocalesConfigured() {
-        if (configuredLocales == null) {
+        JSONArray entries = new JSONArray(getValueForKey(SettingsServiceBean.Key.Languages, "[]"));
+        if (configuredLocales == null || configuredLocales.size() != entries.length()) {
             initLocaleSettings();
         }
         return configuredLocales.size() > 1;

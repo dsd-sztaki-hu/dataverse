@@ -5,8 +5,11 @@
  */
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.MarkupChecker;
 import edu.harvard.iq.dataverse.util.StringUtil;
+import org.apache.sis.internal.util.Cloner;
+
 import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -18,6 +21,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.faces.view.ViewScoped;
 import javax.inject.Named;
@@ -409,7 +414,7 @@ public class DatasetVersionUI implements Serializable {
         List <MetadataBlock> actualMDB = new ArrayList<>();
             
         actualMDB.addAll(this.datasetVersion.getDataset().getOwner().getMetadataBlocks());
-        
+
         for (DatasetField dsfv : filledInFields) {
             if (!dsfv.isEmptyForDisplay()) {
                 MetadataBlock mdbTest = dsfv.getDatasetFieldType().getMetadataBlock();
@@ -417,13 +422,15 @@ public class DatasetVersionUI implements Serializable {
                     actualMDB.add(mdbTest);
                 }
             }
-        }       
+        }
         
         for (MetadataBlock mdb : actualMDB) {
             mdb.setEmpty(true);
             mdb.setHasRequired(false);
             List<DatasetField> datasetFieldsForView = new ArrayList<>();
             List<DatasetField> datasetFieldsForEdit = new ArrayList<>();
+            DatasetField previous = null;
+            List<DatasetField> toRemove = new ArrayList<>();
             for (DatasetField dsf : datasetVersion.getDatasetFields()) {
                 if (dsf.getDatasetFieldType().getMetadataBlock().equals(mdb)) {
                     datasetFieldsForEdit.add(dsf);
@@ -431,11 +438,28 @@ public class DatasetVersionUI implements Serializable {
                         mdb.setHasRequired(true);
                     }
                     if (!dsf.isEmptyForDisplay()) {
+                        String localeName = "_" + BundleUtil.getCurrentLocale().getLanguage();
+                        Pattern p = Pattern.compile("_[A-Za-z]{2}$");
+                        String fName = dsf.getDatasetFieldType().getName();
+                        Matcher m = p.matcher(fName);
+                        if(m.find() && !fName.endsWith(localeName)){
+                            continue;
+                        }
+                        if(fName.contains("_")) {
+                            String basicName = fName.substring(0, fName.indexOf('_'));
+                            if (previous != null && previous.getDatasetFieldType().getName().equals(basicName)){
+                                toRemove.add(previous);
+                                dsf.getDatasetFieldType().setName(basicName);
+                            }
+                        }
+                        previous = dsf;
                         mdb.setEmpty(false);
                         datasetFieldsForView.add(dsf);
                     }
                 }
             }
+
+            datasetFieldsForView.removeAll(toRemove);
 
             if (!datasetFieldsForView.isEmpty()) {
                 metadataBlocksForView.put(mdb, datasetFieldsForView);
