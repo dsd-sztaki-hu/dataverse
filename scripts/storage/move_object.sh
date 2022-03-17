@@ -110,8 +110,9 @@ then
 	filename=`_runsql "SELECT REPLACE(REPLACE(storageidentifier,'$FROM://',''),'$TO://','') FROM datafile NATURAL JOIN dvobject WHERE id=$ID" | head -n3 | tail -n1 | sed 's/^ *//;s/ *$//'`
 	
 	echo "copying file $OBJ (id $ID) FROM $FROM (path $frompath) to $TO (path $topath), datasetpath $datasetpath"
-	cp $frompath/$datasetpath/$filename $topath/$datasetpath/$filename
-	chown payara.payara $topath/$datasetpath/$filename
+	#cp $frompath/$datasetpath/$filename $topath/$datasetpath/$filename
+	rsync --inplace $frompath/$datasetpath/$filename $topath/$datasetpath/$filename
+	#chown payara.payara $topath/$datasetpath/$filename
 	
 	echo "setting storageidentifier for file $OBJ (id $ID) from $FROM to $TO"
 	_runsql "UPDATE dvobject SET storageidentifier=REPLACE(storageidentifier,'$FROM://','$TO://') WHERE id=$ID"
