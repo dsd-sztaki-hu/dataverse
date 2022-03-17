@@ -73,6 +73,7 @@ then
 	
 	echo "creating storageidentifier path at $TO if necessary"
 	mkdir -p $topath/$datasetpath
+	chown payara.payara $topath/$datasetpath
 	
 	echo "setting storageidentifier for all files in the dataset"
 	_runsql "SELECT id FROM dvobject NATURAL JOIN datafile WHERE owner_id=$ID" | grep '^ *[0-9]\+ *$' |
@@ -110,6 +111,7 @@ then
 	
 	echo "copying file $OBJ (id $ID) FROM $FROM (path $frompath) to $TO (path $topath), datasetpath $datasetpath"
 	cp $frompath/$datasetpath/$filename $topath/$datasetpath/$filename
+	chown payara.payara $topath/$datasetpath/$filename
 	
 	echo "setting storageidentifier for file $OBJ (id $ID) from $FROM to $TO"
 	_runsql "UPDATE dvobject SET storageidentifier=REPLACE(storageidentifier,'$FROM://','$TO://') WHERE id=$ID"
