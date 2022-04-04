@@ -58,8 +58,10 @@ elif [ "$1" = "dataset" ]
 then
 	if !(echo "$OBJ" | grep '^[0-9]\+$')
 	then
-		ID=`_runsql "SELECT ds1.id FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
-		             WHERE ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '$2://%') GROUP BY ds1.id,dvo1.identifier"`
+		#ID=`_runsql "SELECT ds1.id FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
+		#             WHERE ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '$FROM://%') GROUP BY ds1.id,dvo1.identifier"`
+		echo "You MUST specify an ID for a dataset."
+		exit 1
 	else
 		ID=$OBJ
 	fi
