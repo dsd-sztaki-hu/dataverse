@@ -289,6 +289,7 @@ public class DatasetPage implements java.io.Serializable {
     private String protocol = "";
     private String authority = "";
     private String customFields="";
+    private boolean hasFakeDOI = false;
 
     private boolean noDVsAtAll = false;
 
@@ -1899,8 +1900,20 @@ public class DatasetPage implements java.io.Serializable {
                 JsfHelper.addWarningMessage(retrieveDatasetVersionResponse.getDifferentVersionMessage());//BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
             }
 
+            // Check if the DOI is fake
+            String fakePrefix = settingsService.getValueForKey(SettingsServiceBean.Key.FakeDoiPrefix, nonNullDefaultIfKeyNotFound);
+            if (protocol.equals("doi") && persistentId != null && persistentId.toLowerCase().contains(fakePrefix.toLowerCase())) {
+                this.setHasFakeDOI(true);
+            }
+
             // init the citation
-            displayCitation = dataset.getCitation(true, workingVersion, isAnonymizedAccess());
+            if (hasFakeDOI) {
+                String alertText = BundleUtil.getStringFromBundle("notification.fakeDoi", List.of("[" + persistentId + "]"));
+                displayCitation = dataset.getCitation(true, workingVersion, isAnonymizedAccess())
+                        .replace("<a ", String.format("<a class=\"fakedoi-url\" onclick=\"alert('%s'); return false;\" ", alertText));
+            } else {
+                displayCitation = dataset.getCitation(true, workingVersion, isAnonymizedAccess());
+            }
             logger.fine("Citation: " + displayCitation);
 
             if(workingVersion.isPublished()) {
@@ -5878,5 +5891,13 @@ public class DatasetPage implements java.io.Serializable {
             }
         }
         return false;
+    }
+
+    public boolean isHasFakeDOI() {
+        return hasFakeDOI;
+    }
+
+    public void setHasFakeDOI(boolean hasFakeDOI) {
+        this.hasFakeDOI = hasFakeDOI;
     }
 }

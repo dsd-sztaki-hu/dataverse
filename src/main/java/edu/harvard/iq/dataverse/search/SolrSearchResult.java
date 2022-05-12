@@ -103,6 +103,7 @@ public class SolrSearchResult {
 	private boolean draftState = false;
 	private boolean inReviewState = false;
 	private boolean deaccessionedState = false;
+	private boolean hasFakeDOI = false;
 	private long datasetVersionId;
 	private String versionNumberFriendly;
 	// Determine if the search result is owned by any of the dvs in the tree of the DV displayed
@@ -1254,5 +1255,13 @@ public class SolrSearchResult {
 
 	public void setEmbargoEndDate(Long embargoEndDate) {
 		this.embargoEndDate = embargoEndDate;
+	}
+
+	public boolean isHasFakeDOI() {
+		return hasFakeDOI;
+	}
+
+	public void setHasFakeDOI(boolean hasFakeDOI) {
+		this.hasFakeDOI = hasFakeDOI;
 	}
 }

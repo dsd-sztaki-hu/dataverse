@@ -15,6 +15,7 @@ import edu.harvard.iq.dataverse.authorization.users.GuestUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
+import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 import java.io.IOException;
@@ -75,6 +76,8 @@ public class SearchServiceBean {
     SystemConfig systemConfig;
     @EJB
     SolrClientService solrClientService;
+    @EJB
+    SettingsServiceBean settingsService;
     
     /**
      * Import note: "onlyDatatRelatedToMe" relies on filterQueries for providing
@@ -502,6 +505,13 @@ public class SearchServiceBean {
                 solrSearchResult.setDatasetVersionId(datasetVersionId);
 
                 solrSearchResult.setCitation(citation);
+                String fakePrefix = settingsService.getValueForKey(SettingsServiceBean.Key.FakeDoiPrefix);
+                String protocol = settingsService.getValueForKey(SettingsServiceBean.Key.Protocol);
+                if (fakePrefix != null && "doi".equals(protocol) && identifier.toLowerCase().contains(fakePrefix.toLowerCase())) {
+                    String alertText = BundleUtil.getStringFromBundle("notification.fakeDoi", List.of("[" + identifier + "]"));
+                    citationPlainHtml = citationPlainHtml.replace("<a ", String.format("<a class=\"fakedoi-url\" onclick=\"alert('%s'); return false;\" ", alertText));
+                    solrSearchResult.setHasFakeDOI(true);
+                }
                 solrSearchResult.setCitationHtml(citationPlainHtml);
 
                 solrSearchResult.setIdentifierOfDataverse(identifierOfDataverse);

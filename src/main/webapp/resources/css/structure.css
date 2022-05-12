@@ -1110,6 +1110,7 @@ a {
 }
 span.label-warning { background-color: #A4660E }
 span.label-danger { background-color: #D3413C }
+span.label-fakedoi { background-color: #D3413C }
 span.label-default { background-color: #757575 }
 .dropdown-header { color:#757575 }
 
