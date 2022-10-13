@@ -53,6 +53,13 @@
     <!-- TODO: Housekeeping is utterly needed. -->
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->
+        <dependency>
+            <groupId>com.thetransactioncompany</groupId>
+            <artifactId>cors-filter</artifactId>
+            <version>2.10</version>
+        </dependency>
+
         <!-- This dependency ensures the lib is on the classpath. That way, anything coming from
              SLF4J should flow through our usual ways of using java.util.logging.
              (Which makes it also configurable using those mechanisms.) No direct use intended. -->
@@ -202,7 +209,7 @@
             <artifactId>omnifaces</artifactId>
             <version>3.8</version> <!-- Or 1.8-SNAPSHOT -->
         </dependency>
-        
+
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
