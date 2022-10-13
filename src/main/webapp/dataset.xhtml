@@ -924,6 +924,17 @@
                                     <ui:param name="anonymized" value="#{DatasetPage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
+                                   rendered="#{DatasetPage.sessionUserAuthenticated and (empty DatasetPage.editMode)}">
+                                <ui:include src="describo.xhtml">
+                                    <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                    <ui:param name="dvHost" value="#{DatasetPage.dvHost}"/>
+                                    <ui:param name="dvApiKey" value="#{DatasetPage.dvApiKey}"/>
+                                    <ui:param name="dvRoot" value="#{DatasetPage.dvRoot}"/>
+                                    <ui:param name="describoHost" value="#{DatasetPage.describoHost}"/>
+                                    <ui:param name="describoSecret" value="#{DatasetPage.describoSecret}"/>
+                                </ui:include>
+                            </p:tab>
                         </p:tabView>
                     </div>
                     <!-- END View/Tabs infoMode -->
