@@ -247,17 +247,17 @@ public class DatasetPage implements java.io.Serializable {
 
     private static final Properties prop = new Properties();
 
-//    static {
-//        try (InputStream input = CedarEndpoint.class.getClassLoader().getResourceAsStream("config.properties")) {
-//            if (input == null) {
-//                logger.log(Level.SEVERE, "Unable to load config.properties");
-//            }
-//
-//            prop.load(input);
-//        } catch (IOException ex) {
-//            ex.printStackTrace();
-//        }
-//    }
+    static {
+        try (InputStream input = DatasetPage.class.getClassLoader().getResourceAsStream("config.properties")) {
+            if (input == null) {
+                logger.log(Level.SEVERE, "Unable to load config.properties");
+            }
+
+            prop.load(input);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     private String dvHost = "";
 
