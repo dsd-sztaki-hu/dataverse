@@ -402,11 +402,12 @@ public class ArpApi extends AbstractApiBean {
                 propType = actProp.get("@type").getAsString();
                 propType = propType.substring(propType.lastIndexOf("/") + 1);
                 String termUri = Optional.ofNullable(getJsonElement(cedarTemplateJson, "properties.@context.properties." + prop + ".enum[0]")).map(String::valueOf).orElse("").replaceAll("\"", "");
+                termUri = termUri.equals("null") ? "" : termUri;
                 boolean isNew = true;
                 for (var entry: dvPropTermUriPairs.entrySet()) {
                     var k = entry.getKey();
                     var v = entry.getValue();
-                    if ((k.equals(prop) && !v.equals(termUri)) || (v.equals(termUri) && !k.equals(prop))) {
+                    if ((k.equals(prop) && !v.equals(termUri)) || (!termUri.equals("") && v.equals(termUri) && !k.equals(prop))) {
                         Pair<String, String> actPair = Pair.create(prop, termUri);
                         if (cedarTemplateErrors.incompatiblePairs.containsKey(actPair)) {
                             cedarTemplateErrors.incompatiblePairs.get(actPair).put(k, v);
