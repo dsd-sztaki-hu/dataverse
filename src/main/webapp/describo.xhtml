@@ -41,13 +41,13 @@
                                         "folder": folderPath,
                                     },
                                 },
-                                // configuration: {
-                                //      allowProfileChange: false,
-                                //      allowServiceChange: false,
-                                //  },
-                                // profile: {
-                                //      file: "schema.org",
-                                //  },
+                                configuration: {
+                                     allowProfileChange: false,
+                                     allowServiceChange: false,
+                                 },
+                                profile: {
+                                     file: "ncbi-profile.json",
+                                 },
                             }),
                         });
                         ({ sessionId } = await response.json());
