@@ -1,0 +1,165 @@
+{
+  "metadata": {
+    "name": "Cedar to Describo generated profile",
+    "version": 1.0,
+    "description": "Generated Describo schema from a Cedar template",
+    "warnMissingProperty": true
+  },
+  "layouts": {
+    "Dataset": [
+      {
+        "name": "creatorName_test",
+        "description": "",
+        "inputs": [
+          "firstName_test",
+          "lastName_test"
+        ]
+      }
+    ]
+  },
+  "classes": {
+    "Dataset": {
+      "definition": "override",
+      "subClassOf": [],
+      "inputs": [
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/18e2c9f4-1206-4910-a2d0-f31310a13bca",
+          "name": "newFirstField_test",
+          "label": "New First Field_test",
+          "help": "New First Field Help Text_test",
+          "type": [
+            "Text"
+          ],
+          "required": false,
+          "multiple": false
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/8f0bd2e4-fb8e-405e-ba94-16293f6a814c",
+          "name": "contributorEmail_test",
+          "label": "Contributor Email_export_test",
+          "help": "Contributor Email Help Text_test",
+          "type": [
+            "Text"
+          ],
+          "required": true,
+          "multiple": true
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/4677c6ef-164d-4ec0-8298-70ec06b211d8",
+          "name": "dateCreated_test",
+          "label": "Date Created_export_test",
+          "help": "Date Created Help Text_test",
+          "type": [
+            "Date"
+          ],
+          "required": true,
+          "multiple": false
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/f2274f70-0952-4359-9710-19966e0beec6",
+          "name": "dropdownTrialSingle_test",
+          "label": "Dropdown Trial Single_export_test",
+          "help": "Dropdown Trial Single Help Text_test",
+          "type": [
+            "Select"
+          ],
+          "required": false,
+          "multiple": false,
+          "values": [
+            "Single option 1_test",
+            "Single option 2_test",
+            "Single option 3_test",
+            "Single option 4_test"
+          ]
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/69c43448-13ca-4c71-a9c0-48b97de82c3a",
+          "name": "dropdownTrialMultiple_test",
+          "label": "Dropdown Trial Multiple_export_test",
+          "help": "Dropdown Trial Multiple Help Text_test",
+          "type": [
+            "Select"
+          ],
+          "required": true,
+          "multiple": true,
+          "values": [
+            "Multiple option 1_test",
+            "Multiple option 2_test",
+            "Multiple option 3_test",
+            "Multiple option 4_test",
+            "Multiple option 5_test"
+          ]
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/29b3bb34-df00-45e5-823d-20527df731ed",
+          "name": "urlTrial_test",
+          "label": "URL Trial_export_test",
+          "help": "URL Trial Help Text_test",
+          "type": [
+            "URL"
+          ],
+          "required": true,
+          "multiple": true
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/ef6214fc-8cc4-4a77-81d6-37b325765c14",
+          "name": "intNumTrial_test",
+          "label": "Integer Number Trial_export_test",
+          "help": "Integer Number Trial Help Text_test",
+          "type": [
+            "Number"
+          ],
+          "required": false,
+          "multiple": false
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/48c7112a-5dd2-429f-bb13-34e928d5c97d",
+          "name": "floatNumTrial_test",
+          "label": "Floating Number Trial_export_test",
+          "help": "Floating Number Trial Help Text_test",
+          "type": [
+            "Number"
+          ],
+          "required": true,
+          "multiple": false
+        },
+        {
+          "id": "https://schema.metadatacenter.orgx/properties/a6f6c9b6-1320-40ee-a54f-d41f785ecb30",
+          "name": "title_test",
+          "label": "Title_export_test",
+          "help": "Title Help Text_test",
+          "type": [
+            "Text"
+          ],
+          "required": false,
+          "multiple": false
+        },
+        {
+          "id": "http://www.w3.org/2006/vcard/ns#givenName",
+          "name": "firstName_test",
+          "label": "Creator First Name_test",
+          "help": "Creator First Name Help Text_test",
+          "type": [
+            "Text"
+          ],
+          "required": true,
+          "multiple": false
+        },
+        {
+          "id": "http://www.w3.org/2006/vcard/ns#familyName",
+          "name": "lastName_test",
+          "label": "Creator Last Name_test",
+          "help": "Creator Last Name Help Text_test",
+          "type": [
+            "Text"
+          ],
+          "required": false,
+          "multiple": false
+        }
+      ]
+    }
+  },
+  "enabledClasses": [
+    "Dataset"
+  ]
+}
