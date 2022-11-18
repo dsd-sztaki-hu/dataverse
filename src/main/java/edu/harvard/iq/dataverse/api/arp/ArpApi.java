@@ -135,7 +135,9 @@ public class ArpApi extends AbstractApiBean {
             return Response.serverError().entity(e.getMessage()).build();
         }
 
-        return Response.ok(mdbTsv).build();
+        //TODO: check why is the origin duplicated if the header is not added here as well as in the ApiBlockingFilter
+        //TODO: maybe the cors filter?
+        return Response.ok(mdbTsv).header("Access-Control-Allow-Origin", "*").build();
     }
 
     @POST
