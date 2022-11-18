@@ -43,10 +43,10 @@ public class ArpApi extends AbstractApiBean {
     IndexBean index;
 
     @EJB
-    RequestScopedDataverses dataverses;
+    DataversesBean dataverses;
 
     @EJB
-    RequestScopedDatasetFieldServiceApi datasetFieldServiceApi;
+    DatasetFieldServiceApiBean datasetFieldServiceApi;
 
     @EJB
     DatasetFieldServiceBean datasetFieldService;
