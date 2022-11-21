@@ -170,13 +170,13 @@ public class ArpApi extends AbstractApiBean {
         BufferedReader bufferedReader = null;
 
         try {
-            String cedarTemplateConverterPath = prop.getProperty("arp.script.path");
-            String pythonPath = prop.getProperty("arp.python.path");
-            String dvApiKey = prop.getProperty("dv.api.key");
-            String dvUpdaterScriptPath = prop.getProperty("dv.updater.script.path");
-            String solrSchemaPath = prop.getProperty("solr.schema.path");
-            String solrCollectionName = prop.getProperty("solr.collection.name");
-            String solrAddress = prop.getProperty("solr.host");
+            String cedarTemplateConverterPath = System.getProperty("arp.script.path") != null ? System.getProperty("arp.script.path") : prop.getProperty("arp.script.path");
+            String pythonPath = System.getProperty("arp.python.path") != null ? System.getProperty("arp.python.path") : prop.getProperty("arp.python.path");
+            String dvApiKey = System.getProperty("dv.api.key") != null ? System.getProperty("dv.api.key") : prop.getProperty("dv.api.key");
+            String dvUpdaterScriptPath = System.getProperty("dv.updater.script.path") != null ? System.getProperty("dv.updater.script.path") : prop.getProperty("dv.updater.script.path");
+            String solrSchemaPath = System.getProperty("solr.schema.path") != null ? System.getProperty("solr.schema.path") : prop.getProperty("solr.schema.path");
+            String solrCollectionName = System.getProperty("solr.collection.name") != null ? System.getProperty("solr.collection.name") : prop.getProperty("solr.collection.name");
+            String solrAddress = System.getProperty("solr.host") != null ? System.getProperty("solr.host") : prop.getProperty("solr.host");
             ProcessBuilder pb = new ProcessBuilder()
                     .command(pythonPath, cedarTemplateConverterPath, "--cedar_template", templateJson,
                     "--output_type", outputType, "--dv_api_key", dvApiKey, "--solr_collection", solrCollectionName,
@@ -225,7 +225,7 @@ public class ArpApi extends AbstractApiBean {
 
     private void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(prop.getProperty("dv.updater.script.path"), prop.getProperty("solr.schema.path"));
+        processBuilder.command(System.getProperty("dv.updater.script.path") != null ? System.getProperty("dv.updater.script.path") : prop.getProperty("dv.updater.script.path"), System.getProperty("solr.schema.path") != null ? System.getProperty("solr.schema.path") : prop.getProperty("solr.schema.path"));
         processBuilder.redirectErrorStream(true);
 
         updateEnabledMetadataBlocks(dvIdtf, metadataBlockName);
@@ -241,8 +241,10 @@ public class ArpApi extends AbstractApiBean {
         int exitVal = process.waitFor();
         if (exitVal == 0) {
             HttpClient client= HttpClient.newHttpClient();
+            String solrHost = System.getProperty("solr.host") != null ? System.getProperty("solr.host") : prop.getProperty("solr.host");
+            String solrCollection = System.getProperty("solr.collection.name") != null ? System.getProperty("solr.collection.name") : prop.getProperty("solr.collection.name");
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(prop.getProperty("solr.host") + "/solr/admin/cores?action=RELOAD&core=" + prop.getProperty("solr.collection.name")))
+                    .uri(new URI(solrHost + "/solr/admin/cores?action=RELOAD&core=" + solrCollection))
                     .GET()
                     .build();
             HttpResponse<String> solrResponse = client.send(request, HttpResponse.BodyHandlers.ofString());

@@ -1911,11 +1911,10 @@ public class DatasetPage implements java.io.Serializable {
         String nonNullDefaultIfKeyNotFound = "";
         protocol = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Protocol, nonNullDefaultIfKeyNotFound);
         authority = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Authority, nonNullDefaultIfKeyNotFound);
-        setDvHost(prop.getProperty("dv.host"));
-        setDvRoot(prop.getProperty("dv.root.dataverse"));
-        setDvApiKey(prop.getProperty("dv.api.key"));
-        setDescriboHost(prop.getProperty("describo.host"));
-        setDescriboSecret(prop.getProperty("describo.secret"));
+        setDvHost(System.getProperty("dv.host") != null ? System.getProperty("dv.host") : prop.getProperty("dv.host"));
+        setDvApiKey(System.getProperty("dv.api.key") != null ? System.getProperty("dv.api.key") : prop.getProperty("dv.api.key"));
+        setDescriboHost(System.getProperty("describo.host") != null ? System.getProperty("describo.host") : prop.getProperty("describo.host"));
+        setDescriboSecret(System.getProperty("describo.secret") != null ? System.getProperty("describo.secret") : prop.getProperty("describo.secret"));
         if (this.getId() != null || versionId != null || persistentId != null) { // view mode for a dataset
 
             DatasetVersionServiceBean.RetrieveDatasetVersionResponse retrieveDatasetVersionResponse = null;
