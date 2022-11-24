@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-@Path("admin/arp")
+@Path("arp")
 public class ArpApi extends AbstractApiBean {
 
     private static final Logger logger = Logger.getLogger(ArpApi.class.getCanonicalName());
