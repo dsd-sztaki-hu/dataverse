@@ -273,7 +273,7 @@ public class ArpApiIT {
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .contentType("application/json; charset=utf-8")
                 .body(body)
-                .post("/api/admin/arp/checkCedarTemplate");
+                .post("/api/arp/checkCedarTemplate");
     }
 
     static Response cedarToMdb(String apiToken, byte[] body) {
@@ -282,7 +282,7 @@ public class ArpApiIT {
                 .contentType("application/json; charset=utf-8")
                 .body(body)
                 .queryParam("skipUpload", "true")
-                .post("/api/admin/arp/cedarToMdb/root");
+                .post("/api/arp/cedarToMdb/root");
     }
 
     static Response cedarToDescribo(String apiToken, byte[] body) {
@@ -290,6 +290,6 @@ public class ArpApiIT {
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .contentType("application/json; charset=utf-8")
                 .body(body)
-                .post("/api/admin/arp/cedarToDescribo");
+                .post("/api/arp/cedarToDescribo");
     }
 }
