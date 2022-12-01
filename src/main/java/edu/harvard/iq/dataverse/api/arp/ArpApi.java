@@ -586,7 +586,7 @@ public class ArpApi extends AbstractApiBean {
                         default:
                             throw new IOException("Encountered unknown #header type at line lineNumber " + lineNumber);
                     }
-                } else {
+                } else if(header!=null) {
                     switch (header) {
                         case METADATABLOCK:
                             responseArr.add( Json.createObjectBuilder()
@@ -610,7 +610,9 @@ public class ArpApi extends AbstractApiBean {
                             throw new IOException("No #header defined in file.");
 
                     }
-                }
+                } else {
+					logger.warning("There was a line before the header in the CSV: "+line);
+				}
             }
         } finally {
             actionLogSvc.log(alr);
