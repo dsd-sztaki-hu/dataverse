@@ -131,6 +131,15 @@ public class ArpApi extends AbstractApiBean {
                 loadDatasetFields(lines, metadataBlockName);
                 updateMetadataBlock(dvIdtf, metadataBlockName);
             }
+
+            String langDirPath = System.getProperty("dataverse.lang.directory");
+            if (langDirPath != null) {
+                String fileName = metadataBlockName + "_hu.properties";
+                List<String> hunTranslations = collectHunTranslations(templateJson, "/properties", new ArrayList<>());
+                FileWriter writer = new FileWriter(langDirPath + "/" + fileName);
+                writer.write(String.join("\n", hunTranslations));
+                writer.close();
+            }
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -448,6 +457,62 @@ public class ArpApi extends AbstractApiBean {
 
         return cedarTemplateErrors;
     }
+
+    public static ArrayList<String> collectHunTranslations(String cedarTemplate, String parentPath, ArrayList<String> hunTranslations) {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
+
+        if (parentPath.equals("/properties")) {
+            hunTranslations.add("metadatablock.name = " + getJsonElement(cedarTemplateJson, "schema:name").getAsString());
+            if (cedarTemplateJson.has("hunTitle")) {
+                hunTranslations.add("metadatablock.displayName = " + getJsonElement(cedarTemplateJson, "hunTitle").getAsString());
+            }
+            if (cedarTemplateJson.has("hunDescription")) {
+                hunTranslations.add("metadatablock.description = " + getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
+            }
+        }
+
+        List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
+
+        for (String prop : propNames) {
+            JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
+            String newPath = parentPath + "/" + prop;
+            String propType;
+            if (actProp.has("hunLabel")) {
+                String dftName = getJsonElement(actProp, "schema:name").getAsString();
+                String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
+                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunLabel));
+            }
+            if (actProp.has("@type")) {
+                propType = actProp.get("@type").getAsString();
+                propType = propType.substring(propType.lastIndexOf("/") + 1);
+
+            } else {
+                propType = actProp.get("type").getAsString();
+                actProp = getJsonObject(actProp, "items");
+                String itemsType = actProp.get("@type").getAsString();
+                if (itemsType.substring(itemsType.lastIndexOf("/") + 1).equals("TemplateField")) {
+                    continue;
+                }
+            }
+            if (propType.equals("TemplateElement") || propType.equals("array")) {
+                if (actProp.has("hunTitle") && !actProp.has("hunLabel")) {
+                    String dftName = getJsonElement(actProp, "schema:name").getAsString();
+                    String hunTitle = getJsonElement(actProp, "hunTitle").getAsString();
+                    hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunTitle));
+                }
+                if (actProp.has("hunDescription")) {
+                    String dftName = getJsonElement(actProp, "schema:name").getAsString();
+                    String hunDescription = getJsonElement(actProp, "hunDescription").getAsString();
+                    hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s", dftName, hunDescription));
+                }
+                collectHunTranslations(actProp.toString(), newPath, hunTranslations);
+            }
+        }
+
+        return hunTranslations;
+    }
+
 
     //region Copied functions from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi to avoid modifying the base code
     private String parseMetadataBlock(String[] values) {
