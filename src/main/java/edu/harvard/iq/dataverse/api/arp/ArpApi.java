@@ -253,7 +253,13 @@ public class ArpApi extends AbstractApiBean {
                 throw new Exception("Failed to update solr schema");
             }
         } else {
-            throw new Exception("An error occurred during updating the solr schema");
+			BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+			StringBuffer sb = new StringBuffer();
+			String str;
+			while ((str = br.readLine()) != null) {
+                sb.append(str);
+            }
+            throw new Exception("An error occurred during updating the solr schema. Output was: "+sb.toString());
         }
     }
 
