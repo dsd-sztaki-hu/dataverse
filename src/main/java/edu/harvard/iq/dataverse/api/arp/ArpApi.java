@@ -141,7 +141,7 @@ public class ArpApi extends AbstractApiBean {
                 writer.close();
             }
         } catch (Exception e) {
-            return Response.serverError().entity(e.getMessage()).build();
+            return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
         }
 
         //TODO: check why is the origin duplicated if the header is not added here as well as in the ApiBlockingFilter
