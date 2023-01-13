@@ -692,4 +692,14 @@ public class DatasetField implements Serializable {
         
     } // end: needsTextCleaning
 
+    @ManyToOne
+    private DatasetFieldTypeOverride datasetFieldTypeOverride;
+
+    public DatasetFieldTypeOverride getDatasetFieldTypeOverride() {
+        return datasetFieldTypeOverride;
+    }
+
+    public void setDatasetFieldTypeOverride(DatasetFieldTypeOverride datasetFieldTypeOverride) {
+        this.datasetFieldTypeOverride = datasetFieldTypeOverride;
+    }
 }

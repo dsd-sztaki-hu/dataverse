@@ -36,8 +36,11 @@ public class DatasetVersionUI implements Serializable {
     @EJB
     DataverseServiceBean dataverseService;
     @PersistenceContext(unitName = "VDCNet-ejbPU")
-    private EntityManager em;   
-    
+    private EntityManager em;
+
+    @EJB
+    DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
+
     public DatasetVersionUI() {
     }
 
@@ -61,7 +64,7 @@ public class DatasetVersionUI implements Serializable {
     }
     
     public DatasetVersionUI  initDatasetVersionUI(DatasetVersion datasetVersion, boolean createBlanks) {
-        /*takes in the values of a dataset version 
+        /*takes in the values of a dataset version
          and apportions them into lists for 
          viewing and editng in the dataset page.
          */
@@ -439,6 +442,8 @@ public class DatasetVersionUI implements Serializable {
                 }
             }
 
+            List<DatasetFieldTypeOverride> overrides = datasetFieldTypeOverrideService.findOverrides(mdb);
+            datasetFieldTypeOverrideService.calcGenerateOriginalFieldValues(overrides, actualMDB, datasetVersion.getDataset().getOwner());
             if (!datasetFieldsForView.isEmpty()) {
                 metadataBlocksForView.put(mdb, datasetFieldsForView);
             }
