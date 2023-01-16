@@ -542,7 +542,7 @@ public class DatasetField implements Serializable {
 
     @Override
     public String toString() {
-        return "edu.harvard.iq.dataverse.DatasetField[ id=" + id + " ]";
+        return "edu.harvard.iq.dataverse.DatasetField[ id=" + id + " ]: "+getDatasetFieldType().getName();
     }
 
     public DatasetField copy(Object version) {
@@ -655,6 +655,12 @@ public class DatasetField implements Serializable {
 
     public void addDatasetFieldValue(int index) {
         datasetFieldValues.add(index, new DatasetFieldValue(this));
+        // Connect the values of the overriding field and the original field.
+        // When the overriding field changes value it is also applied to the original field.
+        if (overridingField != null) {
+            overridingField.addDatasetFieldValue(index);
+            datasetFieldValues.get(index).setValueStorage(overridingField.getDatasetFieldValues().get(index));
+        }
     }
 
     public void removeDatasetFieldValue(int index) {
@@ -692,14 +698,29 @@ public class DatasetField implements Serializable {
         
     } // end: needsTextCleaning
 
-    @ManyToOne
-    private DatasetFieldTypeOverride datasetFieldTypeOverride;
+    @Transient
+    private DatasetFieldTypeOverride fieldTypeOverride;
 
-    public DatasetFieldTypeOverride getDatasetFieldTypeOverride() {
-        return datasetFieldTypeOverride;
+    public DatasetFieldTypeOverride getFieldTypeOverride()
+    {
+        return fieldTypeOverride;
     }
 
-    public void setDatasetFieldTypeOverride(DatasetFieldTypeOverride datasetFieldTypeOverride) {
-        this.datasetFieldTypeOverride = datasetFieldTypeOverride;
+    public void setFieldTypeOverride(DatasetFieldTypeOverride fieldTypeOverride)
+    {
+        this.fieldTypeOverride = fieldTypeOverride;
+    }
+
+    @Transient
+    private DatasetField overridingField;
+
+    public DatasetField getOverridingField()
+    {
+        return overridingField;
+    }
+
+    public void setOverridingField(DatasetField overridingField)
+    {
+        this.overridingField = overridingField;
     }
 }

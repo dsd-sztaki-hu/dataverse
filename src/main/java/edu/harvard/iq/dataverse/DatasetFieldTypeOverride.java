@@ -164,7 +164,12 @@ public class DatasetFieldTypeOverride implements Serializable
             try {
                 return BundleUtil.getStringFromPropertyFile("datasetfieldtype." + getLocalNameOrName() + ".title", getMetadataBlock().getName());
             } catch (MissingResourceException e) {
-                return title;
+                if (title != null) {
+                    return title;
+                }
+                else {
+                    return original.getTitle();
+                }
             }
         }
     }
@@ -176,7 +181,12 @@ public class DatasetFieldTypeOverride implements Serializable
             try {
                 return BundleUtil.getStringFromPropertyFile("datasetfieldtype." + getLocalNameOrName() + ".description", getMetadataBlock().getName());
             } catch (MissingResourceException e) {
-                return description;
+                if (description != null) {
+                    return description;
+                }
+                else {
+                    return original.getDescription();
+                }
             }
         }
     }
@@ -188,7 +198,12 @@ public class DatasetFieldTypeOverride implements Serializable
             try {
                 return BundleUtil.getStringFromPropertyFile("datasetfieldtype." + getLocalNameOrName() + ".watermark", getMetadataBlock().getName());
             } catch (MissingResourceException e) {
-                return watermark;
+                if (watermark != null) {
+                    return watermark;
+                }
+                else {
+                    return original.getWatermark();
+                }
             }
         }
     }
@@ -201,5 +216,9 @@ public class DatasetFieldTypeOverride implements Serializable
     public void setGenerateOriginalField(boolean generateOriginalField)
     {
         this.generateOriginalField = generateOriginalField;
+    }
+
+    public String getName() {
+        return getOriginal().getName();
     }
 }

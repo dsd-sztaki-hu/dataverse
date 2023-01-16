@@ -6,23 +6,16 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.util.MarkupChecker;
-import edu.harvard.iq.dataverse.util.StringUtil;
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
-import static java.util.stream.Collectors.toList;
 import javax.ejb.EJB;
 import javax.faces.view.ViewScoped;
-import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -443,7 +436,47 @@ public class DatasetVersionUI implements Serializable {
             }
 
             List<DatasetFieldTypeOverride> overrides = datasetFieldTypeOverrideService.findOverrides(mdb);
-            datasetFieldTypeOverrideService.calcGenerateOriginalFieldValues(overrides, actualMDB, datasetVersion.getDataset().getOwner());
+            overrides.stream().forEach(ov -> {
+                var optField = datasetVersion.getDatasetFields().stream().filter(df -> df.getDatasetFieldType().getName().equals(ov.getName())).findFirst();
+                DatasetField dsf = null;
+                if (optField.isPresent()) {
+                    // we make a copy because it may also appear in the context of the source MDB as "included=false"
+                    // and we don't want to change that.
+                    dsf = optField.get().copy(datasetVersion);
+                    dsf.setInclude(true);
+                    var dsfFieldType = dsf.getDatasetFieldType();
+                    dsfFieldType.setInclude(true);
+                    dsf.setFieldTypeOverride(ov);
+                }
+                else {
+                    dsf = DatasetField.createNewEmptyDatasetField(ov.getOriginal(), datasetVersion);
+                    dsf.setInclude(true);
+                }
+                // simple if (!datasetFieldsForEdit.contains(dsf)) doesn't work here ...
+               DatasetField finalDsf = dsf;
+               var optRes = datasetFieldsForEdit.stream().filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(finalDsf.getDatasetFieldType().getName())).findFirst();
+                if (optRes.isEmpty()) {
+                    datasetFieldsForEdit.add(dsf);
+                    var dsfInDsOpt = datasetVersion.getDatasetFields().stream().filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(finalDsf.getDatasetFieldType().getName())).findFirst();
+                    // Connect the dsfInDs with the overriding dsf. When the overriden dsf's value is changed it will
+                    // also change the connected dsfInDs's value.
+                    if (dsfInDsOpt.isPresent()) {
+                        var dsfInDs = dsfInDsOpt.get();
+                        dsf.setOverridingField(dsfInDs);
+                        for (int i = 0; i < dsfInDs.getDatasetFieldValues().size(); i++) {
+                            var val = dsfInDs.getDatasetFieldValues().get(0);
+                            dsf.getDatasetFieldValues().get(0).setValueStorage(val);
+                        }
+                    }
+                }
+                if (!dsf.isEmptyForDisplay()) {
+                    optRes = datasetFieldsForView.stream().filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(finalDsf.getDatasetFieldType().getName())).findFirst();
+                    if (optRes.isEmpty()) {
+                        datasetFieldsForView.add(dsf);
+                    }
+                }
+            });
+
             if (!datasetFieldsForView.isEmpty()) {
                 metadataBlocksForView.put(mdb, datasetFieldsForView);
             }

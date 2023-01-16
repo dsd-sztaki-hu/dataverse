@@ -69,7 +69,7 @@
                                 <ui:repeat value="#{metadataBlockVal.value}" var="dsf">
                                     <tr id="metadata_#{dsf.datasetFieldType.name}">
                                         <th scope="row">
-                                            #{dsf.datasetFieldType.localeTitle}
+                                            #{dsf.fieldTypeOverride != null ? dsf.fieldTypeOverride.localeTitle : dsf.datasetFieldType.localeTitle}
                                             <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                                   data-toggle="tooltip" data-placement="auto right" data-original-title="#{dsf.datasetFieldType.localeDescription}"></span>
                                         </th>
@@ -211,7 +211,19 @@
                     </div>
                     <div id="panelCollapse#{block.index}" class="collapse #{block.first or editMode == 'CREATE' or !cvocConf.isEmpty() ? 'in' : ''}">
                         <div class="panel-body">
+<!--                            #{metadataBlockVal.value}-->
                             <ui:repeat value="#{metadataBlockVal.value}" var="dsf" varStatus="curField">
+<!--                                BUBUBUBU-->
+<!--                                PPP#{metadataBlockVal.key}LLL-->
+<!--                                SSS#{metadataBlockVal.value}DDD-->
+<!--                                <hr/>-->
+<!--                                name: #{dsf.datasetFieldType.name}-->
+<!--                                displayOnCreate: #{dsf.datasetFieldType.displayOnCreate}-->
+<!--                                dsf.include: #{dsf.include}-->
+<!--                                dsf.datasetFieldType.include: #{dsf.datasetFieldType.include}-->
+<!--                                editMode: #{editMode}-->
+<!--                                dsf.isEmpty(): #{dsf.isEmpty()}-->
+<!--                                (!datasetPage and dsf.include): #{(!datasetPage and dsf.include)}-->
                                 <div class="form-group" role="group"
                                      jsf:rendered="#{((editMode == 'METADATA'
                                                          or dsf.datasetFieldType.displayOnCreate or !dsf.isEmpty() or dsf.required) and dsf.include)
@@ -221,7 +233,7 @@
                                         <p:autoUpdate/>
                                         <div>
                                           <h:outputLabel for="#{dsf.datasetFieldType.controlledVocabulary ? (!dsf.datasetFieldType.allowMultiples ? 'unique1_focus' : 'unique2_focus') : ('fieldvaluelist:0:'.concat(((dsf.datasetFieldType.fieldType == 'TEXTBOX') ? 'description' : 'inputText')))}" styleClass="col-sm-3 control-label">
-                                            #{dsf.datasetFieldType.localeTitle}
+                                            #{dsf.fieldTypeOverride != null ? dsf.fieldTypeOverride.localeTitle : dsf.datasetFieldType.localeTitle}
                                             <span class="glyphicon glyphicon-asterisk text-danger" jsf:rendered="#{dsf.required}"/>
                                             <span class="glyphicon glyphicon-question-sign tooltip-icon"
                                                   data-toggle="tooltip" data-placement="auto right" data-original-title="#{dsf.datasetFieldType.localeDescription}"></span>

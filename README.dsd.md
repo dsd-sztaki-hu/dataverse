@@ -1,131 +1,9 @@
+
 # branch: datasetfieldtype-refact
 
 ## Trial #2 - datasetfieldtype_override table
 
 ```sql
-do
-$$
-    declare
-my_mdb_id   integer;
-        title_id    integer;
-        subtitle_id integer;
-        alttitle_id integer;
-begin
-INSERT INTO public.metadatablock (displayname, name, namespaceuri, owner_id)
-VALUES (''ARP Metadata'', ''arp_metadata'', ''https://arp.org/schema/citation'', null)
-    returning id into my_mdb_id;
-
-INSERT INTO public.datasetfieldtype (id, advancedsearchfieldtype, allowcontrolledvocabulary, allowmultiples,
-                                     description, displayformat, displayoncreate, displayorder, facetable,
-                                     fieldtype, name, required, title, uri, validationformat, watermark,
-                                     metadatablock_id, parentdatasetfieldtype_id)
-VALUES (1, true, false, false, ''ARP Location description'', '''', true, 0, false, ''TEXT'', ''arpLocation'',
-        true, ''ARP Location'', ''http://ar.org/terms/location'', null, '''', my_mdb_id, null);
-
-select id from datasetfieldtype where name = ''title'' into title_id;
-select id from datasetfieldtype where name = ''subtitle'' into subtitle_id;
-select id from datasetfieldtype where name = ''alternativeTitle'' into alttitle_id;
-
--- Same as title but with different localname
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, ''arp_title'', ''Title'', ''The main title of the Dataset'', null, null, null);
-
-
--- Same as subtitle but with different local_name and updated Title
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, ''arp_subtitle'', ''ARP Subtitle'',
-        ''ARP A secondary title that amplifies or states certain limitations on the main title'', null, null,
-        null);
-
--- Same as alternativeTitle with no local_name
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, null, ''ARP Alt title'',
-        ''ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title'',  null, null, null);
-
-end;
-$$;
-do
-$$
-    declare
-my_mdb_id   integer;
-        title_id    integer;
-        subtitle_id integer;
-        alttitle_id integer;
-begin
-INSERT INTO public.metadatablock (displayname, name, namespaceuri, owner_id)
-VALUES ('ARP Metadata', 'arp_metadata', 'https://arp.org/schema/citation', null)
-    returning id into my_mdb_id;
-
-INSERT INTO public.datasetfieldtype (id, advancedsearchfieldtype, allowcontrolledvocabulary, allowmultiples,
-                                     description, displayformat, displayoncreate, displayorder, facetable,
-                                     fieldtype, name, required, title, uri, validationformat, watermark,
-                                     metadatablock_id, parentdatasetfieldtype_id)
-VALUES (1, true, false, false, ''ARP Location description'', '''', true, 0, false, ''TEXT'', ''arpLocation'',
-        true, ''ARP Location'', ''http://ar.org/terms/location'', null, '''', my_mdb_id, null);
-
-select id from datasetfieldtype where name = ''title'' into title_id;
-select id from datasetfieldtype where name = ''subtitle'' into subtitle_id;
-select id from datasetfieldtype where name = ''alternativeTitle'' into alttitle_id;
-
--- Same as title but with different localname
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, ''arp_title'', ''Title'', ''The main title of the Dataset'', null, null, null);
-
-
--- Same as subtitle but with different local_name and updated Title
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, ''arp_subtitle'', ''ARP Subtitle'',
-        ''ARP A secondary title that amplifies or states certain limitations on the main title'', null, null,
-        null);
-
--- Same as alternativeTitle with no local_name
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, null, ''ARP Alt title'',
-        ''ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title'',  null, null, null);
-
-end;
-$$;
-do
-$$
-    declare
-my_mdb_id   integer;
-        title_id    integer;
-        subtitle_id integer;
-        alttitle_id integer;
-begin
-INSERT INTO public.metadatablock (displayname, name, namespaceuri, owner_id)
-VALUES ('ARP Metadata', 'arp_metadata', 'https://arp.org/schema/citation', null)
-    returning id into my_mdb_id;
-
-INSERT INTO public.datasetfieldtype (id, advancedsearchfieldtype, allowcontrolledvocabulary, allowmultiples,
-                                     description, displayformat, displayoncreate, displayorder, facetable,
-                                     fieldtype, name, required, title, uri, validationformat, watermark,
-                                     metadatablock_id, parentdatasetfieldtype_id)
-VALUES (1, true, false, false, 'ARP Location description', '', true, 0, false, 'TEXT', 'arpLocation',
-        true, 'ARP Location', 'http://ar.org/terms/location', null, '', my_mdb_id, null);
-
-select id from datasetfieldtype where name = 'title' into title_id;
-select id from datasetfieldtype where name = 'subtitle' into subtitle_id;
-select id from datasetfieldtype where name = 'alternativeTitle' into alttitle_id;
-
--- Same as title but with different localname
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, 'arp_title', 'Title', 'The main title of the Dataset', null, null, null);
-
-
--- Same as subtitle but with different local_name and updated Title
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, 'arp_subtitle', 'ARP Subtitle',
-        'ARP A secondary title that amplifies or states certain limitations on the main title', null, null,
-        null);
 do
 $$
     declare
@@ -148,38 +26,37 @@ VALUES (true, false, false, 'ARP Location description', '', true, 0, false, 'TEX
 select id from datasetfieldtype where name = 'title' into title_id;
 select id from datasetfieldtype where name = 'subtitle' into subtitle_id;
 select id from datasetfieldtype where name = 'alternativeTitle' into alttitle_id;
+select id from datasetfieldtype where name = 'otherReferences' into otherrefs_id;
 
 -- Same as title but with different localname
 INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
                                              displayorder, required)
-VALUES (my_mdb_id, 1, 'arp_title', 'Title', 'The main title of the Dataset', null, null, null);
+VALUES (my_mdb_id, title_id, 'arp_title', 'Title', 'The main title of the Dataset', null, null, null) ON CONFLICT DO NOTHING;
 
 
 -- Same as subtitle but with different local_name and updated Title
 INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
                                              displayorder, required)
-VALUES (my_mdb_id, 2, 'arp_subtitle', 'ARP Subtitle',
+VALUES (my_mdb_id, subtitle_id, 'arp_subtitle', 'ARP Subtitle',                                                                                                                                                                                                                                             ``          
         'ARP A secondary title that amplifies or states certain limitations on the main title', null, null,
-        null);
+        null) ON CONFLICT DO NOTHING;
 
 -- Same as alternativeTitle with no local_name
 INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
                                              displayorder, required)
-VALUES (my_mdb_id, 3, null, 'ARP Alt title',
-        'ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title',  null, null, null);
+VALUES (my_mdb_id, alttitle_id, null, 'ARP Alt title',
+        'ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title',  null, null, null) ON CONFLICT DO NOTHING;
 
-end;
-$$;
 
--- Same as alternativeTitle with no local_name
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, localname, title, description, watermark,
+-- otherReferences
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
                                              displayorder, required)
-VALUES (my_mdb_id, null, 'ARP Alt title',
-        'ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title',  null, null, null);
+VALUES (my_mdb_id, otherrefs_id, null, 'ARP Other reference',
+        'ARP other refs',  null, null, null) ON CONFLICT DO NOTHING;
+
 
 end;
 $$;
-
 
 
 ```
