@@ -1,6 +1,11 @@
 package edu.harvard.iq.dataverse;
 
 //import edu.harvard.iq.dataverse.api.CedarEndpoint;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.harvard.iq.dataverse.datasetutility.AddReplaceFileHelper;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -57,15 +62,15 @@ import static edu.harvard.iq.dataverse.util.StringUtil.isEmpty;
 
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
+import edu.harvard.iq.dataverse.util.file.CreateDataFileResult;
 import edu.harvard.iq.dataverse.validation.URLValidator;
 import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -81,7 +86,15 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
+import edu.kit.datamanager.ro_crate.entities.data.DataEntity;
+import edu.kit.datamanager.ro_crate.entities.data.DataSetEntity;
+import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
+import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
 
@@ -92,6 +105,8 @@ import javax.faces.model.SelectItem;
 import javax.faces.validator.ValidatorException;
 
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+
 import edu.harvard.iq.dataverse.engine.command.exception.IllegalCommandException;
 import edu.harvard.iq.dataverse.engine.command.impl.AbstractSubmitToArchiveCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateNewDatasetCommand;
@@ -3769,6 +3784,7 @@ public class DatasetPage implements java.io.Serializable {
                 }
             }
             if (editMode.equals(EditMode.METADATA)) {
+                createRoCrate();
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
             }
             if (editMode.equals(EditMode.LICENSE)) {
@@ -6124,4 +6140,201 @@ public class DatasetPage implements java.io.Serializable {
         }
         PrimeFaces.current().executeScript(globusService.getGlobusDownloadScript(dataset, apiToken));
     }
+
+    //TODO: Refact later
+    public void generateRoCrateData(RoCrate.RoCrateBuilder roCrateBuilder, RootDataEntity.RootDataEntityBuilder rootDataEntityBuilder, List<DatasetField> dsFields, HashMap<String, String> contextMap, ObjectMapper mapper) throws Exception {
+        for (DatasetField datasetField : dsFields) {
+            List<DatasetFieldCompoundValue> compoundValues = datasetField.getDatasetFieldCompoundValues();
+            List<DatasetFieldValue> fieldValues = datasetField.getDatasetFieldValues();
+            List<ControlledVocabularyValue> controlledVocabValues = datasetField.getControlledVocabularyValues();
+            DatasetFieldType fieldType = datasetField.getDatasetFieldType();
+            String fieldName = fieldType.getName();
+            String fieldUri = fieldType.getUri();
+            if (!compoundValues.isEmpty()) {
+                for (var compoundValue : compoundValues) {
+                    ContextualEntity.ContextualEntityBuilder contextualEntityBuilder = new ContextualEntity.ContextualEntityBuilder();
+                    for (var childDatasetField : compoundValue.getChildDatasetFields()) {
+                        if (!childDatasetField.getDatasetFieldCompoundValues().isEmpty()) {
+                            throw new Exception("Values this deep should not be allowed");
+                        }
+                        List<DatasetFieldValue> childFieldValues = childDatasetField.getDatasetFieldValues();
+                        List<ControlledVocabularyValue> childControlledVocabValues = childDatasetField.getControlledVocabularyValues();
+                        if (!childFieldValues.isEmpty() || !childControlledVocabValues.isEmpty()) {
+                            if (!contextMap.containsKey(fieldName)) {
+                                contextMap.put(fieldName, fieldUri);
+                                roCrateBuilder.addValuePairToContext(fieldName, fieldUri);
+                            } else {
+                                if (!Objects.equals(fieldUri, contextMap.get(fieldName))) {
+                                    fieldName = fieldUri;
+                                }
+                            }
+                            DatasetFieldType childFieldType = childDatasetField.getDatasetFieldType();
+                            String childFieldName = childFieldType.getName();
+                            String childFieldUri = childFieldType.getUri();
+                            if (!contextMap.containsKey(childFieldName)) {
+                                contextMap.put(childFieldName, childFieldUri);
+                                roCrateBuilder.addValuePairToContext(childFieldName, childFieldUri);
+                            } else {
+                                if (!Objects.equals(childFieldUri, contextMap.get(childFieldName))) {
+                                    childFieldName = childFieldUri;
+                                }
+                            }
+                            if (!childFieldValues.isEmpty()) {
+                                for (var childFieldValue : childFieldValues) {
+                                    contextualEntityBuilder.addProperty(childFieldName, childFieldValue.getValue());
+                                }
+                            }
+                            if (!childControlledVocabValues.isEmpty()) {
+                                for (var controlledVocabValue : childControlledVocabValues) {
+                                    contextualEntityBuilder.addProperty(childFieldName, controlledVocabValue.getStrValue());
+                                }
+                            }
+                        }
+                    }
+                    ContextualEntity contextualEntity = contextualEntityBuilder.build();
+                    // The "@id" is always a prop in a contextualEntity
+                    if (contextualEntity.getProperties().size() > 1) {
+                        rootDataEntityBuilder.addIdProperty(fieldName, contextualEntity.getId());
+                        roCrateBuilder.addContextualEntity(contextualEntity);
+                    }
+                }
+            }
+            if (!fieldValues.isEmpty() || !controlledVocabValues.isEmpty()) {
+                if (!contextMap.containsKey(fieldName)) {
+                    contextMap.put(fieldName, fieldUri);
+                    roCrateBuilder.addValuePairToContext(fieldName, fieldUri);
+                } else {
+                    if (!Objects.equals(fieldUri, contextMap.get(fieldName))) {
+                        fieldName = fieldUri;
+                    }
+                }
+                if (!fieldValues.isEmpty()) {
+                    if (fieldValues.size() == 1) {
+                        rootDataEntityBuilder.addProperty(fieldName, fieldValues.get(0).getValue());
+                    } else {
+                        ArrayNode valuesNode = mapper.createArrayNode();
+                        for (var fieldValue : fieldValues) {
+                            valuesNode.add(fieldValue.getValue());
+                        }
+                        rootDataEntityBuilder.addProperty(fieldName, valuesNode);
+                    }
+                }
+                if (!controlledVocabValues.isEmpty()) {
+                    if (controlledVocabValues.size() == 1) {
+                        rootDataEntityBuilder.addProperty(fieldName, controlledVocabValues.get(0).getStrValue());
+                    } else {
+                        ArrayNode strValuesNode = mapper.createArrayNode();
+                        for (var controlledVocabValue : controlledVocabValues) {
+                            strValuesNode.add(controlledVocabValue.getStrValue());
+                        }
+                        rootDataEntityBuilder.addProperty(fieldName, strValuesNode);
+                    }
+                }
+            }
+        }
+    }
+
+    public RoCrate generateRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) {
+        for (var fileMetadata : fileMetadatas) {
+            FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
+            String fileName = fileMetadata.getLabel();
+            DataFile dataFile = fileMetadata.getDataFile();
+            fileEntityBuilder.setId("#" + fileName);
+            fileEntityBuilder.addProperty("name", fileName);
+            fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
+            fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
+            if (fileMetadata.getDescription() != null) {
+                fileEntityBuilder.addProperty("description", fileMetadata.getDescription());
+            }
+            roCrate.addDataEntity(fileEntityBuilder.build(), true);
+        }
+
+        return roCrate;
+    }
+
+    public void createRoCrate() {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            dataset = datasetService.find(dataset.getId()).getLatestVersion().getDataset();
+//                    dataset = datasetService.find(dataset.getId());
+            RoCrate.RoCrateBuilder roCrateBuilder = new RoCrate.RoCrateBuilder();
+
+            List<String> a = dataset.getLatestVersion().getDatasetFields().stream().map(dsf -> dsf.getDatasetFieldType().getName() + dsf.getDatasetFieldType().getUri()).collect(Collectors.toList());
+            RootDataEntity.RootDataEntityBuilder rootDataEntityBuilder = new RootDataEntity.RootDataEntityBuilder();
+            generateRoCrateData(roCrateBuilder, rootDataEntityBuilder, dataset.getLatestVersion().getDatasetFields(), new HashMap<>(), objectMapper);
+
+            RoCrate roCrate = roCrateBuilder.build();
+            roCrate.setRootDataEntity(rootDataEntityBuilder.build());
+            roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas().stream().filter(
+                    fmd -> !Objects.equals(fmd.getLabel(), "ro-crate-metadata.json")
+            ).collect(Collectors.toList()));
+
+
+            System.out.println("ROCRATE");
+            JSONObject json = new JSONObject(roCrate.getJsonMetadata());
+            System.out.println(json.toString(4));
+            ByteArrayInputStream roCrateInputStream = new ByteArrayInputStream(json.toString(4).getBytes());
+            FileMetadata existingRoCrateMetadata = dataset.getLatestVersion().getFileMetadatas().stream()
+                    .filter(file -> file.getLabel().equals("ro-crate-metadata.json"))
+                    .findFirst()
+                    .orElse(null);
+            if (existingRoCrateMetadata == null) {
+                CreateDataFileResult createDataFileResult = FileUtil.createDataFiles(dataset.getLatestVersion(), roCrateInputStream, "ro-crate-metadata.json", "application/json", null, null, systemConfig);
+                ingestService.saveAndAddFilesToDataset(dataset.getLatestVersion(), createDataFileResult.getDataFiles(), null, true);
+            } else {
+                AddReplaceFileHelper addFileHelper = new AddReplaceFileHelper(dvRequestService.getDataverseRequest(),
+                        this.ingestService,
+                        this.datasetService,
+                        this.datafileService,
+                        this.permissionService,
+                        this.commandEngine,
+                        this.systemConfig,
+                        this.licenseServiceBean);
+                addFileHelper.runReplaceFile(existingRoCrateMetadata.getDataFile().getId(),
+                        existingRoCrateMetadata.getLabel(),
+                        "application/json",
+                        null,
+                        roCrateInputStream,
+                        null
+                );
+            }
+            String roCratePath = String.join("/", List.of(System.getProperty("dataverse.files.directory"), dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json"));
+            Files.writeString(Paths.get(roCratePath), json.toString(4));
+//                    cmd = new UpdateDatasetVersionCommand(dataset, dvRequestService.getDataverseRequest());
+//                    dataset = commandEngine.submit(cmd);
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
+
+            //IMPORT
+/*                    List<DatasetFieldType> fieldTypes = fieldService.findAllOrderedByName();
+                    Map<String, DatasetFieldType> fieldTypeMap = new HashMap<>();
+                    fieldTypes.forEach(ft -> fieldTypeMap.put(ft.getName(), ft));
+                    InputStream dataStream = dataset.getLatestVersion().getFileMetadatas().stream().filter(fileMetadata -> fileMetadata.getLabel().equals("ro-crate-metadata.json")).findFirst().get().getDataFile().getStorageIO().getInputStream();
+                    String dataString = new String(dataStream.readAllBytes());
+                    JSONObject dataJson = new JSONObject(dataString).getJSONArray("@graph").getJSONObject(0);
+                    Map<String, JSONObject> importMap = new HashMap<>();
+
+                    for (String k : dataJson.keySet()) {
+                        JSONObject value = (JSONObject) dataJson.get(k);
+                        if (fieldTypeMap.get(k).getParentDatasetFieldType() == null) {
+                            importMap.put(k, value);
+                        } else {
+                            if (importMap.containsKey(k)) {
+                                importMap.get(k).getJSONArray("value").put(value);
+                            } else {
+                                JSONObject field = new JSONObject();
+                                field.put("typeName", k);
+                                JSONArray valueArray = new JSONArray();
+                                valueArray.put(value);
+                                field.put("value", valueArray);
+                                importMap.put(fieldTypeMap.get(k).getParentDatasetFieldType().getName(), field);
+                            }
+                        }
+                    }*/
+
+
+        } catch (Exception e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
+    }
+
 }

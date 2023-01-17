@@ -53,6 +53,12 @@
     <!-- TODO: Housekeeping is utterly needed. -->
     <dependencies>
 
+        <dependency>
+            <groupId>edu.kit.datamanager</groupId>
+            <artifactId>ro-crate-java</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->
         <dependency>
             <groupId>com.thetransactioncompany</groupId>
