@@ -665,6 +665,9 @@ public class DatasetField implements Serializable {
 
     public void removeDatasetFieldValue(int index) {
         datasetFieldValues.remove(index);
+        if (overridingField != null) {
+            overridingField.removeDatasetFieldValue(index);
+        }
     }
 
     public void addDatasetFieldCompoundValue(int index) {
