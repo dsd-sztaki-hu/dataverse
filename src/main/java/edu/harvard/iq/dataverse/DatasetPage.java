@@ -6256,10 +6256,8 @@ public class DatasetPage implements java.io.Serializable {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             dataset = datasetService.find(dataset.getId()).getLatestVersion().getDataset();
-//                    dataset = datasetService.find(dataset.getId());
             RoCrate.RoCrateBuilder roCrateBuilder = new RoCrate.RoCrateBuilder();
 
-            List<String> a = dataset.getLatestVersion().getDatasetFields().stream().map(dsf -> dsf.getDatasetFieldType().getName() + dsf.getDatasetFieldType().getUri()).collect(Collectors.toList());
             RootDataEntity.RootDataEntityBuilder rootDataEntityBuilder = new RootDataEntity.RootDataEntityBuilder();
             generateRoCrateData(roCrateBuilder, rootDataEntityBuilder, dataset.getLatestVersion().getDatasetFields(), new HashMap<>(), objectMapper);
 
@@ -6269,69 +6267,11 @@ public class DatasetPage implements java.io.Serializable {
                     fmd -> !Objects.equals(fmd.getLabel(), "ro-crate-metadata.json")
             ).collect(Collectors.toList()));
 
-
-            System.out.println("ROCRATE");
             JSONObject json = new JSONObject(roCrate.getJsonMetadata());
-            System.out.println(json.toString(4));
-            ByteArrayInputStream roCrateInputStream = new ByteArrayInputStream(json.toString(4).getBytes());
-            FileMetadata existingRoCrateMetadata = dataset.getLatestVersion().getFileMetadatas().stream()
-                    .filter(file -> file.getLabel().equals("ro-crate-metadata.json"))
-                    .findFirst()
-                    .orElse(null);
-            if (existingRoCrateMetadata == null) {
-                CreateDataFileResult createDataFileResult = FileUtil.createDataFiles(dataset.getLatestVersion(), roCrateInputStream, "ro-crate-metadata.json", "application/json", null, null, systemConfig);
-                ingestService.saveAndAddFilesToDataset(dataset.getLatestVersion(), createDataFileResult.getDataFiles(), null, true);
-            } else {
-                AddReplaceFileHelper addFileHelper = new AddReplaceFileHelper(dvRequestService.getDataverseRequest(),
-                        this.ingestService,
-                        this.datasetService,
-                        this.datafileService,
-                        this.permissionService,
-                        this.commandEngine,
-                        this.systemConfig,
-                        this.licenseServiceBean);
-                addFileHelper.runReplaceFile(existingRoCrateMetadata.getDataFile().getId(),
-                        existingRoCrateMetadata.getLabel(),
-                        "application/json",
-                        null,
-                        roCrateInputStream,
-                        null
-                );
-            }
             String roCratePath = String.join("/", List.of(System.getProperty("dataverse.files.directory"), dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json"));
             Files.writeString(Paths.get(roCratePath), json.toString(4));
-//                    cmd = new UpdateDatasetVersionCommand(dataset, dvRequestService.getDataverseRequest());
-//                    dataset = commandEngine.submit(cmd);
-            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
 
-            //IMPORT
-/*                    List<DatasetFieldType> fieldTypes = fieldService.findAllOrderedByName();
-                    Map<String, DatasetFieldType> fieldTypeMap = new HashMap<>();
-                    fieldTypes.forEach(ft -> fieldTypeMap.put(ft.getName(), ft));
-                    InputStream dataStream = dataset.getLatestVersion().getFileMetadatas().stream().filter(fileMetadata -> fileMetadata.getLabel().equals("ro-crate-metadata.json")).findFirst().get().getDataFile().getStorageIO().getInputStream();
-                    String dataString = new String(dataStream.readAllBytes());
-                    JSONObject dataJson = new JSONObject(dataString).getJSONArray("@graph").getJSONObject(0);
-                    Map<String, JSONObject> importMap = new HashMap<>();
-
-                    for (String k : dataJson.keySet()) {
-                        JSONObject value = (JSONObject) dataJson.get(k);
-                        if (fieldTypeMap.get(k).getParentDatasetFieldType() == null) {
-                            importMap.put(k, value);
-                        } else {
-                            if (importMap.containsKey(k)) {
-                                importMap.get(k).getJSONArray("value").put(value);
-                            } else {
-                                JSONObject field = new JSONObject();
-                                field.put("typeName", k);
-                                JSONArray valueArray = new JSONArray();
-                                valueArray.put(value);
-                                field.put("value", valueArray);
-                                importMap.put(fieldTypeMap.get(k).getParentDatasetFieldType().getName(), field);
-                            }
-                        }
-                    }*/
-
-
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateSuccess"));
         } catch (Exception e) {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
