@@ -35,25 +35,27 @@ VALUES (my_mdb_id, title_id, 'arp_title', 'Title', 'The main title of the Datase
 
 
 -- Same as subtitle but with different local_name and updated Title
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, subtitle_id, 'arp_subtitle', 'ARP Subtitle',                                                                                                                                                                                                                                             ``          
-        'ARP A secondary title that amplifies or states certain limitations on the main title', null, null,
-        null) ON CONFLICT DO NOTHING;
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,displayorder, required)
+VALUES (my_mdb_id, subtitle_id, 'arp_subtitle', 'ARP Subtitle',``, 'ARP A secondary title that amplifies or states certain limitations on the main title', null, null, null) ON CONFLICT DO NOTHING;
 
 -- Same as alternativeTitle with no local_name
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, alttitle_id, null, 'ARP Alt title',
-        'ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title',  null, null, null) ON CONFLICT DO NOTHING;
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark, displayorder, required)
+VALUES (my_mdb_id, alttitle_id, null, 'ARP Alt title', 'ARP Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title',  null, null, null) ON CONFLICT DO NOTHING;
 
 
 -- otherReferences
-INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,
-                                             displayorder, required)
-VALUES (my_mdb_id, otherrefs_id, null, 'ARP Other reference',
-        'ARP other refs',  null, null, null) ON CONFLICT DO NOTHING;
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,displayorder, required)
+VALUES (my_mdb_id, otherrefs_id, null, 'ARP Other reference','ARP other refs',  null, null, null) ON CONFLICT DO NOTHING;
 
+-- software, softwareName, softwareVersion
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,displayorder, required)
+VALUES (my_mdb_id, otherrefs_id, 'arpSoftware', 'ARP Software title','ARP Software description',  null, null, null) ON CONFLICT DO NOTHING;
+
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,displayorder, required)
+VALUES (my_mdb_id, otherrefs_id, 'arpSoftwareName', 'ARP Software name title','ARP Software name description',  null, null, null) ON CONFLICT DO NOTHING;
+
+INSERT INTO public.datasetfieldtypeoverride (metadatablock_id, original_id, localname, title, description, watermark,displayorder, required)
+VALUES (my_mdb_id, otherrefs_id, 'arpSoftwareVersion', 'ARP Software version title','ARP Software version description',  null, null, null) ON CONFLICT DO NOTHING;
 
 end;
 $$;

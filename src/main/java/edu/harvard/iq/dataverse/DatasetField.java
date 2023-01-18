@@ -10,15 +10,7 @@ package edu.harvard.iq.dataverse;
  * @author skraffmiller
  */
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -655,27 +647,59 @@ public class DatasetField implements Serializable {
 
     public void addDatasetFieldValue(int index) {
         datasetFieldValues.add(index, new DatasetFieldValue(this));
+
         // Connect the values of the overriding field and the original field.
         // When the overriding field changes value it is also applied to the original field.
-        if (overridingField != null) {
-            overridingField.addDatasetFieldValue(index);
-            datasetFieldValues.get(index).setValueStorage(overridingField.getDatasetFieldValues().get(index));
+        if (originalField != null) {
+            originalField.addDatasetFieldValue(index);
+            // add fake ID
+            this.datasetFieldValues.get(index).setId(new Date().getTime());
+            this.datasetFieldValues.get(index).setValueStorage(originalField.getDatasetFieldValues().get(index));
         }
     }
 
     public void removeDatasetFieldValue(int index) {
         datasetFieldValues.remove(index);
-        if (overridingField != null) {
-            overridingField.removeDatasetFieldValue(index);
+
+        // Remove from original as well
+        if (originalField != null) {
+            originalField.removeDatasetFieldValue(index);
         }
     }
 
     public void addDatasetFieldCompoundValue(int index) {
         datasetFieldCompoundValues.add(index, DatasetFieldCompoundValue.createNewEmptyDatasetFieldCompoundValue(this));
+
+        // Add also to originalField and connect with this overriding field.
+        if (originalField != null) {
+            // add fake IDs with this sequence
+            long idSeq = new Date().getTime();
+            originalField.datasetFieldCompoundValues.add(index, DatasetFieldCompoundValue.createNewEmptyDatasetFieldCompoundValue(originalField));
+            var origCompound = originalField.datasetFieldCompoundValues.get(index);
+            var overridingCompound = this.datasetFieldCompoundValues.get(index);
+            overridingCompound.setId(idSeq++);
+            for (int i = 0; i < origCompound.getChildDatasetFields().size(); i++) {
+                var origChildField = origCompound.getChildDatasetFields().get(i);
+                var overridingChildField = overridingCompound.getChildDatasetFields().get(i);
+                overridingChildField.setId(idSeq++);
+                overridingChildField.setOriginalField(origChildField);
+                for (int j = 0; j < origChildField.getDatasetFieldValues().size(); j++) {
+                    var origChildFieldValue = origChildField.getDatasetFieldValues().get(j);
+                    var overridingChildFieldValue = overridingChildField.getDatasetFieldValues().get(j);
+                    overridingChildFieldValue.setId(idSeq++);
+                    overridingChildFieldValue.setValueStorage(origChildFieldValue);
+                }
+            }
+        }
     }
 
     public void removeDatasetFieldCompoundValue(int index) {
         datasetFieldCompoundValues.remove(index);
+
+        // Remove from original as well
+        if (originalField != null) {
+            originalField.removeDatasetFieldCompoundValue(index);
+        }
     }
 
     
@@ -715,15 +739,15 @@ public class DatasetField implements Serializable {
     }
 
     @Transient
-    private DatasetField overridingField;
+    private DatasetField originalField;
 
-    public DatasetField getOverridingField()
+    public DatasetField getOriginalField()
     {
-        return overridingField;
+        return originalField;
     }
 
-    public void setOverridingField(DatasetField overridingField)
+    public void setOriginalField(DatasetField originalField)
     {
-        this.overridingField = overridingField;
+        this.originalField = originalField;
     }
 }
