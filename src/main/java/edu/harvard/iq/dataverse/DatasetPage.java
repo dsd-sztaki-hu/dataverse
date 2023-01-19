@@ -6194,6 +6194,7 @@ public class DatasetPage implements java.io.Serializable {
                     ContextualEntity contextualEntity = contextualEntityBuilder.build();
                     // The "@id" is always a prop in a contextualEntity
                     if (contextualEntity.getProperties().size() > 1) {
+                        contextualEntity.addType(fieldName);
                         rootDataEntityBuilder.addIdProperty(fieldName, contextualEntity.getId());
                         roCrateBuilder.addContextualEntity(contextualEntity);
                     }
