@@ -6253,6 +6253,15 @@ public class DatasetPage implements java.io.Serializable {
         return roCrate;
     }
 
+    public String getRoCratePath() {
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json");
+    }
+
     public void createRoCrate() {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
@@ -6267,7 +6276,7 @@ public class DatasetPage implements java.io.Serializable {
             roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
 
             JSONObject json = new JSONObject(roCrate.getJsonMetadata());
-            String roCratePath = String.join("/", List.of(System.getProperty("dataverse.files.directory"), dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json"));
+            String roCratePath = getRoCratePath();
             Files.writeString(Paths.get(roCratePath), json.toString(4));
 
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateSuccess"));
