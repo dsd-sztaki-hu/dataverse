@@ -6240,7 +6240,7 @@ public class DatasetPage implements java.io.Serializable {
             FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
             String fileName = fileMetadata.getLabel();
             DataFile dataFile = fileMetadata.getDataFile();
-            fileEntityBuilder.setId("#" + fileName);
+//            fileEntityBuilder.setId("#" + fileName);
             fileEntityBuilder.addProperty("name", fileName);
             fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
             fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
@@ -6264,9 +6264,7 @@ public class DatasetPage implements java.io.Serializable {
 
             RoCrate roCrate = roCrateBuilder.build();
             roCrate.setRootDataEntity(rootDataEntityBuilder.build());
-            roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas().stream().filter(
-                    fmd -> !Objects.equals(fmd.getLabel(), "ro-crate-metadata.json")
-            ).collect(Collectors.toList()));
+            roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
 
             JSONObject json = new JSONObject(roCrate.getJsonMetadata());
             String roCratePath = String.join("/", List.of(System.getProperty("dataverse.files.directory"), dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json"));
