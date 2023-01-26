@@ -88,6 +88,11 @@ public class DatasetFieldValue implements Serializable {
 
     public void setValueForEdit(String value) {
         this.value = value;
+        // In case of overridef DatasetField store the value in the DatasetField, whihc associated with the
+        // original MDB.
+        if (valueStorage != null) {
+            valueStorage.setValueForEdit(value);
+        }
     }
     
     public String getDisplayValue() {
@@ -193,6 +198,18 @@ public class DatasetFieldValue implements Serializable {
         dsfv.setValue(value);
                      
         return dsfv;
-    }    
-    
+    }
+
+    @Transient
+    private DatasetFieldValue valueStorage;
+
+    public DatasetFieldValue getValueStorage()
+    {
+        return valueStorage;
+    }
+
+    public void setValueStorage(DatasetFieldValue valueStorage)
+    {
+        this.valueStorage = valueStorage;
+    }
 }

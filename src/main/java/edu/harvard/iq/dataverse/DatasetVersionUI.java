@@ -6,23 +6,16 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.util.MarkupChecker;
-import edu.harvard.iq.dataverse.util.StringUtil;
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
-import static java.util.stream.Collectors.toList;
 import javax.ejb.EJB;
 import javax.faces.view.ViewScoped;
-import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
@@ -36,8 +29,11 @@ public class DatasetVersionUI implements Serializable {
     @EJB
     DataverseServiceBean dataverseService;
     @PersistenceContext(unitName = "VDCNet-ejbPU")
-    private EntityManager em;   
-    
+    private EntityManager em;
+
+    @EJB
+    DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
+
     public DatasetVersionUI() {
     }
 
@@ -61,7 +57,7 @@ public class DatasetVersionUI implements Serializable {
     }
     
     public DatasetVersionUI  initDatasetVersionUI(DatasetVersion datasetVersion, boolean createBlanks) {
-        /*takes in the values of a dataset version 
+        /*takes in the values of a dataset version
          and apportions them into lists for 
          viewing and editng in the dataset page.
          */
@@ -439,6 +435,8 @@ public class DatasetVersionUI implements Serializable {
                 }
             }
 
+            handleOverrides(mdb, datasetFieldsForView, datasetFieldsForEdit);
+
             if (!datasetFieldsForView.isEmpty()) {
                 metadataBlocksForView.put(mdb, datasetFieldsForView);
             }
@@ -448,4 +446,114 @@ public class DatasetVersionUI implements Serializable {
         }
     }
 
+
+    /**
+     * Handle field type overrides by adjusting the DatasetField-s in datasetFieldsForView and datasetFieldsForEdit
+     * The overriding fields will store its values in the originating fields they override, this in effect the
+     * values set in the overriding fields will be stored at the original field and original MDB. For example, if the
+     * field "title" as an override type with loval name "arpTitle" the value of "arpTitle" will be store in the
+     * "title" field and will be indexed in solr for the field name "title".
+     * @param mdb metadatablock containing field type overrides
+     * @param datasetFieldsForView dataset fields used for viewing
+     * @param datasetFieldsForEdit dataset fields used in edit forms
+     */
+    private void handleOverrides(MetadataBlock mdb, List<DatasetField> datasetFieldsForView, List<DatasetField> datasetFieldsForEdit) {
+        List<DatasetFieldTypeOverride> overrides = datasetFieldTypeOverrideService.findOverrides(mdb);
+        overrides.stream().forEach(fieldTypeOverride -> {
+            // Child/subfields are ignorred. We only handle top level fields
+            if (fieldTypeOverride.getOriginal().isChild()) {
+                return;
+            }
+
+            // Generates fake ID
+            var idSeq = new Object(){
+                private long idSeq = new Date().getTime();
+                public long next(){
+                    return idSeq++;
+                }
+            };
+
+            DatasetField overridingDsf = null;
+            DatasetField dsfInDs = null;
+            // Find the original DatasetField in datasetVersion.getDatasetFields(). We need to connect our
+            // overrides to this
+            var dsfInDsOpt = datasetVersion.getDatasetFields().stream().filter(df -> df.getDatasetFieldType().getName().equals(fieldTypeOverride.getName())).findFirst();
+
+            // Maybe empty when field first added to DS in view mode.
+            if (dsfInDsOpt.isEmpty()) {
+                overridingDsf = DatasetField.createNewEmptyDatasetField(fieldTypeOverride.getOriginal(), datasetVersion);
+                overridingDsf.setInclude(true);
+                overridingDsf.setOriginalField(dsfInDs);
+                return;
+            }
+            else {
+                dsfInDs = dsfInDsOpt.get();
+
+                // Make a copy of the original field, this will be our overriding field
+                overridingDsf = dsfInDs.copy(datasetVersion);
+                overridingDsf.setInclude(true);
+                var dsfFieldType = overridingDsf.getDatasetFieldType();
+                dsfFieldType.setInclude(true);
+                overridingDsf.setFieldTypeOverride(fieldTypeOverride);
+
+                // DatasetField's hashCode expects to have  an ID, otherwise objects with null ID-s will
+                // clash and adding them as keys would fail, eg. in case of
+                // DatasetFieldCompoundValue.getDisplayValueMap
+                // So we fake an ID, a hopefully big one derived from timestamp, which won't clash
+                overridingDsf.setId(idSeq.next());
+                overridingDsf.getDatasetFieldCompoundValues().forEach(datasetFieldCompoundValue -> {
+                    datasetFieldCompoundValue.getChildDatasetFields().forEach(datasetField -> {
+                        datasetField.setId(idSeq.next());
+                    });
+                });
+            }
+
+            // simple if (!datasetFieldsForEdit.contains(dsf)) doesn't work here ...
+            DatasetField finalOverriding = overridingDsf;
+            var dsfInDatasetFieldsForEdit = datasetFieldsForEdit.stream().filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(finalOverriding.getDatasetFieldType().getName())).findFirst();
+
+            // If field is not already in  datasetFieldsForEdit
+            if (dsfInDatasetFieldsForEdit.isEmpty()) {
+                datasetFieldsForEdit.add(overridingDsf);
+
+                // Connect dsfInDs with overridingDsf as override
+                overridingDsf.setOriginalField(dsfInDs);
+
+                // Connect overriding field's value with the original field value
+
+                // Non-compound fields just have datasetFieldValues to connect
+                for (int i = 0; i < dsfInDs.getDatasetFieldValues().size(); i++) {
+                    var dsVal = dsfInDs.getDatasetFieldValues().get(i);
+                    var overridenVal = overridingDsf.getDatasetFieldValues().get(i);
+                    // When overriden value is set, its value will also be copied to the original field valu
+                    overridenVal.setValueStorage(dsVal);
+                }
+                // Compound fields just have datasetCompoundFields --> childDatasetFields --> datasetFieldValues
+                // to connect
+                for (int i = 0; i < dsfInDs.getDatasetFieldCompoundValues().size(); i++) {
+                    var dsCompounds = dsfInDs.getDatasetFieldCompoundValues().get(i);
+                    var overrideCompounds = overridingDsf.getDatasetFieldCompoundValues().get(i);
+                    for (int j = 0; j < dsCompounds.getChildDatasetFields().size(); j++) {
+                        var dsChild = dsCompounds.getChildDatasetFields().get(j);
+                        var overrideChild = overrideCompounds.getChildDatasetFields().get(j);
+                        overrideChild.setOriginalField(dsChild);
+                        for (int k = 0; k < dsChild.getDatasetFieldValues().size(); k++) {
+                            var dsVal = dsChild.getDatasetFieldValues().get(k);
+                            var overridenVal = overrideChild.getDatasetFieldValues().get(k);
+                            // When overriden value is set, its value will also be copied to the original field valu
+                            overridenVal.setValueStorage(dsVal);
+                        }
+                    }
+                }
+            }
+
+            // If fields needs to be included in view mode as well, then add it
+            if (!overridingDsf.isEmptyForDisplay()) {
+                dsfInDatasetFieldsForEdit = datasetFieldsForView.stream().filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(finalOverriding.getDatasetFieldType().getName())).findFirst();
+                if (dsfInDatasetFieldsForEdit.isEmpty()) {
+                    datasetFieldsForView.add(overridingDsf);
+                }
+            }
+        });
+    }
 }
