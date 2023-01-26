@@ -75,6 +75,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
@@ -92,6 +93,8 @@ import edu.kit.datamanager.ro_crate.entities.data.DataEntity;
 import edu.kit.datamanager.ro_crate.entities.data.DataSetEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.reader.FolderReader;
+import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -3785,6 +3788,7 @@ public class DatasetPage implements java.io.Serializable {
             }
             if (editMode.equals(EditMode.METADATA)) {
                 createRoCrate();
+//                importRoCrate(getRoCrateFolder());
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
             }
             if (editMode.equals(EditMode.LICENSE)) {
@@ -6254,12 +6258,16 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public String getRoCratePath() {
+        return String.join(File.separator, getRoCrateFolder(), "ro-crate-metadata.json");
+    }
+
+    public String getRoCrateFolder() {
         String filesRootDirectory = System.getProperty("dataverse.files.directory");
         if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
             filesRootDirectory = "/tmp/files";
         }
 
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata.json");
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
     }
 
     public void createRoCrate() {
@@ -6282,6 +6290,142 @@ public class DatasetPage implements java.io.Serializable {
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateSuccess"));
         } catch (Exception e) {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
+    }
+
+    public void importRoCrate(String roCratePath) {
+        JSONObject importFormatMetadataBlocks = new JSONObject();
+        Map<String, DatasetFieldType> datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
+
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        RoCrate roCrate = roCrateFolderReader.readCrate(roCratePath);
+
+        RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
+        Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream().collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
+
+        rootDataEntity.getProperties().fields().forEachRemaining(field -> {
+            String fieldName = field.getKey();
+            if (!fieldName.startsWith("@") && !fieldName.equals("hasPart")) {
+                DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                MetadataBlock metadataBlock = datasetFieldType.getMetadataBlock();
+                // Check if the import format already contains the field's parent metadata block
+                if (!importFormatMetadataBlocks.has(metadataBlock.getName())) {
+                    createMetadataBlock(importFormatMetadataBlocks, metadataBlock);
+                }
+
+                // Process the values depending on the field's type
+                if (datasetFieldType.isCompound()) {
+                    processCompoundField(importFormatMetadataBlocks, field.getValue(), datasetFieldType, datasetFieldTypeMap, contextualEntityHashMap);
+                } else {
+                    JSONArray container = importFormatMetadataBlocks.getJSONObject(metadataBlock.getName()).getJSONArray("fields");
+                    if (datasetFieldType.isAllowControlledVocabulary()) {
+                        List<String> controlledVocabValues = new ArrayList<>();
+                        field.getValue().forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+                        processControlledVocabFields(fieldName, controlledVocabValues, container, datasetFieldTypeMap);
+                    } else {
+                        processPrimitiveField(fieldName, field.getValue().textValue(), container, datasetFieldTypeMap);
+                    }
+                }
+            }
+        });
+
+
+        JSONObject importFormatJson = new JSONObject();
+        importFormatJson.put("metadataBlocks", importFormatMetadataBlocks);
+        System.out.println(importFormatJson.toString(4));
+//        TODO: With the importFormatJson, update the metadata for the Dataset https://guides.dataverse.org/en/latest/api/native-api.html#id58
+    }
+
+    public void createMetadataBlock(JSONObject jsonObject, MetadataBlock metadataBlock) {
+        JSONObject mdb = new JSONObject();
+        mdb.put("displayName", metadataBlock.getDisplayName());
+        mdb.put("name", metadataBlock.getName());
+        mdb.put("fields", new JSONArray());
+        jsonObject.put(metadataBlock.getName(), mdb);
+    }
+
+    public void processCompoundField(JSONObject metadataBlocks, JsonNode roCrateValues, DatasetFieldType datasetField, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
+        JSONObject compoundField = new JSONObject();
+        compoundField.put("typeName", datasetField.getName());
+        compoundField.put("multiple", datasetField.isAllowMultiples());
+        compoundField.put("typeClass", "compound");
+
+        if (roCrateValues.isArray()) {
+            JSONArray compoundFieldValues = new JSONArray();
+            roCrateValues.forEach(value -> {
+                JSONObject compoundFieldValue = processCompoundFieldValue(value, datasetFieldTypeMap, contextualEntityHashMap);
+                compoundFieldValues.put(compoundFieldValue);
+            });
+            compoundField.put("value", compoundFieldValues);
+        } else {
+            JSONObject compoundFieldValue = processCompoundFieldValue(roCrateValues, datasetFieldTypeMap, contextualEntityHashMap);
+            if (datasetField.isAllowMultiples()) {
+                JSONArray valueArray = new JSONArray();
+                valueArray.put(compoundFieldValue);
+                compoundField.put("value", valueArray);
+            } else {
+                compoundField.put("value", compoundFieldValue);
+            }
+        }
+
+        metadataBlocks.getJSONObject(datasetField.getMetadataBlock().getName()).getJSONArray("fields").put(compoundField);
+    }
+
+    public JSONObject processCompoundFieldValue(JsonNode roCrateValue, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
+        JSONObject compoundFieldValue = new JSONObject();
+        ContextualEntity contextualEntity = contextualEntityHashMap.get(roCrateValue.get("@id").textValue());
+        contextualEntity.getProperties().fields().forEachRemaining(roCrateField -> {
+            String fieldName = roCrateField.getKey();
+            if (!roCrateField.getKey().startsWith("@")) {
+                DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                if (datasetFieldType.isAllowControlledVocabulary()) {
+                    if (roCrateField.getValue().isArray()) {
+                        List<String> controlledVocabValues = new ArrayList<>();
+                        roCrateField.getValue().forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+                        processControlledVocabFields(fieldName, controlledVocabValues, compoundFieldValue, datasetFieldTypeMap);
+                    } else {
+                        processControlledVocabFields(fieldName, roCrateField.getValue().textValue(), compoundFieldValue, datasetFieldTypeMap);
+                    }
+                } else {
+                    processPrimitiveField(fieldName, roCrateField.getValue().textValue(), compoundFieldValue, datasetFieldTypeMap);
+                }
+            }
+        });
+
+        return compoundFieldValue;
+    }
+
+    public void processPrimitiveField(String fieldName, String fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+        DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+        JSONObject primitiveField = new JSONObject();
+        primitiveField.put("typeName", datasetFieldType.getName());
+        primitiveField.put("multiple", datasetFieldType.isAllowMultiples());
+        primitiveField.put("typeClass", "primitive");
+        if (datasetFieldType.isAllowMultiples()) {
+            primitiveField.put("value", List.of(fieldValue));
+        } else {
+            primitiveField.put("value", fieldValue);
+        }
+
+        if (container instanceof JSONObject) {
+            ((JSONObject) container).put(datasetFieldType.getName(), primitiveField);
+        } else if (container instanceof JSONArray) {
+            ((JSONArray) container).put(primitiveField);
+        }
+    }
+
+    public void processControlledVocabFields(String fieldName, Object fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+        DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+        JSONObject field = new JSONObject();
+        field.put("typeName", datasetFieldType.getName());
+        field.put("multiple", datasetFieldType.isAllowMultiples());
+        field.put("typeClass", "controlledVocabulary");
+        field.put("value", fieldValue);
+
+        if (container instanceof JSONObject) {
+            ((JSONObject) container).put(datasetFieldType.getName(), field);
+        } else if (container instanceof JSONArray) {
+            ((JSONArray) container).put(field);
         }
     }
 
