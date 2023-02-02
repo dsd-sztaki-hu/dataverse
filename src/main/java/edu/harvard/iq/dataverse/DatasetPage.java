@@ -259,13 +259,13 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    private String dvHost = "";
+    private String dvAddress = "";
 
     private String dvApiKey = "";
 
     private String dvRoot = "";
 
-    private String describoHost = "";
+    private String describoAddress = "";
 
     private String describoSecret = "";
 
@@ -1561,8 +1561,8 @@ public class DatasetPage implements java.io.Serializable {
         this.dropBoxSelection = dropBoxSelection;
     }
 
-    public String getDvHost() {
-        return dvHost;
+    public String getDvAddress() {
+        return dvAddress;
     }
 
     public String getDvApiKey() {
@@ -1573,8 +1573,8 @@ public class DatasetPage implements java.io.Serializable {
         return dvRoot;
     }
 
-    public void setDvHost(String dvHost) {
-        this.dvHost = dvHost;
+    public void setDvAddress(String dvAddress) {
+        this.dvAddress = dvAddress;
     }
 
     public void setDvApiKey(String dvApiKey) {
@@ -1585,12 +1585,12 @@ public class DatasetPage implements java.io.Serializable {
         this.dvRoot = dvRoot;
     }
 
-    public String getDescriboHost() {
-        return describoHost;
+    public String getDescriboAddress() {
+        return describoAddress;
     }
 
-    public void setDescriboHost(String describoHost) {
-        this.describoHost = describoHost;
+    public void setDescriboAddress(String describoAddress) {
+        this.describoAddress = describoAddress;
     }
 
     public String getDescriboSecret() {
@@ -1914,9 +1914,9 @@ public class DatasetPage implements java.io.Serializable {
         String nonNullDefaultIfKeyNotFound = "";
         protocol = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Protocol, nonNullDefaultIfKeyNotFound);
         authority = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Authority, nonNullDefaultIfKeyNotFound);
-        setDvHost(System.getProperty("dv.host") != null ? System.getProperty("dv.host") : prop.getProperty("dv.host"));
+        setDvAddress(System.getProperty("dv.address") != null ? System.getProperty("dv.address") : prop.getProperty("dv.address"));
         setDvApiKey(System.getProperty("dv.api.key") != null ? System.getProperty("dv.api.key") : prop.getProperty("dv.api.key"));
-        setDescriboHost(System.getProperty("describo.host") != null ? System.getProperty("describo.host") : prop.getProperty("describo.host"));
+        setDescriboAddress(System.getProperty("describo.address") != null ? System.getProperty("describo.address") : prop.getProperty("describo.address"));
         setDescriboSecret(System.getProperty("describo.secret") != null ? System.getProperty("describo.secret") : prop.getProperty("describo.secret"));
         if (this.getId() != null || versionId != null || persistentId != null) { // view mode for a dataset
 

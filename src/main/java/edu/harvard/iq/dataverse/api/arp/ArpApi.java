@@ -209,36 +209,18 @@ public class ArpApi extends AbstractApiBean {
     }
 
     private void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(System.getProperty("dv.updater.script.path") != null ? System.getProperty("dv.updater.script.path") : prop.getProperty("dv.updater.script.path"), System.getProperty("solr.schema.path") != null ? System.getProperty("solr.schema.path") : prop.getProperty("solr.schema.path"));
-        processBuilder.redirectErrorStream(true);
-
-        updateEnabledMetadataBlocks(dvIdtf, metadataBlockName);
-        String newSchema = index.getSolrSchema();
-
-        Process process = processBuilder.start();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-
-        writer.write(newSchema);
-        writer.flush();
-        writer.close();
-
-        int exitVal = process.waitFor();
-        if (exitVal == 0) {
-            HttpClient client= HttpClient.newHttpClient();
-            String solrHost = System.getProperty("solr.host") != null ? System.getProperty("solr.host") : prop.getProperty("solr.host");
-            String solrCollection = System.getProperty("solr.collection.name") != null ? System.getProperty("solr.collection.name") : prop.getProperty("solr.collection.name");
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(new URI(solrHost + "/solr/admin/cores?action=RELOAD&core=" + solrCollection))
-                    .GET()
-                    .build();
-            HttpResponse<String> solrResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (solrResponse.statusCode() != 200) {
-                throw new Exception("Failed to update solr schema");
-            }
-        } else {
-            throw new Exception("An error occurred during updating the solr schema");
+        HttpClient client = HttpClient.newHttpClient();
+        String solrUpdaterAddress = System.getProperty("solr.updater.address") != null ? System.getProperty("solr.updater.address") : prop.getProperty("solr.updater.address");
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(solrUpdaterAddress))
+                .GET()
+                .build();
+        HttpResponse<String> solrResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (solrResponse.statusCode() != 200) {
+            throw new Exception("Failed to update solr schema");
         }
+        updateEnabledMetadataBlocks(dvIdtf, metadataBlockName);
+
     }
 
     /**
