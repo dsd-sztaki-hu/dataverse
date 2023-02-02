@@ -216,6 +216,8 @@ public class CedarTemplateToDvMdbConverter {
             } else {
                 dataverseFieldType = cedarDataverseFieldTypes.get(fieldType);
             }
+        } else {
+            dataverseFieldType = "none";
         }
 
         return dataverseFieldType;
