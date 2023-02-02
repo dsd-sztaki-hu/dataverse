@@ -114,11 +114,6 @@ public class CedarTemplateToDvMdbConverter {
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
                     processTemplateField(property, displayOrder, false, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
-                    DataverseDatasetField lastProcessedField = processedCedarTemplateValues.datasetFieldValues.get(processedCedarTemplateValues.datasetFieldValues.size() - 1);
-                    if (lastProcessedField.allowControlledVocabulary) {
-                        String finalPropName = lastProcessedField.getName();
-                        processCtrlVocabValues(property, finalPropName, processedCedarTemplateValues);
-                    }
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, false, parentName);
                 }
@@ -154,6 +149,11 @@ public class CedarTemplateToDvMdbConverter {
         dataverseDatasetField.setTermUri(propertyTermUri);
 
         processedCedarTemplateValues.datasetFieldValues.add(dataverseDatasetField);
+
+        if (allowCtrlVocab) {
+            String finalPropName = dataverseDatasetField.getName();
+            processCtrlVocabValues(templateField, finalPropName, processedCedarTemplateValues);
+        }
     }
 
     public void processCtrlVocabValues(JsonObject templateField, String finalPropName, ProcessedCedarTemplateValues processedCedarTemplateValues) {
