@@ -1,7 +1,6 @@
 package edu.harvard.iq.dataverse.api.arp;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
@@ -22,7 +21,6 @@ import javax.ws.rs.core.Response;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,6 +30,8 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
@@ -125,8 +125,8 @@ public class ArpApi extends AbstractApiBean {
                 throw new Exception(errors);
             }
 
-            lines = convertTemplate(templateJson, "dv");
-            mdbTsv = String.join("\n", lines);
+            mdbTsv = convertTemplate(templateJson, "dv");
+            lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
                 loadDatasetFields(lines, metadataBlockName);
                 updateMetadataBlock(dvIdtf, metadataBlockName);
@@ -155,7 +155,6 @@ public class ArpApi extends AbstractApiBean {
     @Produces("application/json")
     public Response cedarToDescribo(String templateJson) {
         String describoProfile;
-        List<String> lines;
 
         try {
             Response checkTemplateResponse = checkTemplate(templateJson);
@@ -163,9 +162,7 @@ public class ArpApi extends AbstractApiBean {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-
-            lines = convertTemplate(templateJson, "describo");
-            describoProfile = String.join("\n", lines);
+            describoProfile = convertTemplate(templateJson, "describo");
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -173,44 +170,23 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(describoProfile).build();
     }
 
-    private List<String> convertTemplate(String templateJson, String outputType) throws Exception {
-        String line;
-        ArrayList<String> converted = new ArrayList<>();
-        BufferedReader bufferedReader = null;
+    private String convertTemplate(String cedarTemplate, String outputType) throws Exception {
+        String conversionResult;
 
         try {
-            String cedarTemplateConverterPath = System.getProperty("arp.script.path") != null ? System.getProperty("arp.script.path") : prop.getProperty("arp.script.path");
-            String pythonPath = System.getProperty("arp.python.path") != null ? System.getProperty("arp.python.path") : prop.getProperty("arp.python.path");
-            String dvApiKey = System.getProperty("dv.api.key") != null ? System.getProperty("dv.api.key") : prop.getProperty("dv.api.key");
-            String dvUpdaterScriptPath = System.getProperty("dv.updater.script.path") != null ? System.getProperty("dv.updater.script.path") : prop.getProperty("dv.updater.script.path");
-            String solrSchemaPath = System.getProperty("solr.schema.path") != null ? System.getProperty("solr.schema.path") : prop.getProperty("solr.schema.path");
-            String solrCollectionName = System.getProperty("solr.collection.name") != null ? System.getProperty("solr.collection.name") : prop.getProperty("solr.collection.name");
-            String solrAddress = System.getProperty("solr.host") != null ? System.getProperty("solr.host") : prop.getProperty("solr.host");
-            ProcessBuilder pb = new ProcessBuilder()
-                    .command(pythonPath, cedarTemplateConverterPath, "--cedar_template", templateJson,
-                    "--output_type", outputType, "--dv_api_key", dvApiKey, "--solr_collection", solrCollectionName,
-                    "--solr_address", solrAddress, "--dv_solr_script", dvUpdaterScriptPath,
-                    "--dv_solr_schema", solrSchemaPath, "--skip_dv_upload");
-            pb.redirectErrorStream(true);
-
-            Process p = pb.start();
-            bufferedReader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            while ((line = bufferedReader.readLine()) != null) {
-                converted.add(line);
+            if (outputType.equals("dv")) {
+                CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
+                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate);
+            } else {
+                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter();
+                conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
             }
 
-            int exitCode = p.waitFor();
-            if (exitCode != 0) {
-                throw new Exception("An error occurred during converting the template");
-            }
-        } finally {
-            if (bufferedReader != null) {
-                bufferedReader.close();
-            }
+        } catch (Exception exception) {
+            throw new Exception("An error occurred during converting the template");
         }
 
-        return converted;
+        return conversionResult;
     }
 
     @POST
@@ -334,53 +310,6 @@ public class ArpApi extends AbstractApiBean {
                 throw new Exception("Failed to set Metadata blocks");
             }
         }
-    }
-
-    /**
-     * Returns a JSON sub-element from the given JsonElement and the given path
-     *
-     * @param json - a Gson JsonElement
-     * @param path - a JSON path, e.g. a.b.c[2].d
-     * @return - a sub-element of json according to the given path
-     */
-    public static JsonElement getJsonElement(JsonElement json, String path){
-
-        String[] parts = path.split("\\.|\\[|\\]");
-        JsonElement result = json;
-
-        for (String key : parts) {
-
-            key = key.trim();
-            if (key.isEmpty())
-                continue;
-
-            if (result == null){
-                result = JsonNull.INSTANCE;
-                break;
-            }
-
-            if (result.isJsonObject()){
-                result = ((JsonObject)result).get(key);
-            }
-            else if (result.isJsonArray()){
-                int ix = Integer.parseInt(key);
-                result = ((com.google.gson.JsonArray)result).get(ix);
-            }
-            else break;
-        }
-
-        return result;
-    }
-
-    public static List<String> getStringList(JsonElement json, String path) {
-        Gson gson = new Gson();
-        Type type = new TypeToken<List<String>>(){}.getType();
-        com.google.gson.JsonArray jsonArray = getJsonElement(json, path).getAsJsonArray();
-        return gson.fromJson(jsonArray, type);
-    }
-
-    public static JsonObject getJsonObject(JsonElement json, String path) {
-        return getJsonElement(json, path).getAsJsonObject();
     }
 
     public static CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields) {

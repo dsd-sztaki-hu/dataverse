@@ -21,19 +21,19 @@ public class CedarTemplateToDescriboProfileConverter {
     }
 
     // TODO: Update profile metadata, pass override/inherit values for the classes, maybe store the profile in a seperated file
-    public void processCedarTemplate(String cedarTemplate) throws IOException {
+    public String processCedarTemplate(String cedarTemplate) throws IOException {
         String describoProfileTemplate = "{\n  \"metadata\": {\n    \"name\": \"Cedar to Describo generated profile\",\n    \"version\": 1.0,\n    \"description\": \"Generated Describo schema from a Cedar template\",\n    \"warnMissingProperty\": true\n  },\n  \"layouts\": {\n    \"Dataset\": \"layouts\"\n  },\n  \"classes\": {\n    \"Dataset\": {\n      \"definition\": \"override\",\n      \"subClassOf\": [],\n      \"inputs\": \"inputs\"\n    }\n  },\n  \"enabledClasses\": [\n    \"Dataset\"\n  ]\n}";
 
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject describoProfile = gson.fromJson(describoProfileTemplate, JsonObject.class);
 
         ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(gson.fromJson(cedarTemplate, JsonObject.class), new ProcessedDescriboProfileValues(new ArrayList<>(), new ArrayList<>()));
         describoProfile.getAsJsonObject("layouts").add("Dataset", gson.toJsonTree(processedDescriboProfileValues.layouts));
         describoProfile.getAsJsonObject("classes").getAsJsonObject("Dataset").add("inputs", gson.toJsonTree(processedDescriboProfileValues.inputs));
 
-        System.out.println("pretty");
-        System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(describoProfile));
-
+        String resultProfile = gson.toJson(describoProfile);
+        System.out.println(resultProfile);
+        return resultProfile;
     }
 
     public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues) {
