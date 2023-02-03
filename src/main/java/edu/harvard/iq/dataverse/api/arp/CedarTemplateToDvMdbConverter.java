@@ -5,12 +5,14 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
@@ -20,7 +22,7 @@ public class CedarTemplateToDvMdbConverter {
     }
 
     //    TODO: Maybe pass in the results of the template check, and create the overrides here to get the field names for generating the tsv
-    public String processCedarTemplate(String cedarTemplate) throws IOException {
+    public String processCedarTemplate(String cedarTemplate, Set<String> overridePropNames) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         CsvMapper mapper = new CsvMapper();
 
@@ -30,7 +32,7 @@ public class CedarTemplateToDvMdbConverter {
         String metadataBlockId = id.substring(id.lastIndexOf("/") + 1);
 
         DataverseMetadataBlock metadataBlockValues = processMetadataBlock(cedarTemplateJson, metadataBlockId);
-        ProcessedCedarTemplateValues processedCedarTemplateValues = processTemplate(cedarTemplateJson, metadataBlockId, new ProcessedCedarTemplateValues(new ArrayList<>(), new ArrayList<>()), null);
+        ProcessedCedarTemplateValues processedCedarTemplateValues = processTemplate(cedarTemplateJson, metadataBlockId, new ProcessedCedarTemplateValues(new ArrayList<>(), new ArrayList<>()), null, overridePropNames);
 
         CsvSchema mdbSchema = CsvSchema.builder()
                 .addColumn("#metadataBlock")
@@ -102,8 +104,8 @@ public class CedarTemplateToDvMdbConverter {
         return dataverseMetadataBlock;
     }
 
-    public ProcessedCedarTemplateValues processTemplate(JsonObject cedarTemplate, String metadataBlockId, ProcessedCedarTemplateValues processedCedarTemplateValues, String parentName) {
-        for (String propertyName : getStringList(cedarTemplate, "_ui.order")) {
+    public ProcessedCedarTemplateValues processTemplate(JsonObject cedarTemplate, String metadataBlockId, ProcessedCedarTemplateValues processedCedarTemplateValues, String parentName, Set<String> overridePropNames) {
+        getStringList(cedarTemplate, "_ui.order").stream().filter(propertyName -> !overridePropNames.contains(propertyName)).forEach(propertyName -> {
             JsonObject property = getJsonObject(cedarTemplate, "properties." + propertyName);
             String propertyType = Optional.ofNullable(property.get("@type")).map(JsonElement::getAsString).orElse(null);
             int displayOrder = processedCedarTemplateValues.datasetFieldValues.size();
@@ -115,15 +117,15 @@ public class CedarTemplateToDvMdbConverter {
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
                     processTemplateField(property, displayOrder, false, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
                 } else if (actPropertyType.equals("TemplateElement")) {
-                    processTemplateElement(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, false, parentName);
+                    processTemplateElement(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, false, parentName, overridePropNames);
                 }
             } else {
                 String actPropertyType = property.get("type").getAsString();
                 if (actPropertyType.equals("array")) {
-                    processArray(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, parentName);
+                    processArray(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, parentName, overridePropNames);
                 }
             }
-        }
+        });
 
         return processedCedarTemplateValues;
     }
@@ -169,22 +171,22 @@ public class CedarTemplateToDvMdbConverter {
         }
     }
 
-    public void processTemplateElement(JsonObject templateElement, ProcessedCedarTemplateValues processedCedarTemplateValues, String metadataBlockId, String propertyTermUri, boolean allowMultiples, String parentName) {
+    public void processTemplateElement(JsonObject templateElement, ProcessedCedarTemplateValues processedCedarTemplateValues, String metadataBlockId, String propertyTermUri, boolean allowMultiples, String parentName, Set<String> overridePropNames) {
         int displayOrder = processedCedarTemplateValues.datasetFieldValues.size();
         boolean allowsMultiple = allowMultiples || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         processTemplateField(templateElement, displayOrder, allowsMultiple, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
         String parent = processedCedarTemplateValues.datasetFieldValues.get(processedCedarTemplateValues.datasetFieldValues.size() - 1).getName();
-        processTemplate(templateElement, metadataBlockId, processedCedarTemplateValues, parent);
+        processTemplate(templateElement, metadataBlockId, processedCedarTemplateValues, parent, overridePropNames);
     }
 
-    public void processArray(JsonObject array, ProcessedCedarTemplateValues processedCedarTemplateValues, String metadataBlockId, String propertyTermUri, String parentName) {
+    public void processArray(JsonObject array, ProcessedCedarTemplateValues processedCedarTemplateValues, String metadataBlockId, String propertyTermUri, String parentName, Set<String> overridePropNames) {
         JsonObject items = array.getAsJsonObject("items");
         int displayOrder = processedCedarTemplateValues.datasetFieldValues.size();
         String inputType = Optional.ofNullable(getJsonElement(items, "_ui.inputTye")).map(JsonElement::getAsString).orElse(null);
         if (inputType != null) {
             processTemplateField(items, displayOrder, true, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
         } else {
-            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, null);
+            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, null, overridePropNames);
         }
     }
 

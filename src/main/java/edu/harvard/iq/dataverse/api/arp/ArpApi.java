@@ -9,6 +9,7 @@ import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.solr.common.util.Hash;
 import org.json.JSONObject;
 
 import javax.ejb.EJB;
@@ -57,6 +58,9 @@ public class ArpApi extends AbstractApiBean {
     @EJB
     MetadataBlockServiceBean metadataBlockService;
 
+    @EJB
+    DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
+
     static {
         try (InputStream input = ArpApi.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input == null) {
@@ -71,31 +75,15 @@ public class ArpApi extends AbstractApiBean {
     @POST
     @Path("/checkCedarTemplate")
     @Consumes("application/json")
-    public Response checkTemplate(String templateJson) {
-        Map<String, String> propAndTermUriMap;
+    public Response checkCedarTemplateCall(String templateJson) {
+        CedarTemplateErrors errors;
         try {
-            propAndTermUriMap = listBlocksWithUri();
+            errors = checkTemplate(templateJson);
         } catch (Exception e) {
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        // region Static fields from src/main/java/edu/harvard/iq/dataverse/api/Index.java: listOfStaticFields
-        List<String> listOfStaticFields = new ArrayList<>();
-        Object searchFieldsObject = new SearchFields();
-        Field[] staticSearchFields = searchFieldsObject.getClass().getDeclaredFields();
-        for (Field fieldObject : staticSearchFields) {
-            String staticSearchField;
-            try {
-                staticSearchField = (String) fieldObject.get(searchFieldsObject);
-                listOfStaticFields.add(staticSearchField);
-            } catch (IllegalAccessException e) {
-            }
-        }
-        //endregion
-
-        CedarTemplateErrors errors = checkCedarTemplate(templateJson, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields);
-
-        if (!(errors.incompatiblePairs.isEmpty() && errors.invalidNames.isEmpty() && errors.unprocessableElements.isEmpty())) {
+        if (!(errors.invalidNames.isEmpty() && errors.unprocessableElements.isEmpty())) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                             .add("status", STATUS_ERROR)
@@ -115,20 +103,29 @@ public class ArpApi extends AbstractApiBean {
                                String templateJson) {
         String mdbTsv;
         List<String> lines;
+        Set<String> overridePropNames = new HashSet<>();
         String metadataBlockId = new JSONObject(templateJson).getString("@id");
         String metadataBlockName = metadataBlockId.substring(metadataBlockId.lastIndexOf('/') + 1);
 
         try {
-            Response checkTemplateResponse = checkTemplate(templateJson);
-            if (!checkTemplateResponse.getStatusInfo().toEnum().equals(Response.Status.OK)) {
-                String errors = checkTemplateResponse.getEntity().toString();
-                throw new Exception(errors);
+            CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
+            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty())) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity( NullSafeJsonBuilder.jsonObjectBuilder()
+                                .add("status", STATUS_ERROR)
+                                .add( "message", cedarTemplateErrors.toJson() ).build()
+                        ).type(MediaType.APPLICATION_JSON_TYPE).build();
+            }
+            if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
+                overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
             }
 
-            mdbTsv = convertTemplate(templateJson, "dv");
+            mdbTsv = convertTemplate(templateJson, "dv", overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
                 loadDatasetFields(lines, metadataBlockName);
+                // at this point the new mdb is already in the db
+                datasetFieldTypeOverrideService.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
                 updateMetadataBlock(dvIdtf, metadataBlockName);
             }
 
@@ -157,12 +154,12 @@ public class ArpApi extends AbstractApiBean {
         String describoProfile;
 
         try {
-            Response checkTemplateResponse = checkTemplate(templateJson);
+            Response checkTemplateResponse = checkCedarTemplateCall(templateJson);
             if (!checkTemplateResponse.getStatusInfo().toEnum().equals(Response.Status.OK)) {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-            describoProfile = convertTemplate(templateJson, "describo");
+            describoProfile = convertTemplate(templateJson, "describo", new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -170,13 +167,13 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(describoProfile).build();
     }
 
-    private String convertTemplate(String cedarTemplate, String outputType) throws Exception {
+    private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception {
         String conversionResult;
 
         try {
             if (outputType.equals("dv")) {
                 CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
-                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate);
+                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
             } else {
                 CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter();
                 conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
@@ -220,7 +217,6 @@ public class ArpApi extends AbstractApiBean {
             throw new Exception("Failed to update solr schema");
         }
         updateEnabledMetadataBlocks(dvIdtf, metadataBlockName);
-
     }
 
     /**
@@ -294,7 +290,29 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
-    public static CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields) {
+    public CedarTemplateErrors checkTemplate(String cedarTemplate) throws Exception {
+        Map<String, String> propAndTermUriMap = listBlocksWithUri();
+
+        // region Static fields from src/main/java/edu/harvard/iq/dataverse/api/Index.java: listOfStaticFields
+        List<String> listOfStaticFields = new ArrayList<>();
+        Object searchFieldsObject = new SearchFields();
+        Field[] staticSearchFields = searchFieldsObject.getClass().getDeclaredFields();
+        for (Field fieldObject : staticSearchFields) {
+            String staticSearchField;
+            try {
+                staticSearchField = (String) fieldObject.get(searchFieldsObject);
+                listOfStaticFields.add(staticSearchField);
+            } catch (IllegalAccessException e) {
+            }
+        }
+        //endregion
+
+        String metadataBlockId = new JSONObject(cedarTemplate).getString("@id");
+        String metadataBlockName = metadataBlockId.substring(metadataBlockId.lastIndexOf('/') + 1);
+        return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, metadataBlockName);
+    }
+
+    public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
@@ -329,14 +347,18 @@ public class ArpApi extends AbstractApiBean {
                 for (var entry: dvPropTermUriPairs.entrySet()) {
                     var k = entry.getKey();
                     var v = entry.getValue();
-                    if ((k.equals(prop) && !v.equals(termUri)) || (!termUri.equals("") && v.equals(termUri) && !k.equals(prop))) {
-                        Pair<String, String> actPair = Pair.create(prop, termUri);
-                        if (cedarTemplateErrors.incompatiblePairs.containsKey(actPair)) {
-                            cedarTemplateErrors.incompatiblePairs.get(actPair).put(k, v);
-                        } else {
-                            cedarTemplateErrors.incompatiblePairs.put(actPair, new HashMap<>(Map.of(k, v)));
+                    if (v.equals(termUri)) {
+                        DatasetFieldType original = datasetFieldService.findByName(k);
+                        // There's no need to create overrides if the original metadata block is updated
+                        if (!mdbName.equals(original.getMetadataBlock().getName())) {
+                            DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
+                            override.setOriginal(original);
+                            override.setMetadataBlock(original.getMetadataBlock());
+                            override.setLocalName(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
+                            override.setTitle(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
+                            cedarTemplateErrors.incompatiblePairs.put(prop, override);
+                            isNew = false;
                         }
-                        isNew = false;
                     }
                 }
 
@@ -355,9 +377,9 @@ public class ArpApi extends AbstractApiBean {
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
                     cedarTemplateErrors.unprocessableElements.add(newPath);
-                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields);
+                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName);
                 } else {
-                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields);
+                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName);
                 }
             } else {
                 if (!propType.equals("TemplateField") && !propType.equals("StaticTemplateField")) {
@@ -595,9 +617,9 @@ public class ArpApi extends AbstractApiBean {
     private static class CedarTemplateErrors {
         public ArrayList<String> unprocessableElements;
         public ArrayList<String> invalidNames;
-        public Map<Pair<String, String>, HashMap<String, String>> incompatiblePairs;
+        public HashMap<String, DatasetFieldTypeOverride> incompatiblePairs;
 
-        public CedarTemplateErrors(ArrayList<String> unprocessableElements, ArrayList<String> invalidNames, Map<Pair<String, String>, HashMap<String, String>> incompatiblePairs) {
+        public CedarTemplateErrors(ArrayList<String> unprocessableElements, ArrayList<String> invalidNames, HashMap<String, DatasetFieldTypeOverride> incompatiblePairs) {
             this.unprocessableElements = unprocessableElements;
             this.invalidNames = invalidNames;
             this.incompatiblePairs = incompatiblePairs;
@@ -616,14 +638,6 @@ public class ArpApi extends AbstractApiBean {
                 JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
                 invalidNames.forEach(jsonArrayBuilder::add);
                 builder.add("invalidNames", jsonArrayBuilder);
-            }
-
-            if (!incompatiblePairs.isEmpty()) {
-                JsonObjectBuilder jsonObjectBuilder = Json.createObjectBuilder();
-                for (var a : incompatiblePairs.entrySet()) {
-                    jsonObjectBuilder.add(a.getKey().toString(), Json.createObjectBuilder(new HashMap<>(a.getValue())));
-                }
-                builder.add("incompatiblePairs", jsonObjectBuilder);
             }
 
             return builder.build();
