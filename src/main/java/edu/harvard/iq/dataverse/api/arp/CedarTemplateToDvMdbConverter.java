@@ -1,18 +1,17 @@
 package edu.harvard.iq.dataverse.api.arp;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.gson.*;
+import edu.harvard.iq.dataverse.ControlledVocabularyValue;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
@@ -71,8 +70,8 @@ public class CedarTemplateToDvMdbConverter {
 
         CsvSchema controlledVocabularySchema = CsvSchema.builder()
                 .addColumn("#controlledVocabulary")
-                .addColumn("datasetField")
-                .addColumn("value")
+                .addColumn("DatasetField")
+                .addColumn("Value")
                 .addColumn("identifier")
                 .addColumn("displayOrder")
                 .build()
@@ -457,28 +456,30 @@ public class CedarTemplateToDvMdbConverter {
     }
 
     private static class DataverseControlledVocabulary {
-        private String DatasetField;
-        private String Value;
+        @JsonProperty("DatasetField")
+        private String datasetField;
+        @JsonProperty("Value")
+        private String value;
         private String identifier;
         private int displayOrder;
 
         public DataverseControlledVocabulary() {
         }
-
+        @JsonProperty("DatasetField")
         public String getDatasetField() {
-            return DatasetField;
+            return datasetField;
         }
-
+        @JsonProperty("DatasetField")
         public void setDatasetField(String DatasetField) {
-            this.DatasetField = DatasetField;
+            this.datasetField = DatasetField;
         }
-
+        @JsonProperty("Value")
         public String getValue() {
-            return Value;
+            return value;
         }
-
+        @JsonProperty("Value")
         public void setValue(String value) {
-            this.Value = value;
+            this.value = value;
         }
 
         public String getIdentifier() {
