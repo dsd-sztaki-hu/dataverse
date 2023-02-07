@@ -79,7 +79,9 @@ public class CedarTemplateToDescriboProfileConverter {
             JsonArray literals = jsonElement == null ? new JsonArray() : jsonElement.getAsJsonArray();
             List<String> literalValues = new ArrayList<>();
             literals.forEach(literal -> literalValues.add(literal.getAsJsonObject().get("label").getAsString()));
-            describoInput.setValues(literalValues);
+            if (!literalValues.isEmpty()) {
+                describoInput.setValues(literalValues);
+            }
         }
 
         processedDescriboProfileValues.inputs.add(describoInput);
@@ -92,7 +94,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId) {
         JsonObject items = array.getAsJsonObject("items");
-        String inputType = Optional.ofNullable(getJsonElement(items, "_ui.inputTye")).map(JsonElement::getAsString).orElse(null);
+        String inputType = Optional.ofNullable(getJsonElement(items, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         if (inputType != null) {
             processTemplateField(items, true, inputId, processedDescriboProfileValues);
         } else {
@@ -105,7 +107,9 @@ public class CedarTemplateToDescriboProfileConverter {
         layout.setName(Optional.ofNullable(templateElement.get("schema:name")).map(JsonElement::getAsString).orElse(null));
         layout.setDescription("");
         layout.setInputs(getStringList(templateElement, "_ui.order"));
-        processedDescriboProfileValues.layouts.add(layout);
+        if (!layout.getInputs().isEmpty()) {
+            processedDescriboProfileValues.layouts.add(layout);
+        }
     }
 
     public List<String> getDescriboType(JsonObject templateField) {
