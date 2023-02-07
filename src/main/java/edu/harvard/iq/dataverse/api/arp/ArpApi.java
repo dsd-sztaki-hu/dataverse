@@ -362,7 +362,7 @@ public class ArpApi extends AbstractApiBean {
                     }
                 }
 
-                if (isNew) {
+                if (isNew && !dvPropTermUriPairs.containsKey(prop)) {
                     dvPropTermUriPairs.put(prop, termUri);
                 }
 
