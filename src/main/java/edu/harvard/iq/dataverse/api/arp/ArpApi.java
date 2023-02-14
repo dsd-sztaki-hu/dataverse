@@ -125,7 +125,11 @@ public class ArpApi extends AbstractApiBean {
             if (!skipUpload) {
                 loadDatasetFields(lines, metadataBlockName);
                 // at this point the new mdb is already in the db
-                datasetFieldTypeOverrideService.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
+                if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
+                    MetadataBlock newMdb = metadataBlockService.findByName(metadataBlockName);
+                    cedarTemplateErrors.incompatiblePairs.values().forEach(override -> override.setMetadataBlock(newMdb));
+                    datasetFieldTypeOverrideService.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
+                }
                 updateMetadataBlock(dvIdtf, metadataBlockName);
             }
 
@@ -353,7 +357,6 @@ public class ArpApi extends AbstractApiBean {
                         if (!mdbName.equals(original.getMetadataBlock().getName())) {
                             DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
                             override.setOriginal(original);
-                            override.setMetadataBlock(original.getMetadataBlock());
                             override.setLocalName(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
                             override.setTitle(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
                             cedarTemplateErrors.incompatiblePairs.put(prop, override);
