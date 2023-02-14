@@ -63,14 +63,14 @@
           "type": [
             "Select"
           ],
-          "required": false,
-          "multiple": false,
           "values": [
             "Single option 1_test",
             "Single option 2_test",
             "Single option 3_test",
             "Single option 4_test"
-          ]
+          ],
+          "required": false,
+          "multiple": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/69c43448-13ca-4c71-a9c0-48b97de82c3a",
@@ -80,15 +80,15 @@
           "type": [
             "Select"
           ],
-          "required": true,
-          "multiple": true,
           "values": [
             "Multiple option 1_test",
             "Multiple option 2_test",
             "Multiple option 3_test",
             "Multiple option 4_test",
             "Multiple option 5_test"
-          ]
+          ],
+          "required": true,
+          "multiple": true
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/29b3bb34-df00-45e5-823d-20527df731ed",

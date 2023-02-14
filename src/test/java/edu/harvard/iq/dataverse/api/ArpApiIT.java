@@ -3,13 +3,17 @@ package edu.harvard.iq.dataverse.api;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
+import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
 import org.apache.commons.math3.util.Pair;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import javax.ejb.EJB;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +124,7 @@ public class ArpApiIT {
     }
 
     @Test
-    public void checkTemplate_incompatiblePairs() {
+    public void checkTemplate_incompatiblePairs_afterOverrideUpdate() {
         Response createUser = UtilIT.createRandomUser();
         String apiToken = UtilIT.getApiTokenFromResponse(createUser);
 
@@ -131,6 +135,23 @@ public class ArpApiIT {
             logger.warning(e.getMessage());
             assertEquals(0,1);
         }
+
+        Response response = checkTemplate(apiToken, templateContent);
+        assertEquals(200, response.getStatusCode());
+        response.then().assertThat().statusCode(OK.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("OK", status);
+
+        Map<String, String> data = JsonPath.from(body).getMap("data");
+        assertEquals(1, data.size());
+        String message = data.get("message");
+        assertEquals("Valid Template", message);
+
+        /*
+        We used to have the response below, but after adding the override generation this template no longer contains errors,
+        the required fields will be overridden during the mdb creation
 
         Response response = checkTemplate(apiToken, templateContent);
         assertEquals(500, response.getStatusCode());
@@ -147,6 +168,7 @@ public class ArpApiIT {
         assertTrue(incompatiblePairs.containsValue(Map.of("software", "https://www.w3.org/TR/prov-o/#wasGeneratedBy")));
         assertTrue(incompatiblePairs.containsValue(Map.of("publicationIDType", "http://purl.org/spar/datacite/ResourceIdentifierScheme")));
         assertTrue(incompatiblePairs.containsValue(Map.of("alternativeURL", "https://schema.org/distribution")));
+        */
     }
 
     @Test
@@ -177,6 +199,70 @@ public class ArpApiIT {
         }
 
         assertEquals(tsvContent, body);
+    }
+
+    @Test
+    public void checkMdbOverrideCreation() throws Exception {
+        int metadataBlockMaxId = getMaxIdFromTable("metadatablock");
+        int datasetFieldTypeMaxId = getMaxIdFromTable("datasetfieldtype");
+        int datasetFieldTypeOverrideMaxId = getMaxIdFromTable("datasetfieldtypeoverride");
+        logger.info("metadataBlockIdMax " + metadataBlockMaxId);
+        logger.info("datasetFieldTypeMaxId " + datasetFieldTypeMaxId);
+        logger.info("datasetFieldTypeOverrideMaxId " + datasetFieldTypeOverrideMaxId);
+
+        Response createSuperuser = UtilIT.createRandomUser();
+        String superuserUsername = UtilIT.getUsernameFromResponse(createSuperuser);
+        String superuserApiToken = UtilIT.getApiTokenFromResponse(createSuperuser);
+        Response toggleSuperuser = UtilIT.makeSuperUser(superuserUsername);
+        toggleSuperuser.then().assertThat()
+                .statusCode(OK.getStatusCode());
+
+        byte[] mdbToOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-to-override.json"));
+        Response response = cedarToMdbWithUpload(superuserApiToken, mdbToOverride);
+        assertEquals(200, response.getStatusCode());
+        response.then().assertThat().statusCode(OK.getStatusCode());
+
+        byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override.json"));
+        Response response2 = cedarToMdbWithUpload(superuserApiToken, mdbContainingOverride);
+        assertEquals(200, response2.getStatusCode());
+        response2.then().assertThat().statusCode(OK.getStatusCode());
+
+        Connection connection = connectToDatabase();
+        if (connection == null) {
+            throw new Exception("Can not connect to database");
+        }
+        connection.setAutoCommit(false);
+        Statement stmt = connection.createStatement();
+
+        ResultSet metadatablockTable = stmt.executeQuery( "SELECT * from metadatablock where id > " + metadataBlockMaxId);
+        metadatablockTable.next();
+        assertEquals("MDB to override", metadatablockTable.getString("displayname"));
+        int mdbToOverrideId = metadatablockTable.getInt("id");
+        metadatablockTable.next();
+        assertEquals("MDB containing override", metadatablockTable.getString("displayname"));
+        int mdbContainingOverrideId = metadatablockTable.getInt("id");
+        metadatablockTable.close();
+
+        ResultSet datasetfieldtypeTable = stmt.executeQuery("SELECT * from datasetfieldtype where id > " + datasetFieldTypeMaxId);
+        datasetfieldtypeTable.next();
+        assertEquals("datasetfieldtype_to_override", datasetfieldtypeTable.getString("name"));
+        assertEquals("Datasetfieldtype that will be overridden", datasetfieldtypeTable.getString("title"));
+        assertEquals(mdbToOverrideId, datasetfieldtypeTable.getInt("metadatablock_id"));
+        datasetfieldtypeTable.close();
+
+        ResultSet datasetfieldtypeoverrideTable = stmt.executeQuery("SELECT * from datasetfieldtypeoverride where id > " + datasetFieldTypeOverrideMaxId);
+        datasetfieldtypeoverrideTable.next();
+        assertEquals("Datasetfieldtype that will overridde", datasetfieldtypeoverrideTable.getString("localname"));
+        assertEquals("datasetfieldtype_that_override", datasetfieldtypeoverrideTable.getString("title"));
+        assertEquals(mdbContainingOverrideId, datasetfieldtypeoverrideTable.getInt("metadatablock_id"));
+        datasetfieldtypeoverrideTable.close();
+        stmt.close();
+        connection.close();
+
+        deleteTestDataFromTable(datasetFieldTypeOverrideMaxId, "datasetfieldtypeoverride", "id");
+        deleteTestDataFromTable(datasetFieldTypeMaxId, "datasetfieldtype", "id");
+        deleteTestDataFromTable(metadataBlockMaxId, "dataverse_metadatablock", "metadatablocks_id");
+        deleteTestDataFromTable(metadataBlockMaxId, "metadatablock", "id");
     }
 
     @Test
@@ -285,11 +371,74 @@ public class ArpApiIT {
                 .post("/api/arp/cedarToMdb/root");
     }
 
+    static Response cedarToMdbWithUpload(String apiToken, byte[] body) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .contentType("application/json; charset=utf-8")
+                .body(body)
+                .post("/api/arp/cedarToMdb/root");
+    }
+
     static Response cedarToDescribo(String apiToken, byte[] body) {
         return given()
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .contentType("application/json; charset=utf-8")
                 .body(body)
                 .post("/api/arp/cedarToDescribo");
+    }
+
+    // Opens the connection to the database.
+    // Uses the credentials supplied via JVM options
+    private static Connection connectToDatabase() {
+        Connection c;
+
+        String host = System.getProperty("db.serverName") != null ? System.getProperty("db.serverName") : "localhost";
+        String port = System.getProperty("db.portNumber") != null ? System.getProperty("db.portNumber") : "5432";
+        String database = System.getProperty("db.databaseName") != null ? System.getProperty("db.databaseName") : "dvndb";
+        String pguser = System.getProperty("db.user") != null ? System.getProperty("db.user") : "dvnapp";
+        String pgpasswd = System.getProperty("db.password") != null ? System.getProperty("db.password") : "secret";
+
+        try {
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager
+                    .getConnection("jdbc:postgresql://" + host + ":" + port + "/" + database,
+                            pguser,
+                            pgpasswd);
+        } catch (Exception e) {
+            return null;
+        }
+        return c;
+    }
+
+    public static int getMaxIdFromTable(String tableName) throws Exception {
+        int maxId;
+
+        Connection connection = connectToDatabase();
+        if (connection == null) {
+            throw new Exception("Can not connect to database");
+        }
+        connection.setAutoCommit(false);
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery( "SELECT MAX(id) as max_id from " + tableName);
+        rs.next();
+        maxId = rs.getInt("max_id");
+        rs.close();
+        stmt.close();
+        connection.close();
+
+        return maxId;
+    }
+
+    public static void deleteTestDataFromTable(int originalMaxId, String tableName, String idName) throws Exception {
+        Connection connection = connectToDatabase();
+        if (connection == null) {
+            throw new Exception("Can not connect to database");
+        }
+        connection.setAutoCommit(false);
+        Statement stmt = connection.createStatement();
+        stmt.execute( "DELETE FROM " + tableName + " WHERE " + idName + " > " + originalMaxId + ";");
+        connection.commit();
+        stmt.close();
+        connection.close();
     }
 }
