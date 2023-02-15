@@ -222,7 +222,8 @@ public class ArpApiIT {
         assertEquals(200, response.getStatusCode());
         response.then().assertThat().statusCode(OK.getStatusCode());
 
-        byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override.json"));
+//        byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override.json"));
+        byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override-and-onemore.json"));
         Response response2 = cedarToMdbWithUpload(superuserApiToken, mdbContainingOverride);
         assertEquals(200, response2.getStatusCode());
         response2.then().assertThat().statusCode(OK.getStatusCode());
