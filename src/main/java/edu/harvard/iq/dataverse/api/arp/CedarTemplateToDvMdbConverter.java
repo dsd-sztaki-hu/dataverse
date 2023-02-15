@@ -20,7 +20,6 @@ public class CedarTemplateToDvMdbConverter {
     public CedarTemplateToDvMdbConverter() {
     }
 
-    //    TODO: Maybe pass in the results of the template check, and create the overrides here to get the field names for generating the tsv
     public String processCedarTemplate(String cedarTemplate, Set<String> overridePropNames) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         CsvMapper mapper = new CsvMapper();
@@ -84,13 +83,7 @@ public class CedarTemplateToDvMdbConverter {
         String datasetFieldValues = mapper.writer(datasetFieldSchema).writeValueAsString(processedCedarTemplateValues.datasetFieldValues);
         String controlledVocabularyValues = mapper.writer(controlledVocabularySchema).writeValueAsString(processedCedarTemplateValues.controlledVocabularyValues);
 
-        System.out.println("PROCESSED CEDAR TEMPLATE");
-        String convertedMdb = metadataBlocks + datasetFieldValues + controlledVocabularyValues;
-        System.out.println(convertedMdb);
-        Files.write(Paths.get("/Users/fintanorbert/Work/tmp/metadata_blocks.tsv"), convertedMdb.getBytes(StandardCharsets.UTF_8));
-
-        return convertedMdb;
-
+        return metadataBlocks + datasetFieldValues + controlledVocabularyValues;
     }
 
     public DataverseMetadataBlock processMetadataBlock(JsonObject cedarTemplate, String metadataBlockId) {
