@@ -23,7 +23,7 @@
                         const persistentId = "#{persistentId}"
                         const folder = persistentId.substring(persistentId.indexOf('/'));
                         const folderPath = "/" + "#{DatasetPage.dataset.owner.displayName}" + folder
-                        let response = await fetch("#{describoHost}" + "/api/session/application", {
+                        let response = await fetch("#{describoAddress}" + "/api/session/application", {
                             method: "POST",
                             headers: {
                                 Authorization: "Bearer " + "#{describoSecret}",
@@ -34,7 +34,7 @@
                                 name: "John Citizen",
                                 service: {
                                     dataverse: {
-                                        "host": "#{dvHost}",
+                                        "host": "#{dvAddress}",
                                         "rootDataverse": "#{dvRoot}",
                                         "apiKey": "#{dvApiKey}",
                                         "dvPersistentId": persistentId,
@@ -51,7 +51,7 @@
                             }),
                         });
                         ({ sessionId } = await response.json());
-                        document.getElementById('iframeId').src = "#{describoHost}" + "/application?sid=" + sessionId;
+                        document.getElementById('iframeId').src = "#{describoAddress}" + "/application?sid=" + sessionId;
                     } catch (error) {
                         console.log("Error: " + error);
                     }
