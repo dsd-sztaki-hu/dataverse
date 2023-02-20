@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse.api.arp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import edu.harvard.iq.dataverse.*;
@@ -56,6 +57,9 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     MetadataBlockServiceBean metadataBlockService;
+
+    @EJB
+    DatasetServiceBean datasetService;
 
     static {
         try (InputStream input = ArpApi.class.getClassLoader().getResourceAsStream("config.properties")) {
@@ -230,6 +234,24 @@ public class ArpApi extends AbstractApiBean {
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
+    }
+
+    @GET
+    @Path("/getRoCrate/{persistentId : .+}")
+    @Produces("application/json")
+    public Response getRoCrate(@PathParam("persistentId") String persistentId) {
+        Dataset dataset = datasetService.findByGlobalId(persistentId);
+        JsonObject roCrateJson;
+
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(RoCrateManager.getRoCratePath(dataset)));
+            roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(roCrateJson.toString()).build();
     }
 
     private void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
