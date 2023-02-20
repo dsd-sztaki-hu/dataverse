@@ -70,6 +70,7 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -3787,7 +3788,6 @@ public class DatasetPage implements java.io.Serializable {
                 }
             }
             if (editMode.equals(EditMode.METADATA)) {
-                createRoCrate();
 //                importRoCrate(getRoCrateFolder());
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
             }
@@ -3796,6 +3796,12 @@ public class DatasetPage implements java.io.Serializable {
             }
             if (editMode.equals(EditMode.FILE)) {
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.filesSuccess"));
+            }
+
+            try {
+                createRoCrate();
+            } catch (Exception e) {
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
             }
 
         } else {
@@ -6270,27 +6276,24 @@ public class DatasetPage implements java.io.Serializable {
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
     }
 
-    public void createRoCrate() {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            dataset = datasetService.find(dataset.getId()).getLatestVersion().getDataset();
-            RoCrate.RoCrateBuilder roCrateBuilder = new RoCrate.RoCrateBuilder();
+    public void createRoCrate() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        dataset = datasetService.find(dataset.getId()).getLatestVersion().getDataset();
+        RoCrate.RoCrateBuilder roCrateBuilder = new RoCrate.RoCrateBuilder();
 
-            RootDataEntity.RootDataEntityBuilder rootDataEntityBuilder = new RootDataEntity.RootDataEntityBuilder();
-            generateRoCrateData(roCrateBuilder, rootDataEntityBuilder, dataset.getLatestVersion().getDatasetFields(), new HashMap<>(), objectMapper);
+        RootDataEntity.RootDataEntityBuilder rootDataEntityBuilder = new RootDataEntity.RootDataEntityBuilder();
+        generateRoCrateData(roCrateBuilder, rootDataEntityBuilder, dataset.getLatestVersion().getDatasetFields(), new HashMap<>(), objectMapper);
 
-            RoCrate roCrate = roCrateBuilder.build();
-            roCrate.setRootDataEntity(rootDataEntityBuilder.build());
-            roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
+        RoCrate roCrate = roCrateBuilder.build();
+        roCrate.setRootDataEntity(rootDataEntityBuilder.build());
+        roCrate = generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
 
-            JSONObject json = new JSONObject(roCrate.getJsonMetadata());
-            String roCratePath = getRoCratePath();
-            Files.writeString(Paths.get(roCratePath), json.toString(4));
-
-            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateSuccess"));
-        } catch (Exception e) {
-            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        JSONObject json = new JSONObject(roCrate.getJsonMetadata());
+        String roCratePath = getRoCratePath();
+        if (!Files.exists(Paths.get(getRoCrateFolder()))) {
+            Files.createDirectories(Path.of(getRoCrateFolder()));
         }
+        Files.writeString(Paths.get(roCratePath), json.toString(4));
     }
 
     public void importRoCrate(String roCratePath) {
