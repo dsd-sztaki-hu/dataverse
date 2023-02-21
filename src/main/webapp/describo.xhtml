@@ -56,10 +56,13 @@
                         console.log("Error: " + error);
                     }
                 }
-
+                setTimeout(() => {
+                  const persistentId = "#{persistentId}"
+                  document.getElementById('iframeId').src = "#{describoAddress}/dataset/" + encodeURIComponent(persistentId)+"??apiKey=#{DatasetPage.dvApiKey}";
+                }, 10)
             </script>
-            <h2>Describo Online</h2>
-            <button type="button" onclick="openDescriboOnline()">Describo Online</button>
+<!--            <h2>Describo Online</h2>-->
+<!--            <button type="button" onclick="openDescriboOnline()">Describo Online</button>-->
             <div id="frame-div" class="embed-responsive embed-responsive-16by9">
                 <iframe id="iframeId" title="Describo Online" src=""></iframe>
             </div>

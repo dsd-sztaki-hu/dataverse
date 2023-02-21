@@ -66,6 +66,7 @@ import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
@@ -6154,4 +6155,7 @@ public class DatasetPage implements java.io.Serializable {
         facesContext.responseComplete();
     }
 
+    public String getUriEncodedPersistentId() {
+        return java.net.URLEncoder.encode(persistentId);
+    }
 }
