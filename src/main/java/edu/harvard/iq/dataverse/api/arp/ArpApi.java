@@ -1,11 +1,17 @@
 package edu.harvard.iq.dataverse.api.arp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
+import edu.harvard.iq.dataverse.api.Datasets;
+import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
+import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.SearchFields;
+import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -34,6 +40,8 @@ import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
+import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
+
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
 
@@ -57,6 +65,12 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     MetadataBlockServiceBean metadataBlockService;
+
+    @EJB
+    DatasetServiceBean datasetService;
+
+    @EJB
+    DatasetFieldServiceBean fieldService;
 
     @EJB
     DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
@@ -208,6 +222,100 @@ public class ArpApi extends AbstractApiBean {
         }
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
     }
+
+    @GET
+    @Path("/getRoCrate/{persistentId : .+}")
+    @Produces("application/json")
+    public Response getRoCrate(@PathParam("persistentId") String persistentId) {
+        Dataset dataset = datasetService.findByGlobalId(persistentId);
+        JsonObject roCrateJson;
+
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(RoCrateManager.getRoCratePath(dataset)));
+            roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(roCrateJson.toString()).build();
+    }
+
+    @PUT
+    @Path("/updateRoCrate/{persistentId : .+}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) {
+        Map<String, DatasetFieldType> datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
+        Dataset dataset = datasetService.findByGlobalId(persistentId);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        try {
+            try (FileWriter writer = new FileWriter(RoCrateManager.getRoCratePath(dataset))) {
+                gson.toJson(JsonParser.parseString(roCrateJson), writer);
+            }
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        String importFormat = RoCrateManager.importRoCrate(dataset, datasetFieldTypeMap);
+
+        //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
+        try ( StringReader rdr = new StringReader(importFormat) ) {
+            DataverseRequest req = createDataverseRequest(findUserOrDie());
+            Dataset ds = datasetService.findByGlobalId(persistentId);
+            javax.json.JsonObject json = Json.createReader(rdr).readObject();
+            DatasetVersion incomingVersion = jsonParser().parseDatasetVersion(json);
+
+            // clear possibly stale fields from the incoming dataset version.
+            // creation and modification dates are updated by the commands.
+            incomingVersion.setId(null);
+            incomingVersion.setVersionNumber(null);
+            incomingVersion.setMinorVersionNumber(null);
+            incomingVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
+            incomingVersion.setDataset(ds);
+            incomingVersion.setCreateTime(null);
+            incomingVersion.setLastUpdateTime(null);
+
+            if (!incomingVersion.getFileMetadatas().isEmpty()){
+                return error( Response.Status.BAD_REQUEST, "You may not add files via this api.");
+            }
+
+            boolean updateDraft = ds.getLatestVersion().isDraft();
+
+            DatasetVersion managedVersion;
+            if (updateDraft) {
+                final DatasetVersion editVersion = ds.getEditVersion();
+                editVersion.setDatasetFields(incomingVersion.getDatasetFields());
+                editVersion.setTermsOfUseAndAccess(incomingVersion.getTermsOfUseAndAccess());
+                editVersion.getTermsOfUseAndAccess().setDatasetVersion(editVersion);
+                boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(editVersion.getTermsOfUseAndAccess(), null);
+                if (!hasValidTerms) {
+                    return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
+                }
+                Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                managedVersion = managedDataset.getEditVersion();
+            } else {
+                boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(incomingVersion.getTermsOfUseAndAccess(), null);
+                if (!hasValidTerms) {
+                    return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
+                }
+                managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
+            }
+
+            return ok( json(managedVersion) );
+
+        } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
+            logger.log(Level.SEVERE, "Semantic error parsing dataset version Json: " + ex.getMessage(), ex);
+            return error( Response.Status.BAD_REQUEST, "Error parsing dataset version: " + ex.getMessage() );
+
+        } catch (WrappedResponse ex) {
+            return ex.getResponse();
+
+        }
+        //endregion
+    }
+
 
     private void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
