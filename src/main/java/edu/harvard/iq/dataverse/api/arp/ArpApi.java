@@ -1,6 +1,5 @@
 package edu.harvard.iq.dataverse.api.arp;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
@@ -14,14 +13,11 @@ import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
-import org.apache.solr.common.util.Hash;
 import org.json.JSONObject;
 
 import javax.ejb.EJB;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -41,6 +37,7 @@ import java.util.stream.Collectors;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
+import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
@@ -227,15 +224,19 @@ public class ArpApi extends AbstractApiBean {
     @Path("/getRoCrate/{persistentId : .+}")
     @Produces("application/json")
     public Response getRoCrate(@PathParam("persistentId") String persistentId) {
-        Dataset dataset = datasetService.findByGlobalId(persistentId);
         JsonObject roCrateJson;
 
         try {
+            findAuthenticatedUserOrDie();
+            Dataset dataset = datasetService.findByGlobalId(persistentId);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             BufferedReader bufferedReader = new BufferedReader(new FileReader(RoCrateManager.getRoCratePath(dataset)));
             roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
-        } catch (Exception e) {
+        } catch (FileNotFoundException e) {
             return Response.serverError().entity(e.getMessage()).build();
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
         }
 
         return Response.ok(roCrateJson.toString()).build();
@@ -246,16 +247,21 @@ public class ArpApi extends AbstractApiBean {
     @Consumes("application/json")
     @Produces("application/json")
     public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) {
-        Map<String, DatasetFieldType> datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
-        Dataset dataset = datasetService.findByGlobalId(persistentId);
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
+        Map<String, DatasetFieldType> datasetFieldTypeMap;
+        Dataset dataset;
         try {
+            findAuthenticatedUserOrDie();
+            datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
+            dataset = datasetService.findByGlobalId(persistentId);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
             try (FileWriter writer = new FileWriter(RoCrateManager.getRoCratePath(dataset))) {
                 gson.toJson(JsonParser.parseString(roCrateJson), writer);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             return Response.serverError().entity(e.getMessage()).build();
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
         }
 
         String importFormat = RoCrateManager.importRoCrate(dataset, datasetFieldTypeMap);
