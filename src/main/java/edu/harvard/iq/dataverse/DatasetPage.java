@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse;
 
 //import edu.harvard.iq.dataverse.api.CedarEndpoint;
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -65,6 +66,8 @@ import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -6133,6 +6136,22 @@ public class DatasetPage implements java.io.Serializable {
             apiToken.setTokenString(privUrl.getToken());
         }
         PrimeFaces.current().executeScript(globusService.getGlobusDownloadScript(dataset, apiToken));
+    }
+
+    public void downloadRoCrate() throws IOException {
+        String json = Files.readString(Paths.get(RoCrateManager.getRoCratePath(dataset)));
+
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
+        response.setContentType("application/json");
+        response.setHeader("Content-Disposition", "attachment;filename=ro-crate.json");
+
+        OutputStream outputStream = response.getOutputStream();
+        outputStream.write(json.getBytes());
+        outputStream.flush();
+        outputStream.close();
+
+        facesContext.responseComplete();
     }
 
 }
