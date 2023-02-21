@@ -168,11 +168,11 @@ public class RoCrateManager {
         Files.writeString(Paths.get(roCratePath), json.toString(4));
     }
 
-    public void importRoCrate(Dataset dataset, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+    public static String importRoCrate(Dataset dataset, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         JSONObject importFormatMetadataBlocks = new JSONObject();
 
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCratePath(dataset));
+        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
 
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream().collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
@@ -193,9 +193,7 @@ public class RoCrateManager {
                 } else {
                     JSONArray container = importFormatMetadataBlocks.getJSONObject(metadataBlock.getName()).getJSONArray("fields");
                     if (datasetFieldType.isAllowControlledVocabulary()) {
-                        List<String> controlledVocabValues = new ArrayList<>();
-                        field.getValue().forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
-                        processControlledVocabFields(fieldName, controlledVocabValues, container, datasetFieldTypeMap);
+                        processControlledVocabFields(fieldName, field.getValue(), container, datasetFieldTypeMap);
                     } else {
                         processPrimitiveField(fieldName, field.getValue().textValue(), container, datasetFieldTypeMap);
                     }
@@ -206,11 +204,10 @@ public class RoCrateManager {
 
         JSONObject importFormatJson = new JSONObject();
         importFormatJson.put("metadataBlocks", importFormatMetadataBlocks);
-        System.out.println(importFormatJson.toString(4));
-//        TODO: With the importFormatJson, update the metadata for the Dataset https://guides.dataverse.org/en/latest/api/native-api.html#id58
+        return importFormatJson.toString(4);
     }
 
-    public void createMetadataBlock(JSONObject jsonObject, MetadataBlock metadataBlock) {
+    public static void createMetadataBlock(JSONObject jsonObject, MetadataBlock metadataBlock) {
         JSONObject mdb = new JSONObject();
         mdb.put("displayName", metadataBlock.getDisplayName());
         mdb.put("name", metadataBlock.getName());
@@ -218,7 +215,7 @@ public class RoCrateManager {
         jsonObject.put(metadataBlock.getName(), mdb);
     }
 
-    public void processCompoundField(JSONObject metadataBlocks, JsonNode roCrateValues, DatasetFieldType datasetField, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
+    public static void processCompoundField(JSONObject metadataBlocks, JsonNode roCrateValues, DatasetFieldType datasetField, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
         JSONObject compoundField = new JSONObject();
         compoundField.put("typeName", datasetField.getName());
         compoundField.put("multiple", datasetField.isAllowMultiples());
@@ -245,7 +242,7 @@ public class RoCrateManager {
         metadataBlocks.getJSONObject(datasetField.getMetadataBlock().getName()).getJSONArray("fields").put(compoundField);
     }
 
-    public JSONObject processCompoundFieldValue(JsonNode roCrateValue, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
+    public static JSONObject processCompoundFieldValue(JsonNode roCrateValue, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap) {
         JSONObject compoundFieldValue = new JSONObject();
         ContextualEntity contextualEntity = contextualEntityHashMap.get(roCrateValue.get("@id").textValue());
         contextualEntity.getProperties().fields().forEachRemaining(roCrateField -> {
@@ -269,7 +266,7 @@ public class RoCrateManager {
         return compoundFieldValue;
     }
 
-    public void processPrimitiveField(String fieldName, String fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+    public static void processPrimitiveField(String fieldName, String fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
         JSONObject primitiveField = new JSONObject();
         primitiveField.put("typeName", datasetFieldType.getName());
@@ -288,13 +285,21 @@ public class RoCrateManager {
         }
     }
 
-    public void processControlledVocabFields(String fieldName, Object fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+    public static void processControlledVocabFields(String fieldName, Object fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
         JSONObject field = new JSONObject();
+        List<String> controlledVocabValues = new ArrayList<>();
+
+        if (fieldValue instanceof ArrayNode) {
+            ((ArrayNode) fieldValue).forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+        } else {
+            controlledVocabValues.add(((JsonNode) fieldValue).textValue());
+        }
+
         field.put("typeName", datasetFieldType.getName());
         field.put("multiple", datasetFieldType.isAllowMultiples());
         field.put("typeClass", "controlledVocabulary");
-        field.put("value", fieldValue);
+        field.put("value", controlledVocabValues);
 
         if (container instanceof JSONObject) {
             ((JSONObject) container).put(datasetFieldType.getName(), field);
