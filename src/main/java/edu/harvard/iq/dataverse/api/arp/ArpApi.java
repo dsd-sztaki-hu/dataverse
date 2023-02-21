@@ -197,7 +197,7 @@ public class ArpApi extends AbstractApiBean {
             }
 
         } catch (Exception exception) {
-            throw new Exception("An error occurred during converting the template");
+            throw new Exception("An error occurred during converting the template", exception);
         }
 
         return conversionResult;
@@ -250,7 +250,7 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(roCrateJson.toString()).build();
     }
 
-    @PUT
+    @POST
     @Path("/updateRoCrate/{persistentId : .+}")
     @Consumes("application/json")
     @Produces("application/json")
