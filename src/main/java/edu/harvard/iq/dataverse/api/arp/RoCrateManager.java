@@ -181,6 +181,13 @@ public class RoCrateManager {
             String fieldName = field.getKey();
             if (!fieldName.startsWith("@") && !fieldName.equals("hasPart")) {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                // RO-Crate spec: name: SHOULD identify the dataset to humans well enough to disambiguate it from other RO-Crates
+                // In our case if the MDB has a "name" field, then we use it and store the value we get, otherwise
+                // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
+                // wich must be an error.`
+                if (fieldName.equals("name") && datasetFieldType == null) {
+                    return;
+                }
                 MetadataBlock metadataBlock = datasetFieldType.getMetadataBlock();
                 // Check if the import format already contains the field's parent metadata block
                 if (!importFormatMetadataBlocks.has(metadataBlock.getName())) {
@@ -249,6 +256,13 @@ public class RoCrateManager {
             String fieldName = roCrateField.getKey();
             if (!roCrateField.getKey().startsWith("@")) {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                // RO-Crate spec: name: SHOULD identify the dataset to humans well enough to disambiguate it from other RO-Crates
+                // In our case if the MDB has a "name" field, then we use it and store the value we get, otherwise
+                // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
+                // wich must be an error.
+                if (fieldName.equals("name") && datasetFieldType == null) {
+                    return;
+                }
                 if (datasetFieldType.isAllowControlledVocabulary()) {
                     if (roCrateField.getValue().isArray()) {
                         List<String> controlledVocabValues = new ArrayList<>();
