@@ -28,6 +28,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -230,13 +232,19 @@ public class ArpApi extends AbstractApiBean {
             findAuthenticatedUserOrDie();
             Dataset dataset = datasetService.findByGlobalId(persistentId);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(RoCrateManager.getRoCratePath(dataset)));
+            String roCratePath = RoCrateManager.getRoCratePath(dataset);
+            if (!Files.exists(Paths.get(roCratePath))) {
+                RoCrateManager.createRoCrate(dataset);
+            }
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
             roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
         } catch (FileNotFoundException e) {
             return Response.serverError().entity(e.getMessage()).build();
         } catch (WrappedResponse ex) {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
         }
 
         return Response.ok(roCrateJson.toString()).build();
