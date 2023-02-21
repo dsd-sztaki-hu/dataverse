@@ -6144,7 +6144,7 @@ public class DatasetPage implements java.io.Serializable {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         response.setContentType("application/json");
-        response.setHeader("Content-Disposition", "attachment;filename=ro-crate.json");
+        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
 
         OutputStream outputStream = response.getOutputStream();
         outputStream.write(json.getBytes());
