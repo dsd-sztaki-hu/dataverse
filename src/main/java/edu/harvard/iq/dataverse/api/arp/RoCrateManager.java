@@ -1,8 +1,10 @@
 package edu.harvard.iq.dataverse.api.arp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -212,6 +214,37 @@ public class RoCrateManager {
         JSONObject importFormatJson = new JSONObject();
         importFormatJson.put("metadataBlocks", importFormatMetadataBlocks);
         return importFormatJson.toString(4);
+    }
+
+    public static String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(roCrateJson);
+        JsonNode graphNode = rootNode.get("@graph");
+
+        ObjectNode filteredJson = mapper.createObjectNode();
+        ArrayNode filteredGraph = mapper.createArrayNode();
+
+        for (JsonNode node : graphNode) {
+            if (!node.get("@type").textValue().equals("Thing")) {
+                filteredGraph.add(node);
+            }
+        }
+
+        filteredJson.set("@context", rootNode.get("@context"));
+        filteredJson.set("@graph", filteredGraph);
+
+        removeReverseProperties(filteredJson);
+        return filteredJson.toPrettyString();
+    }
+
+    private static void removeReverseProperties(JsonNode node) {
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            objectNode.remove("@reverse");
+            objectNode.fields().forEachRemaining(entry -> removeReverseProperties(entry.getValue()));
+        } else if (node.isArray()) {
+            node.forEach(RoCrateManager::removeReverseProperties);
+        }
     }
 
     public static void createMetadataBlock(JSONObject jsonObject, MetadataBlock metadataBlock) {
