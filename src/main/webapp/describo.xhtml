@@ -58,7 +58,7 @@
                 }
                 setTimeout(() => {
                   const persistentId = "#{persistentId}"
-                  document.getElementById('iframeId').src = "#{describoAddress}/dataset/" + encodeURIComponent(persistentId)+"??apiKey=#{DatasetPage.dvApiKey}";
+                  document.getElementById('iframeId').src = "#{describoAddress}/dataset/" + encodeURIComponent(persistentId)+"?apiKey=#{DatasetPage.currentUserApiKey}";
                 }, 10)
             </script>
 <!--            <h2>Describo Online</h2>-->
