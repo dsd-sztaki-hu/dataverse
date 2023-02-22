@@ -1,8 +1,11 @@
 package edu.harvard.iq.dataverse.api.arp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import edu.harvard.iq.dataverse.*;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -214,6 +217,37 @@ public class RoCrateManager {
         return importFormatJson.toString(4);
     }
 
+    public static String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(roCrateJson);
+        JsonNode graphNode = rootNode.get("@graph");
+
+        ObjectNode filteredJson = mapper.createObjectNode();
+        ArrayNode filteredGraph = mapper.createArrayNode();
+
+        for (JsonNode node : graphNode) {
+            if (!node.get("@type").textValue().equals("Thing")) {
+                filteredGraph.add(node);
+            }
+        }
+
+        filteredJson.set("@context", rootNode.get("@context"));
+        filteredJson.set("@graph", filteredGraph);
+
+        removeReverseProperties(filteredJson);
+        return filteredJson.toPrettyString();
+    }
+
+    private static void removeReverseProperties(JsonNode node) {
+        if (node.isObject()) {
+            ObjectNode objectNode = (ObjectNode) node;
+            objectNode.remove("@reverse");
+            objectNode.fields().forEachRemaining(entry -> removeReverseProperties(entry.getValue()));
+        } else if (node.isArray()) {
+            node.forEach(RoCrateManager::removeReverseProperties);
+        }
+    }
+
     public static void createMetadataBlock(JSONObject jsonObject, MetadataBlock metadataBlock) {
         JSONObject mdb = new JSONObject();
         mdb.put("displayName", metadataBlock.getDisplayName());
@@ -302,18 +336,29 @@ public class RoCrateManager {
     public static void processControlledVocabFields(String fieldName, Object fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
         JSONObject field = new JSONObject();
-        List<String> controlledVocabValues = new ArrayList<>();
 
         if (fieldValue instanceof ArrayNode) {
+            List<String> controlledVocabValues = new ArrayList<>();
             ((ArrayNode) fieldValue).forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+            field.put("value", controlledVocabValues);
         } else {
-            controlledVocabValues.add(((JsonNode) fieldValue).textValue());
+            String controlledVocabValue;
+            if (fieldValue instanceof TextNode) {
+                controlledVocabValue = ((TextNode) fieldValue).textValue();
+            } else {
+                controlledVocabValue = fieldValue.toString();
+            }
+            if (datasetFieldType.isAllowMultiples()) {
+                field.put("value", List.of(controlledVocabValue));
+            } else {
+                field.put("value", controlledVocabValue);
+            }
         }
 
         field.put("typeName", datasetFieldType.getName());
         field.put("multiple", datasetFieldType.isAllowMultiples());
         field.put("typeClass", "controlledVocabulary");
-        field.put("value", controlledVocabValues);
+
 
         if (container instanceof JSONObject) {
             ((JSONObject) container).put(datasetFieldType.getName(), field);

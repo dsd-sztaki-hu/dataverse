@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse.api.arp;
 
+
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
@@ -261,9 +262,8 @@ public class ArpApi extends AbstractApiBean {
             findAuthenticatedUserOrDie();
             datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
             dataset = datasetService.findByGlobalId(persistentId);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
             try (FileWriter writer = new FileWriter(RoCrateManager.getRoCratePath(dataset))) {
-                gson.toJson(JsonParser.parseString(roCrateJson), writer);
+                writer.write(RoCrateManager.preProcessRoCrateFromAroma(roCrateJson));
             }
         } catch (IOException e) {
             return Response.serverError().entity(e.getMessage()).build();
