@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import edu.harvard.iq.dataverse.*;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -335,18 +336,29 @@ public class RoCrateManager {
     public static void processControlledVocabFields(String fieldName, Object fieldValue, Object container, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
         JSONObject field = new JSONObject();
-        List<String> controlledVocabValues = new ArrayList<>();
 
         if (fieldValue instanceof ArrayNode) {
+            List<String> controlledVocabValues = new ArrayList<>();
             ((ArrayNode) fieldValue).forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+            field.put("value", controlledVocabValues);
         } else {
-            controlledVocabValues.add(((JsonNode) fieldValue).textValue());
+            String controlledVocabValue;
+            if (fieldValue instanceof TextNode) {
+                controlledVocabValue = ((TextNode) fieldValue).textValue();
+            } else {
+                controlledVocabValue = fieldValue.toString();
+            }
+            if (datasetFieldType.isAllowMultiples()) {
+                field.put("value", List.of(controlledVocabValue));
+            } else {
+                field.put("value", controlledVocabValue);
+            }
         }
 
         field.put("typeName", datasetFieldType.getName());
         field.put("multiple", datasetFieldType.isAllowMultiples());
         field.put("typeClass", "controlledVocabulary");
-        field.put("value", controlledVocabValues);
+
 
         if (container instanceof JSONObject) {
             ((JSONObject) container).put(datasetFieldType.getName(), field);
