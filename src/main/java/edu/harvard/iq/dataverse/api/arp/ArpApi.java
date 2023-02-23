@@ -348,7 +348,7 @@ public class ArpApi extends AbstractApiBean {
     /**
      * Get all metadata blocks with URI-s
      */
-    public Map<String, String> listBlocksWithUri() throws Exception {
+    public Map<String, String> listBlocksWithUri() {
         Map<String, String> propAndTermUriMap = new HashMap<>();
         for (MetadataBlock blk : metadataBlockSvc.listMetadataBlocks()) {
             jsonWithUri(blk).forEach((k, v) -> propAndTermUriMap.merge(k, v, (v1, v2) -> {
@@ -386,6 +386,8 @@ public class ArpApi extends AbstractApiBean {
      */
     public Map<String, String> jsonWithUri(MetadataBlock blk) {
         Map<String, String> propUriMap = new HashMap<>();
+        //We need to check that the name of the new property does not collide with the name of an already existing MetadataBlock
+        //this is why we store the MetadataBlock names as well
         propUriMap.put(blk.getName(), Optional.ofNullable(blk.getNamespaceUri()).map(Objects::toString).orElse(""));
 
         for (DatasetFieldType df : new TreeSet<>(blk.getDatasetFieldTypes())) {
@@ -438,7 +440,7 @@ public class ArpApi extends AbstractApiBean {
         return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, metadataBlockName);
     }
 
-    public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) {
+    public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) throws Exception {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
@@ -460,7 +462,12 @@ public class ArpApi extends AbstractApiBean {
             cedarTemplateErrors.invalidNames.addAll(invalidNames);
         }
 
+        List<String> mdbNames = metadataBlockService.listMetadataBlocks().stream().map(MetadataBlock::getName).collect(Collectors.toList());
+
         for (String prop : propNames) {
+            if (mdbNames.contains(prop)) {
+                throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
+            }
             JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
