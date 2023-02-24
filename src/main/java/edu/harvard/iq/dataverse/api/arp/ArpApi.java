@@ -114,7 +114,8 @@ public class ArpApi extends AbstractApiBean {
     @Produces("text/tab-separated-values")
     public Response cedarToMdb(@PathParam("identifier") String dvIdtf,
                                @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
-                               String templateJson) {
+                               String templateJson)
+    {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
@@ -156,6 +157,7 @@ public class ArpApi extends AbstractApiBean {
                 writer.close();
             }
         } catch (Exception e) {
+            logger.log(Level.SEVERE, "CEDAR template upload failed", e);
             return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
         }
 
@@ -386,9 +388,13 @@ public class ArpApi extends AbstractApiBean {
      */
     public Map<String, String> jsonWithUri(MetadataBlock blk) {
         Map<String, String> propUriMap = new HashMap<>();
-        //We need to check that the name of the new property does not collide with the name of an already existing MetadataBlock
-        //this is why we store the MetadataBlock names as well
-        propUriMap.put(blk.getName(), Optional.ofNullable(blk.getNamespaceUri()).map(Objects::toString).orElse(""));
+        // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to add to
+        // propUriMap. ie. we can have an MDB named "journal" and a prop name "journal" as well.
+        //
+        // if (mdbNames.contains(prop)) {
+        //    throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
+        // }
+        //propUriMap.put(blk.getName(), Optional.ofNullable(blk.getNamespaceUri()).map(Objects::toString).orElse(""));
 
         for (DatasetFieldType df : new TreeSet<>(blk.getDatasetFieldTypes())) {
             jsonWithUri(df).forEach((k, v) -> propUriMap.merge(k, v, (v1, v2) -> {
@@ -465,9 +471,11 @@ public class ArpApi extends AbstractApiBean {
         List<String> mdbNames = metadataBlockService.listMetadataBlocks().stream().map(MetadataBlock::getName).collect(Collectors.toList());
 
         for (String prop : propNames) {
-            if (mdbNames.contains(prop)) {
-                throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
-            }
+            // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
+            // ie. we can have an MDB named "journal" and a prop name "journal" as well.
+            // if (mdbNames.contains(prop)) {
+            //    throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
+            // }
             JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
