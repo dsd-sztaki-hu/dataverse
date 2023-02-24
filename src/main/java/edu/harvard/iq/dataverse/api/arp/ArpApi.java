@@ -486,8 +486,8 @@ public class ArpApi extends AbstractApiBean {
                         if (!mdbName.equals(original.getMetadataBlock().getName())) {
                             DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
                             override.setOriginal(original);
-                            override.setLocalName(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
-                            override.setTitle(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
+                            override.setTitle(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
+                            override.setLocalName(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
                             cedarTemplateErrors.incompatiblePairs.put(prop, override);
                             isNew = false;
                         }
