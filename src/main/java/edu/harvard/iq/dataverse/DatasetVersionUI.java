@@ -479,10 +479,16 @@ public class DatasetVersionUI implements Serializable {
             // overrides to this
             var dsfInDsOpt = datasetVersion.getDatasetFields().stream().filter(df -> df.getDatasetFieldType().getName().equals(fieldTypeOverride.getName())).findFirst();
 
-            // Maybe empty when field first added to DS in view mode.
+            // Maybe empty when field first added to DS in view mode or when the original field is not included
+            // in another MDB. If eg. Citation has "title" and another DB has "title", then at this point we
+            // will have a value in dsfInDsOpt because of Citation.title. If however Citation is not displayed only
+            // the other MDB, then this will be null and we have to create a field value here.
             if (dsfInDsOpt.isEmpty()) {
                 overridingDsf = DatasetField.createNewEmptyDatasetField(fieldTypeOverride.getOriginal(), datasetVersion);
                 overridingDsf.setInclude(true);
+                // The overridingDsf should be put back to the original list of DSF-s. In this case it will its own
+                // override, and that's OK.
+                datasetVersion.getDatasetFields().add(overridingDsf);
                 overridingDsf.setOriginalField(dsfInDs);
                 return;
             }
