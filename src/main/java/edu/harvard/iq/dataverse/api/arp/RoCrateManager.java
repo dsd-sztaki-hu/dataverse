@@ -77,6 +77,9 @@ public class RoCrateManager {
                             }
                         }
                     }
+                    // The hashmark before the uuid is required in Describo
+                    // "@id's starting with # as these signify the reference is internal to the crate"
+                    contextualEntityBuilder.setId("#" + UUID.randomUUID());
                     ContextualEntity contextualEntity = contextualEntityBuilder.build();
                     // The "@id" is always a prop in a contextualEntity
                     if (contextualEntity.getProperties().size() > 1) {
@@ -126,7 +129,7 @@ public class RoCrateManager {
             FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
             String fileName = fileMetadata.getLabel();
             DataFile dataFile = fileMetadata.getDataFile();
-//            fileEntityBuilder.setId("#" + fileName);
+            fileEntityBuilder.setId("#" + fileName);
             fileEntityBuilder.addProperty("name", fileName);
             fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
             fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
@@ -217,6 +220,9 @@ public class RoCrateManager {
         return importFormatJson.toString(4);
     }
 
+    // After adding a hashmark before every @id property, Describo (AROMA) probably will not generate new entities with "@type: Thing"
+    // TODO: If the hashmark really solved the issue then remove the part that rebuilds the whole json without the "Thing" nodes,
+    // TODO: also check if the lib that processes the RO-Crate can already handle "@reverse" nodes
     public static String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(roCrateJson);
