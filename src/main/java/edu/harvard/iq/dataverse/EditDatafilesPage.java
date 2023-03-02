@@ -40,6 +40,7 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.EjbUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
+import static edu.harvard.iq.dataverse.api.arp.RoCrateManager.createRoCrate;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -1225,6 +1226,11 @@ public class EditDatafilesPage implements java.io.Serializable {
         // queue the data ingest jobs for asynchronous execution:
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
+            try {
+                createRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            } catch (Exception e) {
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
         }
 
         if (FileEditMode.EDIT == mode && Referrer.FILE == referrer && fileMetadatas.size() > 0) {

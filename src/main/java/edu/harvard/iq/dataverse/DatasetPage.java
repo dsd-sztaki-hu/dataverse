@@ -3785,12 +3785,6 @@ public class DatasetPage implements java.io.Serializable {
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.filesSuccess"));
             }
 
-            try {
-                createRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
-            } catch (Exception e) {
-                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
-            }
-
         } else {
             // must have been a bulk file update or delete:
             if (bulkFileDeleteInProgress) {
@@ -3798,6 +3792,12 @@ public class DatasetPage implements java.io.Serializable {
             } else {
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.filesSuccess"));
             }
+        }
+
+        try {
+            createRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+        } catch (Exception e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
 
         editMode = null;
