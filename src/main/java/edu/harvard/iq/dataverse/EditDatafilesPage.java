@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.DataFile.ChecksumType;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
@@ -41,17 +42,9 @@ import edu.harvard.iq.dataverse.util.EjbUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
+import java.io.*;
+import java.util.*;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
@@ -73,9 +66,7 @@ import javax.json.JsonReader;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.httpclient.methods.GetMethod;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+
 import java.util.logging.Level;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.event.FacesEvent;
@@ -148,6 +139,8 @@ public class EditDatafilesPage implements java.io.Serializable {
     DataFileCategoryServiceBean dataFileCategoryService;
     @Inject
     EditDataFilesPageHelper editDataFilesPageHelper;
+    @Inject
+    RoCrateUploadServiceBean roCrateUploadService;
 
     private Dataset dataset = new Dataset();
 
@@ -2056,6 +2049,62 @@ public class EditDatafilesPage implements java.io.Serializable {
             for (DataFile newFile : dFileList) {
                 FileUtil.deleteTempFile(newFile, dataset, ingestService);
             }
+        }
+    }
+
+    public void handleRoCrateUpload() throws IOException {
+        if (uploadInProgress != null) {
+            String roCrateName = roCrateUploadService.getRoCrateName();
+            String roCrateType = roCrateUploadService.getRoCrateType();
+            InputStream roCrateInputStream = roCrateUploadService.getRoCrateInputStream();
+
+            if (uploadInProgress.isFalse()) {
+                uploadInProgress.setValue(true);
+            }
+
+            //resetting marked as dup in case there are multiple uploads
+            //we only want to delete as dupes those that we uploaded in this
+            //session
+            newFiles.forEach((df) -> {
+                df.setMarkedAsDuplicate(false);
+            });
+
+            List<DataFile> dFileList = null;
+
+            try {
+                // Note: A single uploaded file may produce multiple datafiles -
+                // for example, multiple files can be extracted from an uncompressed
+                // zip file.
+                CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+                dFileList = createDataFilesResult.getDataFiles();
+                String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
+                if (createDataFilesError != null) {
+                    errorMessages.add(createDataFilesError);
+                }
+
+            } catch (IOException ioex) {
+                logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
+                return;
+            }
+
+            // -----------------------------------------------------------
+            // These raw datafiles are then post-processed, in order to drop any files
+            // already in the dataset/already uploaded, and to correct duplicate file names, etc.
+            // -----------------------------------------------------------
+            String warningMessage = processUploadedFileList(dFileList);
+
+            if (warningMessage != null) {
+                uploadWarningMessage = warningMessage;
+            }
+
+            if (uploadInProgress.isFalse()) {
+                logger.warning("Upload in progress cancelled");
+                for (DataFile newFile : dFileList) {
+                    FileUtil.deleteTempFile(newFile, dataset, ingestService);
+                }
+            }
+
+            uploadFinished();
         }
     }
 
