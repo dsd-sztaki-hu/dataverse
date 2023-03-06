@@ -5,20 +5,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.JsfHelper;
 
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 import static edu.harvard.iq.dataverse.DatasetFieldCompoundValue.createNewEmptyDatasetFieldCompoundValue;
 
@@ -44,7 +47,11 @@ public class RoCrateUploadServiceBean implements Serializable {
         setRoCrateAsBase64(roCrateAsBase64);
         setRoCrateName(roCrateName);
         setRoCrateType(roCrateType);
-        setRoCrateInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(roCrateAsBase64.split(",")[1])));
+        try {
+            setRoCrateInputStream(processRoCrateZip(roCrateAsBase64));
+        } catch (Exception e) {
+            JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+        }
     }
 
     public DatasetVersionUI resetVersionUIRoCrate(DatasetVersionUI datasetVersionUI, DatasetVersion workingVersion, Dataset dataset) throws JsonProcessingException {
@@ -123,6 +130,37 @@ public class RoCrateUploadServiceBean implements Serializable {
             var cvv = fieldService.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(datasetField.getDatasetFieldType(), fieldValue.textValue(), true);
             datasetField.getControlledVocabularyValues().add(cvv);
         }
+    }
+
+    private ByteArrayInputStream processRoCrateZip(String roCrateAsBase64) throws IOException {
+        byte[] roCrateBytes = Base64.getDecoder().decode(roCrateAsBase64.split(",")[1]);
+        String entryNameToDelete = BundleUtil.getStringFromBundle("arp.rocrate.metadata.name");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try (baos; ByteArrayInputStream bais = new ByteArrayInputStream(roCrateBytes);
+             ZipInputStream zis = new ZipInputStream(bais);
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (!entry.getName().contains(entryNameToDelete)) {
+                    byte[] buffer = new byte[1024 * 32];
+                    int bytesRead;
+                    zos.putNextEntry(entry);
+                    while ((bytesRead = zis.read(buffer)) != -1) {
+                        zos.write(buffer, 0, bytesRead);
+                    }
+                    zos.closeEntry();
+                }
+            }
+            // the zip contained only the ro-crate-metadata.json
+            if (baos.size() == 0) {
+                return null;
+            }
+        } catch (Exception e) {
+            return null;
+        }
+
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     public String getRoCrateJsonString() {

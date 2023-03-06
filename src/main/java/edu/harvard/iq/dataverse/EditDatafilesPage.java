@@ -2077,20 +2077,22 @@ public class EditDatafilesPage implements java.io.Serializable {
 
             List<DataFile> dFileList = null;
 
-            try {
-                // Note: A single uploaded file may produce multiple datafiles -
-                // for example, multiple files can be extracted from an uncompressed
-                // zip file.
-                CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
-                dFileList = createDataFilesResult.getDataFiles();
-                String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
-                if (createDataFilesError != null) {
-                    errorMessages.add(createDataFilesError);
-                }
+            if (roCrateInputStream != null) {
+                try {
+                    // Note: A single uploaded file may produce multiple datafiles -
+                    // for example, multiple files can be extracted from an uncompressed
+                    // zip file.
+                    CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+                    dFileList = createDataFilesResult.getDataFiles();
+                    String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
+                    if (createDataFilesError != null) {
+                        errorMessages.add(createDataFilesError);
+                    }
 
-            } catch (IOException ioex) {
-                logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
-                return;
+                } catch (IOException ioex) {
+                    logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
+                    return;
+                }
             }
 
             // -----------------------------------------------------------
