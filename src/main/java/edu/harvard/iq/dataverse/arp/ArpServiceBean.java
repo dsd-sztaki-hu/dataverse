@@ -198,15 +198,17 @@ public class ArpServiceBean implements java.io.Serializable {
                 if (line.startsWith("#")) {
                     header = line.split("\t")[0];
                 } else {
-                    line = line.replaceFirst("\t", "");
                     switch (header) {
                         case "#metadataBlock":
+                            line = String.join("\t", Arrays.copyOfRange(line.split("\t"), 1, 5)).replace("null", "");
                             metadataBlock = mapper.readerWithTypedSchemaFor(DataverseMetadataBlock.class).with(mdbSchema).readValue(line);
                             break;
                         case "#datasetField":
+                            line = String.join("\t", Arrays.copyOfRange(line.split("\t"), 1, 17)).replace("null", "");
                             datasetFields.add(mapper.readerWithTypedSchemaFor(DataverseDatasetField.class).with(datasetFieldSchema).readValue(line));
                             break;
                         case "#controlledVocabulary":
+                            line = String.join("\t", Arrays.copyOfRange(line.split("\t"), 1, 5)).replace("null", "");
                             controlledVocabularyValues.add(mapper.readerWithTypedSchemaFor(DataverseControlledVocabulary.class).with(controlledVocabularySchema).readValue(line));
                             break;
                         default:
