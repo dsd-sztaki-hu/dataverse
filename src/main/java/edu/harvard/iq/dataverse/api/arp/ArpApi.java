@@ -1,12 +1,15 @@
 package edu.harvard.iq.dataverse.api.arp;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
-import edu.harvard.iq.dataverse.api.Datasets;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
@@ -31,6 +34,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -74,6 +79,9 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
+
+    @EJB
+    ArpServiceBean arpService;
 
     static {
         try (InputStream input = ArpApi.class.getClassLoader().getResourceAsStream("config.properties")) {
@@ -164,6 +172,108 @@ public class ArpApi extends AbstractApiBean {
         //TODO: check why is the origin duplicated if the header is not added here as well as in the ApiBlockingFilter
         //TODO: maybe the cors filter?
         return Response.ok(mdbTsv).header("Access-Control-Allow-Origin", "*").build();
+    }
+
+    @GET
+    @Path("/exportMdbAsTsv/{identifier}")
+    @Produces("text/tab-separated-values")
+    public Response exportMdbAsTsv(@PathParam("identifier") String mdbIdtf)
+    {
+        String mdbTsv;
+
+        try {
+            findAuthenticatedUserOrDie();
+            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf);
+        } catch (JsonProcessingException e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        }
+
+        return Response.ok(mdbTsv).build();
+    }
+
+    @POST
+    @Path("/exportTsvToCedar/{identifier}")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response exportTsvToCedar(@PathParam("identifier") String mdbIdtf, String cedarParams)
+    {
+        try {
+            findAuthenticatedUserOrDie();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode params = mapper.readTree(cedarParams).get("cedarParams");
+            String cedarDomain;
+
+            if (params.has("cedarDomain")) {
+                cedarDomain = params.get("cedarDomain").textValue();
+            } else {
+                cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
+            }
+
+            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
+            arpService.exportTemplateToCedar(cedarTemplate, params, cedarDomain);
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/tsvToCedarTemplate/")
+    @Consumes("text/tab-separated-values")
+    @Produces("application/json")
+    public Response tsvToCedarTemplate(String mdbTsv)
+    {
+        String cedarTemplate;
+
+        try {
+            findAuthenticatedUserOrDie();
+            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).getAsString();
+        } catch (JsonProcessingException e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        }
+
+        return Response.ok(cedarTemplate).build();
+    }
+
+    @POST
+    @Path("/tsvToCedar/")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response tsvToCedar(String cedarData)
+    {
+        try {
+            findAuthenticatedUserOrDie();
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode params = mapper.readTree(cedarData).get("cedarParams");
+            String cedarTsv = mapper.readTree(cedarData).get("cedarTsv").textValue();
+            String cedarDomain;
+
+            if (params.has("cedarDomain")) {
+                cedarDomain = params.get("cedarDomain").textValue();
+            } else {
+                cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
+            }
+
+            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
+            arpService.exportTemplateToCedar(cedarTemplate, params, cedarDomain);
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok().build();
     }
 
     @POST

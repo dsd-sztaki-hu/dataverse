@@ -128,7 +128,11 @@ public class CedarTemplateToDvMdbConverter {
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         boolean allowCtrlVocab = Objects.equals(fieldType, "list") || Objects.equals(fieldType, "radio");
 
-        dataverseDatasetField.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
+        /*
+         * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
+         * upon importing from CEDAR the colons are replaced with dots again
+         * */
+        dataverseDatasetField.setName(Optional.ofNullable(templateField.get("schema:name")).map(name -> name.getAsString().replace(':', '.')).orElse(null));
         String title = Optional.ofNullable(templateField.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
         dataverseDatasetField.setTitle(title);
         dataverseDatasetField.setDescription(Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null));

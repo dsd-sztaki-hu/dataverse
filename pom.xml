@@ -638,6 +638,7 @@
                     <include>**/*.sql</include>
                     <include>**/*.xml</include>
                     <include>**/firstNames/*.*</include>
+                    <include>arp/*.*</include>
                     <include>**/*.xsl</include>
                     <include>**/services/*</include>
                 </includes>
