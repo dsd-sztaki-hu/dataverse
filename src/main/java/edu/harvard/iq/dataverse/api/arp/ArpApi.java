@@ -411,7 +411,7 @@ public class ArpApi extends AbstractApiBean {
 
             DatasetVersion managedVersion;
             if (updateDraft) {
-                final DatasetVersion editVersion = ds.getEditVersion();
+                final DatasetVersion editVersion = ds.getOrCreateEditVersion();
                 editVersion.setDatasetFields(incomingVersion.getDatasetFields());
                 editVersion.setTermsOfUseAndAccess(incomingVersion.getTermsOfUseAndAccess());
                 editVersion.getTermsOfUseAndAccess().setDatasetVersion(editVersion);
@@ -420,7 +420,7 @@ public class ArpApi extends AbstractApiBean {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
                 Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
-                managedVersion = managedDataset.getEditVersion();
+                managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
                 boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(incomingVersion.getTermsOfUseAndAccess(), null);
                 if (!hasValidTerms) {

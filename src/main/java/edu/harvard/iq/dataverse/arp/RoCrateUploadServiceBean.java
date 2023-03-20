@@ -58,7 +58,7 @@ public class RoCrateUploadServiceBean implements Serializable {
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
-        Map<String, DatasetField> dsfTypeMap = dataset.getEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
+        Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
         JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> node.get("@type").textValue().equals("Dataset")).findFirst().get();
 
         // process the Dataset node, from here we can get the primitive values
