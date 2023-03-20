@@ -253,8 +253,8 @@ public class ArpApiIT {
 
         ResultSet datasetfieldtypeoverrideTable = stmt.executeQuery("SELECT * from datasetfieldtypeoverride where id > " + datasetFieldTypeOverrideMaxId);
         datasetfieldtypeoverrideTable.next();
-        assertEquals("Datasetfieldtype that will overridde", datasetfieldtypeoverrideTable.getString("localname"));
-        assertEquals("datasetfieldtype_that_override", datasetfieldtypeoverrideTable.getString("title"));
+        assertEquals("Datasetfieldtype that will overridde", datasetfieldtypeoverrideTable.getString("title"));
+        assertEquals("datasetfieldtype_that_override", datasetfieldtypeoverrideTable.getString("localname"));
         assertEquals(mdbContainingOverrideId, datasetfieldtypeoverrideTable.getInt("metadatablock_id"));
         datasetfieldtypeoverrideTable.close();
         stmt.close();
@@ -355,6 +355,36 @@ public class ArpApiIT {
         assertTrue(invalidNames.contains("name"));
     }
 
+    @Test
+    public void citationToTsv() {
+        checkGeneratedTsv("1", "src/test/resources/arp/citation.tsv");
+    }
+
+    @Test
+    public void geospatialToTsv() {
+        checkGeneratedTsv("2", "src/test/resources/arp/geospatial.tsv");
+    }
+
+    @Test
+    public void socialscienceToTsv() {
+        checkGeneratedTsv("3", "src/test/resources/arp/socialscience.tsv");
+    }
+
+    @Test
+    public void astrophysicsToTsv() {
+        checkGeneratedTsv("4", "src/test/resources/arp/astrophysics.tsv");
+    }
+
+    @Test
+    public void biomedicalToTsv() {
+        checkGeneratedTsv("5", "src/test/resources/arp/biomedical.tsv");
+    }
+
+    @Test
+    public void journalToTsv() {
+        checkGeneratedTsv("6", "src/test/resources/arp/journal.tsv");
+    }
+
     static Response checkTemplate(String apiToken, byte[] body) {
         return given()
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
@@ -370,6 +400,34 @@ public class ArpApiIT {
                 .body(body)
                 .queryParam("skipUpload", "true")
                 .post("/api/arp/cedarToMdb/root");
+    }
+
+    static Response exportMdbAsTsv(String apiToken, String mdbIdtf) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .contentType("application/json; charset=utf-8")
+                .get("/api/arp/exportMdbAsTsv/" + mdbIdtf);
+    }
+
+    static void checkGeneratedTsv(String mdbIdtf, String tsvName) {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        Response response = exportMdbAsTsv(apiToken, mdbIdtf);
+        assertEquals(200, response.getStatusCode());
+        response.then().assertThat().statusCode(OK.getStatusCode());
+
+        String body = response.getBody().asString();
+
+        String tsvContent = null;
+        try {
+            tsvContent = Files.readString(Paths.get(tsvName));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        assertEquals(tsvContent, body);
     }
 
     static Response cedarToMdbWithUpload(String apiToken, byte[] body) {
