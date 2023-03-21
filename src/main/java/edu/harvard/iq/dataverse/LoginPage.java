@@ -18,6 +18,8 @@ import edu.harvard.iq.dataverse.util.SessionUtil;
 
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 import edu.harvard.iq.dataverse.util.SystemConfig;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.*;
@@ -182,6 +184,20 @@ public class LoginPage implements java.io.Serializable {
             } catch (UnsupportedEncodingException ex) {
                 Logger.getLogger(LoginPage.class.getName()).log(Level.SEVERE, null, ex);
                 redirectPage = redirectToRoot();
+            }
+
+            // In case of external redirection pass the API token and redirect.
+            // TODO: consider using the signed URLs mechanism used by ExternalToolsHandler
+            if (redirectPage.startsWith("http")) {
+                // If we already have a query param append with & otherwise with ?
+                String paramChar = redirectPage.contains("?") ? "&" : "?";
+                AuthenticatedUser au = (AuthenticatedUser) session.getUser();
+                var apiToken = authSvc.findApiTokenByUser(au);
+                try {
+                    FacesContext.getCurrentInstance().getExternalContext().redirect(redirectPage + paramChar+"apiToken=" + apiToken.getTokenString());
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
             }
 
             logger.log(Level.FINE, "Sending user to = {0}", redirectPage);
