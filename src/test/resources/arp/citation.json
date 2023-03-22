@@ -652,14 +652,14 @@
       ],
       "schema:name": "title",
       "schema:description": "The main title of the Dataset",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Title",
-      "@id": "https://repo.arp.orgx/template-fields/11607c66-30e4-45fa-9b66-bbec0d901fbd",
+      "@id": "https://repo.arp.orgx/template-fields/6e840528-826b-49f4-8a21-3277e307a456",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "subtitle": {
@@ -741,14 +741,14 @@
       ],
       "schema:name": "subtitle",
       "schema:description": "A secondary title that amplifies or states certain limitations on the main title",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Subtitle",
-      "@id": "https://repo.arp.orgx/template-fields/ea895b11-9fc4-4bb4-8052-ed9d28a61dff",
+      "@id": "https://repo.arp.orgx/template-fields/e2fdbd79-224f-4b3d-8ce9-b66d69c7f551",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "alternativeTitle": {
@@ -830,14 +830,14 @@
       ],
       "schema:name": "alternativeTitle",
       "schema:description": "Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Alternative Title",
-      "@id": "https://repo.arp.orgx/template-fields/42fbdc7b-ca46-4001-88d3-53937d6616ce",
+      "@id": "https://repo.arp.orgx/template-fields/c5d74dad-f115-40d8-8a38-25184b66a93f",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "alternativeURL": {
@@ -914,14 +914,14 @@
       },
       "schema:name": "alternativeURL",
       "schema:description": "Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Alternative URL",
-      "@id": "https://repo.arp.orgx/template-fields/c151099c-0455-42ff-9066-05ee15ab7098",
+      "@id": "https://repo.arp.orgx/template-fields/0ebfbfbf-afef-4bcf-97fd-7d92038d4552",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "otherId": {
@@ -1199,16 +1199,16 @@
           "otherIdAgency",
           "otherIdValue"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Other Identifier",
-        "@id": "https://repo.arp.orgx/template-fields/367854be-68f6-4eb5-a36e-7a919ba83bfa",
+        "@id": "https://repo.arp.orgx/template-fields/b1e5dd0e-740b-4f19-be5a-4e2c6ae4ece1",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -1710,16 +1710,16 @@
           "authorIdentifierScheme",
           "authorIdentifier"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Author",
-        "@id": "https://repo.arp.orgx/template-fields/695cbd9d-b806-4946-a183-6b41d2726406",
+        "@id": "https://repo.arp.orgx/template-fields/73b8087a-26dd-4906-98ad-66293ccd3881",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -2096,16 +2096,16 @@
           "datasetContactAffiliation",
           "datasetContactEmail"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Point of Contact",
-        "@id": "https://repo.arp.orgx/template-fields/d76d1595-ac48-402c-9045-d33ea3dcf883",
+        "@id": "https://repo.arp.orgx/template-fields/92ae7ebb-7faa-4b48-83c3-62e9a85dbfe0",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -2198,28 +2198,90 @@
             ]
           },
           "dsDescriptionValue": {
-            "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+            "@type": "https://schema.metadatacenter.org/core/TemplateField",
             "@context": {
-              "schema": "http://schema.org/",
+              "xsd": "http://www.w3.org/2001/XMLSchema#",
               "pav": "http://purl.org/pav/",
               "bibo": "http://purl.org/ontology/bibo/",
-              "oslc": "http://open-services.net/ns/core#"
+              "oslc": "http://open-services.net/ns/core#",
+              "schema": "http://schema.org/",
+              "skos": "http://www.w3.org/2004/02/skos/core#",
+              "schema:name": {
+                "@type": "xsd:string"
+              },
+              "schema:description": {
+                "@type": "xsd:string"
+              },
+              "skos:prefLabel": {
+                "@type": "xsd:string"
+              },
+              "skos:altLabel": {
+                "@type": "xsd:string"
+              },
+              "pav:createdOn": {
+                "@type": "xsd:dateTime"
+              },
+              "pav:createdBy": {
+                "@type": "@id"
+              },
+              "pav:lastUpdatedOn": {
+                "@type": "xsd:dateTime"
+              },
+              "oslc:modifiedBy": {
+                "@type": "@id"
+              }
             },
             "type": "object",
             "title": "dsDescriptionValue field schema",
             "description": "dsDescriptionValue field schema generated by the CEDAR Template Editor 2.6.19",
             "_ui": {
-              "inputType": "richtext",
-              "_content": null
+              "inputType": "textarea"
             },
+            "_valueConstraints": {
+              "requiredValue": true
+            },
+            "properties": {
+              "@type": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "uniqueItems": true
+                  }
+                ]
+              },
+              "@value": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rdfs:label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "@value"
+            ],
+            "schema:name": "dsDescriptionValue",
+            "schema:description": "A summary describing the purpose, nature, and scope of the Dataset",
             "pav:createdOn": null,
             "pav:createdBy": null,
             "pav:lastUpdatedOn": null,
             "oslc:modifiedBy": null,
             "schema:schemaVersion": "1.6.0",
-            "schema:description": "A summary describing the purpose, nature, and scope of the Dataset",
             "additionalProperties": false,
-            "schema:name": "dsDescriptionValue",
             "@id": "tmp-placeholder",
             "skos:prefLabel": "Text",
             "$schema": "http://json-schema.org/draft-04/schema#"
@@ -2324,16 +2386,16 @@
           "dsDescriptionValue",
           "dsDescriptionDate"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Description",
-        "@id": "https://repo.arp.orgx/template-fields/4132b42b-46f0-48bc-a4ff-b87145906415",
+        "@id": "https://repo.arp.orgx/template-fields/def8467e-8bcc-4cb1-a56c-a226e173d497",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -2461,16 +2523,16 @@
       ],
       "schema:name": "subject",
       "schema:description": "The area of study relevant to the Dataset",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Subject",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/f350ec76-b40c-4231-8836-8343bbec77b6",
+      "@id": "https://repo.arp.orgx/template-fields/3d624d22-cc76-4509-8023-ee54e25e5ab2",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "keyword": {
@@ -2841,16 +2903,16 @@
           "keywordVocabulary",
           "keywordVocabularyURI"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Keyword",
-        "@id": "https://repo.arp.orgx/template-fields/4741faa8-b301-4964-b73d-b431cbd42dd9",
+        "@id": "https://repo.arp.orgx/template-fields/98804e5a-6af8-4d62-93be-1aa4301b3a5e",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -3222,16 +3284,16 @@
           "topicClassVocab",
           "topicClassVocabURI"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Topic Classification",
-        "@id": "https://repo.arp.orgx/template-fields/d58c123e-9cd2-49ff-bb0a-857d5fa49415",
+        "@id": "https://repo.arp.orgx/template-fields/0724a699-b204-4d20-8f67-0b42efe7ca8b",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -3340,28 +3402,90 @@
             ]
           },
           "publicationCitation": {
-            "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+            "@type": "https://schema.metadatacenter.org/core/TemplateField",
             "@context": {
-              "schema": "http://schema.org/",
+              "xsd": "http://www.w3.org/2001/XMLSchema#",
               "pav": "http://purl.org/pav/",
               "bibo": "http://purl.org/ontology/bibo/",
-              "oslc": "http://open-services.net/ns/core#"
+              "oslc": "http://open-services.net/ns/core#",
+              "schema": "http://schema.org/",
+              "skos": "http://www.w3.org/2004/02/skos/core#",
+              "schema:name": {
+                "@type": "xsd:string"
+              },
+              "schema:description": {
+                "@type": "xsd:string"
+              },
+              "skos:prefLabel": {
+                "@type": "xsd:string"
+              },
+              "skos:altLabel": {
+                "@type": "xsd:string"
+              },
+              "pav:createdOn": {
+                "@type": "xsd:dateTime"
+              },
+              "pav:createdBy": {
+                "@type": "@id"
+              },
+              "pav:lastUpdatedOn": {
+                "@type": "xsd:dateTime"
+              },
+              "oslc:modifiedBy": {
+                "@type": "@id"
+              }
             },
             "type": "object",
             "title": "publicationCitation field schema",
             "description": "publicationCitation field schema generated by the CEDAR Template Editor 2.6.19",
             "_ui": {
-              "inputType": "richtext",
-              "_content": null
+              "inputType": "textarea"
             },
+            "_valueConstraints": {
+              "requiredValue": false
+            },
+            "properties": {
+              "@type": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "uniqueItems": true
+                  }
+                ]
+              },
+              "@value": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rdfs:label": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "@value"
+            ],
+            "schema:name": "publicationCitation",
+            "schema:description": "The full bibliographic citation for the related publication",
             "pav:createdOn": null,
             "pav:createdBy": null,
             "pav:lastUpdatedOn": null,
             "oslc:modifiedBy": null,
             "schema:schemaVersion": "1.6.0",
-            "schema:description": "The full bibliographic citation for the related publication",
             "additionalProperties": false,
-            "schema:name": "publicationCitation",
             "@id": "tmp-placeholder",
             "skos:prefLabel": "Citation",
             "$schema": "http://json-schema.org/draft-04/schema#"
@@ -3699,44 +3823,106 @@
           "publicationIDNumber",
           "publicationURL"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Related Publication",
-        "@id": "https://repo.arp.orgx/template-fields/691fb8c6-96df-4fb6-bce9-1a362359ac50",
+        "@id": "https://repo.arp.orgx/template-fields/ba0d43cd-b86a-41c1-98fa-05ebd0463a5d",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
     "notesText": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "notesText field schema",
       "description": "notesText field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "notesText",
+      "schema:description": "Additional information about the Dataset",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "Additional information about the Dataset",
       "additionalProperties": false,
-      "schema:name": "notesText",
       "skos:prefLabel": "Notes",
-      "@id": "https://repo.arp.orgx/template-fields/147540fc-27af-4e88-8478-72bbc1bfc6b4",
+      "@id": "https://repo.arp.orgx/template-fields/486e8d05-e53c-46a6-a69b-d0eabf6ec61d",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "language": {
@@ -4379,16 +4565,16 @@
       ],
       "schema:name": "language",
       "schema:description": "A language that the Dataset's files is written in",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Language",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/daa1fb66-e28b-4cbd-807f-9e2475b46559",
+      "@id": "https://repo.arp.orgx/template-fields/a256cb4f-9003-448b-ad61-d675e6b7f55f",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "producer": {
@@ -4950,16 +5136,16 @@
           "producerURL",
           "producerLogoURL"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Producer",
-        "@id": "https://repo.arp.orgx/template-fields/b6ac6cf1-1867-430f-a13e-c8fadb9c26bc",
+        "@id": "https://repo.arp.orgx/template-fields/a4e8adc3-e0e3-4a8a-a3af-f17a690c33c8",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -5044,14 +5230,14 @@
       ],
       "schema:name": "productionDate",
       "schema:description": "The date when the data were produced (not distributed, published, or archived)",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Production Date",
-      "@id": "https://repo.arp.orgx/template-fields/e498ef0e-3188-4809-9245-cb76082964d0",
+      "@id": "https://repo.arp.orgx/template-fields/32b8f91e-9ac1-4384-b92d-04731dca5473",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "productionPlace": {
@@ -5133,16 +5319,16 @@
       ],
       "schema:name": "productionPlace",
       "schema:description": "The location where the data and any related materials were produced or collected",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Production Location",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/cc71e01d-8cf9-49c9-be47-784f43628017",
+      "@id": "https://repo.arp.orgx/template-fields/545cace3-1069-41f1-b2df-52d695816c0e",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "contributor": {
@@ -5474,16 +5660,16 @@
           "contributorType",
           "contributorName"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Contributor",
-        "@id": "https://repo.arp.orgx/template-fields/84dc4bc9-86b0-4dff-bacb-01d4bb1eaa55",
+        "@id": "https://repo.arp.orgx/template-fields/1d1dfc9e-8528-419e-b86f-6fa301507253",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -5762,16 +5948,16 @@
           "grantNumberAgency",
           "grantNumberValue"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Funding Information",
-        "@id": "https://repo.arp.orgx/template-fields/44dddb70-18a6-4b5c-bda4-0d21ebc38d42",
+        "@id": "https://repo.arp.orgx/template-fields/7dd168ed-dc54-42ab-ad67-51130b124344",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -6334,16 +6520,16 @@
           "distributorURL",
           "distributorLogoURL"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Distributor",
-        "@id": "https://repo.arp.orgx/template-fields/729e2d23-7a1c-40d9-8de5-918bbc6b17b7",
+        "@id": "https://repo.arp.orgx/template-fields/9a529691-3814-4c92-a071-2d711c56908b",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -6428,14 +6614,14 @@
       ],
       "schema:name": "distributionDate",
       "schema:description": "The date when the Dataset was made available for distribution/presentation",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Distribution Date",
-      "@id": "https://repo.arp.orgx/template-fields/0b6fc4d5-53a4-458a-9e5e-3e1df0d26035",
+      "@id": "https://repo.arp.orgx/template-fields/6e4b5766-9352-41b9-8e61-52969f43c57e",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "depositor": {
@@ -6517,14 +6703,14 @@
       ],
       "schema:name": "depositor",
       "schema:description": "The entity, such as a person or organization, that deposited the Dataset in the repository",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Depositor",
-      "@id": "https://repo.arp.orgx/template-fields/39bd3770-1b9e-4fb0-ab79-c3e6c3c8a6c9",
+      "@id": "https://repo.arp.orgx/template-fields/ed343b01-f31b-41af-807d-a8f106e043de",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "dateOfDeposit": {
@@ -6608,14 +6794,14 @@
       ],
       "schema:name": "dateOfDeposit",
       "schema:description": "The date when the Dataset was deposited into the repository",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Deposit Date",
-      "@id": "https://repo.arp.orgx/template-fields/2afce0ec-c451-4695-ba81-8af15bc15b19",
+      "@id": "https://repo.arp.orgx/template-fields/068eb387-f364-44ce-bb81-6e4a8144302b",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "timePeriodCovered": {
@@ -6897,16 +7083,16 @@
           "timePeriodCoveredStart",
           "timePeriodCoveredEnd"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Time Period",
-        "@id": "https://repo.arp.orgx/template-fields/fe9d0d6a-3e9e-432b-be40-d12c22df087a",
+        "@id": "https://repo.arp.orgx/template-fields/ad103539-d75a-48f1-914e-69d45569d57c",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -7189,16 +7375,16 @@
           "dateOfCollectionStart",
           "dateOfCollectionEnd"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Date of Collection",
-        "@id": "https://repo.arp.orgx/template-fields/43efdc63-e6fe-4291-abeb-95f1d4286f4c",
+        "@id": "https://repo.arp.orgx/template-fields/8ba989b4-a752-4d77-84f8-a9cf4fcb1bbd",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -7281,16 +7467,16 @@
       ],
       "schema:name": "kindOfData",
       "schema:description": "The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Data Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/7afb0b08-babf-4595-b733-29e0ba7acd45",
+      "@id": "https://repo.arp.orgx/template-fields/f9eb30ef-e728-437d-998f-339dffb6f7da",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "series": {
@@ -7468,28 +7654,90 @@
           "$schema": "http://json-schema.org/draft-04/schema#"
         },
         "seriesInformation": {
-          "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+          "@type": "https://schema.metadatacenter.org/core/TemplateField",
           "@context": {
-            "schema": "http://schema.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
             "pav": "http://purl.org/pav/",
             "bibo": "http://purl.org/ontology/bibo/",
-            "oslc": "http://open-services.net/ns/core#"
+            "oslc": "http://open-services.net/ns/core#",
+            "schema": "http://schema.org/",
+            "skos": "http://www.w3.org/2004/02/skos/core#",
+            "schema:name": {
+              "@type": "xsd:string"
+            },
+            "schema:description": {
+              "@type": "xsd:string"
+            },
+            "skos:prefLabel": {
+              "@type": "xsd:string"
+            },
+            "skos:altLabel": {
+              "@type": "xsd:string"
+            },
+            "pav:createdOn": {
+              "@type": "xsd:dateTime"
+            },
+            "pav:createdBy": {
+              "@type": "@id"
+            },
+            "pav:lastUpdatedOn": {
+              "@type": "xsd:dateTime"
+            },
+            "oslc:modifiedBy": {
+              "@type": "@id"
+            }
           },
           "type": "object",
           "title": "seriesInformation field schema",
           "description": "seriesInformation field schema generated by the CEDAR Template Editor 2.6.19",
           "_ui": {
-            "inputType": "richtext",
-            "_content": null
+            "inputType": "textarea"
           },
+          "_valueConstraints": {
+            "requiredValue": false
+          },
+          "properties": {
+            "@type": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "format": "uri"
+                },
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "@value": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rdfs:label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "@value"
+          ],
+          "schema:name": "seriesInformation",
+          "schema:description": "Can include 1) a history of the series and 2) a summary of features that apply to the series",
           "pav:createdOn": null,
           "pav:createdBy": null,
           "pav:lastUpdatedOn": null,
           "oslc:modifiedBy": null,
           "schema:schemaVersion": "1.6.0",
-          "schema:description": "Can include 1) a history of the series and 2) a summary of features that apply to the series",
           "additionalProperties": false,
-          "schema:name": "seriesInformation",
           "@id": "tmp-placeholder",
           "skos:prefLabel": "Information",
           "$schema": "http://json-schema.org/draft-04/schema#"
@@ -7503,16 +7751,16 @@
         "seriesName",
         "seriesInformation"
       ],
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "pav:version": "0.0.1",
       "bibo:status": "bibo:draft",
       "skos:prefLabel": "Series",
-      "@id": "https://repo.arp.orgx/template-fields/80428657-16eb-4f14-840f-ffd3c7057268",
+      "@id": "https://repo.arp.orgx/template-fields/cbc9ac92-2fac-4b86-bc55-a961f2127ec4",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "software": {
@@ -7794,75 +8042,199 @@
           "softwareName",
           "softwareVersion"
         ],
-        "pav:createdOn": "2023-03-22T17:55:09+01:00",
+        "pav:createdOn": "2023-03-22T19:17:42+01:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+        "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Software",
-        "@id": "https://repo.arp.orgx/template-fields/8a9431d5-41bb-4857-ac93-8f991e15c9f0",
+        "@id": "https://repo.arp.orgx/template-fields/d0e8ea44-c2e3-41f1-9713-8b796e713956",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
     "relatedMaterial": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "relatedMaterial field schema",
       "description": "relatedMaterial field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "relatedMaterial",
+      "schema:description": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
       "additionalProperties": false,
-      "schema:name": "relatedMaterial",
       "skos:prefLabel": "Related Material",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/ed6da758-a289-4eb7-ac0c-27cbea5560a6",
+      "@id": "https://repo.arp.orgx/template-fields/8cdb4f38-8a2f-42b1-8480-90d8be814244",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "relatedDatasets": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "relatedDatasets field schema",
       "description": "relatedDatasets field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "relatedDatasets",
+      "schema:description": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
       "additionalProperties": false,
-      "schema:name": "relatedDatasets",
       "skos:prefLabel": "Related Dataset",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/ad574bea-3691-4f1b-b41f-b2c7f65a1dd1",
+      "@id": "https://repo.arp.orgx/template-fields/98ae11d4-b1d1-4880-819a-514dae1df2f2",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "otherReferences": {
@@ -7944,126 +8316,374 @@
       ],
       "schema:name": "otherReferences",
       "schema:description": "Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset",
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Other Reference",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/a0f52f30-e2d4-43ff-be0b-7b57ffad7e1b",
+      "@id": "https://repo.arp.orgx/template-fields/a5162592-b49a-48c0-9b22-7f9f28cb1331",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "dataSources": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "dataSources field schema",
       "description": "dataSources field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "dataSources",
+      "schema:description": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
       "additionalProperties": false,
-      "schema:name": "dataSources",
       "skos:prefLabel": "Data Source",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/6651ed2e-597c-44e4-a5ab-507c8e488bdb",
+      "@id": "https://repo.arp.orgx/template-fields/11ae1f03-7907-40dd-8687-20e8278a145e",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "originOfSources": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "originOfSources field schema",
       "description": "originOfSources field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "originOfSources",
+      "schema:description": "For historical sources, the origin and any rules followed in establishing them as sources",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "For historical sources, the origin and any rules followed in establishing them as sources",
       "additionalProperties": false,
-      "schema:name": "originOfSources",
       "skos:prefLabel": "Origin of Historical Sources",
-      "@id": "https://repo.arp.orgx/template-fields/84b02eef-9976-4844-9be3-17cc1c58857a",
+      "@id": "https://repo.arp.orgx/template-fields/44d2357c-1040-49c0-adba-285f63393df7",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "characteristicOfSources": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "characteristicOfSources field schema",
       "description": "characteristicOfSources field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "characteristicOfSources",
+      "schema:description": "Characteristics not already noted elsewhere",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "Characteristics not already noted elsewhere",
       "additionalProperties": false,
-      "schema:name": "characteristicOfSources",
       "skos:prefLabel": "Characteristic of Sources",
-      "@id": "https://repo.arp.orgx/template-fields/cea07c01-dfb6-4db4-bf7f-30dab7a72feb",
+      "@id": "https://repo.arp.orgx/template-fields/4d13b897-2127-4882-a912-877fe0ff7234",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "accessToSources": {
-      "@type": "https://schema.metadatacenter.org/core/StaticTemplateField",
+      "@type": "https://schema.metadatacenter.org/core/TemplateField",
       "@context": {
-        "schema": "http://schema.org/",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
         "pav": "http://purl.org/pav/",
         "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#"
+        "oslc": "http://open-services.net/ns/core#",
+        "schema": "http://schema.org/",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "schema:name": {
+          "@type": "xsd:string"
+        },
+        "schema:description": {
+          "@type": "xsd:string"
+        },
+        "skos:prefLabel": {
+          "@type": "xsd:string"
+        },
+        "skos:altLabel": {
+          "@type": "xsd:string"
+        },
+        "pav:createdOn": {
+          "@type": "xsd:dateTime"
+        },
+        "pav:createdBy": {
+          "@type": "@id"
+        },
+        "pav:lastUpdatedOn": {
+          "@type": "xsd:dateTime"
+        },
+        "oslc:modifiedBy": {
+          "@type": "@id"
+        }
       },
       "type": "object",
       "title": "accessToSources field schema",
       "description": "accessToSources field schema generated by the CEDAR Template Editor 2.6.19",
       "_ui": {
-        "inputType": "richtext",
-        "_content": null
+        "inputType": "textarea"
       },
-      "pav:createdOn": "2023-03-22T17:55:09+01:00",
+      "_valueConstraints": {
+        "requiredValue": false
+      },
+      "properties": {
+        "@type": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "uri"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "uniqueItems": true
+            }
+          ]
+        },
+        "@value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rdfs:label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "@value"
+      ],
+      "schema:name": "accessToSources",
+      "schema:description": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
+      "pav:createdOn": "2023-03-22T19:17:42+01:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+      "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
-      "schema:description": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
       "additionalProperties": false,
-      "schema:name": "accessToSources",
       "skos:prefLabel": "Documentation and Access to Sources",
-      "@id": "https://repo.arp.orgx/template-fields/edf63d7d-d555-4f96-9642-89e87149fb63",
+      "@id": "https://repo.arp.orgx/template-fields/383e4fbc-0d38-47eb-bb7c-64c07656b2ae",
       "$schema": "http://json-schema.org/draft-04/schema#"
     }
   },
@@ -8115,14 +8735,14 @@
   ],
   "schema:name": "citation",
   "schema:description": "",
-  "pav:createdOn": "2023-03-22T17:55:09+01:00",
+  "pav:createdOn": "2023-03-22T19:17:42+01:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-22T17:55:09+01:00",
+  "pav:lastUpdatedOn": "2023-03-22T19:17:42+01:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
-  "@id": "https://repo.arp.orgx/templates/8061dedd-37fe-4d98-a265-c9fc2fc430e4",
+  "@id": "https://repo.arp.orgx/templates/b476995e-7001-410a-a011-8794bc845540",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }
