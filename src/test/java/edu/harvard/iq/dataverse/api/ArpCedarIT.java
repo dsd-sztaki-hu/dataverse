@@ -44,6 +44,8 @@ public class ArpCedarIT {
 
     public static final String API_TOKEN_HTTP_HEADER = "X-Dataverse-key";
     
+    private static final String TEST_FOLDER_NAME = "arpCedarITFolder";
+    
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     
     private static JsonObject cedarParams;
@@ -67,7 +69,15 @@ public class ArpCedarIT {
             if (domainFromEnv != null) {
                 testParams.addProperty("cedarDomain", domainFromEnv);
             }
-            String testFolderId = createFolder(testParams.get("parentFolderIdForTheTests").getAsString(), testParams.get("cedarDomain").getAsString(), testParams.get("apiKey").getAsString(), httpClient);
+            
+            String parentFolderId = testParams.get("parentFolderIdForTheTests").getAsString();
+            String apiKey = testParams.get("apiKey").getAsString();
+            String cedarDomain = testParams.get("cedarDomain").getAsString();
+            
+            //In case the test folder is present before running the tests, remove it
+            checkAndDeleteTestFolderIfExists(httpClient, parentFolderId, apiKey, cedarDomain);
+            
+            String testFolderId = createFolder(parentFolderId, cedarDomain, apiKey, httpClient);
             testParams.addProperty("folderId", testFolderId);
             originalParams.add("cedarParams", testParams);
             cedarParams = originalParams;
@@ -171,14 +181,16 @@ public class ArpCedarIT {
         Response exportMdbResponse = exportMdb(apiToken, mdbIdtf, gson.toJson(cedarParams).getBytes());
         assertEquals(200, exportMdbResponse.getStatusCode());
         exportMdbResponse.then().assertThat().statusCode(OK.getStatusCode());
+        
+        JsonObject params = cedarParams.getAsJsonObject("cedarParams");
 
-        JsonArray folderContent = listFolderContent(httpClient, cedarParams.getAsJsonObject("cedarParams").get("folderId").getAsString());
+        JsonArray folderContent = listFolderContent(httpClient, params.get("folderId").getAsString(), params.get("apiKey").getAsString(), params.get("cedarDomain").getAsString());
         boolean containsTemplate = false;
         String templateId = null;
         for (JsonElement entry : folderContent) {
             JsonObject jsonObject = entry.getAsJsonObject();
             if (jsonObject.get("schema:name").getAsString().equals(templateName) && jsonObject.get("resourceType").getAsString().equals("folder")) {
-                JsonArray templateFolderContent = listFolderContent(httpClient, jsonObject.get("@id").getAsString());
+                JsonArray templateFolderContent = listFolderContent(httpClient, jsonObject.get("@id").getAsString(), params.get("apiKey").getAsString(), params.get("cedarDomain").getAsString());
                 for (JsonElement templateFolderEntry : templateFolderContent) {
                     JsonObject templateObject = templateFolderEntry.getAsJsonObject();
                     if (templateObject.get("schema:name").getAsString().equals(templateName) && templateObject.get("resourceType").getAsString().equals("template")) {
@@ -218,20 +230,19 @@ public class ArpCedarIT {
                 .post("/api/arp/exportTsvToCedar/" + mdbIdtf);
     }
 
-    private static JsonArray listFolderContent(HttpClient client, String folderId) {
+    private static JsonArray listFolderContent(HttpClient client, String folderId, String apiKey, String cedarDomain) {
         JsonArray resources = null;
-        JsonObject params = cedarParams.getAsJsonObject("cedarParams");
         try {
             String encodedFolderId = URLEncoder.encode(folderId, StandardCharsets.UTF_8);
-            String url = String.format("https://resource.%s/folders/%s/contents", params.get("cedarDomain").getAsString(), encodedFolderId);
+            String url = String.format("https://resource.%s/folders/%s/contents", cedarDomain, encodedFolderId);
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-                    .header("Authorization", "apiKey " + params.get("apiKey").getAsString())
+                    .header("Authorization", "apiKey " + apiKey)
                     .header("Content-Type", "application/json")
                     .build();
             HttpResponse<String> listFolderResponse = client.send(request, ofString());
             if (listFolderResponse.statusCode() != 200) {
-                throw new Exception("An error occurred during listing conten of folder: arpCedarITFolder");
+                throw new Exception("An error occurred during listing conten of folder: " + TEST_FOLDER_NAME);
             }
             resources = gson.fromJson(listFolderResponse.body(), JsonObject.class).getAsJsonArray("resources");
         } catch (Exception e) {
@@ -284,8 +295,8 @@ public class ArpCedarIT {
         String url = "https://resource." + cedarDomain + "/folders";
         Map<String, Object> data = new HashMap<>();
         data.put("folderId", parentFolderId);
-        data.put("name", "arpCedarITFolder");
-        data.put("description", "arpCedarITFolder description");
+        data.put("name", TEST_FOLDER_NAME);
+        data.put("description", TEST_FOLDER_NAME + " description");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .POST(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(data)))
@@ -368,6 +379,17 @@ public class ArpCedarIT {
 
         if (response.statusCode() != 204) {
             System.out.println("Error: Could not delete folder " + folderId);
+        }
+    }
+    
+    private static void checkAndDeleteTestFolderIfExists(HttpClient httpClient, String folderId, String apiKey, String cedarDomain) throws Exception {
+        JsonArray folderContent = listFolderContent(httpClient, folderId, apiKey, cedarDomain);
+        for (JsonElement entry : folderContent) {
+            JsonObject jsonObject = entry.getAsJsonObject();
+            if (jsonObject.get("resourceType").getAsString().equals("folder") && jsonObject.get("schema:name").getAsString().equals(TEST_FOLDER_NAME)) {
+                String encodedFolderId = URLEncoder.encode(jsonObject.get("@id").getAsString(), StandardCharsets.UTF_8);
+                deleteFolderAndContents(encodedFolderId, apiKey, cedarDomain);
+            }
         }
     }
     
