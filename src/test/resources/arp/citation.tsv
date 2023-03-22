@@ -43,7 +43,7 @@
 	producerURL	URL	The URL of the producer's website	https://	URL	39	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	producer	citation	
 	producerLogoURL	Logo URL	The URL of the producer's logo	https://	URL	40	<img src="#VALUE" alt="#NAME" class="metadata-logo"/><br/>	false	false	false	false	false	false	producer	citation	
 	productionDate	Production Date	The date when the data were produced (not distributed, published, or archived)	YYYY-MM-DD	DATE	41		true	false	false	true	false	false		citation	
-	productionPlace	Production Location	The location where the data and any related materials were produced or collected		TEXT	42		false	false	false	false	false	false		citation	
+	productionPlace	Production Location	The location where the data and any related materials were produced or collected		TEXT	42		true	false	true	true	false	false		citation	
 	contributor	Contributor	The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset		NONE	43	:	false	false	true	false	false	false		citation	http://purl.org/dc/terms/contributor
 	contributorType	Type	Indicates the type of contribution made to the dataset		TEXT	44	#VALUE 	true	true	false	true	false	false	contributor	citation	
 	contributorName	Name	The name of the contributor, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	45	#VALUE	true	false	false	true	false	false	contributor	citation	
@@ -105,21 +105,22 @@
 	publicationIDType	ark		0
 	publicationIDType	arXiv		1
 	publicationIDType	bibcode		2
-	publicationIDType	doi		3
-	publicationIDType	ean13		4
-	publicationIDType	eissn		5
-	publicationIDType	handle		6
-	publicationIDType	isbn		7
-	publicationIDType	issn		8
-	publicationIDType	istc		9
-	publicationIDType	lissn		10
-	publicationIDType	lsid		11
-	publicationIDType	pmid		12
-	publicationIDType	purl		13
-	publicationIDType	upc		14
-	publicationIDType	url		15
-	publicationIDType	urn		16
-	publicationIDType	DASH-NRS		17
+	publicationIDType	cstr		3
+	publicationIDType	doi		4
+	publicationIDType	ean13		5
+	publicationIDType	eissn		6
+	publicationIDType	handle		7
+	publicationIDType	isbn		8
+	publicationIDType	issn		9
+	publicationIDType	istc		10
+	publicationIDType	lissn		11
+	publicationIDType	lsid		12
+	publicationIDType	pmid		13
+	publicationIDType	purl		14
+	publicationIDType	upc		15
+	publicationIDType	url		16
+	publicationIDType	urn		17
+	publicationIDType	DASH-NRS		18
 	language	Abkhaz		0
 	language	Afar		1
 	language	Afrikaans		2

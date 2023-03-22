@@ -7,7 +7,8 @@
 	journalPubDate	Publication Date	The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).	YYYY or YYYY-MM or YYYY-MM-DD	DATE	3		true	false	false	true	false	false	journalVolumeIssue	journal	
 	journalArticleType	Type of Article	Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS). 		TEXT	4		true	true	false	true	false	false		journal
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder
-	journalArticleType	reprint		26
+	journalArticleType	rapid communication		24
+	journalArticleType	reply		25
 	journalArticleType	abstract		0
 	journalArticleType	addendum		1
 	journalArticleType	announcement		2
@@ -32,8 +33,7 @@
 	journalArticleType	oration		21
 	journalArticleType	partial retraction		22
 	journalArticleType	product review		23
-	journalArticleType	rapid communication		24
-	journalArticleType	reply		25
+	journalArticleType	reprint		26
 	journalArticleType	research article		27
 	journalArticleType	retraction		28
 	journalArticleType	review article		29
