@@ -305,7 +305,7 @@ public class ArpCedarIT {
                 .build();
         HttpResponse<String> createFolderResponse = client.send(request, ofString());
         if (createFolderResponse.statusCode() != 201) {
-            throw new Exception("An error occurred during creating new folder: arpCedarITtestFolder");
+            throw new Exception("An error occurred during creating new folder: arpCedarITtestFolder: "+createFolderResponse.body());
         }
         return new ObjectMapper().readTree(createFolderResponse.body()).get("@id").textValue();
     }
