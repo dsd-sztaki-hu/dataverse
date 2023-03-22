@@ -1,9 +1,5 @@
 package edu.harvard.iq.dataverse;
 
-//import edu.harvard.iq.dataverse.api.CedarEndpoint;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
-import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -56,7 +52,6 @@ import edu.harvard.iq.dataverse.util.FileSortFieldAndOrder;
 import edu.harvard.iq.dataverse.util.FileUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
 
-import static edu.harvard.iq.dataverse.api.arp.RoCrateManager.createRoCrate;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 import static edu.harvard.iq.dataverse.util.StringUtil.isEmpty;
 
@@ -154,6 +149,11 @@ import org.apache.solr.common.SolrDocumentList;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
+
+import static edu.harvard.iq.dataverse.api.arp.RoCrateManager.createRoCrate;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 
 /**
  *
@@ -1848,7 +1848,15 @@ public class DatasetPage implements java.io.Serializable {
         */
         setFileAccessRequest(workingVersion.getTermsOfUseAndAccess().isFileAccessRequest());
         setTermsOfAccess(workingVersion.getTermsOfUseAndAccess().getTermsOfAccess());
-        
+        if (roCrateUploadService.getRoCrateJsonString() == null) {
+            resetVersionUI();
+        } else {
+            try {
+                datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
+            } catch (JsonProcessingException jsonProcessingException) {
+                JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+            }
+        }
         resetVersionUI();
     }
 
@@ -6172,4 +6180,35 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
+    public void downloadRoCrate() throws IOException {
+        String json = Files.readString(Paths.get(RoCrateManager.getRoCratePath(dataset)));
+
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
+        response.setContentType("application/json");
+        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
+
+        OutputStream outputStream = response.getOutputStream();
+        outputStream.write(json.getBytes());
+        outputStream.flush();
+        outputStream.close();
+
+        facesContext.responseComplete();
+    }
+
+    public String getUriEncodedPersistentId() {
+        return java.net.URLEncoder.encode(persistentId);
+    }
+
+    public String getCurrentUserApiKey() {
+        User user = session.getUser();
+        if (user instanceof AuthenticatedUser) {
+            var token = authService.findApiTokenByUser((AuthenticatedUser) user);
+            if (token == null) {
+                return null;
+            }
+            return token.getTokenString();
+        }
+        return null;
+    }
 }
