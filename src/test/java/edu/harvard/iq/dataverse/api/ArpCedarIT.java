@@ -55,6 +55,18 @@ public class ArpCedarIT {
             String params = Files.readString(Paths.get("src/test/resources/arp/cedarParams.json"));
             JsonObject originalParams = gson.fromJson(params, JsonObject.class);
             JsonObject testParams = originalParams.getAsJsonObject("cedarParams");
+            String parentIdFromEnv = System.getenv("CEDAR_PARENT_FOLDER_ID_FOR_THE_TESTS");
+            String apiKeyFromEnv = System.getenv("CEDAR_API_KEY");
+            String domainFromEnv = System.getenv("CEDAR_DOMAIN");
+            if (parentIdFromEnv != null) {
+                testParams.addProperty("parentFolderIdForTheTests", parentIdFromEnv);
+            }
+            if (apiKeyFromEnv != null) {
+                testParams.addProperty("apiKey", apiKeyFromEnv);
+            }
+            if (domainFromEnv != null) {
+                testParams.addProperty("cedarDomain", domainFromEnv);
+            }
             String testFolderId = createFolder(testParams.get("parentFolderIdForTheTests").getAsString(), testParams.get("cedarDomain").getAsString(), testParams.get("apiKey").getAsString(), httpClient);
             testParams.addProperty("folderId", testFolderId);
             originalParams.add("cedarParams", testParams);
