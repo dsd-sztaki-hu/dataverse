@@ -299,12 +299,11 @@ public class ArpServiceBean implements java.io.Serializable {
 
     private void processTemplateField(JsonObject jsonSchema, DataverseDatasetField datasetField, JsonArray cvvs) {
         String fieldType = datasetField.getFieldType().toLowerCase();
-        JsonObject templateField = fieldType.equals("textbox") ? cedarStaticTemplateField.deepCopy() : cedarTemplateField.deepCopy();
+        JsonObject templateField = cedarTemplateField.deepCopy();
 
         processCommonFields(templateField, datasetField, true);
-        if (!fieldType.equals("textbox")) {
-            templateField.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
-        }
+        templateField.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
+        
 
         switch (fieldType) {
             case "text":
@@ -317,6 +316,9 @@ public class ArpServiceBean implements java.io.Serializable {
                 } else {
                     templateField.getAsJsonObject("_ui").addProperty("inputType", "textfield");
                 }
+                break;
+            case "textbox":
+                templateField.getAsJsonObject("_ui").addProperty("inputType", "textarea");
                 break;
             case "date":
                 templateField.getAsJsonObject("_ui").addProperty("inputType", "temporal");
