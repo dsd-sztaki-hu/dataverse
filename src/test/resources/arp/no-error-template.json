@@ -1489,6 +1489,7 @@
     "creatorName_test"
   ],
   "schema:name": "arp_test",
+  "schema:identifier": "arp_test",
   "schema:description": "",
   "pav:createdOn": "2022-08-05T11:15:03+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",

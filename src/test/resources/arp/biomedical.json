@@ -2456,6 +2456,7 @@
     "studyAssayCellType"
   ],
   "schema:name": "Life Sciences Metadata",
+  "schema:identifier": "biomedical",
   "schema:description": "",
   "pav:createdOn": "2023-03-21T11:59:15+01:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",

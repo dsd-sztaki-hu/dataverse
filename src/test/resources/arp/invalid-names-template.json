@@ -972,6 +972,7 @@
     "invalid3_test_1"
   ],
   "schema:name": "invalid_names_template",
+  "schema:identifier": "invalid_names_template",
   "schema:description": "",
   "pav:createdOn": "2022-11-10T15:12:16+01:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",

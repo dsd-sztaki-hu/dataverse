@@ -8734,6 +8734,7 @@
     "accessToSources"
   ],
   "schema:name": "Citation Metadata",
+  "schema:identifier": "citation",
   "schema:description": "",
   "pav:createdOn": "2023-03-22T19:17:42+01:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",

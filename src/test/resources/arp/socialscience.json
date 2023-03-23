@@ -2834,6 +2834,7 @@
     "socialScienceNotes"
   ],
   "schema:name": "Social Science and Humanities Metadata",
+  "schema:identifier": "socialscience",
   "schema:description": "",
   "pav:createdOn": "2023-03-22T19:21:13+01:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
