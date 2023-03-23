@@ -471,6 +471,18 @@ public class ArpServiceBean implements java.io.Serializable {
         String encodedFolderId = URLEncoder.encode(templateFolderId, StandardCharsets.UTF_8);
         String url = "https://resource." + cedarDomain + "/templates?folder_id=" + encodedFolderId;
 
+        // Update the template with the uploaded elements, to have their real @id
+        List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, cedarDomain, client);
+        elements.forEach(element -> {
+            ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
+            ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
+            if (prop.has("items")) {
+                prop.replace("items", element);
+            } else {
+                properties.replace(element.get("schema:name").textValue(), element);
+            }
+        });
+        
         String apiKey = cedarParams.get("apiKey").textValue();
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(new URI(url))
@@ -482,10 +494,10 @@ public class ArpServiceBean implements java.io.Serializable {
         if (uploadTemplateResponse.statusCode() != 201) {
             throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue());
         }
-        exportElements(cedarTemplate, cedarParams, templateFolderId, cedarDomain, client);
     }
 
-    private void exportElements(JsonNode cedarTemplate, JsonNode cedarParams, String templateFolderId, String cedarDomain, HttpClient client) throws Exception {
+    private List<JsonNode> exportElements(JsonNode cedarTemplate, JsonNode cedarParams, String templateFolderId, String cedarDomain, HttpClient client) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
         String apiKey = cedarParams.get("apiKey").textValue();
         String elementsFolderId = checkOrCreateFolder(templateFolderId, "elements", apiKey, cedarDomain, client);
         String encodedFolderId = URLEncoder.encode(elementsFolderId, StandardCharsets.UTF_8);
@@ -513,17 +525,26 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
             }
         });
+        
+        List<HttpResponse<String>> responses = templateElementsRequests.stream()
+                .map(request -> client.sendAsync(request, ofString())
+                        .thenApply(response -> {
+                            if (response.statusCode() != 201) {
+                                throw new RuntimeException("An error occured during uploading the template elements for template: " + cedarTemplate.get("schema:name").textValue());
+                            }
+                            return response;
+                        }))
+                .map(CompletableFuture::join)
+                .collect(Collectors.toList());
+        
+        return responses.stream().map(response -> {
+            try {
+                return mapper.readTree(response.body());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
 
-        CompletableFuture.allOf(templateElementsRequests.stream()
-                        .map(request -> client.sendAsync(request, ofString())
-                                .thenApply(response -> {
-                                    if (response.statusCode() != 201) {
-                                        throw new RuntimeException("An error occured during uploading the template elements for template: " + cedarTemplate.get("schema:name").textValue());
-                                    }
-                                    return response;
-                                }))
-                        .toArray(CompletableFuture<?>[]::new))
-                        .join();
     }
 
     public HttpClient getUnsafeHttpClient() throws NoSuchAlgorithmException, KeyManagementException {
