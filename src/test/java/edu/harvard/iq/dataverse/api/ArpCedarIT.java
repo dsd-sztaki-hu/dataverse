@@ -217,7 +217,7 @@ public class ArpCedarIT {
                 new Customization("**.@id", (t1, t2) -> true),
                 new Customization("**:createdOn", (t1, t2) -> true),
                 new Customization("**:lastUpdatedOn", (t1, t2) -> true),
-                new Customization("**::createdBy", (t1, t2) -> true),
+                new Customization("**:createdBy", (t1, t2) -> true),
                 new Customization("**:modifiedBy", (t1, t2) -> true)
         ));
     }
