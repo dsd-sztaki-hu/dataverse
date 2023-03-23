@@ -513,21 +513,14 @@ public class ArpApi extends AbstractApiBean {
     }
 
     public void updateEnabledMetadataBlocks(String dvIdtf, String metadataBlockName) throws Exception {
-        Set<String> names = new HashSet<>() {};
-        Response listResp = dataverses.listMetadataBlocks(dvIdtf);
-        if (!listResp.getStatusInfo().toEnum().equals(Response.Status.OK)) {
-            throw new Exception("Failed to list Metadata blocks");
+        Dataverse dataverse = dataverseService.findAll().stream().filter(dv -> dv.getAlias().equals(dvIdtf)).findFirst().get();
+        List<MetadataBlock> metadataBlocks = dataverse.getMetadataBlocks();
+        MetadataBlock enabledMdb = findMetadataBlock(metadataBlockName);
+        if (!metadataBlocks.contains(enabledMdb)) {
+            metadataBlocks.add(enabledMdb);
         }
-        javax.json.JsonArray metadataBlocks = ((javax.json.JsonObject) listResp.getEntity()).getJsonArray("data");
-
-        metadataBlocks.forEach(block -> names.add(block.asJsonObject().get("name").toString()));
-        names.add("\"" + metadataBlockName + "\"");
-
-        try (Response response = dataverses.setMetadataBlocks(dvIdtf, names.toString())) {
-            if (!response.getStatusInfo().toEnum().equals(Response.Status.OK)) {
-                throw new Exception("Failed to set Metadata blocks");
-            }
-        }
+        dataverse.setMetadataBlocks(metadataBlocks);
+        dataverseService.save(dataverse);
     }
 
     public CedarTemplateErrors checkTemplate(String cedarTemplate) throws Exception {
