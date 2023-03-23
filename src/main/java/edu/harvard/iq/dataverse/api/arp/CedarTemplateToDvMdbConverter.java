@@ -26,8 +26,7 @@ public class CedarTemplateToDvMdbConverter {
 
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
-        String id = cedarTemplateJson.get("@id").getAsString();
-        String metadataBlockId = id.substring(id.lastIndexOf("/") + 1);
+        String metadataBlockId = cedarTemplateJson.get("schema:identifier").getAsString();
 
         DataverseMetadataBlock metadataBlockValues = processMetadataBlock(cedarTemplateJson, metadataBlockId);
         ProcessedCedarTemplateValues processedCedarTemplateValues = processTemplate(cedarTemplateJson, metadataBlockId, new ProcessedCedarTemplateValues(new ArrayList<>(), new ArrayList<>()), null, overridePropNames);
@@ -91,7 +90,7 @@ public class CedarTemplateToDvMdbConverter {
 
         dataverseMetadataBlock.setName(metadataBlockId);
         dataverseMetadataBlock.setDisplayName(cedarTemplate.get("schema:name").getAsString());
-        dataverseMetadataBlock.setBlockURI(cedarTemplate.get("@id").getAsString());
+//        dataverseMetadataBlock.setBlockURI(cedarTemplate.get("@id").getAsString());
 
         return dataverseMetadataBlock;
     }

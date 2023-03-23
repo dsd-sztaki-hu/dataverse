@@ -294,7 +294,8 @@ public class ArpServiceBean implements java.io.Serializable {
     private void processMetadataBlock(JsonObject jsonSchema, DataverseMetadataBlock dataverseMetadataBlock) {
         jsonSchema.addProperty("title", dataverseMetadataBlock.getName() + jsonSchema.get("title").getAsString());
         jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + jsonSchema.get("description").getAsString());
-        jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getName());
+        jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getDisplayName().isBlank() ? dataverseMetadataBlock.getName() : dataverseMetadataBlock.getDisplayName());
+        jsonSchema.addProperty("schema:identifier", dataverseMetadataBlock.getName());
     }
 
     private void processTemplateField(JsonObject jsonSchema, DataverseDatasetField datasetField, JsonArray cvvs) {

@@ -57,9 +57,6 @@ public class ArpApi extends AbstractApiBean {
     IndexBean index;
 
     @EJB
-    DataversesBean dataverses;
-
-    @EJB
     DatasetFieldServiceApiBean datasetFieldServiceApi;
 
     @EJB
@@ -116,19 +113,18 @@ public class ArpApi extends AbstractApiBean {
         return ok("Valid Template");
     }
 
+    //TODO: remove added headers
     @POST
     @Path("/cedarToMdb/{identifier}")
     @Consumes("application/json")
     @Produces("text/tab-separated-values")
     public Response cedarToMdb(@PathParam("identifier") String dvIdtf,
                                @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
-                               String templateJson)
-    {
+                               String templateJson) throws JsonProcessingException {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
-        String metadataBlockId = new JSONObject(templateJson).getString("@id");
-        String metadataBlockName = metadataBlockId.substring(metadataBlockId.lastIndexOf('/') + 1);
+        String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
 
         try {
             CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
@@ -137,7 +133,7 @@ public class ArpApi extends AbstractApiBean {
                         .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                                 .add("status", STATUS_ERROR)
                                 .add( "message", cedarTemplateErrors.toJson() ).build()
-                        ).type(MediaType.APPLICATION_JSON_TYPE).build();
+                        ).type(MediaType.APPLICATION_JSON_TYPE).header("Access-Control-Allow-Origin", "*").build();
             }
             if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
                 overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
@@ -551,9 +547,8 @@ public class ArpApi extends AbstractApiBean {
         }
         //endregion
 
-        String metadataBlockId = new JSONObject(cedarTemplate).getString("@id");
-        String metadataBlockName = metadataBlockId.substring(metadataBlockId.lastIndexOf('/') + 1);
-        return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, metadataBlockName);
+        String mdbId = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier").textValue();
+        return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
     }
 
     public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) throws Exception {
@@ -569,8 +564,8 @@ public class ArpApi extends AbstractApiBean {
                 .entrySet()
                 .stream()
                 .filter(s -> s.getValue() > 1 ||
-                        !s.getKey().matches("^(?![_\\W].*_$)\\D\\w+") ||
-                        listOfStaticFields.contains(s.getKey()))
+                        !s.getKey().matches("^(?![_\\W].*_$)[^0-9:]\\w*(:?\\w*)*") ||
+                        listOfStaticFields.contains(s.getKey()) && metadataBlockService.findByName(mdbName) == null)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
 
