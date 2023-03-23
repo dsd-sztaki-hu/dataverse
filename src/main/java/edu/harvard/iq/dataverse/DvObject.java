@@ -150,7 +150,6 @@ public abstract class DvObject extends DataverseEntity implements java.io.Serial
     public void setAlternativePersistentIndentifiers(Set<AlternativePersistentIdentifier> alternativePersistentIndentifiers) {
         this.alternativePersistentIndentifiers = alternativePersistentIndentifiers;
     }
-        
     
     /**
      * previewImageAvailable could also be thought of as "thumbnail has been

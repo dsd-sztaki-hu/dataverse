@@ -206,6 +206,9 @@ public class DatasetVersion implements Serializable {
     
     @Transient 
     private JsonObject archivalStatus;
+	
+	@OneToMany(mappedBy="datasetVersion", cascade={CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
+	private List<DatasetVersionStorageSite> storageSites;
     
     public Long getId() {
         return this.id;
@@ -438,6 +441,14 @@ public class DatasetVersion implements Serializable {
         this.datasetVersionUsers = datasetVersionUsers;
     }
 
+	public List<DatasetVersionStorageSite> getStorageSites() {
+		return storageSites;
+	}
+
+	public void setStorageSites(List<DatasetVersionStorageSite> storageSites) {
+		this.storageSites = storageSites;
+	}
+	
     public List<String> getVersionContributorIdentifiers() {
         if (this.getDatasetVersionUsers() == null) {
             return Collections.emptyList();

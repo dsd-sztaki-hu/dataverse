@@ -444,6 +444,11 @@
                                                                 <h:outputText value="#{bundle['dataset.editBtn.itemLabel.thumbnailsAndWidgets']}"/>
                                                             </h:outputLink>
                                                         </li>
+                                                        <li>
+                                                            <h:outputLink value="/dataset-storagesites.xhtml?datasetId=#{DatasetPage.dataset.id}">
+                                                                <h:outputText value="#{bundle['dataset.editBtn.itemLabel.selectStorageSites']}"/>
+                                                            </h:outputLink>
+                                                        </li>
                                                         <ui:fragment rendered="#{!DatasetPage.dataset.released and DatasetPage.dataset.latestVersion.versionState=='DRAFT' and permissionsWrapper.canIssueDeleteDatasetCommand(DatasetPage.dataset)}">
                                                             <li role="separator" class="divider"></li>
                                                             <li>

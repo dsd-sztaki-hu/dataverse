@@ -541,7 +541,27 @@ public class Datasets extends AbstractApiBean {
             return notFound("metadata block named " + blockName + " not found");
         });
     }
-    
+
+    @GET
+    @Path("{id}/versions/{versionId}/storageSite")
+    public Response getVersionStorageSite( @PathParam("id") String datasetId,
+			                               @PathParam("versionId") String versionId,
+										   @Context UriInfo uriInfo,
+										   @Context HttpHeaders headers) {
+		return response( req -> {
+				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers );
+				return ok(json(dsv.getStorageSites()));
+		});
+		
+	}
+	
+    @PUT
+    @Path("{id}/versions/{versionId}/storageSite")
+    public Response setVersionStorageSite( @PathParam("id") String datasetId, @PathParam("versionId") String versionId, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
+		
+	}
+
+	
     @GET
     @Path("{id}/modifyRegistration")
     public Response updateDatasetTargetURL(@PathParam("id") String id ) {
