@@ -105,7 +105,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("1", "citation", "src/test/resources/arp/citation.json", httpClient, apiToken);    
+            exportAndCheckTemplate("1", "Citation Metadata", "src/test/resources/arp/citation.json", httpClient, apiToken);    
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -118,7 +118,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("2", "geospatial", "src/test/resources/arp/geospatial.json", httpClient, apiToken);
+            exportAndCheckTemplate("2", "Geospatial Metadata", "src/test/resources/arp/geospatial.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -131,7 +131,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("3", "socialscience", "src/test/resources/arp/socialscience.json", httpClient, apiToken);
+            exportAndCheckTemplate("3", "Social Science and Humanities Metadata", "src/test/resources/arp/socialscience.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -144,7 +144,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("4", "astrophysics", "src/test/resources/arp/astrophysics.json", httpClient, apiToken);
+            exportAndCheckTemplate("4", "Astronomy and Astrophysics Metadata", "src/test/resources/arp/astrophysics.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -157,7 +157,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("5", "biomedical", "src/test/resources/arp/biomedical.json", httpClient, apiToken);
+            exportAndCheckTemplate("5", "Life Sciences Metadata", "src/test/resources/arp/biomedical.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -170,7 +170,7 @@ public class ArpCedarIT {
             HttpClient httpClient = getUnsafeHttpClient();
             Response createUser = UtilIT.createRandomUser();
             String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-            exportAndCheckTemplate("6", "journal", "src/test/resources/arp/journal.json", httpClient, apiToken);
+            exportAndCheckTemplate("6", "Journal Metadata", "src/test/resources/arp/journal.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
