@@ -225,6 +225,7 @@ public class ArpServiceBean implements java.io.Serializable {
         processMetadataBlock(jsonSchema, metadataBlock);
 
         // process the dataset field and controlled vocabulary values
+        DataverseMetadataBlock finalMetadataBlock = metadataBlock;
         datasetFields.forEach(dsf -> {
             if (!dsf.parent.isBlank()) {
                 return;
@@ -240,16 +241,16 @@ public class ArpServiceBean implements java.io.Serializable {
                         cvvs.add(literal);
                     });
             if (children.isEmpty()){
-                processTemplateField(jsonSchema, dsf, cvvs);
+                processTemplateField(jsonSchema, dsf, cvvs, finalMetadataBlock);
             } else {
-                processTemplateElement(jsonSchema, dsf, children, controlledVocabularyValues);
+                processTemplateElement(jsonSchema, dsf, children, controlledVocabularyValues, finalMetadataBlock);
             }
         });
 
         return jsonSchema;
     }
 
-    private void addValueToParent(JsonObject parentObj, JsonObject valueObj, DataverseDatasetField datasetField, boolean parentIsTemplateField) {
+    private void addValueToParent(JsonObject parentObj, JsonObject valueObj, DataverseDatasetField datasetField, boolean parentIsTemplateField, DataverseMetadataBlock dataverseMetadataBlock) {
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
          * upon importing from CEDAR the colons are replaced with dots again
@@ -268,8 +269,10 @@ public class ArpServiceBean implements java.io.Serializable {
         * but this value can not be null in the CEDAR Template just an empty string.
         * There's also a comment in DatasetFieldConstant.java that says southLongitude value is "Incorrect in DB".
         * */
-        String uri = datasetField.getTermURI();
-        enumArray.add(uri == null ? "" : uri);
+        String termUri = datasetField.getTermURI();
+        String nameSpaceUri = dataverseMetadataBlock.getBlockURI().endsWith("/") ? dataverseMetadataBlock.getBlockURI() : dataverseMetadataBlock.getBlockURI() + "/";
+        String uri = !termUri.isBlank() ? termUri : nameSpaceUri + datasetField.getName() ;
+        enumArray.add(uri);
         enumObj.add("enum", enumArray);
         JsonHelper.getJsonElement(parentObj,"properties.@context.properties").getAsJsonObject().add(propName, enumObj);
         parentObj.getAsJsonArray("required").add(propName);
@@ -296,9 +299,19 @@ public class ArpServiceBean implements java.io.Serializable {
         jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + jsonSchema.get("description").getAsString());
         jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getDisplayName().isBlank() ? dataverseMetadataBlock.getName() : dataverseMetadataBlock.getDisplayName());
         jsonSchema.addProperty("schema:identifier", dataverseMetadataBlock.getName());
+        JsonHelper.getJsonElement(jsonSchema, "properties.@type.oneOf").getAsJsonArray().forEach(jsonElement -> {
+            JsonObject oneOf = jsonElement.getAsJsonObject();
+            JsonArray enumArray = new JsonArray();
+            enumArray.add(dataverseMetadataBlock.getBlockURI());
+            if (oneOf.get("type").getAsString().equals("string")) {
+                oneOf.add("enum", enumArray);
+            } else if (oneOf.get("type").getAsString().equals("array")) {
+                oneOf.getAsJsonObject("items").add("enum", enumArray);
+            }
+        });
     }
 
-    private void processTemplateField(JsonObject jsonSchema, DataverseDatasetField datasetField, JsonArray cvvs) {
+    private void processTemplateField(JsonObject jsonSchema, DataverseDatasetField datasetField, JsonArray cvvs, DataverseMetadataBlock dataverseMetadataBlock) {
         String fieldType = datasetField.getFieldType().toLowerCase();
         JsonObject templateField = cedarTemplateField.deepCopy();
 
@@ -353,10 +366,10 @@ public class ArpServiceBean implements java.io.Serializable {
                 break;
         }
 
-        addValueToParent(jsonSchema, templateField, datasetField, true);
+        addValueToParent(jsonSchema, templateField, datasetField, true, dataverseMetadataBlock);
     }
 
-    private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues) {
+    private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues, DataverseMetadataBlock dataverseMetadataBlock) {
         JsonObject templateElement = cedarTemplateElement.deepCopy();
         processCommonFields(templateElement, datasetField, false);
         children.forEach(child -> {
@@ -369,10 +382,10 @@ public class ArpServiceBean implements java.io.Serializable {
                         literal.addProperty("label", label);
                         cvvs.add(literal);
                     });
-            processTemplateField(templateElement, child, cvvs);
+            processTemplateField(templateElement, child, cvvs, dataverseMetadataBlock);
         });
 
-        addValueToParent(jsonSchema, templateElement, datasetField, false);
+        addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
     }
 
     private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField, boolean parentIsTemplateField) {
