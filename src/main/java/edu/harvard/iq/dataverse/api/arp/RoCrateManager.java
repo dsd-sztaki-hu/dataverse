@@ -221,28 +221,11 @@ public class RoCrateManager {
         return importFormatJson.toString(4);
     }
 
-    // After adding a hashmark before every @id property, Describo (AROMA) probably will not generate new entities with "@type: Thing"
-    // TODO: If the hashmark really solved the issue then remove the part that rebuilds the whole json without the "Thing" nodes,
-    // TODO: also check if the lib that processes the RO-Crate can already handle "@reverse" nodes
     public static String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(roCrateJson);
-        JsonNode graphNode = rootNode.get("@graph");
-
-        ObjectNode filteredJson = mapper.createObjectNode();
-        ArrayNode filteredGraph = mapper.createArrayNode();
-
-        for (JsonNode node : graphNode) {
-            if (!node.get("@type").textValue().equals("Thing")) {
-                filteredGraph.add(node);
-            }
-        }
-
-        filteredJson.set("@context", rootNode.get("@context"));
-        filteredJson.set("@graph", filteredGraph);
-
-        removeReverseProperties(filteredJson);
-        return filteredJson.toPrettyString();
+        removeReverseProperties(rootNode);
+        return rootNode.toPrettyString();
     }
 
     private static void removeReverseProperties(JsonNode node) {
