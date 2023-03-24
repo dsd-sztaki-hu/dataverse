@@ -26,8 +26,10 @@ public class CedarTemplateToDescriboProfileConverter {
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject describoProfile = gson.fromJson(describoProfileTemplate, JsonObject.class);
+        JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
-        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(gson.fromJson(cedarTemplate, JsonObject.class), new ProcessedDescriboProfileValues(new ArrayList<>(), new ArrayList<>()));
+        processProfileMetadata(cedarTemplateJson, describoProfile);
+        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>(), new ArrayList<>()));
         describoProfile.getAsJsonObject("layouts").add("Dataset", gson.toJsonTree(processedDescriboProfileValues.layouts));
         describoProfile.getAsJsonObject("classes").getAsJsonObject("Dataset").add("inputs", gson.toJsonTree(processedDescriboProfileValues.inputs));
 
@@ -110,6 +112,12 @@ public class CedarTemplateToDescriboProfileConverter {
         if (!layout.getInputs().isEmpty()) {
             processedDescriboProfileValues.layouts.add(layout);
         }
+    }
+    
+    private void processProfileMetadata(JsonObject cedarTemplate, JsonObject describoProfile) {
+        describoProfile.getAsJsonObject("metadata").addProperty("name", cedarTemplate.get("schema:name").getAsString());
+        describoProfile.getAsJsonObject("metadata").addProperty("description", cedarTemplate.get("schema:description").getAsString());
+        
     }
 
     public List<String> getDescriboType(JsonObject templateField) {
