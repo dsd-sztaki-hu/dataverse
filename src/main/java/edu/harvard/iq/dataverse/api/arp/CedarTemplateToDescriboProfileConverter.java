@@ -107,7 +107,7 @@ public class CedarTemplateToDescriboProfileConverter {
     private void processLayouts(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues) {
         DescriboLayout layout = new DescriboLayout();
         layout.setName(Optional.ofNullable(templateElement.get("schema:name")).map(JsonElement::getAsString).orElse(null));
-        layout.setDescription("");
+        layout.setDescription(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
         layout.setInputs(getStringList(templateElement, "_ui.order"));
         if (!layout.getInputs().isEmpty()) {
             processedDescriboProfileValues.layouts.add(layout);
