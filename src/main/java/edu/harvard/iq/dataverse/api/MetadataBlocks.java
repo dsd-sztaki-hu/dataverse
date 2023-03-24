@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.harvard.iq.dataverse.MetadataBlock;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -31,4 +32,18 @@ public class MetadataBlocks extends AbstractApiBean {
         return   (b != null ) ? ok(json(b)) : notFound("Can't find metadata block '" + idtf + "'");
     }
     
+    @GET
+    @Path("/tsv/{identifier}")
+    @Produces("text/tab-separated-values")
+    public Response getTsv(@PathParam("identifier") String mdbIdtf) {
+        String mdbTsv;
+        
+        try {
+            mdbTsv = metadataBlockSvc.exportMdbAsTsv(mdbIdtf);
+        }  catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        
+        return Response.ok(mdbTsv).build();
+    }
 }

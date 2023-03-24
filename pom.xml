@@ -30,6 +30,7 @@
         <poi.version>5.2.1</poi.version>
         <tika.version>2.4.1</tika.version>
         <netcdf.version>5.5.3</netcdf.version>
+        <jackson.version>2.12.6</jackson.version>
     </properties>
     
     <!-- Versions of dependencies used both directly and transitive are managed here.
@@ -71,6 +72,12 @@
             <groupId>org.passay</groupId>
             <artifactId>passay</artifactId>
             <version>1.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-csv</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
         
         <!-- TECHNICAL DEBT
