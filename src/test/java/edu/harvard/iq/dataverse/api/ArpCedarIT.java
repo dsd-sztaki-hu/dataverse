@@ -212,6 +212,9 @@ public class ArpCedarIT {
         }
         
         String uploadedTemplateContent =  getTemplate(httpClient, templateId);
+        logger.info("Expected template: \n" + templateContent);
+        logger.info("Actual template: \n" + gson.toJson(JsonParser.parseString(uploadedTemplateContent)));
+        
         JSONAssert.assertEquals(templateContent,  uploadedTemplateContent, new CustomComparator(
                 JSONCompareMode.LENIENT,
                 new Customization("**.@id", (t1, t2) -> true),
