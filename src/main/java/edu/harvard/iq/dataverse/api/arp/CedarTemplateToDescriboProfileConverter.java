@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse.api.arp;
 
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.DatasetPage;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getJsonElement;
@@ -20,25 +22,40 @@ public class CedarTemplateToDescriboProfileConverter {
     public CedarTemplateToDescriboProfileConverter() {
     }
 
-    // TODO: Update profile metadata, pass override/inherit values for the classes, maybe store the profile in a seperated file
+    // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file
     public String processCedarTemplate(String cedarTemplate) throws IOException {
-        String describoProfileTemplate = "{\n  \"metadata\": {\n    \"name\": \"Cedar to Describo generated profile\",\n    \"version\": 1.0,\n    \"description\": \"Generated Describo schema from a Cedar template\",\n    \"warnMissingProperty\": true\n  },\n  \"layouts\": {\n    \"Dataset\": \"layouts\"\n  },\n  \"classes\": {\n    \"Dataset\": {\n      \"definition\": \"override\",\n      \"subClassOf\": [],\n      \"inputs\": \"inputs\"\n    }\n  },\n  \"enabledClasses\": [\n    \"Dataset\"\n  ]\n}";
-
+        String describoProfileTemplate = "{\n  \"metadata\": {\n    \"name\": \"Cedar to Describo generated profile\",\n    \"version\": 1.0,\n    \"description\": \"Generated Describo schema from a Cedar template\",\n    \"warnMissingProperty\": true\n  },\n  \"classes\": {\n    \"Dataset\": {\n      \"definition\": \"override\",\n      \"subClassOf\": [],\n      \"inputs\":[] \n    }\n  },\n  \"enabledClasses\": [\n    \"Dataset\"\n  ]\n}";
+        String classTemplate = "{\n  \"definition\": \"override\",\n  \"subClassOf\": [],\n  \"inputs\": []\n}";
+        
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject describoProfile = gson.fromJson(describoProfileTemplate, JsonObject.class);
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         processProfileMetadata(cedarTemplateJson, describoProfile);
-        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>(), new ArrayList<>()));
-        describoProfile.getAsJsonObject("layouts").add("Dataset", gson.toJsonTree(processedDescriboProfileValues.layouts));
-        describoProfile.getAsJsonObject("classes").getAsJsonObject("Dataset").add("inputs", gson.toJsonTree(processedDescriboProfileValues.inputs));
+        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
 
+        JsonObject classes = describoProfile.getAsJsonObject("classes");
+        
+        for (var input : processedDescriboProfileValues.inputs) {
+            String className = input.getKey();
+            if (!classes.has(className)) {
+                classes.add(className, gson.fromJson(classTemplate, JsonObject.class));
+            }
+            classes.getAsJsonObject(className).getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
+            
+        }
+        
+        JsonArray enabledClasses = new JsonArray();
+        processedDescriboProfileValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
+        
+        describoProfile.add("enabledClasses", enabledClasses);
+        
         String resultProfile = gson.toJson(describoProfile);
         System.out.println(resultProfile);
         return resultProfile;
     }
 
-    public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues) {
+    public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         for (String propertyName : getStringList(cedarTemplate, "_ui.order")) {
             JsonObject property = getJsonObject(cedarTemplate, "properties." + propertyName);
             String propertyType = Optional.ofNullable(property.get("@type")).map(JsonElement::getAsString).orElse(null);
@@ -48,14 +65,14 @@ public class CedarTemplateToDescriboProfileConverter {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
-                    processTemplateField(property, false, inputId, processedDescriboProfileValues);
+                    processTemplateField(property, false, inputId, processedDescriboProfileValues, parentName);
                 } else if (actPropertyType.equals("TemplateElement")) {
-                    processTemplateElement(property, processedDescriboProfileValues);
+                    processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName);
                 }
             } else {
                 String actPropertyType = property.get("type").getAsString();
                 if (actPropertyType.equals("array")) {
-                    processArray(property, processedDescriboProfileValues, inputId);
+                    processArray(property, processedDescriboProfileValues, inputId, parentName);
                 }
             }
         }
@@ -63,7 +80,7 @@ public class CedarTemplateToDescriboProfileConverter {
         return processedDescriboProfileValues;
     }
 
-    public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues) {
+    public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
 
@@ -86,31 +103,35 @@ public class CedarTemplateToDescriboProfileConverter {
             }
         }
 
-        processedDescriboProfileValues.inputs.add(describoInput);
+        processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
     }
 
-    private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues) {
-        processLayouts(templateElement, processedDescriboProfileValues);
-        processTemplate(templateElement, processedDescriboProfileValues);
+    private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName) {
+        DescriboInput describoInput = new DescriboInput();
+
+        String propName = templateElement.get("schema:name").getAsString();
+        
+        describoInput.setId(inputId);
+        describoInput.setName(propName);
+        String label = Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
+        describoInput.setLabel(label);
+        describoInput.setHelp(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
+        describoInput.setType(List.of(propName));
+        describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
+        describoInput.setMultiple(allowMultiple);
+        
+        processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
+        
+        processTemplate(templateElement, processedDescriboProfileValues, propName);
     }
 
-    public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId) {
+    public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId, String parentName) {
         JsonObject items = array.getAsJsonObject("items");
         String inputType = Optional.ofNullable(getJsonElement(items, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         if (inputType != null) {
-            processTemplateField(items, true, inputId, processedDescriboProfileValues);
+            processTemplateField(items, true, inputId, processedDescriboProfileValues, parentName);
         } else {
-            processTemplateElement(items, processedDescriboProfileValues);
-        }
-    }
-
-    private void processLayouts(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues) {
-        DescriboLayout layout = new DescriboLayout();
-        layout.setName(Optional.ofNullable(templateElement.get("schema:name")).map(JsonElement::getAsString).orElse(null));
-        layout.setDescription(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
-        layout.setInputs(getStringList(templateElement, "_ui.order"));
-        if (!layout.getInputs().isEmpty()) {
-            processedDescriboProfileValues.layouts.add(layout);
+            processTemplateElement(items, processedDescriboProfileValues, true, inputId, parentName);
         }
     }
     
@@ -234,68 +255,20 @@ public class CedarTemplateToDescriboProfileConverter {
         }
     }
 
-    private static class DescriboLayout {
-        private String name;
-        private String description;
-        private List<String> inputs;
-
-        public DescriboLayout() {
-        }
-
-        public DescriboLayout(String name, String description, List<String> inputs) {
-            this.name = name;
-            this.description = description;
-            this.inputs = inputs;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public List<String> getInputs() {
-            return inputs;
-        }
-
-        public void setInputs(List<String> inputs) {
-            this.inputs = inputs;
-        }
-    }
 
     private static class ProcessedDescriboProfileValues {
-        private List<DescriboInput> inputs;
-        private List<DescriboLayout> layouts;
+        private List<Pair<String, DescriboInput>> inputs;
 
-        public ProcessedDescriboProfileValues(List<DescriboInput> inputs, List<DescriboLayout> layouts) {
+        public ProcessedDescriboProfileValues(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
-            this.layouts = layouts;
         }
 
-        public List<DescriboInput> getInputs() {
+        public List<Pair<String, DescriboInput>> getInputs() {
             return inputs;
         }
 
-        public void setInputs(List<DescriboInput> inputs) {
+        public void setInputs(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
-        }
-
-        public List<DescriboLayout> getLayouts() {
-            return layouts;
-        }
-
-        public void setLayouts(List<DescriboLayout> layouts) {
-            this.layouts = layouts;
         }
     }
 }
