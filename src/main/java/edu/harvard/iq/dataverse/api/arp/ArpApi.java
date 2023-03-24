@@ -292,6 +292,26 @@ public class ArpApi extends AbstractApiBean {
 
         return Response.ok(describoProfile).build();
     }
+    
+    @GET
+    @Path("/mdbToDescribo/{identifier}")
+    @Produces("application/json")
+    public Response mdbToDescribo(@PathParam("identifier") String mdbIdtf) {
+        String describoProfile;
+        
+        try {
+            findAuthenticatedUserOrDie();
+            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
+            describoProfile = convertTemplate(templateJson, "describo", new HashSet<>());
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(describoProfile).build();
+    }
 
     private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception {
         String conversionResult;
