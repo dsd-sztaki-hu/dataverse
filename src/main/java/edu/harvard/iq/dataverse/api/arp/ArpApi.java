@@ -330,7 +330,8 @@ public class ArpApi extends AbstractApiBean {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
             for (int i=0; i<ids.length; i++) {
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i])).toString();
+                // Convert TSV to CEDAR template without converting '.' to ':' in field names
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
                 String profile = convertTemplate(templateJson, "describo", new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 
@@ -390,6 +391,7 @@ public class ArpApi extends AbstractApiBean {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
     }
