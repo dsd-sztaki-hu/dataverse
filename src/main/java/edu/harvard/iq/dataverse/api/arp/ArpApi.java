@@ -313,6 +313,88 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(describoProfile).build();
     }
 
+    @GET
+    @Path("/mdbsToDescribo/{identifiers}")
+    @Produces("application/json")
+    public Response mdbsToDescribo(@PathParam("identifiers") String identifiers) {
+        try {
+            findAuthenticatedUserOrDie();
+
+            // ids separated by commas
+            var ids = identifiers.split(",\\s*");
+            JsonObject mergedProfile = null;
+            JsonArray mergedProfileInputs = null;
+            JsonObject mergedProfileClasses = null;
+            JsonArray enabledClasses = null;
+            JsonObject layouts = null;
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+            for (int i=0; i<ids.length; i++) {
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i])).toString();
+                String profile = convertTemplate(templateJson, "describo", new HashSet<>());
+                JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
+
+                if (mergedProfile == null) {
+                    mergedProfile = profileJson;
+                    mergedProfileClasses = mergedProfile.getAsJsonObject("classes");
+                    mergedProfileInputs = mergedProfileClasses
+                            .getAsJsonObject("Dataset")
+                            .getAsJsonArray("inputs");
+                    enabledClasses = mergedProfile.getAsJsonArray("enabledClasses");
+                    layouts = new JsonObject();
+                    mergedProfile.add("layouts", layouts);
+                }
+
+                // Add all inputs from the profile to the merged profile
+                JsonObject classes = profileJson.getAsJsonObject("classes");
+                JsonArray inputs = classes
+                        .getAsJsonObject("Dataset")
+                        .getAsJsonArray("inputs");
+                JsonObject metadata = profileJson.getAsJsonObject("metadata");
+                // Get rid of the "Metadata" suffix.
+                if (metadata.get("name").getAsString().endsWith(" Metadata")) {
+                    String name = metadata.get("name").getAsString();
+                    metadata.addProperty("name", name.substring(0, name.length()-" Metadata".length()));
+                }
+                mergedProfileInputs.addAll(inputs);
+
+                // Add all classes from the profile to the merged profile
+                final var finalMergedProfileClasses = mergedProfileClasses;
+                final var finalEnabledClasses = enabledClasses;
+                classes.keySet().forEach(k -> {
+                    if (!k.equals("Dataset")) {
+                        finalMergedProfileClasses.add(k, classes.get(k));
+                        finalEnabledClasses.add(new JsonPrimitive(k));
+                    }
+                });
+
+                // Add a group for the profile in the merged profile's Dataset layout
+                JsonArray datasetLayout = layouts.getAsJsonArray("Dataset");
+                if (datasetLayout == null) {
+                    datasetLayout = new JsonArray();
+                    layouts.add("Dataset", datasetLayout);
+                }
+                JsonObject layoutObj = new JsonObject();
+                layoutObj.addProperty("name", metadata.get("name").getAsString());
+                layoutObj.addProperty("description", metadata.get("description").getAsString());
+                JsonArray layoutInputs = new JsonArray();
+                inputs.iterator().forEachRemaining(jsonElement -> {
+                    layoutInputs.add(jsonElement.getAsJsonObject().get("name"));
+                });
+                layoutObj.add("inputs", layoutInputs);
+                datasetLayout.add(layoutObj);
+            }
+
+            return Response.ok(gson.toJson(mergedProfile)).build();
+        } catch (WrappedResponse ex) {
+            System.out.println(ex.getResponse());
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+    }
+
+
     private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception {
         String conversionResult;
 
