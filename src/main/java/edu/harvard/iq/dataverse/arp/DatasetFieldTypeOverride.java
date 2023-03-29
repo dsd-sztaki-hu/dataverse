@@ -1,5 +1,7 @@
-package edu.harvard.iq.dataverse;
+package edu.harvard.iq.dataverse.arp;
 
+import edu.harvard.iq.dataverse.DatasetFieldType;
+import edu.harvard.iq.dataverse.MetadataBlock;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
 import javax.persistence.*;
