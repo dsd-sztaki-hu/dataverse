@@ -57,9 +57,16 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         for (String propertyName : getStringList(cedarTemplate, "_ui.order")) {
-            JsonObject property = getJsonObject(cedarTemplate, "properties." + propertyName);
+            // Note: cannot use getJsonObject here because the propertyName may contain ".", eg:
+            // coverage.Spectral.CentralWavelength, which would result in properties.coverage.Spectral.CentralWavelength
+            // JsonObject property = getJsonObject(cedarTemplate, "properties." + propertyName);
+            JsonObject property = cedarTemplate.getAsJsonObject("properties").getAsJsonObject(propertyName);
             String propertyType = Optional.ofNullable(property.get("@type")).map(JsonElement::getAsString).orElse(null);
-            String inputId = getStringList(cedarTemplate, "properties.@context.properties." + propertyName + ".enum").get(0);
+            //String inputId = getStringList(cedarTemplate, "properties.@context.properties." + propertyName + ".enum").get(0);
+            String inputId = getJsonElement(cedarTemplate, "properties.@context.properties")
+                    .getAsJsonObject()
+                    .getAsJsonObject(propertyName)
+                    .getAsJsonArray("enum").get(0).getAsString();
 
             if (propertyType != null) {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);

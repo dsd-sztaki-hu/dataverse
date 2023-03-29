@@ -10,6 +10,8 @@ import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverride;
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverrideServiceBean;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
@@ -17,7 +19,6 @@ import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
 
 import javax.ejb.EJB;
 import javax.json.Json;
@@ -34,8 +35,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -330,7 +329,8 @@ public class ArpApi extends AbstractApiBean {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
             for (int i=0; i<ids.length; i++) {
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i])).toString();
+                // Convert TSV to CEDAR template without converting '.' to ':' in field names
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
                 String profile = convertTemplate(templateJson, "describo", new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 
@@ -390,6 +390,7 @@ public class ArpApi extends AbstractApiBean {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
     }

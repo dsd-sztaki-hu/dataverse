@@ -25,6 +25,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverride;
 import org.apache.commons.lang3.StringUtils;
 
 @Entity
