@@ -9,9 +9,8 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
-import edu.harvard.iq.dataverse.arp.ArpServiceBean;
-import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverride;
-import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverrideServiceBean;
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
@@ -74,7 +73,7 @@ public class ArpApi extends AbstractApiBean {
     DatasetFieldServiceBean fieldService;
 
     @EJB
-    DatasetFieldTypeOverrideServiceBean datasetFieldTypeOverrideService;
+    ArpMetadataBlockServiceBean arpMetadataBlockServiceBean;
 
     @EJB
     ArpServiceBean arpService;
@@ -117,9 +116,12 @@ public class ArpApi extends AbstractApiBean {
     @Path("/cedarToMdb/{identifier}")
     @Consumes("application/json")
     @Produces("text/tab-separated-values")
-    public Response cedarToMdb(@PathParam("identifier") String dvIdtf,
-                               @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
-                               String templateJson) throws JsonProcessingException {
+    public Response cedarToMdb(
+            @PathParam("identifier") String dvIdtf,
+            @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
+            String templateJson
+    ) throws JsonProcessingException
+    {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
@@ -141,12 +143,12 @@ public class ArpApi extends AbstractApiBean {
             mdbTsv = convertTemplate(templateJson, "dv", overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
-                loadDatasetFields(lines, metadataBlockName);
+                loadDatasetFields(lines, metadataBlockName, templateJson);
                 // at this point the new mdb is already in the db
                 if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
                     MetadataBlock newMdb = metadataBlockService.findByName(metadataBlockName);
                     cedarTemplateErrors.incompatiblePairs.values().forEach(override -> override.setMetadataBlock(newMdb));
-                    datasetFieldTypeOverrideService.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
+                    arpMetadataBlockServiceBean.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
                 }
                 updateMetadataBlock(dvIdtf, metadataBlockName);
             }
@@ -789,7 +791,7 @@ public class ArpApi extends AbstractApiBean {
 
 
     //region Copied functions from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi to avoid modifying the base code
-    private String parseMetadataBlock(String[] values) {
+    private MetadataBlock parseMetadataBlock(String[] values) {
         //Test to see if it exists by name
         MetadataBlock mdb = metadataBlockService.findByName(values[1]);
         if (mdb == null){
@@ -804,11 +806,10 @@ public class ArpApi extends AbstractApiBean {
             mdb.setNamespaceUri(values[4]);
         }
 
-        metadataBlockService.save(mdb);
-        return mdb.getName();
+        return metadataBlockService.save(mdb);
     }
 
-    private String parseDatasetField(String[] values) {
+    private DatasetFieldType parseDatasetField(String[] values) {
 
         //First see if it exists
         DatasetFieldType dsf = datasetFieldService.findByName(values[1]);
@@ -839,8 +840,7 @@ public class ArpApi extends AbstractApiBean {
         if(values.length>16 && !StringUtils.isEmpty(values[16])) {
             dsf.setUri(values[16]);
         }
-        datasetFieldService.save(dsf);
-        return dsf.getName();
+        return datasetFieldService.save(dsf);
     }
 
     private String parseControlledVocabulary(String[] values) {
@@ -895,7 +895,7 @@ public class ArpApi extends AbstractApiBean {
     //endregion
 
     // This function is copied from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi but modified to process String lists
-    public void loadDatasetFields(List<String> lines, String templateName) throws Exception {
+    public void loadDatasetFields(List<String> lines, String templateName, String templateJson) throws Exception {
         ActionLogRecord alr = new ActionLogRecord(ActionLogRecord.ActionType.Admin, "loadDatasetFields");
         alr.setInfo( templateName );
         String splitBy = "\t";
@@ -903,6 +903,10 @@ public class ArpApi extends AbstractApiBean {
         DatasetFieldServiceApi.HeaderType header = null;
         JsonArrayBuilder responseArr = Json.createArrayBuilder();
         String[] values;
+        Gson gson = new Gson();
+        JsonObject cedarTemplate = gson.fromJson(templateJson, JsonObject.class);
+        var cedarFieldJsonDefs = JsonHelper.collectTemplateFields(cedarTemplate);
+        var conformsToId = cedarTemplate.get("@id").getAsString();
         try {
             for (String line : lines) {
                 if (line.equals("")) {
@@ -927,15 +931,37 @@ public class ArpApi extends AbstractApiBean {
                 } else {
                     switch (header) {
                         case METADATABLOCK:
+                            var mdb = parseMetadataBlock(values);
                             responseArr.add( Json.createObjectBuilder()
-                                    .add("name", parseMetadataBlock(values))
+                                    .add("name", mdb.getName())
                                     .add("type", "MetadataBlock"));
+                            // Add/update MetadataBlockArp values
+                            var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
+                            if (mdbArp == null) {
+                                mdbArp = new MetadataBlockArp();
+                            }
+                            mdbArp.setMetadataBlock(mdb);
+                            mdbArp.setCedarDefinition(templateJson);
+                            mdbArp.setRoCrateConformsToId(conformsToId);
+                            arpMetadataBlockServiceBean.save(mdbArp);
                             break;
 
                         case DATASETFIELD:
+                            var dsf = parseDatasetField(values);
+                            var fieldName = dsf.getName();
                             responseArr.add( Json.createObjectBuilder()
-                                    .add("name", parseDatasetField(values))
+                                    .add("name", fieldName)
                                     .add("type", "DatasetField") );
+                            // Add/update DatasetFieldTypeArp value
+                            var dsfArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(dsf);
+                            if (dsfArp == null) {
+                                dsfArp = new DatasetFieldTypeArp();
+                            }
+                            dsfArp.setCedarDefinition(cedarFieldJsonDefs.get(fieldName).toString());
+                            dsfArp.setFieldType(dsf);
+                            var override = arpMetadataBlockServiceBean.findOverrideByOriginal(dsf);
+                            dsfArp.setOverride(override);
+                            arpMetadataBlockServiceBean.save(dsfArp);
                             break;
 
                         case CONTROLLEDVOCABULARY:
