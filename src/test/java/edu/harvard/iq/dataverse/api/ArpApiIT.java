@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse.api;
 
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
@@ -35,6 +36,14 @@ public class ArpApiIT {
     @BeforeClass
     public static void setUpClass() {
         RestAssured.baseURI = UtilIT.getRestAssuredBaseUri();
+    }
+
+    public String createRandomSuperUser() {
+        Response createSuperuser = UtilIT.createRandomUser();
+        String superuserUsername = UtilIT.getUsernameFromResponse(createSuperuser);
+        String superuserApiToken = UtilIT.getApiTokenFromResponse(createSuperuser);
+        Response superuser = UtilIT.makeSuperUser(superuserUsername);
+        return superuserApiToken;
     }
 
     @Test
@@ -173,8 +182,7 @@ public class ArpApiIT {
 
     @Test
     public void generateTsv_noError() {
-        Response createUser = UtilIT.createRandomUser();
-        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+        var apiToken = createRandomSuperUser();
 
         byte[] templateContent = null;
         try {
@@ -206,25 +214,24 @@ public class ArpApiIT {
         int metadataBlockMaxId = getMaxIdFromTable("metadatablock");
         int datasetFieldTypeMaxId = getMaxIdFromTable("datasetfieldtype");
         int datasetFieldTypeOverrideMaxId = getMaxIdFromTable("datasetfieldtypeoverride");
+        int datasetFieldTypeArpMaxId = getMaxIdFromTable("datasetfieldtypearp");
+        int metadataBlockArpMaxId = getMaxIdFromTable("metadatablockarp");
         logger.info("metadataBlockIdMax " + metadataBlockMaxId);
         logger.info("datasetFieldTypeMaxId " + datasetFieldTypeMaxId);
         logger.info("datasetFieldTypeOverrideMaxId " + datasetFieldTypeOverrideMaxId);
+        logger.info("datasetFieldTypeArpMaxId " + datasetFieldTypeArpMaxId);
+        logger.info("metadataBlockArpMaxId " + metadataBlockArpMaxId);
 
-        Response createSuperuser = UtilIT.createRandomUser();
-        String superuserUsername = UtilIT.getUsernameFromResponse(createSuperuser);
-        String superuserApiToken = UtilIT.getApiTokenFromResponse(createSuperuser);
-        Response toggleSuperuser = UtilIT.makeSuperUser(superuserUsername);
-        toggleSuperuser.then().assertThat()
-                .statusCode(OK.getStatusCode());
+        var apiToken = createRandomSuperUser();
 
         byte[] mdbToOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-to-override.json"));
-        Response response = cedarToMdbWithUpload(superuserApiToken, mdbToOverride);
+        Response response = cedarToMdbWithUpload(apiToken, mdbToOverride);
         assertEquals(200, response.getStatusCode());
         response.then().assertThat().statusCode(OK.getStatusCode());
 
 //        byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override.json"));
         byte[] mdbContainingOverride = Files.readAllBytes(Paths.get("src/test/resources/arp/mdb-containing-override-and-onemore.json"));
-        Response response2 = cedarToMdbWithUpload(superuserApiToken, mdbContainingOverride);
+        Response response2 = cedarToMdbWithUpload(apiToken, mdbContainingOverride);
         assertEquals(200, response2.getStatusCode());
         response2.then().assertThat().statusCode(OK.getStatusCode());
 
@@ -261,6 +268,8 @@ public class ArpApiIT {
         connection.close();
 
         deleteTestDataFromTable(datasetFieldTypeOverrideMaxId, "datasetfieldtypeoverride", "id");
+        deleteTestDataFromTable(datasetFieldTypeArpMaxId, "datasetfieldtypearp", "id");
+        deleteTestDataFromTable(metadataBlockArpMaxId, "metadatablockarp", "id");
         deleteTestDataFromTable(datasetFieldTypeMaxId, "datasetfieldtype", "id");
         deleteTestDataFromTable(metadataBlockMaxId, "dataverse_metadatablock", "metadatablocks_id");
         deleteTestDataFromTable(metadataBlockMaxId, "metadatablock", "id");
@@ -268,8 +277,7 @@ public class ArpApiIT {
 
     @Test
     public void generateTsv_unprocessable() {
-        Response createUser = UtilIT.createRandomUser();
-        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+        String apiToken = createRandomSuperUser();
 
         byte[] templateContent = null;
         try {
@@ -406,7 +414,7 @@ public class ArpApiIT {
         return given()
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .contentType("application/json; charset=utf-8")
-                .get("/api/arp/exportMdbAsTsv/" + mdbIdtf);
+                .get("/api/arp/convertMdbToTsv/" + mdbIdtf);
     }
 
     static void checkGeneratedTsv(String mdbIdtf, String tsvName) {
@@ -427,7 +435,7 @@ public class ArpApiIT {
             assertEquals(0,1);
         }
 
-        assertEquals(tsvContent, body);
+        assertEquals(tsvContent.trim(), body.trim());
     }
 
     static Response cedarToMdbWithUpload(String apiToken, byte[] body) {
@@ -443,7 +451,7 @@ public class ArpApiIT {
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .contentType("application/json; charset=utf-8")
                 .body(body)
-                .post("/api/arp/cedarToDescribo");
+                .post("/api/arp/convertCedarTemplateToDescriboProfile");
     }
 
     // Opens the connection to the database.

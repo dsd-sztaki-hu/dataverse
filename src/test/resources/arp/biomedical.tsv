@@ -94,11 +94,11 @@
 	studyAssayMeasurementType	targeted sequencing	TARGETED_SEQ	22
 	studyAssayMeasurementType	transcription factor binding (ChIP-Seq)	OBI_0002018	23
 	studyAssayMeasurementType	transcription factor binding site identification	OBI_0000291	24
+	studyAssayMeasurementType	transcription profiling	EFO_0001032	26
 	studyAssayMeasurementType	transcription profiling (Microarray)	TRANSCRIPTION_PROF	27
 	studyAssayMeasurementType	transcription profiling (RNA-Seq)	OBI_0001271	28
 	studyAssayMeasurementType	TRAP translational profiling	TRAP_TRANS_PROF	29
 	studyAssayMeasurementType	Other	OTHER_MEASUREMENT	30
-	studyAssayMeasurementType	transcription profiling	EFO_0001032	26
 	studyAssayTechnologyType	culture based drug susceptibility testing, single concentration	CULTURE_DRUG_TEST_SINGLE	0
 	studyAssayTechnologyType	culture based drug susceptibility testing, two concentrations	CULTURE_DRUG_TEST_TWO	1
 	studyAssayTechnologyType	culture based drug susceptibility testing, three or more concentrations (minimium inhibitory concentration measurement)	CULTURE_DRUG_TEST_THREE	2

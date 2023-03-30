@@ -11,6 +11,7 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
@@ -89,6 +90,14 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
+    /**
+     * Checks whether a CEDAR template is valid for use as a Metadatablock.
+     *
+     * Requires no authentication.
+     *
+     * @param templateJson
+     * @return
+     */
     @POST
     @Path("/checkCedarTemplate")
     @Consumes("application/json")
@@ -111,17 +120,38 @@ public class ArpApi extends AbstractApiBean {
         return ok("Valid Template");
     }
 
+    /**
+     * Crates a MetadataBlock in the dataverse identified by `dvIdtf` from a CEDAR template.
+     *
+     * Requires superuser authentication.
+     *
+     * TODO: why do we have the skipUpload parameter?
+     * @param dvIdtf
+     * @param skipUpload
+     * @param templateJson
+     * @return
+     * @throws JsonProcessingException
+     */
     //TODO: remove added headers
     @POST
-    @Path("/cedarToMdb/{identifier}")
+    @Path("/cedarToMdb/{dvIdtf}") // TODO: should be importMdbFromCedar, used iin CEDAR template editor
     @Consumes("application/json")
     @Produces("text/tab-separated-values")
     public Response cedarToMdb(
-            @PathParam("identifier") String dvIdtf,
+            @PathParam("dvIdtf") String dvIdtf,
             @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
             String templateJson
     ) throws JsonProcessingException
     {
+        try {
+            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
@@ -171,46 +201,65 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(mdbTsv).header("Access-Control-Allow-Origin", "*").build();
     }
 
+    /**
+     * Returns a MetadatabLock in TSV format.
+     *
+     * Requires no authentication.
+     *
+     * @param mdbIdtf
+     * @return
+     */
     @GET
-    @Path("/exportMdbAsTsv/{identifier}")
+    @Path("/convertMdbToTsv/{identifier}")
     @Produces("text/tab-separated-values")
-    public Response exportMdbAsTsv(@PathParam("identifier") String mdbIdtf)
+    public Response convertMdbToTsv(@PathParam("identifier") String mdbIdtf)
     {
         String mdbTsv;
 
         try {
-            findAuthenticatedUserOrDie();
             mdbTsv = arpService.exportMdbAsTsv(mdbIdtf);
         } catch (JsonProcessingException e) {
             return Response.serverError().entity(e.getMessage()).build();
-        } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
-            return error(FORBIDDEN, "Authorized users only.");
         }
 
         return Response.ok(mdbTsv).build();
     }
 
+    /**
+     * Exports a MetadataBlock to CEDAR.
+     *
+     * Requires superuser authentication
+     *
+     * @param mdbIdtf
+     * @param cedarParams
+     * @return
+     */
     @POST
-    @Path("/exportTsvToCedar/{identifier}")
+    @Path("/exportMdbToCedar/{mdbIdtf}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response exportTsvToCedar(@PathParam("identifier") String mdbIdtf, String cedarParams)
+    public Response exportMdbToCedar(@PathParam("mdbIdtf") String mdbIdtf, ExportToCedarParams cedarParams)
     {
         try {
-            findAuthenticatedUserOrDie();
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode params = mapper.readTree(cedarParams).get("cedarParams");
-            String cedarDomain;
+            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
 
-            if (params.has("cedarDomain")) {
-                cedarDomain = params.get("cedarDomain").textValue();
-            } else {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String cedarDomain = cedarParams.cedarDomain;
+
+            if (cedarDomain == null || cedarDomain.isBlank()){
                 cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
             }
+            cedarParams.cedarDomain = cedarDomain;
 
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
-            arpService.exportTemplateToCedar(cedarTemplate, params, cedarDomain);
+            arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
@@ -221,48 +270,68 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok().build();
     }
 
+    /**
+     * Converts a MetadataBlock TSV to a CEDAR template and returns it.
+     *
+     * Requires no authentication.
+     *
+     * @param mdbTsv
+     * @return
+     */
     @GET
-    @Path("/tsvToCedarTemplate/")
+    @Path("/convertTsvToCedarTemplate")
     @Consumes("text/tab-separated-values")
     @Produces("application/json")
-    public Response tsvToCedarTemplate(String mdbTsv)
+    public Response convertTsvToCedarTemplate(String mdbTsv)
     {
         String cedarTemplate;
 
         try {
-            findAuthenticatedUserOrDie();
             cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).getAsString();
         } catch (JsonProcessingException e) {
             return Response.serverError().entity(e.getMessage()).build();
-        } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
-            return error(FORBIDDEN, "Authorized users only.");
         }
 
         return Response.ok(cedarTemplate).build();
     }
 
+    /**
+     * Exports a MetadataBlock given as TSV to CEDAR.
+     *
+     * cedarData
+     * @param cedarDataAndTsv
+     * @return
+     */
     @POST
-    @Path("/tsvToCedar/")
+    @Path("/exportTsvToCedar/")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response tsvToCedar(String cedarData)
+    public Response exportTsvToCedar(ExportTsvToCedarData cedarDataAndTsv)
     {
         try {
-            findAuthenticatedUserOrDie();
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode params = mapper.readTree(cedarData).get("cedarParams");
-            String cedarTsv = mapper.readTree(cedarData).get("cedarTsv").textValue();
-            String cedarDomain;
+            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
 
-            if (params.has("cedarDomain")) {
-                cedarDomain = params.get("cedarDomain").textValue();
-            } else {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ExportToCedarParams cedarParams = cedarDataAndTsv.cedarParams;
+            String cedarTsv = cedarDataAndTsv.cedarTsv;
+
+            String cedarDomain = cedarParams.cedarDomain;
+
+            if (cedarDomain == null || cedarDomain.isBlank()){
                 cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
             }
+            cedarParams.cedarDomain = cedarDomain;
+
 
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
-            arpService.exportTemplateToCedar(cedarTemplate, params, cedarDomain);
+            arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
@@ -273,11 +342,19 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok().build();
     }
 
+    /**
+     * Converts a CEDAR template to a Describo profile and returns it.
+     *
+     * Requires no authentication.
+     *
+     * @param templateJson
+     * @return
+     */
     @POST
-    @Path("/cedarToDescribo")
+    @Path("/convertCedarTemplateToDescriboProfile")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response cedarToDescribo(String templateJson) {
+    public Response convertCedarTemplateToDescriboProfile(String templateJson) {
         String describoProfile;
 
         try {
@@ -293,20 +370,24 @@ public class ArpApi extends AbstractApiBean {
 
         return Response.ok(describoProfile).build();
     }
-    
+
+    /**
+     * Converts a MetadatBlock to Describo profile and returns it.
+     *
+     * Requires no authentication.
+     *
+     * @param mdbIdtf
+     * @return
+     */
     @GET
-    @Path("/mdbToDescribo/{identifier}")
+    @Path("/convertMdbToDescriboProfile/{mdbIdtf}")
     @Produces("application/json")
-    public Response mdbToDescribo(@PathParam("identifier") String mdbIdtf) {
+    public Response convertMdbToDescriboProfile(@PathParam("mdbIdtf") String mdbIdtf) {
         String describoProfile;
         
         try {
-            findAuthenticatedUserOrDie();
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
             describoProfile = convertTemplate(templateJson, "describo", new HashSet<>());
-        } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
-            return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -314,13 +395,20 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(describoProfile).build();
     }
 
+    /**
+     * Converts a number of MetadataBlock to a merged Describo profile where each MDB is represented
+     * as a layout group of the profile.
+     *
+     * Requires no authentication.
+     *
+     * @param identifiers
+     * @return
+     */
     @GET
-    @Path("/mdbsToDescribo/{identifiers}")
+    @Path("/convertMdbsToDescriboProfile/{identifiers}")
     @Produces("application/json")
-    public Response mdbsToDescribo(@PathParam("identifiers") String identifiers) {
+    public Response convertMdbsToDescriboProfile(@PathParam("identifiers") String identifiers) {
         try {
-            findAuthenticatedUserOrDie();
-
             // ids separated by commas
             var ids = identifiers.split(",\\s*");
             JsonObject mergedProfile = null;
@@ -388,9 +476,6 @@ public class ArpApi extends AbstractApiBean {
             }
 
             return Response.ok(gson.toJson(mergedProfile)).build();
-        } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
-            return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
@@ -417,10 +502,17 @@ public class ArpApi extends AbstractApiBean {
         return conversionResult;
     }
 
+    /**
+     * Updates MDB from an uploaded TSV file.
+     *
+     * @param dvIdtf
+     * @param file
+     * @return
+     */
     @POST
     @Consumes("text/tab-separated-values")
-    @Path("updateMdb/{identifier}")
-    public Response updateMdb(@PathParam("identifier") String dvIdtf, File file) {
+    @Path("/updateMdb/{dvIdtf}")
+    public Response updateMdb(@PathParam("dvIdtf") String dvIdtf, File file) {
         String metadataBlockName;
 
         try {

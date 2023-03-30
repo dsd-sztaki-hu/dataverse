@@ -230,7 +230,7 @@ public class ArpCedarIT {
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
                 .body(body)
                 .contentType("application/json; charset=utf-8")
-                .post("/api/arp/exportTsvToCedar/" + mdbIdtf);
+                .post("/api/arp/exportMdbToCedar/" + mdbIdtf);
     }
 
     private static JsonArray listFolderContent(HttpClient client, String folderId, String apiKey, String cedarDomain) {

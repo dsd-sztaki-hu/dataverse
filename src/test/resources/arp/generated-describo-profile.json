@@ -1,21 +1,9 @@
 {
   "metadata": {
-    "name": "Cedar to Describo generated profile",
+    "name": "arp_test",
     "version": 1.0,
-    "description": "Generated Describo schema from a Cedar template",
+    "description": "",
     "warnMissingProperty": true
-  },
-  "layouts": {
-    "Dataset": [
-      {
-        "name": "creatorName_test",
-        "description": "",
-        "inputs": [
-          "firstName_test",
-          "lastName_test"
-        ]
-      }
-    ]
   },
   "classes": {
     "Dataset": {
@@ -135,6 +123,23 @@
           "multiple": false
         },
         {
+          "id": "https://schema.metadatacenter.orgx/properties/ffda9a22-0413-4bb5-94f4-0ec541138b42",
+          "name": "creatorName_test",
+          "label": "Creator Name_test",
+          "help": "",
+          "type": [
+            "creatorName_test"
+          ],
+          "required": false,
+          "multiple": false
+        }
+      ]
+    },
+    "creatorName_test": {
+      "definition": "override",
+      "subClassOf": [],
+      "inputs": [
+        {
           "id": "http://www.w3.org/2006/vcard/ns#givenName",
           "name": "firstName_test",
           "label": "Creator First Name_test",
@@ -160,6 +165,7 @@
     }
   },
   "enabledClasses": [
+    "creatorName_test",
     "Dataset"
   ]
 }
