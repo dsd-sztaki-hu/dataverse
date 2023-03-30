@@ -5,9 +5,7 @@ import com.google.gson.reflect.TypeToken;
 
 import javax.json.Json;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class JsonHelper {
     /**
@@ -59,4 +57,40 @@ public class JsonHelper {
 
         return jsonElement == null || jsonElement.isJsonNull() ? null : jsonElement.getAsJsonObject();
     }
+
+    /**
+     * Collect fields of a CEDAR template recursively, ie. it also collects fields inside CEDAR Elements as well,
+     * assuming all field names are distinct at any level
+     *
+     * @param cedarTemplate
+     * @return
+     */
+    public static Map<String, JsonElement> collectTemplateFields(JsonObject cedarTemplate) {
+        Map<String, JsonElement> fields = new HashMap<>();
+        collectFields(cedarTemplate.get("properties"), "", fields);
+        return fields;
+    }
+
+    private static void collectFields(JsonElement json, String fieldName, Map<String, JsonElement> fields) {
+        if (json.isJsonObject()) {
+            JsonObject jsonObject = json.getAsJsonObject();
+
+            if (jsonObject.has("_ui") ||
+                    (jsonObject.has("type") && jsonObject.get("type").toString().equals("\"array\"")
+                            && jsonObject.getAsJsonObject("items").has("_ui"))
+            ) {
+                fields.put(fieldName, jsonObject);
+            }
+
+            for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
+                String key = entry.getKey();
+                JsonElement value = entry.getValue();
+
+                if (value.isJsonObject()) {
+                    collectFields(value, key, fields);
+                }
+            }
+        }
+    }
+
 }

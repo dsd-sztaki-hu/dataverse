@@ -12,6 +12,8 @@ import java.util.MissingResourceException;
  * Maps to datasetfieldtypeoverride
  */
 @NamedQueries({
+        @NamedQuery(name = "DatasetFieldTypeOverride.findOneOverrideByOriginal",
+                query = "SELECT o FROM DatasetFieldTypeOverride o WHERE o.original=:original ORDER BY o.id"),
         @NamedQuery(name = "DatasetFieldTypeOverride.findOverrides",
                 query = "SELECT o FROM DatasetFieldTypeOverride o WHERE o.metadataBlock=:metadataBlock ORDER BY o.id")
 })

@@ -10,6 +10,7 @@ import com.google.gson.*;
 import edu.harvard.iq.dataverse.ControlledVocabularyValueServiceBean;
 import edu.harvard.iq.dataverse.MetadataBlock;
 import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.api.arp.ArpApi;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
@@ -206,26 +207,25 @@ public class ArpServiceBean implements java.io.Serializable {
         return new ObjectMapper().readTree(createFolderResponse.body()).get("@id").textValue();
     }
 
-    public void exportTemplateToCedar(JsonNode cedarTemplate, JsonNode cedarParams, String cedarDomain) throws Exception {
+    public void exportTemplateToCedar(JsonNode cedarTemplate, ExportToCedarParams cedarParams) throws Exception {
         //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
         // HttpClient client = HttpClient.newHttpClient();
         HttpClient client = getUnsafeHttpClient();
         String templateName = cedarTemplate.get("schema:name").textValue();
-        String parentFolderId = cedarParams.get("folderId").textValue();
-        String apiKey = cedarParams.get("apiKey").textValue();
-        if (cedarParams.has("cedarDomain")) {
-            cedarDomain = cedarParams.get("cedarDomain").textValue();
-        }
+        String parentFolderId = cedarParams.folderId;
+        String apiKey = cedarParams.apiKey;
+        String cedarDomain = cedarParams.cedarDomain;
         String templateFolderId = checkOrCreateFolder(parentFolderId, templateName, apiKey, cedarDomain, client);
-        uploadTemplate(cedarTemplate, cedarParams, templateFolderId, cedarDomain, client);
+        uploadTemplate(cedarTemplate, cedarParams, templateFolderId, client);
     }
 
-    private void uploadTemplate(JsonNode cedarTemplate, JsonNode cedarParams, String templateFolderId, String cedarDomain, HttpClient client) throws Exception {
+    private void uploadTemplate(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
         String encodedFolderId = URLEncoder.encode(templateFolderId, StandardCharsets.UTF_8);
+        String cedarDomain = cedarParams.cedarDomain;
         String url = "https://resource." + cedarDomain + "/templates?folder_id=" + encodedFolderId;
 
         // Update the template with the uploaded elements, to have their real @id
-        List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, cedarDomain, client);
+        List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
         elements.forEach(element -> {
             ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
             ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
@@ -236,7 +236,7 @@ public class ArpServiceBean implements java.io.Serializable {
             }
         });
         
-        String apiKey = cedarParams.get("apiKey").textValue();
+        String apiKey = cedarParams.apiKey;
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(new URI(url))
                 .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
@@ -249,9 +249,10 @@ public class ArpServiceBean implements java.io.Serializable {
         }
     }
 
-    private List<JsonNode> exportElements(JsonNode cedarTemplate, JsonNode cedarParams, String templateFolderId, String cedarDomain, HttpClient client) throws Exception {
+    private List<JsonNode> exportElements(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        String apiKey = cedarParams.get("apiKey").textValue();
+        String apiKey = cedarParams.apiKey;
+        String cedarDomain = cedarParams.cedarDomain;
         String elementsFolderId = checkOrCreateFolder(templateFolderId, "elements", apiKey, cedarDomain, client);
         String encodedFolderId = URLEncoder.encode(elementsFolderId, StandardCharsets.UTF_8);
         String url = "https://resource." + cedarDomain + "/template-elements?folder_id=" + encodedFolderId;
