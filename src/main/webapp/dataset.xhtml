@@ -868,10 +868,16 @@
                                    rendered="#{(!DatasetPage.workingVersion.deaccessioned or (DatasetPage.workingVersion.deaccessioned and DatasetPage.canUpdateDataset())) 
                                                and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
                                 <div class="button-block tab-header margin-bottom text-right" jsf:rendered="#{empty DatasetPage.editMode}">
-                                    <p:commandButton value="#{bundle['file.dataFilesTab.metadata.downloadRoCrate']}"
+                                    <!--<p:commandButton value="#{bundle['file.dataFilesTab.metadata.downloadRoCrate']}"
                                                      action="#{DatasetPage.downloadRoCrate()}"
                                                      ajax="false"
-                                    />
+                                    />-->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
+                                                   rendered="#{!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView)}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                    </p:commandLink>
                                     <h:outputLink
                                             styleClass="btn btn-default btn-access" value="#{DatasetPage.describoAddress}/dataset/#{DatasetPage.uriEncodedPersistentId}?apiKey=#{DatasetPage.currentUserApiKey}"
                                             rendered="#{!widgetWrapper.widgetView
@@ -881,13 +887,6 @@
                                             target="_blank">
                                         Open AROMA
                                     </h:outputLink>
-
-                                    <!--<p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
-                                                   rendered="#{!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView)}">
-                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
-                                    </p:commandLink>-->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.edit('METADATA')}" update="@form,:messagePanel"
                                                    disabled="#{DatasetPage.lockedFromEdits or !DatasetPage.hasValidTermsOfAccess}"
                                                    rendered="#{!widgetWrapper.widgetView
