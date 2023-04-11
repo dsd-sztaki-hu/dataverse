@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.DataFile.ChecksumType;
@@ -40,13 +41,11 @@ import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.FileUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.harvard.iq.dataverse.util.SystemConfig;
-import edu.harvard.iq.dataverse.util.URLTokenUtil;
 import edu.harvard.iq.dataverse.util.WebloaderUtil;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.EjbUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
-import static edu.harvard.iq.dataverse.api.arp.RoCrateManager.createRoCrate;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 
 import java.io.*;
@@ -129,6 +128,8 @@ public class EditDatafilesPage implements java.io.Serializable {
     DataverseLinkingServiceBean dvLinkingService;
     @EJB
     IndexServiceBean indexService;
+    @EJB
+    RoCrateManager roCrateManager;
     @Inject
     DataverseRequestServiceBean dvRequestService;
     @Inject
@@ -1224,7 +1225,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
             try {
-                createRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
             } catch (Exception e) {
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
             }

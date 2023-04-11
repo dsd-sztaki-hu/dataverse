@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -57,7 +58,6 @@ import static edu.harvard.iq.dataverse.util.StringUtil.isEmpty;
 
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
-import edu.harvard.iq.dataverse.util.URLTokenUtil;
 import edu.harvard.iq.dataverse.util.WebloaderUtil;
 import edu.harvard.iq.dataverse.validation.URLValidator;
 import edu.harvard.iq.dataverse.workflows.WorkflowComment;
@@ -150,9 +150,7 @@ import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
-import static edu.harvard.iq.dataverse.api.arp.RoCrateManager.createRoCrate;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 
 /**
@@ -230,6 +228,8 @@ public class DatasetPage implements java.io.Serializable {
     ExternalToolServiceBean externalToolService;
     @EJB
     SolrClientService solrClientService;
+    @EJB
+    RoCrateManager roCrateManager;
     @Inject
     RoCrateUploadServiceBean roCrateUploadService;
     @Inject
@@ -3823,7 +3823,7 @@ public class DatasetPage implements java.io.Serializable {
         }
 
         try {
-            createRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
         } catch (Exception e) {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
@@ -6181,7 +6181,7 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public void downloadRoCrate() throws IOException {
-        String json = Files.readString(Paths.get(RoCrateManager.getRoCratePath(dataset)));
+        String json = Files.readString(Paths.get(roCrateManager.getRoCratePath(dataset)));
 
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();

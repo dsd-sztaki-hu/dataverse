@@ -2,8 +2,10 @@ package edu.harvard.iq.dataverse.api.arp;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
@@ -18,6 +20,7 @@ import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
+import edu.kit.datamanager.ro_crate.RoCrate;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ejb.EJB;
@@ -44,6 +47,7 @@ import java.util.stream.Collectors;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 @Path("arp")
@@ -78,6 +82,9 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     ArpServiceBean arpService;
+    
+    @EJB
+    RoCrateManager roCrateManager;
 
     static {
         try (InputStream input = ArpApi.class.getClassLoader().getResourceAsStream("config.properties")) {
@@ -538,9 +545,9 @@ public class ArpApi extends AbstractApiBean {
             findAuthenticatedUserOrDie();
             Dataset dataset = datasetService.findByGlobalId(persistentId);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String roCratePath = RoCrateManager.getRoCratePath(dataset);
+            String roCratePath = roCrateManager.getRoCratePath(dataset);
             if (!Files.exists(Paths.get(roCratePath))) {
-                RoCrateManager.createRoCrate(dataset);
+                roCrateManager.createOrUpdateRoCrate(dataset);
             }
             BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
             roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
@@ -560,15 +567,16 @@ public class ArpApi extends AbstractApiBean {
     @Path("/updateRoCrate/{persistentId : .+}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) {
+    public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) throws JsonProcessingException {
         Map<String, DatasetFieldType> datasetFieldTypeMap;
         Dataset dataset;
         try {
             findAuthenticatedUserOrDie();
+            // TODO: collect only from mdbs in conformsTo
             datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
             dataset = datasetService.findByGlobalId(persistentId);
-            try (FileWriter writer = new FileWriter(RoCrateManager.getRoCratePath(dataset))) {
-                writer.write(RoCrateManager.preProcessRoCrateFromAroma(roCrateJson));
+            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
+                writer.write(roCrateManager.preProcessRoCrateFromAroma(roCrateJson));
             }
         } catch (IOException e) {
             return Response.serverError().entity(e.getMessage()).build();
@@ -577,7 +585,7 @@ public class ArpApi extends AbstractApiBean {
             return error(FORBIDDEN, "Authorized users only.");
         }
 
-        String importFormat = RoCrateManager.importRoCrate(dataset, datasetFieldTypeMap);
+        String importFormat = roCrateManager.importRoCrate(dataset, datasetFieldTypeMap);
 
         //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
         try ( StringReader rdr = new StringReader(importFormat) ) {
@@ -622,6 +630,12 @@ public class ArpApi extends AbstractApiBean {
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
             }
 
+            ObjectMapper mapper = (new ObjectMapper()).enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED).enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS);
+            RoCrate postProcessedRoCrate = roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset());
+            String postProcessedRoCrateString = mapper.readTree(postProcessedRoCrate.getJsonMetadata()).toPrettyString();
+            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
+                writer.write(postProcessedRoCrateString);
+            }
             return ok( json(managedVersion) );
 
         } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
@@ -630,7 +644,9 @@ public class ArpApi extends AbstractApiBean {
 
         } catch (WrappedResponse ex) {
             return ex.getResponse();
-
+        } catch (IOException ex) {
+            logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
+            return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
         }
         //endregion
     }
