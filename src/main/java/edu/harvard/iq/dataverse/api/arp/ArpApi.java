@@ -573,7 +573,6 @@ public class ArpApi extends AbstractApiBean {
         try {
             findAuthenticatedUserOrDie();
             // TODO: collect only from mdbs in conformsTo
-            datasetFieldTypeMap = fieldService.findAllOrderedById().stream().collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
             dataset = datasetService.findByGlobalId(persistentId);
             try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
                 writer.write(roCrateManager.preProcessRoCrateFromAroma(roCrateJson));
@@ -585,7 +584,7 @@ public class ArpApi extends AbstractApiBean {
             return error(FORBIDDEN, "Authorized users only.");
         }
 
-        String importFormat = roCrateManager.importRoCrate(dataset, datasetFieldTypeMap);
+        String importFormat = roCrateManager.importRoCrate(dataset);
 
         //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
         try ( StringReader rdr = new StringReader(importFormat) ) {

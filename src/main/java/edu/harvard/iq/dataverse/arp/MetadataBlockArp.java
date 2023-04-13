@@ -13,6 +13,8 @@ import java.io.Serializable;
         // This should give a single result
         @NamedQuery(name = "MetadataBlockArp.findOneForMetadataBlock",
                 query = "SELECT o FROM MetadataBlockArp o WHERE o.metadataBlock=:metadataBlock ORDER BY o.id"),
+        @NamedQuery(name = "MetadataBlockArp.findByRoCrateConformsToId", 
+                query = "SELECT mdbArp FROM MetadataBlockArp mdbArp WHERE mdbArp.roCrateConformsToId=:roCrateConformsToId")
 })
 @Entity
 @Table(indexes = {@Index(columnList="field_type_id")})
