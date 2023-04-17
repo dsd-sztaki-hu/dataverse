@@ -1,0 +1,27 @@
+<ui:composition xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:c="http://java.sun.com/jsp/jstl/core"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:jsf="http://xmlns.jcp.org/jsf">
+    <!-- Dialog Contact Form -->
+    <p:dialog id="downloadRoCrate" header="#{bundle['arp.dataset.roCrate.too.big']}" widgetVar="downloadRoCrate" modal="true">
+        <p:fragment>
+            <h:form id="downloadRoCrateForm">
+                <h:outputFormat value="#{bundle['arp.dataset.roCrate.too.big.simple']}" escape="false">
+                    <f:param value="#{bundle['arp.rocrate.metadata.name']}"/>
+                </h:outputFormat>
+                <!-- Download | cancel buttons -->
+                <div class="button-block">
+                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
+                                   update="@form" onclick="PF('downloadRoCrate').hide()">
+                        #{bundle.ok}
+                    </p:commandLink>
+                    <button class="btn btn-link" onclick="PF('downloadRoCrate').hide()" type="button">
+                        #{bundle.cancel}
+                    </button>
+                </div>
+            </h:form>
+        </p:fragment>
+    </p:dialog>
+</ui:composition>

@@ -3194,6 +3194,19 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
+    public void startRoCrateZipDownload() {
+        this.setSelectedFiles(workingVersion.getFileMetadatas());
+        boolean validate = validateFilesForDownload(false, false);
+        if (validate) {
+            updateGuestbookResponse(false, false);
+            if(!getValidateFilesOutcome().equals("Mixed")){
+                var dataset = guestbookResponse.getDataset();
+                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId);
+            }
+        }
+    }
+
     //A string that is used to determine step(s) taken after files are requested for download
     /*
     Values of "Pass"; "FailSize"; "FailEmpty"; "FailRestricted"; "Mixed"; "GuestbookRequired"
