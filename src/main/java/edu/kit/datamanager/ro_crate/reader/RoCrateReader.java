@@ -119,41 +119,48 @@ public class RoCrateReader {
         for (int i = 0; i < graph.size(); i++) {
             JsonNode node = graph.get(i);
             JsonNode type = node.get("conformsTo");
-            System.out.println("Buuuuuuuuuuu-t vedd ki!");
             if (type != null) {
-                String uri = type.get("@id").asText();
-                if (uri.startsWith("https://w3id.org/ro/crate/")) {
-                    crate.setJsonDescriptor(
-                            new ContextualEntity.ContextualEntityBuilder().setAll(node.deepCopy()).build());
-                    graphCopy.remove(i);
-                    String id = node.get("about").get("@id").asText();
-                    for (int j = 0; j < graphCopy.size(); j++) {
-                        ObjectNode secondIteration = graphCopy.get(j).deepCopy();
-                        if (secondIteration.get("@id").asText().equals(id)) {
-                            // root data entity
-                            JsonNode hasPartNode = secondIteration.get("hasPart");
-                            Set<String> hasPartSet = new HashSet<>();
-                            if (hasPartNode != null) {
-                                if (hasPartNode.isArray()) {
-                                    for (var e : hasPartNode) {
-                                        hasPartSet.add(e.get("@id").asText());
+                if (!type.isArray()) {
+                    String uri = type.get("@id").asText();
+                    if (uri.startsWith("https://w3id.org/ro/crate/")) {
+                        crate.setJsonDescriptor(
+                                new ContextualEntity.ContextualEntityBuilder().setAll(node.deepCopy()).build());
+                        graphCopy.remove(i);
+                        String id = node.get("about").get("@id").asText();
+                        for (int j = 0; j < graphCopy.size(); j++) {
+                            ObjectNode secondIteration = graphCopy.get(j).deepCopy();
+                            if (secondIteration.get("@id").asText().equals(id)) {
+                                // root data entity
+                                JsonNode hasPartNode = secondIteration.get("hasPart");
+                                Set<String> hasPartSet = new HashSet<>();
+                                if (hasPartNode != null) {
+                                    if (hasPartNode.isArray()) {
+                                        for (var e : hasPartNode) {
+                                            hasPartSet.add(e.get("@id").asText());
+                                        }
+                                    } else if (hasPartNode.isObject()) {
+                                        hasPartSet.add(hasPartNode.get("@id").asText());
                                     }
-                                } else if (hasPartNode.isObject()) {
-                                    hasPartSet.add(hasPartNode.get("@id").asText());
                                 }
+                                secondIteration.remove("hasPart");
+                                crate.setRootDataEntity(
+                                        new RootDataEntity.RootDataEntityBuilder()
+                                                .setAll(secondIteration.deepCopy())
+                                                .setHasPart(hasPartSet)
+                                                .build()
+                                );
+                                graphCopy.remove(j);
+                                break;
                             }
-                            secondIteration.remove("hasPart");
-                            crate.setRootDataEntity(
-                                    new RootDataEntity.RootDataEntityBuilder()
-                                            .setAll(secondIteration.deepCopy())
-                                            .setHasPart(hasPartSet)
-                                            .build()
-                            );
-                            graphCopy.remove(j);
-                            break;
                         }
                     }
-                }
+                } /* 
+                else {
+                    We do not add values to the conformsTo property in the node with @type: "CreativeWork", so for now
+                    we can ignore arrays, since those can only be a part of nodes with @type: "Dataset".
+                    Also, the function should probably need to find the "CreativeWork" node in some other way, instead of
+                    checking the conformsTo values.
+                }*/
             }
         }
         return graphCopy;
