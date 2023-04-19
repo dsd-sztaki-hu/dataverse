@@ -59,7 +59,19 @@ public class RoCrateUploadServiceBean implements Serializable {
         ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
         Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
-        JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> node.get("@type").textValue().equals("Dataset")).findFirst().get();
+        JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> {
+            var typeNode = node.get("@type");
+            if (typeNode instanceof ArrayNode) {
+                for (int i = 0; i < typeNode.size(); i++) {
+                    var t = typeNode.get(i);
+                    if (t.textValue().equals("Dataset")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return typeNode.textValue().equals("Dataset");
+        }).findFirst().get();
 
         // process the Dataset node, from here we can get the primitive values
         // and the type of the compound values
