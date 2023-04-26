@@ -536,7 +536,7 @@ public class ArpApi extends AbstractApiBean {
     }
 
     @GET
-    @Path("/getRoCrate/{persistentId : .+}")
+    @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
     public Response getRoCrate(@PathParam("persistentId") String persistentId) {
         JsonObject roCrateJson;
@@ -564,7 +564,7 @@ public class ArpApi extends AbstractApiBean {
     }
 
     @POST
-    @Path("/updateRoCrate/{persistentId : .+}")
+    @Path("/rocrate/{persistentId : .+}")
     @Consumes("application/json")
     @Produces("application/json")
     public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) throws JsonProcessingException {
