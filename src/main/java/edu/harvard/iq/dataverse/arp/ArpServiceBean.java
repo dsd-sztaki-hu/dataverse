@@ -7,12 +7,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.gson.*;
-import edu.harvard.iq.dataverse.ControlledVocabularyValueServiceBean;
-import edu.harvard.iq.dataverse.MetadataBlock;
-import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
-import edu.harvard.iq.dataverse.api.arp.ArpApi;
+import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import edu.harvard.iq.dataverse.util.BundleUtil;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -22,8 +18,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -52,6 +48,23 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     ControlledVocabularyValueServiceBean controlledVocabularyValueService;
+
+    @EJB
+    ArpMetadataBlockServiceBean datasetFieldTypeOverrideService;
+
+    private static final Properties prop = new Properties();
+
+    static {
+        try (InputStream input = ArpServiceBean.class.getClassLoader().getResourceAsStream("config.properties")) {
+            if (input == null) {
+                logger.log(Level.SEVERE, "Unable to load config.properties");
+            }
+
+            prop.load(input);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
@@ -314,6 +327,71 @@ public class ArpServiceBean implements java.io.Serializable {
         return HttpClient.newBuilder()
                 .sslContext(sslContext)
                 .build();
+    }
+
+    private String getExternalVocabValuesUrl(DatasetFieldTypeArp datasetFieldTypeArp) {
+        String terminologyTemplate = System.getProperty("terminology.url.template") != null ? System.getProperty("terminology.url.template") : prop.getProperty("terminology.url.template");
+        String externalVocabUrl = null;
+        JsonObject cedarJson = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+        JsonObject externalVocabProps = cedarJson.has("items") && cedarJson.has("type") ? JsonHelper.getJsonObject(cedarJson, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarJson, "_valueConstraints.branches[0]");
+        if (externalVocabProps != null) {
+            String encodedUri = URLEncoder.encode(externalVocabProps.get("uri").getAsString(), StandardCharsets.UTF_8);
+            externalVocabUrl = String.format(terminologyTemplate, externalVocabProps.get("acronym").getAsString(), encodedUri);
+        }
+        
+        return externalVocabUrl;
+    }
+    
+    private List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
+        List<String > externalVocabStrings = new ArrayList<>();
+        //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
+        // HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = getUnsafeHttpClient();
+        HttpRequest getExternalVocabValues = HttpRequest.newBuilder()
+                .uri(new URI(externalVocabUrl))
+                .build();
+        String externalVocabValues = client.send(getExternalVocabValues, ofString()).body();
+        JsonNode externalVocabValuesCollection = new ObjectMapper().readTree(externalVocabValues).get("collection");
+        externalVocabValuesCollection.forEach(value -> {
+            externalVocabStrings.add(value.get("prefLabel").textValue());
+        });
+        
+        return externalVocabStrings;
+        
+    }
+    
+    public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) {
+        DatasetFieldTypeArp datasetFieldTypeArp = datasetFieldTypeOverrideService.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
+        try {
+            String externalVocabUrl = getExternalVocabValuesUrl(datasetFieldTypeArp);
+            int i = 0;
+            var controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
+            if (externalVocabUrl != null) {
+                for (var externalString : collectExternalVocabStrings(externalVocabUrl)) {
+                    //At this point we presume there are no duplicated values in the lists, even if there are duplicated values
+                    //only their index will be the same, but DV can handle this
+                    var controlledVocabValue = controlledVocabValues.stream().filter(cvv -> cvv.getStrValue().equals(externalString)).findFirst();
+                    ControlledVocabularyValue cvv;
+                    if (controlledVocabValue.isPresent()) {
+                        cvv = controlledVocabValue.get();
+                        cvv.setDisplayOrder(i);
+                    } else {
+                        cvv = new ControlledVocabularyValue();
+                        cvv.setStrValue(externalString);
+                        cvv.setDatasetFieldType(datasetFieldType);
+                        cvv.setDisplayOrder(i);
+                        cvv.setIdentifier("");
+                    }
+                    externalVocabValues.add(cvv);
+                    i++;
+                }
+            }
+        } catch (Exception e) {
+            logger.severe("Failed to collect external vocabulary values for " + datasetFieldTypeArp.getFieldType().getName() + ". " + e.getMessage());
+        }
+        
+        return externalVocabValues;
     }
 
 }

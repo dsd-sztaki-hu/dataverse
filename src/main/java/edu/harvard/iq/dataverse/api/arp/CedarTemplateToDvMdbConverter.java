@@ -126,6 +126,7 @@ public class CedarTemplateToDvMdbConverter {
         DataverseDatasetField dataverseDatasetField = new DataverseDatasetField();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         boolean allowCtrlVocab = Objects.equals(fieldType, "list") || Objects.equals(fieldType, "radio");
+        boolean hasExternalVocabValues = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]") != null;
 
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
@@ -137,7 +138,10 @@ public class CedarTemplateToDvMdbConverter {
         dataverseDatasetField.setDescription(Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null));
         dataverseDatasetField.setFieldType(getDataverseFieldType(templateField));
         dataverseDatasetField.setDisplayOrder(displayOrder);
-        dataverseDatasetField.setAllowControlledVocabulary(allowCtrlVocab);
+        // We need to set allowControlledVocabulary to true for datasetFieldTypes with external vocabulary values as well,
+        // to prevent the edu.harvard.iq.dataverse.DatasetField.createNewEmptyDatasetField(edu.harvard.iq.dataverse.DatasetFieldType)
+        // adding a default datasetFieldValue to the datasetField
+        dataverseDatasetField.setAllowControlledVocabulary(allowCtrlVocab || hasExternalVocabValues);
         dataverseDatasetField.setAllowmultiples(allowMultiple);
         dataverseDatasetField.setDisplayoncreate(true);
         dataverseDatasetField.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));

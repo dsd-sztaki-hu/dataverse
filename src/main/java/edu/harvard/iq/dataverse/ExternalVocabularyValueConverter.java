@@ -1,0 +1,35 @@
+
+package edu.harvard.iq.dataverse;
+
+import javax.enterprise.inject.spi.CDI;
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
+import javax.faces.convert.FacesConverter;
+import java.util.Objects;
+
+@FacesConverter("externalVocabularyValueConverter")
+public class ExternalVocabularyValueConverter implements Converter {
+
+    
+    DatasetFieldServiceBean datasetFieldSvc = CDI.current().select(DatasetFieldServiceBean.class).get();
+
+    public Object getAsObject(FacesContext facesContext, UIComponent component, String submittedValue) {
+        if (submittedValue == null || submittedValue.equals("")) {
+            return "";
+        } else {
+            var requestMap = facesContext.getExternalContext().getRequestMap();
+            var dsf = requestMap.containsKey("subdsf") ? (DatasetField) requestMap.get("subdsf") : (DatasetField) requestMap.get("dsf");
+            ControlledVocabularyValue cvv = datasetFieldSvc.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(dsf.getDatasetFieldType(), submittedValue, false);
+            return Objects.requireNonNullElseGet(cvv, () -> dsf.getDatasetFieldType().getExternalVocabularyValues().stream().filter(evv -> evv.getStrValue().equals(submittedValue)).findFirst().get());
+        }
+    }
+
+    public String getAsString(FacesContext facesContext, UIComponent component, Object value) {
+        if (value == null || value.equals("")) {
+            return "";
+        } else {
+            return ((ControlledVocabularyValue) value).getStrValue();
+        }
+    }
+}
