@@ -106,7 +106,9 @@ public class CedarTemplateToDvMdbConverter {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
-                    processTemplateField(property, displayOrder, false, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
+                    JsonObject valueConstraints = property.getAsJsonObject("_valueConstraints");
+                    boolean allowMultiple = valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean();
+                    processTemplateField(property, displayOrder, allowMultiple, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, false, parentName, overridePropNames);
                 }
