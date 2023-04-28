@@ -51,20 +51,10 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     ArpMetadataBlockServiceBean datasetFieldTypeOverrideService;
+    
+    @EJB
+    ArpConfig arpConfig;
 
-    private static final Properties prop = new Properties();
-
-    static {
-        try (InputStream input = ArpServiceBean.class.getClassLoader().getResourceAsStream("config.properties")) {
-            if (input == null) {
-                logger.log(Level.SEVERE, "Unable to load config.properties");
-            }
-
-            prop.load(input);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
 
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
@@ -330,7 +320,7 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
     private String getExternalVocabValuesUrl(DatasetFieldTypeArp datasetFieldTypeArp) {
-        String terminologyTemplate = System.getProperty("terminology.url.template") != null ? System.getProperty("terminology.url.template") : prop.getProperty("terminology.url.template");
+        String terminologyTemplate = System.getProperty("terminology.url.template") != null ? System.getProperty("terminology.url.template") : arpConfig.get("terminology.url.template");
         String externalVocabUrl = null;
         JsonObject cedarJson = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
         JsonObject externalVocabProps = cedarJson.has("items") && cedarJson.has("type") ? JsonHelper.getJsonObject(cedarJson, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarJson, "_valueConstraints.branches[0]");
