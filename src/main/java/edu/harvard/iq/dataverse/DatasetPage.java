@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -232,6 +233,8 @@ public class DatasetPage implements java.io.Serializable {
     RoCrateManager roCrateManager;
     @Inject
     RoCrateUploadServiceBean roCrateUploadService;
+    @EJB
+    ArpConfig arpConfig;
     @Inject
     DataverseRequestServiceBean dvRequestService;
     @Inject
@@ -259,29 +262,7 @@ public class DatasetPage implements java.io.Serializable {
     @Inject
     GlobusServiceBean globusService;
 
-    private static final Properties prop = new Properties();
-
-    static {
-        try (InputStream input = DatasetPage.class.getClassLoader().getResourceAsStream("config.properties")) {
-            if (input == null) {
-                logger.log(Level.SEVERE, "Unable to load config.properties");
-            }
-
-            prop.load(input);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private String dvAddress = "";
-
-    private String dvApiKey = "";
-
-    private String dvRoot = "";
-
-    private String describoAddress = "";
-
-    private String describoSecret = "";
+    private String aromaAddress = "";
 
     private Dataset dataset = new Dataset();
 
@@ -1575,44 +1556,12 @@ public class DatasetPage implements java.io.Serializable {
         this.dropBoxSelection = dropBoxSelection;
     }
 
-    public String getDvAddress() {
-        return dvAddress;
+    public String getAromaAddress() {
+        return aromaAddress;
     }
 
-    public String getDvApiKey() {
-        return dvApiKey;
-    }
-
-    public String getDvRoot() {
-        return dvRoot;
-    }
-
-    public void setDvAddress(String dvAddress) {
-        this.dvAddress = dvAddress;
-    }
-
-    public void setDvApiKey(String dvApiKey) {
-        this.dvApiKey = dvApiKey;
-    }
-
-    public void setDvRoot(String dvRoot) {
-        this.dvRoot = dvRoot;
-    }
-
-    public String getDescriboAddress() {
-        return describoAddress;
-    }
-
-    public void setDescriboAddress(String describoAddress) {
-        this.describoAddress = describoAddress;
-    }
-
-    public String getDescriboSecret() {
-        return describoSecret;
-    }
-
-    public void setDescriboSecret(String describoSecret) {
-        this.describoSecret = describoSecret;
+    public void setAromaAddress(String aromaAddress) {
+        this.aromaAddress = aromaAddress;
     }
 
     public Dataset getDataset() {
@@ -1938,10 +1887,7 @@ public class DatasetPage implements java.io.Serializable {
         String nonNullDefaultIfKeyNotFound = "";
         protocol = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Protocol, nonNullDefaultIfKeyNotFound);
         authority = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Authority, nonNullDefaultIfKeyNotFound);
-        setDvAddress(System.getProperty("dv.address") != null ? System.getProperty("dv.address") : prop.getProperty("dv.address"));
-        setDvApiKey(System.getProperty("dv.api.key") != null ? System.getProperty("dv.api.key") : prop.getProperty("dv.api.key"));
-        setDescriboAddress(System.getProperty("describo.address") != null ? System.getProperty("describo.address") : prop.getProperty("describo.address"));
-        setDescriboSecret(System.getProperty("describo.secret") != null ? System.getProperty("describo.secret") : prop.getProperty("describo.secret"));
+        setAromaAddress(arpConfig.get("arp.aroma.address"));
         if (this.getId() != null || versionId != null || persistentId != null) { // view mode for a dataset
 
             DatasetVersionServiceBean.RetrieveDatasetVersionResponse retrieveDatasetVersionResponse = null;
@@ -3838,6 +3784,7 @@ public class DatasetPage implements java.io.Serializable {
         try {
             roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
         } catch (Exception e) {
+            e.printStackTrace();
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
 
