@@ -86,16 +86,8 @@ public class ArpApi extends AbstractApiBean {
     @EJB
     RoCrateManager roCrateManager;
 
-    static {
-        try (InputStream input = ArpApi.class.getClassLoader().getResourceAsStream("config.properties")) {
-            if (input == null) {
-                logger.log(Level.SEVERE, "ArpApi was unable to load config.properties");
-            }
-            prop.load(input);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+    @EJB
+    ArpConfig arpConfig;
 
     /**
      * Checks whether a CEDAR template is valid for use as a Metadatablock.
@@ -261,7 +253,7 @@ public class ArpApi extends AbstractApiBean {
             String cedarDomain = cedarParams.cedarDomain;
 
             if (cedarDomain == null || cedarDomain.isBlank()){
-                cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
+                cedarDomain = arpConfig.get("arp.cedar.domain");
             }
             cedarParams.cedarDomain = cedarDomain;
 
@@ -332,7 +324,7 @@ public class ArpApi extends AbstractApiBean {
             String cedarDomain = cedarParams.cedarDomain;
 
             if (cedarDomain == null || cedarDomain.isBlank()){
-                cedarDomain = System.getProperty("cedar.domain") != null ? System.getProperty("cedar.domain") : prop.getProperty("cedar.domain");
+                cedarDomain = arpConfig.get("arp.cedar.domain");
             }
             cedarParams.cedarDomain = cedarDomain;
 
@@ -653,7 +645,7 @@ public class ArpApi extends AbstractApiBean {
 
     private void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
-        String solrUpdaterAddress = System.getProperty("solr.updater.address") != null ? System.getProperty("solr.updater.address") : prop.getProperty("solr.updater.address");
+        String solrUpdaterAddress = arpConfig.get("arp.solr.updater.address");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(solrUpdaterAddress))
                 .GET()

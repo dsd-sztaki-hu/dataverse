@@ -892,7 +892,7 @@
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.describoAddress}/dataset/#{DatasetPage.uriEncodedPersistentId}?apiKey=#{DatasetPage.currentUserApiKey}"
+                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}/dataset/#{DatasetPage.uriEncodedPersistentId}?apiKey=#{DatasetPage.currentUserApiKey}"
                                             rendered="#{!widgetWrapper.widgetView
                                                                and (DatasetPage.sessionUserAuthenticated
                                                                and empty DatasetPage.editMode and !widgetWrapper.widgetView
@@ -960,14 +960,10 @@
 
                             <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
                                    rendered="#{DatasetPage.sessionUserAuthenticated and (empty DatasetPage.editMode) and DatasetPage.canUpdateDataset()}">
-                                <ui:include src="describo.xhtml">
+                                <ui:include src="aroma.xhtml">
                                     <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
-                                    <ui:param name="dvAddress" value="#{DatasetPage.dvAddress}"/>
-                                    <ui:param name="dvApiKey" value="#{DatasetPage.dvApiKey}"/>
                                     <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>
-                                    <ui:param name="dvRoot" value="#{DatasetPage.dvRoot}"/>
-                                    <ui:param name="describoAddress" value="#{DatasetPage.describoAddress}"/>
-                                    <ui:param name="describoSecret" value="#{DatasetPage.describoSecret}"/>
+                                    <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
                                 </ui:include>
                             </p:tab>
                         </p:tabView>

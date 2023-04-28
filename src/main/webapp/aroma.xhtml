@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+      xmlns:pt="http://java.sun.com/jsf/passthrough"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:o="http://omnifaces.org/ui"
+      xmlns:iqbs="http://xmlns.jcp.org/jsf/composite/iqbs">
+    <h:head>
+    </h:head>
+
+    <h:body>
+        <ui:composition>
+            <script>
+                setTimeout(() => {
+                  const persistentId = "#{persistentId}"
+                  document.getElementById('iframeId').src = "#{aromaAddress}/dataset/" + encodeURIComponent(persistentId)+"?apiKey=#{DatasetPage.currentUserApiKey}";
+                }, 10)
+            </script>
+            <div id="frame-div" class="embed-responsive embed-responsive-16by9">
+                <iframe id="iframeId" title="ARP AROMA" src=""></iframe>
+            </div>
+        </ui:composition>
+    </h:body>
+
+</html>
