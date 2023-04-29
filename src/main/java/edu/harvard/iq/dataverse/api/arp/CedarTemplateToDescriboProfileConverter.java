@@ -19,7 +19,15 @@ import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getJsonElement;
 public class CedarTemplateToDescriboProfileConverter {
     private static final Logger logger = Logger.getLogger(ArpApi.class.getCanonicalName());
 
-    public CedarTemplateToDescriboProfileConverter() {
+    private String language;
+
+    public CedarTemplateToDescriboProfileConverter()
+    {
+        this("eng");
+    }
+
+    public CedarTemplateToDescriboProfileConverter(String language) {
+        this.language = language;
     }
 
     // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file

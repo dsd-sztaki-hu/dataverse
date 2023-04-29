@@ -356,7 +356,10 @@ public class ArpApi extends AbstractApiBean {
     @Path("/convertCedarTemplateToDescriboProfile")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response convertCedarTemplateToDescriboProfile(String templateJson) {
+    public Response convertCedarTemplateToDescriboProfile(
+            @QueryParam("lang") String language,
+            String templateJson
+    ) {
         String describoProfile;
 
         try {
@@ -365,7 +368,7 @@ public class ArpApi extends AbstractApiBean {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-            describoProfile = convertTemplate(templateJson, "describo", new HashSet<>());
+            describoProfile = convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -384,12 +387,15 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/convertMdbToDescriboProfile/{mdbIdtf}")
     @Produces("application/json")
-    public Response convertMdbToDescriboProfile(@PathParam("mdbIdtf") String mdbIdtf) {
+    public Response convertMdbToDescriboProfile(
+            @PathParam("mdbIdtf") String mdbIdtf,
+            @QueryParam("lang") String language
+    ) {
         String describoProfile;
         
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
-            describoProfile = convertTemplate(templateJson, "describo", new HashSet<>());
+            describoProfile = convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -409,7 +415,10 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/convertMdbsToDescriboProfile/{identifiers}")
     @Produces("application/json")
-    public Response convertMdbsToDescriboProfile(@PathParam("identifiers") String identifiers) {
+    public Response convertMdbsToDescriboProfile(
+            @PathParam("identifiers") String identifiers,
+            @QueryParam("lang") String language
+    ) {
         try {
             // ids separated by commas
             var ids = identifiers.split(",\\s*");
@@ -423,7 +432,7 @@ public class ArpApi extends AbstractApiBean {
             for (int i=0; i<ids.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
                 String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
-                String profile = convertTemplate(templateJson, "describo", new HashSet<>());
+                String profile = convertTemplate(templateJson, "describo", language, new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 
                 if (mergedProfile == null) {
@@ -484,8 +493,12 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
+    private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception
+    {
+        return convertTemplate(cedarTemplate, outputType, "eng", overridePropNames);
+    }
 
-    private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception {
+    private String convertTemplate(String cedarTemplate, String outputType, String language, Set<String> overridePropNames) throws Exception {
         String conversionResult;
 
         try {
@@ -493,7 +506,7 @@ public class ArpApi extends AbstractApiBean {
                 CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
                 conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
             } else {
-                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter();
+                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
                 conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
             }
 

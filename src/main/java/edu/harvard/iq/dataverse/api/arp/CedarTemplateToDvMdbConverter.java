@@ -17,7 +17,15 @@ import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
 public class CedarTemplateToDvMdbConverter {
 
+    private String language;
+
     public CedarTemplateToDvMdbConverter() {
+        this("eng");
+    }
+
+    public CedarTemplateToDvMdbConverter(String language)
+    {
+        this.language = language;
     }
 
     public String processCedarTemplate(String cedarTemplate, Set<String> overridePropNames) throws IOException {
