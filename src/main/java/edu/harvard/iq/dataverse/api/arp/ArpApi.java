@@ -211,12 +211,15 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/convertMdbToTsv/{identifier}")
     @Produces("text/tab-separated-values")
-    public Response convertMdbToTsv(@PathParam("identifier") String mdbIdtf)
+    public Response convertMdbToTsv(
+            @PathParam("identifier") String mdbIdtf,
+            @QueryParam("lang") String language
+        )
     {
         String mdbTsv;
 
         try {
-            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf);
+            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf, language == null ? "eng" : language);
         } catch (JsonProcessingException e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -391,7 +394,7 @@ public class ArpApi extends AbstractApiBean {
         String describoProfile;
         
         try {
-            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
+            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf, language)).toString();
             describoProfile = convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
@@ -428,7 +431,7 @@ public class ArpApi extends AbstractApiBean {
 
             for (int i=0; i<ids.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i], language), false).toString();
                 String profile = convertTemplate(templateJson, "describo", language, new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 

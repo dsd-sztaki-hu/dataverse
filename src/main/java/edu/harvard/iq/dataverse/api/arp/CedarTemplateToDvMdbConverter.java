@@ -25,7 +25,12 @@ public class CedarTemplateToDvMdbConverter {
 
     public CedarTemplateToDvMdbConverter(String language)
     {
-        this.language = language;
+        if (language == null) {
+            this.language = "eng";
+        }
+        else {
+            this.language = language;
+        }
     }
 
     public String processCedarTemplate(String cedarTemplate, Set<String> overridePropNames) throws IOException {
