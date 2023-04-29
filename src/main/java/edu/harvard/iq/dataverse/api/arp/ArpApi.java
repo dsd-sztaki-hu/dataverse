@@ -884,18 +884,20 @@ public class ArpApi extends AbstractApiBean {
             }
 
             // Help text / tip
-            if (propertyDescriptions.has(dftName+"_hun")) {
+            if (actProp.has("hunDescription")) {
                 hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
                         dftName,
-                        propertyDescriptions.get(dftName+"_hun").getAsString()));
+                        actProp.get("hunDescription").getAsString()));
             }
             else {
+                // Note: english help text should be in schema:description, but it is not, it is in
+                // propertyDescriptions
                 hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
                         dftName,
                         propertyDescriptions.get(dftName).getAsString())+" (magyarul)");
             }
 
-            // TODO: revise how elemnts work!
+            // TODO: revise how elemnets work!
 
             if (actProp.has("@type")) {
                 propType = actProp.get("@type").getAsString();
