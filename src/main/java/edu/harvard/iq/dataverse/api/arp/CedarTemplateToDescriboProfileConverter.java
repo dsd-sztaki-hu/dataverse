@@ -27,7 +27,12 @@ public class CedarTemplateToDescriboProfileConverter {
     }
 
     public CedarTemplateToDescriboProfileConverter(String language) {
-        this.language = language;
+        if (language == null) {
+            this.language = "eng";
+        }
+        else {
+            this.language = language;
+        }
     }
 
     // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file
@@ -101,9 +106,22 @@ public class CedarTemplateToDescriboProfileConverter {
 
         describoInput.setId(inputId);
         describoInput.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
-        String label = Optional.ofNullable(templateField.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
+        String label = "";
+        if (language.equals("hun")) {
+            label = Optional.ofNullable(templateField.get("hunLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
+        }
+        else {
+            label = Optional.ofNullable(templateField.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
+        }
         describoInput.setLabel(label);
-        describoInput.setHelp(Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null));
+        String help = "";
+        if (language.equals("hun")) {
+            help = Optional.ofNullable(templateField.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
+        }
+        else {
+            help = Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null);
+        }
+        describoInput.setHelp(help);
         describoInput.setType(getDescriboType(templateField));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         describoInput.setMultiple(allowMultiple);
