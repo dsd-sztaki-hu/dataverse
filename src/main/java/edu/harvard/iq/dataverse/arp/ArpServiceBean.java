@@ -53,12 +53,7 @@ public class ArpServiceBean implements java.io.Serializable {
     @EJB
     ControlledVocabularyValueServiceBean controlledVocabularyValueService;
 
-        public String exportMdbAsTsv(String mdbId) throws JsonProcessingException
-        {
-            return exportMdbAsTsv(mdbId, "eng");
-        }
-
-        public String exportMdbAsTsv(String mdbId, String language) throws JsonProcessingException {
+    public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
 
         CsvSchema mdbSchema = CsvSchema.builder()
