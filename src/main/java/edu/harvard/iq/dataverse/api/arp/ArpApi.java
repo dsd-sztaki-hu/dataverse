@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
+import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getStringList;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
@@ -190,6 +191,8 @@ public class ArpApi extends AbstractApiBean {
                 writer.write(String.join("\n", hunTranslations));
                 writer.close();
             }
+            // Force reloading language bundles/
+            ResourceBundle.clearCache();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "CEDAR template upload failed", e);
             return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
@@ -848,16 +851,39 @@ public class ArpApi extends AbstractApiBean {
         }
 
         List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
+        JsonObject propertyDescriptions = getJsonObject(cedarTemplateJson, "_ui.propertyDescriptions");
 
         for (String prop : propNames) {
             JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
+            String dftName = getJsonElement(actProp, "schema:name").getAsString();
+
+            //Label
             if (actProp.has("hunLabel")) {
-                String dftName = getJsonElement(actProp, "schema:name").getAsString();
                 String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
                 hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunLabel));
             }
+            else{
+                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s",
+                        dftName,
+                        getJsonElement(actProp, "skos:prefLabel").getAsString())+" (magyarul)");
+            }
+
+            // Help text / tip
+            if (propertyDescriptions.has(dftName+"_hun")) {
+                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
+                        dftName,
+                        propertyDescriptions.get(dftName+"_hun").getAsString()));
+            }
+            else {
+                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
+                        dftName,
+                        propertyDescriptions.get(dftName).getAsString())+" (magyarul)");
+            }
+
+            // TODO: revise how elemnts work!
+
             if (actProp.has("@type")) {
                 propType = actProp.get("@type").getAsString();
                 propType = propType.substring(propType.lastIndexOf("/") + 1);
@@ -871,13 +897,12 @@ public class ArpApi extends AbstractApiBean {
                 }
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
+                dftName = getJsonElement(actProp, "schema:name").getAsString();
                 if (actProp.has("hunTitle") && !actProp.has("hunLabel")) {
-                    String dftName = getJsonElement(actProp, "schema:name").getAsString();
                     String hunTitle = getJsonElement(actProp, "hunTitle").getAsString();
                     hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunTitle));
                 }
                 if (actProp.has("hunDescription")) {
-                    String dftName = getJsonElement(actProp, "schema:name").getAsString();
                     String hunDescription = getJsonElement(actProp, "hunDescription").getAsString();
                     hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s", dftName, hunDescription));
                 }
