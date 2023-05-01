@@ -223,6 +223,18 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         jsonSchema.addProperty("title", dataverseMetadataBlock.getName() + jsonSchema.get("title").getAsString());
         jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + jsonSchema.get("description").getAsString());
         jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getDisplayName().isBlank() ? dataverseMetadataBlock.getName() : dataverseMetadataBlock.getDisplayName());
+        try {
+            var name = BundleUtil.getStringFromPropertyFile("metadatablock.displayName", dataverseMetadataBlock.getName(), hunLocale);
+            jsonSchema.addProperty("hunName", name);
+        }
+        catch(MissingResourceException ex) {
+            try {
+                var name = BundleUtil.getStringFromPropertyFile("metadatablock.name", dataverseMetadataBlock.getName(), hunLocale);
+                jsonSchema.addProperty("name", name);
+            } catch (MissingResourceException ex2) {
+                // ignore
+            }
+        }
         jsonSchema.addProperty("schema:identifier", dataverseMetadataBlock.getName());
         JsonHelper.getJsonElement(jsonSchema, "properties.@type.oneOf").getAsJsonArray().forEach(jsonElement -> {
             JsonObject oneOf = jsonElement.getAsJsonObject();

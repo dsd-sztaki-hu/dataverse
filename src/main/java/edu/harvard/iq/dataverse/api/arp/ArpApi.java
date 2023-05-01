@@ -857,8 +857,8 @@ public class ArpApi extends AbstractApiBean {
 
         if (parentPath.equals("/properties")) {
             hunTranslations.add("metadatablock.name = " + getJsonElement(cedarTemplateJson, "schema:name").getAsString());
-            if (cedarTemplateJson.has("hunTitle")) {
-                hunTranslations.add("metadatablock.displayName = " + getJsonElement(cedarTemplateJson, "hunTitle").getAsString());
+            if (cedarTemplateJson.has("hunName")) {
+                hunTranslations.add("metadatablock.displayName = " + getJsonElement(cedarTemplateJson, "hunName").getAsString());
             }
             if (cedarTemplateJson.has("hunDescription")) {
                 hunTranslations.add("metadatablock.description = " + getJsonElement(cedarTemplateJson, "hunDescription").getAsString());

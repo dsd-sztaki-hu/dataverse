@@ -169,7 +169,14 @@ public class CedarTemplateToDescriboProfileConverter {
     }
     
     private void processProfileMetadata(JsonObject cedarTemplate, JsonObject describoProfile) {
-        describoProfile.getAsJsonObject("metadata").addProperty("name", cedarTemplate.get("schema:name").getAsString());
+        String name = cedarTemplate.get("schema:name").getAsString();
+        if (language.equals("hun")) {
+            name = cedarTemplate.has("hunName")
+                    ? cedarTemplate.get("hunName").getAsString()
+                    : name;
+        }
+        describoProfile.getAsJsonObject("metadata").addProperty("name", name);
+        // TODO: MDB-s have no description. We have the actual cedar template in metadatablockarp, so we could use it.
         describoProfile.getAsJsonObject("metadata").addProperty("description", cedarTemplate.get("schema:description").getAsString());
         
     }
