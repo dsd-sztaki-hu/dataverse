@@ -5,6 +5,9 @@
  */
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverride;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.util.MarkupChecker;
@@ -35,6 +38,9 @@ public class DatasetVersionUI implements Serializable {
 
     @EJB
     ArpMetadataBlockServiceBean datasetFieldTypeOverrideService;
+    
+    @EJB
+    ArpServiceBean arpServiceBean;
 
     public DatasetVersionUI() {
     }
@@ -331,14 +337,25 @@ public class DatasetVersionUI implements Serializable {
 
                     if (add) {
                         cv.getChildDatasetFields().add(DatasetField.createNewEmptyChildDatasetField(dsfType, cv));
+                    } else {
+                        setExternalVocabularyValues(dsfType);
                     }
                 }
                 
                 sortDatasetFields(cv.getChildDatasetFields());
             }
         }
-
+        setExternalVocabularyValues(dsf.getDatasetFieldType());
         return dsf;
+    }
+    
+    private void setExternalVocabularyValues(DatasetFieldType datasetFieldType) {
+        if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.TEXT)) {
+            List<ControlledVocabularyValue> externalVocabValues = arpServiceBean.collectExternalVocabValues(datasetFieldType);
+            if (!externalVocabValues.isEmpty()) {
+                datasetFieldType.setExternalVocabularyValues(externalVocabValues);
+            }
+        }
     }
 
     private List<DatasetField> initDatasetFields(boolean createBlanks) {

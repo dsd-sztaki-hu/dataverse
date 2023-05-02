@@ -211,19 +211,7 @@
                     </div>
                     <div id="panelCollapse#{block.index}" class="collapse #{block.first or editMode == 'CREATE' or !cvocConf.isEmpty() ? 'in' : ''}">
                         <div class="panel-body">
-<!--                            #{metadataBlockVal.value}-->
                             <ui:repeat value="#{metadataBlockVal.value}" var="dsf" varStatus="curField">
-<!--                                BUBUBUBU-->
-<!--                                PPP#{metadataBlockVal.key}LLL-->
-<!--                                SSS#{metadataBlockVal.value}DDD-->
-<!--                                <hr/>-->
-<!--                                name: #{dsf.datasetFieldType.name}-->
-<!--                                displayOnCreate: #{dsf.datasetFieldType.displayOnCreate}-->
-<!--                                dsf.include: #{dsf.include}-->
-<!--                                dsf.datasetFieldType.include: #{dsf.datasetFieldType.include}-->
-<!--                                editMode: #{editMode}-->
-<!--                                dsf.isEmpty(): #{dsf.isEmpty()}-->
-<!--                                (!datasetPage and dsf.include): #{(!datasetPage and dsf.include)}-->
                                 <div class="form-group" role="group"
                                      jsf:rendered="#{((editMode == 'METADATA'
                                                          or dsf.datasetFieldType.displayOnCreate or !dsf.isEmpty() or dsf.required) and dsf.include)
@@ -279,7 +267,7 @@
                                                         </div>
                                                     </div>
                                                 </p:repeat>
-                                                <ui:fragment rendered="#{dsf.datasetFieldType.controlledVocabulary}">
+                                                <ui:fragment rendered="#{dsf.datasetFieldType.controlledVocabulary and !dsf.datasetFieldType.hasExternalVocabularyValues()}">
                                                     <div class="form-group dataset-field-values">
                                                         <div class="form-col-container col-sm-9 edit-field">
                                                             <p:selectOneMenu value="#{dsf.singleControlledVocabularyValue}" converter="controlledVocabularyValueConverter" style="width: auto !important; max-width:100%; min-width:200px;" styleClass="form-control primitive"
@@ -298,6 +286,29 @@
                                                                                   filter="#{(dsf.datasetFieldType.controlledVocabularyValues.size() lt 10) ? 'false':'true'}" filterMatchMode="contains" label="#{bundle.select}"  multiple="true" showHeader="#{(dsf.datasetFieldType.controlledVocabularyValues.size() lt 10) ? 'false':'true'}" 
                                                                                   id="unique2" rendered="#{dsf.datasetFieldType.allowMultiples}">
                                                                 <f:selectItems value="#{dsf.datasetFieldType.controlledVocabularyValues}" var="cvv" itemLabel="#{cvv.getLocaleStrValue(mdLangCode)}" itemValue="#{cvv}"/>
+                                                            </p:selectCheckboxMenu>
+                                                            <div class="ui-message ui-message-error ui-widget ui-corner-all" aria-live="polite" jsf:rendered="#{!empty dsf.validationMessage}">
+                                                                <span class="ui-message-error-detail">#{dsf.validationMessage}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </ui:fragment>
+                                                <ui:fragment rendered="#{dsf.datasetFieldType.hasExternalVocabularyValues()}">
+                                                    <div class="form-group dataset-field-values">
+                                                        <div class="form-col-container col-sm-9 edit-field">
+                                                            <p:selectOneMenu value="#{dsf.singleControlledVocabularyValue}" style="width: auto !important; max-width:100%; min-width:200px;" styleClass="form-control primitive" 
+                                                                             id="arpExternal1" required="#{dsf.required and datasetPage}" 
+                                                                             rendered="#{!dsf.datasetFieldType.allowMultiples}"
+                                                                             converter="externalVocabularyValueConverter"
+                                                                             filter="#{(dsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}" 
+                                                                             filterMatchMode="contains" >
+                                                                <f:selectItem itemLabel="#{bundle.select}" itemValue="" />
+                                                                <f:selectItems value="#{dsf.datasetFieldType.externalVocabularyValues}" var="evv" itemLabel="#{evv.getLocaleStrValue(mdLangCode)}" itemValue="#{evv}"/>
+                                                            </p:selectOneMenu>
+                                                            <p:selectCheckboxMenu value="#{dsf.controlledVocabularyValues}" converter="externalVocabularyValueConverter" styleClass="form-control"
+                                                                                  filter="#{(dsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}" filterMatchMode="contains" label="#{bundle.select}"  multiple="true" showHeader="#{(dsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}"
+                                                                                  id="arpExternal2" rendered="#{dsf.datasetFieldType.allowMultiples}">
+                                                                <f:selectItems value="#{dsf.datasetFieldType.externalVocabularyValues}" var="evv" itemLabel="#{evv.getLocaleStrValue(mdLangCode)}" itemValue="#{evv}"/>
                                                             </p:selectCheckboxMenu>
                                                             <div class="ui-message ui-message-error ui-widget ui-corner-all" aria-live="polite" jsf:rendered="#{!empty dsf.validationMessage}">
                                                                 <span class="ui-message-error-detail">#{dsf.validationMessage}</span>
@@ -363,7 +374,7 @@
                                                                 </ui:include>
                                                             </ui:fragment>
                                                             <!-- MOVED SELECT ONE TO dataFieldForEdit -->
-                                                            <div jsf:rendered="#{subdsf.datasetFieldType.controlledVocabulary}">
+                                                            <div jsf:rendered="#{subdsf.datasetFieldType.controlledVocabulary and !subdsf.datasetFieldType.hasExternalVocabularyValues()}">
                                                                 <p:selectOneMenu id="cvv" value="#{subdsf.singleControlledVocabularyValue}" converter="controlledVocabularyValueConverter" style="width: auto !important; max-width:100%; min-width:200px;"
                                                                                  rendered="#{!subdsf.datasetFieldType.allowMultiples}" filter="#{(subdsf.datasetFieldType.controlledVocabularyValues.size() lt 10) ? 'false':'true'}" filterMatchMode="contains" >
                                                                     <f:selectItem itemLabel="#{bundle.select}" itemValue="" noSelectionOption="true"/>
@@ -389,6 +400,22 @@
                                                                         <f:selectItems value="#{subdsf.datasetFieldType.controlledVocabularyValues}" var="cvv" itemLabel="#{cvv.localeStrValue}" itemValue="#{cvv}" />
                                                                     </p:selectCheckboxMenu>
 
+                                                                <div class="ui-message ui-message-error ui-widget ui-corner-all" aria-live="polite" jsf:rendered="#{!empty subdsf.validationMessage}">
+                                                                    <span class="ui-message-error-detail">#{subdsf.validationMessage}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div jsf:rendered="#{subdsf.datasetFieldType.hasExternalVocabularyValues()}">
+                                                                <p:selectOneMenu id="arpExternalCompound1" value="#{subdsf.singleControlledVocabularyValue}" converter="externalVocabularyValueConverter" style="width: auto !important; max-width:100%; min-width:200px;"
+                                                                                 rendered="#{!subdsf.datasetFieldType.allowMultiples}" filter="#{(subdsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}" filterMatchMode="contains" >
+                                                                    <f:selectItem itemLabel="#{bundle.select}" itemValue="" noSelectionOption="true"/>
+                                                                    <f:selectItems value="#{subdsf.datasetFieldType.externalVocabularyValues}" var="evv" itemLabel="#{evv.getLocaleStrValue(mdLangCode)}" itemValue="#{evv}" />
+                                                                </p:selectOneMenu>
+                                                                <p:selectCheckboxMenu id="arpExternalCompound2" value="#{subdsf.controlledVocabularyValues}" converter="externalVocabularyValueConverter"
+                                                                                      rendered="#{subdsf.datasetFieldType.allowMultiples}" label="#{bundle.select}" multiple="true"
+                                                                                      filter="#{(subdsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}" filterMatchMode="contains"
+                                                                                      showHeader="#{(subdsf.datasetFieldType.externalVocabularyValues.size() lt 10) ? 'false':'true'}">
+                                                                    <f:selectItems value="#{subdsf.datasetFieldType.externalVocabularyValues}" var="evv" itemLabel="#{evv.getLocaleStrValue(mdLangCode)}" itemValue="#{evv}" />
+                                                                </p:selectCheckboxMenu>
                                                                 <div class="ui-message ui-message-error ui-widget ui-corner-all" aria-live="polite" jsf:rendered="#{!empty subdsf.validationMessage}">
                                                                     <span class="ui-message-error-detail">#{subdsf.validationMessage}</span>
                                                                 </div>
