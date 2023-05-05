@@ -512,7 +512,7 @@ public class ArpApi extends AbstractApiBean {
                 CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
                 conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
             } else {
-                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
+                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language, arpService);
                 conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
             }
 

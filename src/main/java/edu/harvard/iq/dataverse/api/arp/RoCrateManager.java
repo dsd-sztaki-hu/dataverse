@@ -7,8 +7,14 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.api.arp.util.JsonUtils;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
+import edu.harvard.iq.dataverse.arp.MetadataBlockArp;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -23,7 +29,6 @@ import org.json.JSONObject;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Named;
-import javax.json.JsonObject;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -437,7 +442,28 @@ public class RoCrateManager {
                     processCompoundField(importFormatMetadataBlocks, field.getValue(), datasetFieldType, datasetFieldTypeMap, contextualEntityHashMap, mapper);
                 } else {
                     ArrayNode container = importFormatMetadataBlocks.get(metadataBlock.getName()).withArray("fields");
+                    boolean ontoPortalBasedVocab = false;
                     if (datasetFieldType.isAllowControlledVocabulary()) {
+                        // TODO: this needs to be revised. Dataverse creates controlledvocabularyvalue values for
+                        // our fake controlled vocab based fields.
+                        // ALSO: datasetfieldtype has allowcontrolledvocabulare=true. We want these fake fields to
+                        // be handled internally as ormal text fields, only on UI show a selection box. The same in
+                        // AROMA
+//                        // If special controlled vocabulary based on ontoportal, then handle it as a normal field.
+//                        DatasetFieldTypeArp dftArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+//                        if (dftArp != null && dftArp.getCedarDefinition() != null) {
+//                            String cedarDef = dftArp.getCedarDefinition();
+//                            JsonObject templateFieldJson = new Gson().fromJson(cedarDef, JsonObject.class);
+//                            if (JsonHelper.getJsonObject(templateFieldJson, "_valueConstraints.branches[0]") != null) {
+//                                ontoPortalBasedVocab = true;
+//                            }
+//                        }
+//                        if (ontoPortalBasedVocab) {
+//                            processPrimitiveField(fieldName, field.getValue().textValue(), container, datasetFieldTypeMap, mapper);
+//                        }
+//                        else {
+//                            processControlledVocabFields(fieldName, field.getValue(), container, datasetFieldTypeMap, mapper);
+//                        }
                         processControlledVocabFields(fieldName, field.getValue(), container, datasetFieldTypeMap, mapper);
                     } else {
                         processPrimitiveField(fieldName, field.getValue().textValue(), container, datasetFieldTypeMap, mapper);

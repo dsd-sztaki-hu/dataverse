@@ -319,6 +319,17 @@ public class ArpServiceBean implements java.io.Serializable {
                 .build();
     }
 
+    public List<String> getExternalVocabValues(JsonObject cedarFieldTemplate)
+    {
+        String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+        try {
+            return collectExternalVocabStrings(externalVocabUrl);
+        }catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed collecting external vocabulary values for field: " + cedarFieldTemplate.get("schema:name").getAsString() + " with error: " + ex.getMessage(), ex);
+            return new ArrayList<>();
+        }
+    }
+
     private String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
         String externalVocabUrl = null;
         String terminologyTemplate = arpConfig.get("terminology.url.template");
