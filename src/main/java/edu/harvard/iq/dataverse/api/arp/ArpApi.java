@@ -432,8 +432,12 @@ public class ArpApi extends AbstractApiBean {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
             for (int i=0; i<ids.length; i++) {
-                // Convert TSV to CEDAR template without converting '.' to ':' in field names
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
+                MetadataBlockArp mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlockById(Long.valueOf(ids[i]));
+                String templateJson = mdbArp != null
+                        // If we have the CEDAr temlate ready in MetadataBlockArp, use that
+                        ? mdbArp.getCedarDefinition()
+                        // OtherwisecConvert TSV to CEDAR template without converting '.' to ':' in field names
+                        : arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
                 String profile = convertTemplate(templateJson, "describo", language, new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 

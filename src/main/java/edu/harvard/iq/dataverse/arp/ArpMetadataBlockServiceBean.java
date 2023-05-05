@@ -91,6 +91,16 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
         }
         return res.get(0);
     }
+
+    public MetadataBlockArp findMetadataBlockArpForMetadataBlockById(Long id) {
+        var query = em.createNamedQuery("MetadataBlockArp.findOneForMetadataBlockById", MetadataBlockArp.class);
+        query.setParameter("metadataBlockId", id);
+        var res = query.getResultList();
+        if (res.size() == 0) {
+            return null;
+        }
+        return res.get(0);
+    }
     
     public MetadataBlockArp findByRoCrateConformsToId(String roCrateConformsToId) {
         try {
