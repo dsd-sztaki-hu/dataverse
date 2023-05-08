@@ -34,4 +34,12 @@ public class ArpCedarAuthenticationServiceBean
         }
         return user.getUser();
     }
+
+    public AuthenticatedUserArp findAuthenticatedUserArpById(Long id) {
+         return em.find(AuthenticatedUserArp.class, id);
+    }
+
+    public AuthenticatedUserArp createNewAuthenticatedUserArp() {
+         return em.merge(new AuthenticatedUserArp());
+    }
 }
