@@ -66,8 +66,8 @@ import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -141,6 +141,9 @@ import edu.harvard.iq.dataverse.search.SearchUtil;
 import edu.harvard.iq.dataverse.search.SolrClientService;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 import java.util.Comparator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.FacetField;
@@ -6140,20 +6143,33 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    public void downloadRoCrate() throws IOException {
-        String json = Files.readString(Paths.get(roCrateManager.getRoCratePath(dataset)));
-
+    public void downloadRoCrate() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
-        response.setContentType("application/json");
-        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.zip");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(json.getBytes());
+        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset))));
         outputStream.flush();
         outputStream.close();
 
         facesContext.responseComplete();
+    }
+
+    private static byte[] zipFolder(Path sourceFolderPath) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+        Files.walkFileTree(sourceFolderPath, new SimpleFileVisitor<Path>() {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                zos.putNextEntry(new ZipEntry(sourceFolderPath.relativize(file).toString()));
+                Files.copy(file, zos);
+                zos.closeEntry();
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        zos.close();
+        return baos.toByteArray();
     }
 
     public String getUriEncodedPersistentId() {

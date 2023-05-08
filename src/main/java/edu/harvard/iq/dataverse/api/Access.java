@@ -1141,9 +1141,7 @@ public class Access extends AbstractApiBean {
                 }
                 
                 //Add the ro-crate-metadata.json to the .zip
-                byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dataset)));
-                
-                zipper.addRoCrateToZipStream(roCrateBytes);
+                addRoCrateFilesToZipStream(zipper, dataset);
                 
                 // This will add the generated File Manifest to the zipped output, 
                 // then flush and close the stream:
@@ -1156,6 +1154,18 @@ public class Access extends AbstractApiBean {
 
         return Response.ok(stream).build();
         
+    }
+    
+    private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset) throws IOException {
+        byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dataset)));
+        String metadataFileName = BundleUtil.getStringFromBundle("arp.rocrate.metadata.name");
+        String metadataMimeType = "application/json";
+        zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);
+
+        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dataset)));
+        String previewFileName = BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name");
+        String previewMimeType = "text/html";
+        zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);
     }
     
     /* 

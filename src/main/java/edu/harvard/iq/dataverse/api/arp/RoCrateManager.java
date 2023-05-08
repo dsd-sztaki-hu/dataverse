@@ -14,8 +14,11 @@ import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.FolderReader;
 import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
+import edu.kit.datamanager.ro_crate.writer.FolderWriter;
+import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -375,34 +378,43 @@ public class RoCrateManager {
         return String.join(File.separator, getRoCrateFolder(dataset), BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
     }
 
+    public String getRoCrateHtmlPreviewPath(Dataset dataset) {
+        return String.join(File.separator, getRoCrateFolder(dataset), BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name"));
+    }
+
     public String getRoCrateFolder(Dataset dataset) {
         String filesRootDirectory = System.getProperty("dataverse.files.directory");
         if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
             filesRootDirectory = "/tmp/files";
         }
 
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
     }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
         var roCratePath = Paths.get(getRoCratePath(dataset));
         RoCrate roCrate;
+        String roCrateFolderPath = getRoCrateFolder(dataset);
 
         if (!Files.exists(roCratePath)) {
-            roCrate = new RoCrate();
+            roCrate = new RoCrate.RoCrateBuilder()
+                    .setPreview(new AutomaticPreview())
+                    .build();
             createOrUpdate(roCrate, dataset, true, null);
-            if (!Files.exists(Paths.get(getRoCrateFolder(dataset)))) {
-                Files.createDirectories(Path.of(getRoCrateFolder(dataset)));
+            Path roCrateFolder = Path.of(roCrateFolderPath);
+            if (!Files.exists(roCrateFolder)) {
+                Files.createDirectories(roCrateFolder);
             }
         } else {
             RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-            roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+            var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
+            roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, dataset, false, datasetFieldTypeMap);
         }
         generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
-        Files.writeString(roCratePath, objectMapper.readTree(roCrate.getJsonMetadata()).toPrettyString());
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
     public String importRoCrate(Dataset dataset) {
