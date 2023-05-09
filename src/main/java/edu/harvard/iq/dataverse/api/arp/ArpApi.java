@@ -872,6 +872,11 @@ public class ArpApi extends AbstractApiBean {
             JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
+
+            if (actProp.has("items")) {
+                actProp = actProp.getAsJsonObject("items");
+            }
+
             String dftName = getJsonElement(actProp, "schema:name").getAsString();
 
             //Label
