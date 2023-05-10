@@ -14,8 +14,10 @@ import edu.harvard.iq.dataverse.DataverseRequestServiceBean;
 import edu.harvard.iq.dataverse.DataverseServiceBean;
 import edu.harvard.iq.dataverse.DataverseSession;
 import edu.harvard.iq.dataverse.DvObject;
-import edu.harvard.iq.dataverse.api.arp.SetCedarKeyData;
+import edu.harvard.iq.dataverse.api.arp.ArpInitialSetupParams;
+import edu.harvard.iq.dataverse.api.arp.SetCedarKeyParams;
 import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.AuthenticatedUserArp;
 import edu.harvard.iq.dataverse.authorization.*;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
@@ -2309,15 +2311,15 @@ public class Admin extends AbstractApiBean {
 	 *     "cedarKey": "<<CEDAR KEY>"
 	 *   }'
 	 *
-	 * @param data
+	 * @param params
 	 * @return
 	 */
 	@POST
 	@Path("arp/setCedarKey")
 	@Consumes("application/json")
-	public Response arpCetCedarKey(SetCedarKeyData data)
+	public Response arpCetCedarKey(SetCedarKeyParams params)
 	{
-		AuthenticatedUser user = authSvc.getAuthenticatedUser(data.userIdentifier);
+		AuthenticatedUser user = authSvc.getAuthenticatedUser(params.userIdentifier);
 
 		if (user == null) {
 			return error(Response.Status.FORBIDDEN, "User not found.");
@@ -2329,8 +2331,59 @@ public class Admin extends AbstractApiBean {
 			userArp = cedarAuthSvc.createNewAuthenticatedUserArp();
 			userArp.setUser(user);
 		}
-		userArp.setCedarToken(data.cedarKey);
+		userArp.setCedarToken(params.cedarKey);
 
 		return Response.ok().build();
+	}
+
+	@EJB
+	ArpServiceBean arpService;
+
+	/**
+	 * Should be called only once when ARP is first installed.
+	 * - Sets default namespaces for MDB-s specified in mdbNamespaceUris
+	 * - Syncs MDB-s with CEDAR listed in syncCedar
+	 * @param params
+	 * @return
+	 */
+	// curl -X POST \
+	//  http://localhost:8080/api/admin/arp/initialSetup \
+	//  -H 'Content-Type: application/json' \
+	//  -d '{
+	//        "mdbNamespaceUris": {
+	//          "geospatial": "https://dataverse.org/schema/geospatial/",
+	//          "socialscience": "https://dataverse.org/schema/socialscience/",
+	//          "biomedical": "https://dataverse.org/schema/biomedical/",
+	//          "astrophysics": "https://dataverse.org/schema/astrophysics/",
+	//          "journal": "https://dataverse.org/schema/journal/"
+	//        },
+	//        "syncCedar": {
+	//          "mdbs": [
+	//            "citation", "journal", "geospatial", "socialscience", "astrophysics", "biomedical"
+	//          ],
+	//          "cedarParams": {
+	//            "cedarDomain": "arp.orgx",
+	//            "apiKey": "xxx",
+	//            "folderId": "https:%2F%2Frepo.arp.orgx%2Ffolders%2F9559c51c-33e3-4429-890d-e4fa8a7de859"
+	//          }
+	//        }
+	//      }'
+	@POST
+	@Path("arp/initialSetup")
+	@Consumes("application/json")
+	public Response arpInitialSetup(ArpInitialSetupParams params) {
+		try {
+			if (params.getMdbNamespaceUris() != null) {
+				arpService.updateMetadatablockNamesaceUris(params.getMdbNamespaceUris());
+			}
+			if (params.syncCedar != null && params.syncCedar.mdbs != null) {
+				params.syncCedar.mdbs.forEach(mdbIdtf -> {
+					arpService.syncMetadataBlockWithCedar(mdbIdtf, params.syncCedar.cedarParams);
+				});
+			}
+			return Response.ok("Done").build();
+		} catch (Throwable ex) {
+			return Response.serverError().entity(ex.getLocalizedMessage()).build();
+		}
 	}
 }
