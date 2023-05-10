@@ -2315,7 +2315,7 @@ public class Admin extends AbstractApiBean {
 	@POST
 	@Path("arp/setCedarKey")
 	@Consumes("application/json")
-	public Response setCedarKey(SetCedarKeyData data)
+	public Response arpCetCedarKey(SetCedarKeyData data)
 	{
 		AuthenticatedUser user = authSvc.getAuthenticatedUser(data.userIdentifier);
 
