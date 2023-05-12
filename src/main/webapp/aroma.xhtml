@@ -18,7 +18,7 @@
             <script>
                 setTimeout(() => {
                   const persistentId = "#{persistentId}"
-                  document.getElementById('iframeId').src = "#{aromaAddress}/dataset/" + encodeURIComponent(persistentId)+"?apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}";
+                  document.getElementById('iframeId').src = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}";
                 }, 10)
             </script>
             <div id="frame-div" class="embed-responsive embed-responsive-16by9">
