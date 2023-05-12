@@ -26,6 +26,7 @@ import java.io.IOException;
 
 import edu.harvard.iq.dataverse.DataFile;
 import edu.harvard.iq.dataverse.Dataset;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
 import java.io.OutputStream;
@@ -218,7 +219,7 @@ public class DataFileZipper {
 
         long byteSize = 0;
 
-        String fileName = BundleUtil.getStringFromBundle("arp.rocrate.metadata.name");
+        String fileName = ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
         String mimeType = "application/json";
 
         InputStream instream = new ByteArrayInputStream(roCrateBytes);

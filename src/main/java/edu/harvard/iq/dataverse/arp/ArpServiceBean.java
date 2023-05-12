@@ -93,6 +93,8 @@ public class ArpServiceBean implements java.io.Serializable {
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
 
+    public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
+
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
 

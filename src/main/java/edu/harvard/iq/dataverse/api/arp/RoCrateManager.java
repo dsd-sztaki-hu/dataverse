@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.util.RawValue;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -379,7 +380,7 @@ public class RoCrateManager {
     }
 
     public String getRoCratePath(Dataset dataset) {
-        return String.join(File.separator, getRoCrateFolder(dataset), BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+        return String.join(File.separator, getRoCrateFolder(dataset), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
 
     public String getRoCrateFolder(Dataset dataset) {
