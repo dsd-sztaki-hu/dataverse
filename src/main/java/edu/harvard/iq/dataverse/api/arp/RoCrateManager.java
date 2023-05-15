@@ -6,15 +6,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.util.RawValue;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import edu.harvard.iq.dataverse.api.arp.util.JsonUtils;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
-import edu.harvard.iq.dataverse.arp.MetadataBlockArp;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -23,8 +20,6 @@ import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.reader.FolderReader;
 import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
 import org.apache.commons.lang3.tuple.Pair;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -34,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,6 +46,9 @@ public class RoCrateManager {
     
     @EJB
     ArpMetadataBlockServiceBean arpMetadataBlockServiceBean;
+
+    @EJB
+    ControlledVocabularyValueServiceBean controlledVocabularyValueService;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -716,7 +715,11 @@ public class RoCrateManager {
 
         if (fieldValue instanceof ArrayNode) {
             ArrayNode controlledVocabValues = mapper.createArrayNode();
-            ((ArrayNode) fieldValue).forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+            AtomicInteger i = new AtomicInteger();
+            ((ArrayNode) fieldValue).forEach(controlledVocabValue -> {
+                createControlledVocabularyValueForDatasetFieldType(controlledVocabValue.textValue(), datasetFieldType, i.getAndIncrement());
+                controlledVocabValues.add(controlledVocabValue.textValue());
+            });
             field.set("value", controlledVocabValues);
         } else {
             String controlledVocabValue;
@@ -730,6 +733,7 @@ public class RoCrateManager {
             } else {
                 field.put("value", controlledVocabValue);
             }
+            createControlledVocabularyValueForDatasetFieldType(controlledVocabValue, datasetFieldType, 0);
         }
 
         field.put("typeName", datasetFieldType.getName());
@@ -741,6 +745,26 @@ public class RoCrateManager {
             ((ObjectNode) container).set(datasetFieldType.getName(), field);
         } else if (container instanceof ArrayNode) {
             ((ArrayNode) container).add(field);
+        }
+    }
+    
+    public void createControlledVocabularyValueForDatasetFieldType(String strValue, DatasetFieldType datasetFieldType, int displayOrder) {
+        DatasetFieldTypeArp dftArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        if (dftArp != null && dftArp.getCedarDefinition() != null) {
+            String cedarDef = dftArp.getCedarDefinition();
+            JsonObject templateFieldJson = new Gson().fromJson(cedarDef, JsonObject.class);
+            if (JsonHelper.getJsonObject(templateFieldJson, "_valueConstraints.branches[0]") != null) {
+                List<ControlledVocabularyValue> controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
+                boolean externalValueNotYetExists = controlledVocabValues.stream().noneMatch(cvv -> cvv.getStrValue().equals(strValue));
+                if (externalValueNotYetExists) {
+                    var cvv = new ControlledVocabularyValue();
+                    cvv.setStrValue(strValue);
+                    cvv.setDatasetFieldType(datasetFieldType);
+                    cvv.setDisplayOrder(displayOrder);
+                    cvv.setIdentifier("");
+                    fieldService.save(cvv);
+                }
+            }
         }
     }
 
