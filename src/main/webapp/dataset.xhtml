@@ -898,7 +898,7 @@
                                                                and empty DatasetPage.editMode and !widgetWrapper.widgetView
                                                                and DatasetPage.canUpdateDataset())}"
                                             target="_blank">
-                                        Open AROMA
+                                        #{bundle['arp.dataset.openAroma']}
                                     </h:outputLink>
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.edit('METADATA')}" update="@form,:messagePanel"
                                                    disabled="#{DatasetPage.lockedFromEdits or !DatasetPage.hasValidTermsOfAccess}"
