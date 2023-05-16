@@ -34,6 +34,8 @@ public class DatasetFieldTypeArp implements Serializable
 
     @Column(columnDefinition="TEXT")
     private String cedarDefinition;
+    
+    private boolean hasExternalValues;
 
     public Long getId()
     {
@@ -73,5 +75,13 @@ public class DatasetFieldTypeArp implements Serializable
     public void setCedarDefinition(String cedarDefinition)
     {
         this.cedarDefinition = cedarDefinition;
+    }
+
+    public boolean isHasExternalValues() {
+        return hasExternalValues;
+    }
+
+    public void setHasExternalValues(boolean hasExternalValues) {
+        this.hasExternalValues = hasExternalValues;
     }
 }

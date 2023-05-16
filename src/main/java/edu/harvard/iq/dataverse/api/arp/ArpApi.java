@@ -1106,6 +1106,8 @@ public class ArpApi extends AbstractApiBean {
                             dsfArp.setFieldType(dsf);
                             var override = arpMetadataBlockServiceBean.findOverrideByOriginal(dsf);
                             dsfArp.setOverride(override);
+                            JsonElement cedarDef = cedarFieldJsonDefs.get(fieldName).getAsJsonObject().has("items") ? cedarFieldJsonDefs.get(fieldName).getAsJsonObject().get("items") : cedarFieldJsonDefs.get(fieldName);
+                            dsfArp.setHasExternalValues(JsonHelper.getJsonObject(cedarDef, "_valueConstraints.branches[0]") != null);
                             arpMetadataBlockServiceBean.save(dsfArp);
                             break;
 
