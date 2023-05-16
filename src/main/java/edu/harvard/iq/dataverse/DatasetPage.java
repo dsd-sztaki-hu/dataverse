@@ -6165,10 +6165,7 @@ public class DatasetPage implements java.io.Serializable {
     public String getCurrentUserApiKey() {
         User user = session.getUser();
         if (user instanceof AuthenticatedUser) {
-            var token = authService.findApiTokenByUser((AuthenticatedUser) user);
-            if (token == null) {
-                return null;
-            }
+            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
             return token.getTokenString();
         }
         return null;
