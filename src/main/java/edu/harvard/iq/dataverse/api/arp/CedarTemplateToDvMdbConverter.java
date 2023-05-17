@@ -200,7 +200,7 @@ public class CedarTemplateToDvMdbConverter {
         if (inputType != null) {
             processTemplateField(items, displayOrder, true, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
         } else {
-            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, null, overridePropNames);
+            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, parentName, overridePropNames);
         }
     }
 
