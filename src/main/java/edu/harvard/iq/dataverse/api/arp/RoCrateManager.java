@@ -164,8 +164,15 @@ public class RoCrateManager {
                                         }
                                     }
                                     if (!childControlledVocabValues.isEmpty()) {
-                                        for (var controlledVocabValue : childControlledVocabValues) {
-                                            actEntityToUpdate.addProperty(childFieldName, controlledVocabValue.getStrValue());
+                                        if (childControlledVocabValues.size() == 1) {
+                                            actEntityToUpdate.addProperty(childFieldName, childControlledVocabValues.get(0).getStrValue());
+                                        } else {
+                                            ArrayNode cvvs = mapper.createArrayNode();
+                                            for (var controlledVocabValue : childControlledVocabValues) {
+                                                cvvs.add(controlledVocabValue.getStrValue());
+                                            }
+                                            actEntityToUpdate.addProperty(childFieldName, cvvs);
+                                            
                                         }
                                     }
                                 }
