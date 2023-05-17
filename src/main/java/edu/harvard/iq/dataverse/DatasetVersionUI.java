@@ -337,15 +337,12 @@ public class DatasetVersionUI implements Serializable {
 
                     if (add) {
                         cv.getChildDatasetFields().add(DatasetField.createNewEmptyChildDatasetField(dsfType, cv));
-                    } else {
-                        setExternalVocabularyValues(dsfType);
                     }
                 }
                 
                 sortDatasetFields(cv.getChildDatasetFields());
             }
         }
-        setExternalVocabularyValues(dsf.getDatasetFieldType());
         return dsf;
     }
     
@@ -355,6 +352,17 @@ public class DatasetVersionUI implements Serializable {
             if (!externalVocabValues.isEmpty()) {
                 datasetFieldType.setExternalVocabularyValues(externalVocabValues);
             }
+        }
+    }
+    
+    private void initExternalVocabularyValues(List<DatasetField> datasetFields) {
+        for (var dsf : datasetFields) {
+            if (dsf.getDatasetFieldType().isCompound()) {
+                for (DatasetFieldType dsfType : dsf.getDatasetFieldType().getChildDatasetFieldTypes()) {
+                        setExternalVocabularyValues(dsfType);
+                }
+            }
+            setExternalVocabularyValues(dsf.getDatasetFieldType());
         }
     }
 
@@ -396,6 +404,10 @@ public class DatasetVersionUI implements Serializable {
                 return Integer.valueOf(a).compareTo(Integer.valueOf(b));
             }
         });
+        
+        if (createBlanks) {
+            initExternalVocabularyValues(retList);
+        }
 
         return sortDatasetFields(retList);
     }  
