@@ -20,10 +20,6 @@ import javax.persistence.PersistenceContext;
 @Stateless
 @Named
 public class MetadataBlockServiceBean {
-
-    @EJB
-    ControlledVocabularyValueServiceBean controlledVocabularyValueService;
-    
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
     
@@ -134,7 +130,7 @@ public class MetadataBlockServiceBean {
             dsfRowValues.add(dsf.getUri());
             dsfRows.add(dsfRowValues.toString().replace("null", ""));
 
-            controlledVocabularyValueService.findByDatasetFieldTypeId(dsf.getId()).forEach(cvv -> {
+            dsf.getControlledVocabularyValues().forEach(cvv -> {
                 StringJoiner cvRowValues = new StringJoiner("\t");
                 cvRowValues.add("");
                 cvRowValues.add(dsf.getName());
