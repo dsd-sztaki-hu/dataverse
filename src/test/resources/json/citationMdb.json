@@ -1,0 +1,4216 @@
+{
+  "id": 1,
+  "name": "citation",
+  "displayName": "Citation Metadata",
+  "namespaceUri": "https://dataverse.org/schema/citation/",
+  "datasetFieldTypes": [
+    {
+      "id": 1,
+      "name": "title",
+      "title": "Title",
+      "description": "The main title of the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 0,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/dc/terms/title",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": true,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 2,
+      "name": "subtitle",
+      "title": "Subtitle",
+      "description": "A secondary title that amplifies or states certain limitations on the main title",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 1,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 3,
+      "name": "alternativeTitle",
+      "title": "Alternative Title",
+      "description": "Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 2,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/alternative",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 4,
+      "name": "alternativeURL",
+      "title": "Alternative URL",
+      "description": "Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 3,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://schema.org/distribution",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 5,
+      "name": "otherId",
+      "title": "Other Identifier",
+      "description": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 4,
+      "displayFormat": ":",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 6,
+      "name": "otherIdAgency",
+      "title": "Agency",
+      "description": "The name of the agency that generated the other identifier",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 5,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 5,
+        "name": "otherId",
+        "title": "Other Identifier",
+        "description": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 4,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 7,
+      "name": "otherIdValue",
+      "title": "Identifier",
+      "description": "Another identifier uniquely identifies the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 6,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 5,
+        "name": "otherId",
+        "title": "Other Identifier",
+        "description": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 4,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 8,
+      "name": "author",
+      "title": "Author",
+      "description": "The entity, e.g. a person or organization, that created the Dataset",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 7,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/dc/terms/creator",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": true,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 9,
+      "name": "authorName",
+      "title": "Name",
+      "description": "The name of the author, such as the person's name or the name of an organization",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) Family Name, Given Name or 2) Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 8,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 8,
+        "name": "author",
+        "title": "Author",
+        "description": "The entity, e.g. a person or organization, that created the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 7,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/creator",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": true,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 10,
+      "name": "authorAffiliation",
+      "title": "Affiliation",
+      "description": "The name of the entity affiliated with the author, e.g. an organization's name",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 9,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 8,
+        "name": "author",
+        "title": "Author",
+        "description": "The entity, e.g. a person or organization, that created the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 7,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/creator",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 11,
+      "name": "authorIdentifierScheme",
+      "title": "Identifier Type",
+      "description": "The type of identifier that uniquely identifies the author (e.g. ORCID, ISNI)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 10,
+      "displayFormat": "- #VALUE:",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/spar/datacite/AgentIdentifierScheme",
+      "controlledVocabularyValues": [
+        {
+          "id": 52,
+          "strValue": "ORCID",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 53,
+          "strValue": "ISNI",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 54,
+          "strValue": "LCNA",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 55,
+          "strValue": "VIAF",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 56,
+          "strValue": "GND",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 57,
+          "strValue": "DAI",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 58,
+          "strValue": "ResearcherID",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 59,
+          "strValue": "ScopusID",
+          "identifier": "",
+          "displayOrder": 7
+        }
+      ],
+      "parentDatasetFieldType": {
+        "id": 8,
+        "name": "author",
+        "title": "Author",
+        "description": "The entity, e.g. a person or organization, that created the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 7,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/creator",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 12,
+      "name": "authorIdentifier",
+      "title": "Identifier",
+      "description": "Uniquely identifies the author when paired with an identifier type",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 11,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/spar/datacite/AgentIdentifier",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 8,
+        "name": "author",
+        "title": "Author",
+        "description": "The entity, e.g. a person or organization, that created the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 7,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/creator",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 13,
+      "name": "datasetContact",
+      "title": "Point of Contact",
+      "description": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 12,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": true,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 14,
+      "name": "datasetContactName",
+      "title": "Name",
+      "description": "The name of the point of contact, e.g. the person's name or the name of an organization",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) FamilyName, GivenName or 2) Organization",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 13,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 13,
+        "name": "datasetContact",
+        "title": "Point of Contact",
+        "description": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 12,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 15,
+      "name": "datasetContactAffiliation",
+      "title": "Affiliation",
+      "description": "The name of the entity affiliated with the point of contact, e.g. an organization's name",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 14,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 13,
+        "name": "datasetContact",
+        "title": "Point of Contact",
+        "description": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 12,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 16,
+      "name": "datasetContactEmail",
+      "title": "E-mail",
+      "description": "The point of contact's email address",
+      "fieldType": "EMAIL",
+      "allowControlledVocabulary": false,
+      "watermark": "name@email.xyz",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 15,
+      "displayFormat": "#EMAIL",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 13,
+        "name": "datasetContact",
+        "title": "Point of Contact",
+        "description": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 12,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": true,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 17,
+      "name": "dsDescription",
+      "title": "Description",
+      "description": "A summary describing the purpose, nature, and scope of the Dataset",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 16,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": true,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 18,
+      "name": "dsDescriptionValue",
+      "title": "Text",
+      "description": "A summary describing the purpose, nature, and scope of the Dataset",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 17,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 17,
+        "name": "dsDescription",
+        "title": "Description",
+        "description": "A summary describing the purpose, nature, and scope of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 16,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": true,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 19,
+      "name": "dsDescriptionDate",
+      "title": "Date",
+      "description": "The date when the description was added to the Dataset. If the Dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 18,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 17,
+        "name": "dsDescription",
+        "title": "Description",
+        "description": "A summary describing the purpose, nature, and scope of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 16,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": true,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 20,
+      "name": "subject",
+      "title": "Subject",
+      "description": "The area of study relevant to the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 19,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/dc/terms/subject",
+      "controlledVocabularyValues": [
+        {
+          "id": 2,
+          "strValue": "Agricultural Sciences",
+          "identifier": "D01",
+          "displayOrder": 0
+        },
+        {
+          "id": 3,
+          "strValue": "Arts and Humanities",
+          "identifier": "D0",
+          "displayOrder": 1
+        },
+        {
+          "id": 4,
+          "strValue": "Astronomy and Astrophysics",
+          "identifier": "D1",
+          "displayOrder": 2
+        },
+        {
+          "id": 5,
+          "strValue": "Business and Management",
+          "identifier": "D2",
+          "displayOrder": 3
+        },
+        {
+          "id": 6,
+          "strValue": "Chemistry",
+          "identifier": "D3",
+          "displayOrder": 4
+        },
+        {
+          "id": 7,
+          "strValue": "Computer and Information Science",
+          "identifier": "D7",
+          "displayOrder": 5
+        },
+        {
+          "id": 8,
+          "strValue": "Earth and Environmental Sciences",
+          "identifier": "D4",
+          "displayOrder": 6
+        },
+        {
+          "id": 9,
+          "strValue": "Engineering",
+          "identifier": "D5",
+          "displayOrder": 7
+        },
+        {
+          "id": 10,
+          "strValue": "Law",
+          "identifier": "D8",
+          "displayOrder": 8
+        },
+        {
+          "id": 11,
+          "strValue": "Mathematical Sciences",
+          "identifier": "D9",
+          "displayOrder": 9
+        },
+        {
+          "id": 12,
+          "strValue": "Medicine, Health and Life Sciences",
+          "identifier": "D6",
+          "displayOrder": 10
+        },
+        {
+          "id": 13,
+          "strValue": "Physics",
+          "identifier": "D10",
+          "displayOrder": 11
+        },
+        {
+          "id": 14,
+          "strValue": "Social Sciences",
+          "identifier": "D11",
+          "displayOrder": 12
+        },
+        {
+          "id": 15,
+          "strValue": "Other",
+          "identifier": "D12",
+          "displayOrder": 13
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": true,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 21,
+      "name": "keyword",
+      "title": "Keyword",
+      "description": "A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 20,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 22,
+      "name": "keywordValue",
+      "title": "Term",
+      "description": "A key term that describes important aspects of the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 21,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 21,
+        "name": "keyword",
+        "title": "Keyword",
+        "description": "A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 20,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 23,
+      "name": "keywordVocabulary",
+      "title": "Controlled Vocabulary Name",
+      "description": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 22,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 21,
+        "name": "keyword",
+        "title": "Keyword",
+        "description": "A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 20,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 24,
+      "name": "keywordVocabularyURI",
+      "title": "Controlled Vocabulary URL",
+      "description": "The URL where one can access information about the term's controlled vocabulary",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 23,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 21,
+        "name": "keyword",
+        "title": "Keyword",
+        "description": "A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 20,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 25,
+      "name": "topicClassification",
+      "title": "Topic Classification",
+      "description": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 24,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 26,
+      "name": "topicClassValue",
+      "title": "Term",
+      "description": "A topic or subject term",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 25,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 25,
+        "name": "topicClassification",
+        "title": "Topic Classification",
+        "description": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 24,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 27,
+      "name": "topicClassVocab",
+      "title": "Controlled Vocabulary Name",
+      "description": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 26,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 25,
+        "name": "topicClassification",
+        "title": "Topic Classification",
+        "description": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 24,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 28,
+      "name": "topicClassVocabURI",
+      "title": "Controlled Vocabulary URL",
+      "description": "The URL where one can access information about the term's controlled vocabulary",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 27,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 25,
+        "name": "topicClassification",
+        "title": "Topic Classification",
+        "description": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 24,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 29,
+      "name": "publication",
+      "title": "Related Publication",
+      "description": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 28,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/dc/terms/isReferencedBy",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 30,
+      "name": "publicationCitation",
+      "title": "Citation",
+      "description": "The full bibliographic citation for the related publication",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 29,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/dc/terms/bibliographicCitation",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 29,
+        "name": "publication",
+        "title": "Related Publication",
+        "description": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 28,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/isReferencedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 31,
+      "name": "publicationIDType",
+      "title": "Identifier Type",
+      "description": "The type of identifier that uniquely identifies a related publication",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 30,
+      "displayFormat": "#VALUE: ",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/spar/datacite/ResourceIdentifierScheme",
+      "controlledVocabularyValues": [
+        {
+          "id": 16,
+          "strValue": "ark",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 17,
+          "strValue": "arXiv",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 18,
+          "strValue": "bibcode",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 19,
+          "strValue": "cstr",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 20,
+          "strValue": "doi",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 21,
+          "strValue": "ean13",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 22,
+          "strValue": "eissn",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 23,
+          "strValue": "handle",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 24,
+          "strValue": "isbn",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 25,
+          "strValue": "issn",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 26,
+          "strValue": "istc",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 27,
+          "strValue": "lissn",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 28,
+          "strValue": "lsid",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 29,
+          "strValue": "pmid",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 30,
+          "strValue": "purl",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 31,
+          "strValue": "upc",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 32,
+          "strValue": "url",
+          "identifier": "",
+          "displayOrder": 16
+        },
+        {
+          "id": 33,
+          "strValue": "urn",
+          "identifier": "",
+          "displayOrder": 17
+        },
+        {
+          "id": 34,
+          "strValue": "DASH-NRS",
+          "identifier": "",
+          "displayOrder": 18
+        }
+      ],
+      "parentDatasetFieldType": {
+        "id": 29,
+        "name": "publication",
+        "title": "Related Publication",
+        "description": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 28,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/isReferencedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 32,
+      "name": "publicationIDNumber",
+      "title": "Identifier",
+      "description": "The identifier for a related publication",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 31,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": "http://purl.org/spar/datacite/ResourceIdentifier",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 29,
+        "name": "publication",
+        "title": "Related Publication",
+        "description": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 28,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/isReferencedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 33,
+      "name": "publicationURL",
+      "title": "URL",
+      "description": "The URL form of the identifier entered in the Identifier field, e.g. the DOI URL if a DOI was entered in the Identifier field. Used to display what was entered in the ID Type and ID Number fields as a link. If what was entered in the Identifier field has no URL form, the URL of the publication webpage is used, e.g. a journal article webpage",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 32,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://schema.org/distribution",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 29,
+        "name": "publication",
+        "title": "Related Publication",
+        "description": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 28,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": true,
+        "uri": "http://purl.org/dc/terms/isReferencedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 34,
+      "name": "notesText",
+      "title": "Notes",
+      "description": "Additional information about the Dataset",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 33,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": true,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 35,
+      "name": "language",
+      "title": "Language",
+      "description": "A language that the Dataset's files is written in",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 34,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/language",
+      "controlledVocabularyValues": [
+        {
+          "id": 60,
+          "strValue": "Abkhaz",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 61,
+          "strValue": "Afar",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 62,
+          "strValue": "Afrikaans",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 63,
+          "strValue": "Akan",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 64,
+          "strValue": "Albanian",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 65,
+          "strValue": "Amharic",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 66,
+          "strValue": "Arabic",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 67,
+          "strValue": "Aragonese",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 68,
+          "strValue": "Armenian",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 69,
+          "strValue": "Assamese",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 70,
+          "strValue": "Avaric",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 71,
+          "strValue": "Avestan",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 72,
+          "strValue": "Aymara",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 73,
+          "strValue": "Azerbaijani",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 74,
+          "strValue": "Bambara",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 75,
+          "strValue": "Bashkir",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 76,
+          "strValue": "Basque",
+          "identifier": "",
+          "displayOrder": 16
+        },
+        {
+          "id": 77,
+          "strValue": "Belarusian",
+          "identifier": "",
+          "displayOrder": 17
+        },
+        {
+          "id": 78,
+          "strValue": "Bengali, Bangla",
+          "identifier": "",
+          "displayOrder": 18
+        },
+        {
+          "id": 79,
+          "strValue": "Bihari",
+          "identifier": "",
+          "displayOrder": 19
+        },
+        {
+          "id": 80,
+          "strValue": "Bislama",
+          "identifier": "",
+          "displayOrder": 20
+        },
+        {
+          "id": 81,
+          "strValue": "Bosnian",
+          "identifier": "",
+          "displayOrder": 21
+        },
+        {
+          "id": 82,
+          "strValue": "Breton",
+          "identifier": "",
+          "displayOrder": 22
+        },
+        {
+          "id": 83,
+          "strValue": "Bulgarian",
+          "identifier": "",
+          "displayOrder": 23
+        },
+        {
+          "id": 84,
+          "strValue": "Burmese",
+          "identifier": "",
+          "displayOrder": 24
+        },
+        {
+          "id": 85,
+          "strValue": "Catalan,Valencian",
+          "identifier": "",
+          "displayOrder": 25
+        },
+        {
+          "id": 86,
+          "strValue": "Chamorro",
+          "identifier": "",
+          "displayOrder": 26
+        },
+        {
+          "id": 87,
+          "strValue": "Chechen",
+          "identifier": "",
+          "displayOrder": 27
+        },
+        {
+          "id": 88,
+          "strValue": "Chichewa, Chewa, Nyanja",
+          "identifier": "",
+          "displayOrder": 28
+        },
+        {
+          "id": 89,
+          "strValue": "Chinese",
+          "identifier": "",
+          "displayOrder": 29
+        },
+        {
+          "id": 90,
+          "strValue": "Chuvash",
+          "identifier": "",
+          "displayOrder": 30
+        },
+        {
+          "id": 91,
+          "strValue": "Cornish",
+          "identifier": "",
+          "displayOrder": 31
+        },
+        {
+          "id": 92,
+          "strValue": "Corsican",
+          "identifier": "",
+          "displayOrder": 32
+        },
+        {
+          "id": 93,
+          "strValue": "Cree",
+          "identifier": "",
+          "displayOrder": 33
+        },
+        {
+          "id": 94,
+          "strValue": "Croatian",
+          "identifier": "",
+          "displayOrder": 34
+        },
+        {
+          "id": 95,
+          "strValue": "Czech",
+          "identifier": "",
+          "displayOrder": 35
+        },
+        {
+          "id": 96,
+          "strValue": "Danish",
+          "identifier": "",
+          "displayOrder": 36
+        },
+        {
+          "id": 97,
+          "strValue": "Divehi, Dhivehi, Maldivian",
+          "identifier": "",
+          "displayOrder": 37
+        },
+        {
+          "id": 98,
+          "strValue": "Dutch",
+          "identifier": "",
+          "displayOrder": 38
+        },
+        {
+          "id": 99,
+          "strValue": "Dzongkha",
+          "identifier": "",
+          "displayOrder": 39
+        },
+        {
+          "id": 100,
+          "strValue": "English",
+          "identifier": "",
+          "displayOrder": 40
+        },
+        {
+          "id": 101,
+          "strValue": "Esperanto",
+          "identifier": "",
+          "displayOrder": 41
+        },
+        {
+          "id": 102,
+          "strValue": "Estonian",
+          "identifier": "",
+          "displayOrder": 42
+        },
+        {
+          "id": 103,
+          "strValue": "Ewe",
+          "identifier": "",
+          "displayOrder": 43
+        },
+        {
+          "id": 104,
+          "strValue": "Faroese",
+          "identifier": "",
+          "displayOrder": 44
+        },
+        {
+          "id": 105,
+          "strValue": "Fijian",
+          "identifier": "",
+          "displayOrder": 45
+        },
+        {
+          "id": 106,
+          "strValue": "Finnish",
+          "identifier": "",
+          "displayOrder": 46
+        },
+        {
+          "id": 107,
+          "strValue": "French",
+          "identifier": "",
+          "displayOrder": 47
+        },
+        {
+          "id": 108,
+          "strValue": "Fula, Fulah, Pulaar, Pular",
+          "identifier": "",
+          "displayOrder": 48
+        },
+        {
+          "id": 109,
+          "strValue": "Galician",
+          "identifier": "",
+          "displayOrder": 49
+        },
+        {
+          "id": 110,
+          "strValue": "Georgian",
+          "identifier": "",
+          "displayOrder": 50
+        },
+        {
+          "id": 111,
+          "strValue": "German",
+          "identifier": "",
+          "displayOrder": 51
+        },
+        {
+          "id": 112,
+          "strValue": "Greek (modern)",
+          "identifier": "",
+          "displayOrder": 52
+        },
+        {
+          "id": 113,
+          "strValue": "Guaraní",
+          "identifier": "",
+          "displayOrder": 53
+        },
+        {
+          "id": 114,
+          "strValue": "Gujarati",
+          "identifier": "",
+          "displayOrder": 54
+        },
+        {
+          "id": 115,
+          "strValue": "Haitian, Haitian Creole",
+          "identifier": "",
+          "displayOrder": 55
+        },
+        {
+          "id": 116,
+          "strValue": "Hausa",
+          "identifier": "",
+          "displayOrder": 56
+        },
+        {
+          "id": 117,
+          "strValue": "Hebrew (modern)",
+          "identifier": "",
+          "displayOrder": 57
+        },
+        {
+          "id": 118,
+          "strValue": "Herero",
+          "identifier": "",
+          "displayOrder": 58
+        },
+        {
+          "id": 119,
+          "strValue": "Hindi",
+          "identifier": "",
+          "displayOrder": 59
+        },
+        {
+          "id": 120,
+          "strValue": "Hiri Motu",
+          "identifier": "",
+          "displayOrder": 60
+        },
+        {
+          "id": 121,
+          "strValue": "Hungarian",
+          "identifier": "",
+          "displayOrder": 61
+        },
+        {
+          "id": 122,
+          "strValue": "Interlingua",
+          "identifier": "",
+          "displayOrder": 62
+        },
+        {
+          "id": 123,
+          "strValue": "Indonesian",
+          "identifier": "",
+          "displayOrder": 63
+        },
+        {
+          "id": 124,
+          "strValue": "Interlingue",
+          "identifier": "",
+          "displayOrder": 64
+        },
+        {
+          "id": 125,
+          "strValue": "Irish",
+          "identifier": "",
+          "displayOrder": 65
+        },
+        {
+          "id": 126,
+          "strValue": "Igbo",
+          "identifier": "",
+          "displayOrder": 66
+        },
+        {
+          "id": 127,
+          "strValue": "Inupiaq",
+          "identifier": "",
+          "displayOrder": 67
+        },
+        {
+          "id": 128,
+          "strValue": "Ido",
+          "identifier": "",
+          "displayOrder": 68
+        },
+        {
+          "id": 129,
+          "strValue": "Icelandic",
+          "identifier": "",
+          "displayOrder": 69
+        },
+        {
+          "id": 130,
+          "strValue": "Italian",
+          "identifier": "",
+          "displayOrder": 70
+        },
+        {
+          "id": 131,
+          "strValue": "Inuktitut",
+          "identifier": "",
+          "displayOrder": 71
+        },
+        {
+          "id": 132,
+          "strValue": "Japanese",
+          "identifier": "",
+          "displayOrder": 72
+        },
+        {
+          "id": 133,
+          "strValue": "Javanese",
+          "identifier": "",
+          "displayOrder": 73
+        },
+        {
+          "id": 134,
+          "strValue": "Kalaallisut, Greenlandic",
+          "identifier": "",
+          "displayOrder": 74
+        },
+        {
+          "id": 135,
+          "strValue": "Kannada",
+          "identifier": "",
+          "displayOrder": 75
+        },
+        {
+          "id": 136,
+          "strValue": "Kanuri",
+          "identifier": "",
+          "displayOrder": 76
+        },
+        {
+          "id": 137,
+          "strValue": "Kashmiri",
+          "identifier": "",
+          "displayOrder": 77
+        },
+        {
+          "id": 138,
+          "strValue": "Kazakh",
+          "identifier": "",
+          "displayOrder": 78
+        },
+        {
+          "id": 139,
+          "strValue": "Khmer",
+          "identifier": "",
+          "displayOrder": 79
+        },
+        {
+          "id": 140,
+          "strValue": "Kikuyu, Gikuyu",
+          "identifier": "",
+          "displayOrder": 80
+        },
+        {
+          "id": 141,
+          "strValue": "Kinyarwanda",
+          "identifier": "",
+          "displayOrder": 81
+        },
+        {
+          "id": 142,
+          "strValue": "Kyrgyz",
+          "identifier": "",
+          "displayOrder": 82
+        },
+        {
+          "id": 143,
+          "strValue": "Komi",
+          "identifier": "",
+          "displayOrder": 83
+        },
+        {
+          "id": 144,
+          "strValue": "Kongo",
+          "identifier": "",
+          "displayOrder": 84
+        },
+        {
+          "id": 145,
+          "strValue": "Korean",
+          "identifier": "",
+          "displayOrder": 85
+        },
+        {
+          "id": 146,
+          "strValue": "Kurdish",
+          "identifier": "",
+          "displayOrder": 86
+        },
+        {
+          "id": 147,
+          "strValue": "Kwanyama, Kuanyama",
+          "identifier": "",
+          "displayOrder": 87
+        },
+        {
+          "id": 148,
+          "strValue": "Latin",
+          "identifier": "",
+          "displayOrder": 88
+        },
+        {
+          "id": 149,
+          "strValue": "Luxembourgish, Letzeburgesch",
+          "identifier": "",
+          "displayOrder": 89
+        },
+        {
+          "id": 150,
+          "strValue": "Ganda",
+          "identifier": "",
+          "displayOrder": 90
+        },
+        {
+          "id": 151,
+          "strValue": "Limburgish, Limburgan, Limburger",
+          "identifier": "",
+          "displayOrder": 91
+        },
+        {
+          "id": 152,
+          "strValue": "Lingala",
+          "identifier": "",
+          "displayOrder": 92
+        },
+        {
+          "id": 153,
+          "strValue": "Lao",
+          "identifier": "",
+          "displayOrder": 93
+        },
+        {
+          "id": 154,
+          "strValue": "Lithuanian",
+          "identifier": "",
+          "displayOrder": 94
+        },
+        {
+          "id": 155,
+          "strValue": "Luba-Katanga",
+          "identifier": "",
+          "displayOrder": 95
+        },
+        {
+          "id": 156,
+          "strValue": "Latvian",
+          "identifier": "",
+          "displayOrder": 96
+        },
+        {
+          "id": 157,
+          "strValue": "Manx",
+          "identifier": "",
+          "displayOrder": 97
+        },
+        {
+          "id": 158,
+          "strValue": "Macedonian",
+          "identifier": "",
+          "displayOrder": 98
+        },
+        {
+          "id": 159,
+          "strValue": "Malagasy",
+          "identifier": "",
+          "displayOrder": 99
+        },
+        {
+          "id": 160,
+          "strValue": "Malay",
+          "identifier": "",
+          "displayOrder": 100
+        },
+        {
+          "id": 161,
+          "strValue": "Malayalam",
+          "identifier": "",
+          "displayOrder": 101
+        },
+        {
+          "id": 162,
+          "strValue": "Maltese",
+          "identifier": "",
+          "displayOrder": 102
+        },
+        {
+          "id": 163,
+          "strValue": "Māori",
+          "identifier": "",
+          "displayOrder": 103
+        },
+        {
+          "id": 164,
+          "strValue": "Marathi (Marāṭhī)",
+          "identifier": "",
+          "displayOrder": 104
+        },
+        {
+          "id": 165,
+          "strValue": "Marshallese",
+          "identifier": "",
+          "displayOrder": 105
+        },
+        {
+          "id": 166,
+          "strValue": "Mixtepec Mixtec",
+          "identifier": "",
+          "displayOrder": 106
+        },
+        {
+          "id": 167,
+          "strValue": "Mongolian",
+          "identifier": "",
+          "displayOrder": 107
+        },
+        {
+          "id": 168,
+          "strValue": "Nauru",
+          "identifier": "",
+          "displayOrder": 108
+        },
+        {
+          "id": 169,
+          "strValue": "Navajo, Navaho",
+          "identifier": "",
+          "displayOrder": 109
+        },
+        {
+          "id": 170,
+          "strValue": "Northern Ndebele",
+          "identifier": "",
+          "displayOrder": 110
+        },
+        {
+          "id": 171,
+          "strValue": "Nepali",
+          "identifier": "",
+          "displayOrder": 111
+        },
+        {
+          "id": 172,
+          "strValue": "Ndonga",
+          "identifier": "",
+          "displayOrder": 112
+        },
+        {
+          "id": 173,
+          "strValue": "Norwegian Bokmål",
+          "identifier": "",
+          "displayOrder": 113
+        },
+        {
+          "id": 174,
+          "strValue": "Norwegian Nynorsk",
+          "identifier": "",
+          "displayOrder": 114
+        },
+        {
+          "id": 175,
+          "strValue": "Norwegian",
+          "identifier": "",
+          "displayOrder": 115
+        },
+        {
+          "id": 176,
+          "strValue": "Nuosu",
+          "identifier": "",
+          "displayOrder": 116
+        },
+        {
+          "id": 177,
+          "strValue": "Southern Ndebele",
+          "identifier": "",
+          "displayOrder": 117
+        },
+        {
+          "id": 178,
+          "strValue": "Occitan",
+          "identifier": "",
+          "displayOrder": 118
+        },
+        {
+          "id": 179,
+          "strValue": "Ojibwe, Ojibwa",
+          "identifier": "",
+          "displayOrder": 119
+        },
+        {
+          "id": 180,
+          "strValue": "Old Church Slavonic,Church Slavonic,Old Bulgarian",
+          "identifier": "",
+          "displayOrder": 120
+        },
+        {
+          "id": 181,
+          "strValue": "Oromo",
+          "identifier": "",
+          "displayOrder": 121
+        },
+        {
+          "id": 182,
+          "strValue": "Oriya",
+          "identifier": "",
+          "displayOrder": 122
+        },
+        {
+          "id": 183,
+          "strValue": "Ossetian, Ossetic",
+          "identifier": "",
+          "displayOrder": 123
+        },
+        {
+          "id": 184,
+          "strValue": "Panjabi, Punjabi",
+          "identifier": "",
+          "displayOrder": 124
+        },
+        {
+          "id": 185,
+          "strValue": "Pāli",
+          "identifier": "",
+          "displayOrder": 125
+        },
+        {
+          "id": 186,
+          "strValue": "Persian (Farsi)",
+          "identifier": "",
+          "displayOrder": 126
+        },
+        {
+          "id": 187,
+          "strValue": "Polish",
+          "identifier": "",
+          "displayOrder": 127
+        },
+        {
+          "id": 188,
+          "strValue": "Pashto, Pushto",
+          "identifier": "",
+          "displayOrder": 128
+        },
+        {
+          "id": 189,
+          "strValue": "Portuguese",
+          "identifier": "",
+          "displayOrder": 129
+        },
+        {
+          "id": 190,
+          "strValue": "Quechua",
+          "identifier": "",
+          "displayOrder": 130
+        },
+        {
+          "id": 191,
+          "strValue": "Romansh",
+          "identifier": "",
+          "displayOrder": 131
+        },
+        {
+          "id": 192,
+          "strValue": "Kirundi",
+          "identifier": "",
+          "displayOrder": 132
+        },
+        {
+          "id": 193,
+          "strValue": "Romanian",
+          "identifier": "",
+          "displayOrder": 133
+        },
+        {
+          "id": 194,
+          "strValue": "Russian",
+          "identifier": "",
+          "displayOrder": 134
+        },
+        {
+          "id": 195,
+          "strValue": "Sanskrit (Saṁskṛta)",
+          "identifier": "",
+          "displayOrder": 135
+        },
+        {
+          "id": 196,
+          "strValue": "Sardinian",
+          "identifier": "",
+          "displayOrder": 136
+        },
+        {
+          "id": 197,
+          "strValue": "Sindhi",
+          "identifier": "",
+          "displayOrder": 137
+        },
+        {
+          "id": 198,
+          "strValue": "Northern Sami",
+          "identifier": "",
+          "displayOrder": 138
+        },
+        {
+          "id": 199,
+          "strValue": "Samoan",
+          "identifier": "",
+          "displayOrder": 139
+        },
+        {
+          "id": 200,
+          "strValue": "Sango",
+          "identifier": "",
+          "displayOrder": 140
+        },
+        {
+          "id": 201,
+          "strValue": "Serbian",
+          "identifier": "",
+          "displayOrder": 141
+        },
+        {
+          "id": 202,
+          "strValue": "Scottish Gaelic, Gaelic",
+          "identifier": "",
+          "displayOrder": 142
+        },
+        {
+          "id": 203,
+          "strValue": "Shona",
+          "identifier": "",
+          "displayOrder": 143
+        },
+        {
+          "id": 204,
+          "strValue": "Sinhala, Sinhalese",
+          "identifier": "",
+          "displayOrder": 144
+        },
+        {
+          "id": 205,
+          "strValue": "Slovak",
+          "identifier": "",
+          "displayOrder": 145
+        },
+        {
+          "id": 206,
+          "strValue": "Slovene",
+          "identifier": "",
+          "displayOrder": 146
+        },
+        {
+          "id": 207,
+          "strValue": "Somali",
+          "identifier": "",
+          "displayOrder": 147
+        },
+        {
+          "id": 208,
+          "strValue": "Southern Sotho",
+          "identifier": "",
+          "displayOrder": 148
+        },
+        {
+          "id": 209,
+          "strValue": "Spanish, Castilian",
+          "identifier": "",
+          "displayOrder": 149
+        },
+        {
+          "id": 210,
+          "strValue": "Sundanese",
+          "identifier": "",
+          "displayOrder": 150
+        },
+        {
+          "id": 211,
+          "strValue": "Swahili",
+          "identifier": "",
+          "displayOrder": 151
+        },
+        {
+          "id": 212,
+          "strValue": "Swati",
+          "identifier": "",
+          "displayOrder": 152
+        },
+        {
+          "id": 213,
+          "strValue": "Swedish",
+          "identifier": "",
+          "displayOrder": 153
+        },
+        {
+          "id": 214,
+          "strValue": "Tamil",
+          "identifier": "",
+          "displayOrder": 154
+        },
+        {
+          "id": 215,
+          "strValue": "Telugu",
+          "identifier": "",
+          "displayOrder": 155
+        },
+        {
+          "id": 216,
+          "strValue": "Tajik",
+          "identifier": "",
+          "displayOrder": 156
+        },
+        {
+          "id": 217,
+          "strValue": "Thai",
+          "identifier": "",
+          "displayOrder": 157
+        },
+        {
+          "id": 218,
+          "strValue": "Tigrinya",
+          "identifier": "",
+          "displayOrder": 158
+        },
+        {
+          "id": 219,
+          "strValue": "Tibetan Standard, Tibetan, Central",
+          "identifier": "",
+          "displayOrder": 159
+        },
+        {
+          "id": 220,
+          "strValue": "Turkmen",
+          "identifier": "",
+          "displayOrder": 160
+        },
+        {
+          "id": 221,
+          "strValue": "Tagalog",
+          "identifier": "",
+          "displayOrder": 161
+        },
+        {
+          "id": 222,
+          "strValue": "Tswana",
+          "identifier": "",
+          "displayOrder": 162
+        },
+        {
+          "id": 223,
+          "strValue": "Tonga (Tonga Islands)",
+          "identifier": "",
+          "displayOrder": 163
+        },
+        {
+          "id": 224,
+          "strValue": "Turkish",
+          "identifier": "",
+          "displayOrder": 164
+        },
+        {
+          "id": 225,
+          "strValue": "Tsonga",
+          "identifier": "",
+          "displayOrder": 165
+        },
+        {
+          "id": 226,
+          "strValue": "Tatar",
+          "identifier": "",
+          "displayOrder": 166
+        },
+        {
+          "id": 227,
+          "strValue": "Twi",
+          "identifier": "",
+          "displayOrder": 167
+        },
+        {
+          "id": 228,
+          "strValue": "Tahitian",
+          "identifier": "",
+          "displayOrder": 168
+        },
+        {
+          "id": 229,
+          "strValue": "Uyghur, Uighur",
+          "identifier": "",
+          "displayOrder": 169
+        },
+        {
+          "id": 230,
+          "strValue": "Ukrainian",
+          "identifier": "",
+          "displayOrder": 170
+        },
+        {
+          "id": 231,
+          "strValue": "Urdu",
+          "identifier": "",
+          "displayOrder": 171
+        },
+        {
+          "id": 232,
+          "strValue": "Uzbek",
+          "identifier": "",
+          "displayOrder": 172
+        },
+        {
+          "id": 233,
+          "strValue": "Venda",
+          "identifier": "",
+          "displayOrder": 173
+        },
+        {
+          "id": 234,
+          "strValue": "Vietnamese",
+          "identifier": "",
+          "displayOrder": 174
+        },
+        {
+          "id": 235,
+          "strValue": "Volapük",
+          "identifier": "",
+          "displayOrder": 175
+        },
+        {
+          "id": 236,
+          "strValue": "Walloon",
+          "identifier": "",
+          "displayOrder": 176
+        },
+        {
+          "id": 237,
+          "strValue": "Welsh",
+          "identifier": "",
+          "displayOrder": 177
+        },
+        {
+          "id": 238,
+          "strValue": "Wolof",
+          "identifier": "",
+          "displayOrder": 178
+        },
+        {
+          "id": 239,
+          "strValue": "Western Frisian",
+          "identifier": "",
+          "displayOrder": 179
+        },
+        {
+          "id": 240,
+          "strValue": "Xhosa",
+          "identifier": "",
+          "displayOrder": 180
+        },
+        {
+          "id": 241,
+          "strValue": "Yiddish",
+          "identifier": "",
+          "displayOrder": 181
+        },
+        {
+          "id": 242,
+          "strValue": "Yoruba",
+          "identifier": "",
+          "displayOrder": 182
+        },
+        {
+          "id": 243,
+          "strValue": "Zhuang, Chuang",
+          "identifier": "",
+          "displayOrder": 183
+        },
+        {
+          "id": 244,
+          "strValue": "Zulu",
+          "identifier": "",
+          "displayOrder": 184
+        },
+        {
+          "id": 245,
+          "strValue": "Not applicable",
+          "identifier": "",
+          "displayOrder": 185
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 36,
+      "name": "producer",
+      "title": "Producer",
+      "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 35,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 37,
+      "name": "producerName",
+      "title": "Name",
+      "description": "The name of the entity, e.g. the person's name or the name of an organization",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) FamilyName, GivenName or 2) Organization",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 36,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 36,
+        "name": "producer",
+        "title": "Producer",
+        "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 35,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": true,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 38,
+      "name": "producerAffiliation",
+      "title": "Affiliation",
+      "description": "The name of the entity affiliated with the producer, e.g. an organization's name",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 37,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 36,
+        "name": "producer",
+        "title": "Producer",
+        "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 35,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 39,
+      "name": "producerAbbreviation",
+      "title": "Abbreviated Name",
+      "description": "The producer's abbreviated name (e.g. IQSS, ICPSR)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 38,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 36,
+        "name": "producer",
+        "title": "Producer",
+        "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 35,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 40,
+      "name": "producerURL",
+      "title": "URL",
+      "description": "The URL of the producer's website",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 39,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 36,
+        "name": "producer",
+        "title": "Producer",
+        "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 35,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 41,
+      "name": "producerLogoURL",
+      "title": "Logo URL",
+      "description": "The URL of the producer's logo",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 40,
+      "displayFormat": "<img src=\"#VALUE\" alt=\"#NAME\" class=\"metadata-logo\"/><br/>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 36,
+        "name": "producer",
+        "title": "Producer",
+        "description": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 35,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 42,
+      "name": "productionDate",
+      "title": "Production Date",
+      "description": "The date when the data were produced (not distributed, published, or archived)",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 41,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 43,
+      "name": "productionPlace",
+      "title": "Production Location",
+      "description": "The location where the data and any related materials were produced or collected",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 42,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 44,
+      "name": "contributor",
+      "title": "Contributor",
+      "description": "The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 43,
+      "displayFormat": ":",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/contributor",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 45,
+      "name": "contributorType",
+      "title": "Type",
+      "description": "Indicates the type of contribution made to the dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 44,
+      "displayFormat": "#VALUE ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 35,
+          "strValue": "Data Collector",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 36,
+          "strValue": "Data Curator",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 37,
+          "strValue": "Data Manager",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 38,
+          "strValue": "Editor",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 39,
+          "strValue": "Funder",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 40,
+          "strValue": "Hosting Institution",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 41,
+          "strValue": "Project Leader",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 42,
+          "strValue": "Project Manager",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 43,
+          "strValue": "Project Member",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 44,
+          "strValue": "Related Person",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 45,
+          "strValue": "Researcher",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 46,
+          "strValue": "Research Group",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 47,
+          "strValue": "Rights Holder",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 48,
+          "strValue": "Sponsor",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 49,
+          "strValue": "Supervisor",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 50,
+          "strValue": "Work Package Leader",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 51,
+          "strValue": "Other",
+          "identifier": "",
+          "displayOrder": 16
+        }
+      ],
+      "parentDatasetFieldType": {
+        "id": 44,
+        "name": "contributor",
+        "title": "Contributor",
+        "description": "The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 43,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "http://purl.org/dc/terms/contributor",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 46,
+      "name": "contributorName",
+      "title": "Name",
+      "description": "The name of the contributor, e.g. the person's name or the name of an organization",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) FamilyName, GivenName or 2) Organization",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 45,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 44,
+        "name": "contributor",
+        "title": "Contributor",
+        "description": "The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 43,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "http://purl.org/dc/terms/contributor",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 47,
+      "name": "grantNumber",
+      "title": "Funding Information",
+      "description": "Information about the Dataset's financial support",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 46,
+      "displayFormat": ":",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://schema.org/sponsor",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 48,
+      "name": "grantNumberAgency",
+      "title": "Agency",
+      "description": "The agency that provided financial support for the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 47,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 47,
+        "name": "grantNumber",
+        "title": "Funding Information",
+        "description": "Information about the Dataset's financial support",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 46,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://schema.org/sponsor",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 49,
+      "name": "grantNumberValue",
+      "title": "Identifier",
+      "description": "The grant identifier or contract identifier of the agency that provided financial support for the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 48,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 47,
+        "name": "grantNumber",
+        "title": "Funding Information",
+        "description": "Information about the Dataset's financial support",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 46,
+        "displayFormat": ":",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://schema.org/sponsor",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 50,
+      "name": "distributor",
+      "title": "Distributor",
+      "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 49,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 51,
+      "name": "distributorName",
+      "title": "Name",
+      "description": "The name of the entity, e.g. the person's name or the name of an organization",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) FamilyName, GivenName or 2) Organization",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 50,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 50,
+        "name": "distributor",
+        "title": "Distributor",
+        "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 49,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 52,
+      "name": "distributorAffiliation",
+      "title": "Affiliation",
+      "description": "The name of the entity affiliated with the distributor, e.g. an organization's name",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "Organization XYZ",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 51,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 50,
+        "name": "distributor",
+        "title": "Distributor",
+        "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 49,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 53,
+      "name": "distributorAbbreviation",
+      "title": "Abbreviated Name",
+      "description": "The distributor's abbreviated name (e.g. IQSS, ICPSR)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 52,
+      "displayFormat": "(#VALUE)",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 50,
+        "name": "distributor",
+        "title": "Distributor",
+        "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 49,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 54,
+      "name": "distributorURL",
+      "title": "URL",
+      "description": "The URL of the distributor's webpage",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 53,
+      "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 50,
+        "name": "distributor",
+        "title": "Distributor",
+        "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 49,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 55,
+      "name": "distributorLogoURL",
+      "title": "Logo URL",
+      "description": "The URL of the distributor's logo image, used to show the image on the Dataset's page",
+      "fieldType": "URL",
+      "allowControlledVocabulary": false,
+      "watermark": "https://",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 54,
+      "displayFormat": "<img src=\"#VALUE\" alt=\"#NAME\" class=\"metadata-logo\"/><br/>",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 50,
+        "name": "distributor",
+        "title": "Distributor",
+        "description": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 49,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 56,
+      "name": "distributionDate",
+      "title": "Distribution Date",
+      "description": "The date when the Dataset was made available for distribution/presentation",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 55,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 57,
+      "name": "depositor",
+      "title": "Depositor",
+      "description": "The entity, such as a person or organization, that deposited the Dataset in the repository",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "1) FamilyName, GivenName or 2) Organization",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 56,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 58,
+      "name": "dateOfDeposit",
+      "title": "Deposit Date",
+      "description": "The date when the Dataset was deposited into the repository",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 57,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/dateSubmitted",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 59,
+      "name": "timePeriodCovered",
+      "title": "Time Period",
+      "description": "The time period that the data refer to. Also known as span. This is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 58,
+      "displayFormat": ";",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://schema.org/temporalCoverage",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 60,
+      "name": "timePeriodCoveredStart",
+      "title": "Start Date",
+      "description": "The start date of the time period that the data refer to",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 59,
+      "displayFormat": "#NAME: #VALUE ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 59,
+        "name": "timePeriodCovered",
+        "title": "Time Period",
+        "description": "The time period that the data refer to. Also known as span. This is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 58,
+        "displayFormat": ";",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://schema.org/temporalCoverage",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 61,
+      "name": "timePeriodCoveredEnd",
+      "title": "End Date",
+      "description": "The end date of the time period that the data refer to",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 60,
+      "displayFormat": "#NAME: #VALUE ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 59,
+        "name": "timePeriodCovered",
+        "title": "Time Period",
+        "description": "The time period that the data refer to. Also known as span. This is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 58,
+        "displayFormat": ";",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://schema.org/temporalCoverage",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 62,
+      "name": "dateOfCollection",
+      "title": "Date of Collection",
+      "description": "The dates when the data were collected or generated",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 61,
+      "displayFormat": ";",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 63,
+      "name": "dateOfCollectionStart",
+      "title": "Start Date",
+      "description": "The date when the data collection started",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 62,
+      "displayFormat": "#NAME: #VALUE ",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 62,
+        "name": "dateOfCollection",
+        "title": "Date of Collection",
+        "description": "The dates when the data were collected or generated",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 61,
+        "displayFormat": ";",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 64,
+      "name": "dateOfCollectionEnd",
+      "title": "End Date",
+      "description": "The date when the data collection ended",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 63,
+      "displayFormat": "#NAME: #VALUE ",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 62,
+        "name": "dateOfCollection",
+        "title": "Date of Collection",
+        "description": "The dates when the data were collected or generated",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 61,
+        "displayFormat": ";",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 65,
+      "name": "kindOfData",
+      "title": "Data Type",
+      "description": "The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 64,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": "http://rdf-vocabulary.ddialliance.org/discovery#kindOfData",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 66,
+      "name": "series",
+      "title": "Series",
+      "description": "Information about the dataset series to which the Dataset belong",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 65,
+      "displayFormat": ":",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 67,
+      "name": "seriesName",
+      "title": "Name",
+      "description": "The name of the dataset series",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 66,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 66,
+        "name": "series",
+        "title": "Series",
+        "description": "Information about the dataset series to which the Dataset belong",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 65,
+        "displayFormat": ":",
+        "allowMultiples": false,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 68,
+      "name": "seriesInformation",
+      "title": "Information",
+      "description": "Can include 1) a history of the series and 2) a summary of features that apply to the series",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 67,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 66,
+        "name": "series",
+        "title": "Series",
+        "description": "Information about the dataset series to which the Dataset belong",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 65,
+        "displayFormat": ":",
+        "allowMultiples": false,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 69,
+      "name": "software",
+      "title": "Software",
+      "description": "Information about the software used to generate the Dataset",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 68,
+      "displayFormat": ",",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://www.w3.org/TR/prov-o/#wasGeneratedBy",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 70,
+      "name": "softwareName",
+      "title": "Name",
+      "description": "The name of software used to generate the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 69,
+      "displayFormat": "#VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 69,
+        "name": "software",
+        "title": "Software",
+        "description": "Information about the software used to generate the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 68,
+        "displayFormat": ",",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://www.w3.org/TR/prov-o/#wasGeneratedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 71,
+      "name": "softwareVersion",
+      "title": "Version",
+      "description": "The version of the software used to generate the Dataset, e.g. 4.11",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 70,
+      "displayFormat": "#NAME: #VALUE",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 69,
+        "name": "software",
+        "title": "Software",
+        "description": "Information about the software used to generate the Dataset",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 68,
+        "displayFormat": ",",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": "https://www.w3.org/TR/prov-o/#wasGeneratedBy",
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 72,
+      "name": "relatedMaterial",
+      "title": "Related Material",
+      "description": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 71,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 73,
+      "name": "relatedDatasets",
+      "title": "Related Dataset",
+      "description": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 72,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/relation",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 74,
+      "name": "otherReferences",
+      "title": "Other Reference",
+      "description": "Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 73,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "http://purl.org/dc/terms/references",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 75,
+      "name": "dataSources",
+      "title": "Data Source",
+      "description": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 74,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": "https://www.w3.org/TR/prov-o/#wasDerivedFrom",
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 76,
+      "name": "originOfSources",
+      "title": "Origin of Historical Sources",
+      "description": "For historical sources, the origin and any rules followed in establishing them as sources",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 75,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 77,
+      "name": "characteristicOfSources",
+      "title": "Characteristic of Sources",
+      "description": "Characteristics not already noted elsewhere",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 76,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 78,
+      "name": "accessToSources",
+      "title": "Documentation and Access to Sources",
+      "description": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
+      "fieldType": "TEXTBOX",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 77,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    }
+  ],
+  "empty": false,
+  "selected": false,
+  "hasRequired": false,
+  "showDatasetFieldTypes": false,
+  "required": true,
+  "localeDisplayFacet": "Citation",
+  "displayOnCreate": true,
+  "localeDisplayName": "Citation Metadata",
+  "idString": "1"
+}

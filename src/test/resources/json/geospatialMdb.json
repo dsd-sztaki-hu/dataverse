@@ -1,0 +1,1939 @@
+{
+  "id": 2,
+  "name": "geospatial",
+  "displayName": "Geospatial Metadata",
+  "namespaceUri": null,
+  "datasetFieldTypes": [
+    {
+      "id": 79,
+      "name": "geographicCoverage",
+      "title": "Geographic Coverage",
+      "description": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 0,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 80,
+      "name": "country",
+      "title": "Country / Nation",
+      "description": "The country or nation that the Dataset is about.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 1,
+      "displayFormat": "#VALUE, ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 246,
+          "strValue": "Afghanistan",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 247,
+          "strValue": "Albania",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 248,
+          "strValue": "Algeria",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 249,
+          "strValue": "American Samoa",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 250,
+          "strValue": "Andorra",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 251,
+          "strValue": "Angola",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 252,
+          "strValue": "Anguilla",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 253,
+          "strValue": "Antarctica",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 254,
+          "strValue": "Antigua and Barbuda",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 255,
+          "strValue": "Argentina",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 256,
+          "strValue": "Armenia",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 257,
+          "strValue": "Aruba",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 258,
+          "strValue": "Australia",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 259,
+          "strValue": "Austria",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 260,
+          "strValue": "Azerbaijan",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 261,
+          "strValue": "Bahamas",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 262,
+          "strValue": "Bahrain",
+          "identifier": "",
+          "displayOrder": 16
+        },
+        {
+          "id": 263,
+          "strValue": "Bangladesh",
+          "identifier": "",
+          "displayOrder": 17
+        },
+        {
+          "id": 264,
+          "strValue": "Barbados",
+          "identifier": "",
+          "displayOrder": 18
+        },
+        {
+          "id": 265,
+          "strValue": "Belarus",
+          "identifier": "",
+          "displayOrder": 19
+        },
+        {
+          "id": 266,
+          "strValue": "Belgium",
+          "identifier": "",
+          "displayOrder": 20
+        },
+        {
+          "id": 267,
+          "strValue": "Belize",
+          "identifier": "",
+          "displayOrder": 21
+        },
+        {
+          "id": 268,
+          "strValue": "Benin",
+          "identifier": "",
+          "displayOrder": 22
+        },
+        {
+          "id": 269,
+          "strValue": "Bermuda",
+          "identifier": "",
+          "displayOrder": 23
+        },
+        {
+          "id": 270,
+          "strValue": "Bhutan",
+          "identifier": "",
+          "displayOrder": 24
+        },
+        {
+          "id": 271,
+          "strValue": "Bolivia, Plurinational State of",
+          "identifier": "",
+          "displayOrder": 25
+        },
+        {
+          "id": 272,
+          "strValue": "Bonaire, Sint Eustatius and Saba",
+          "identifier": "",
+          "displayOrder": 26
+        },
+        {
+          "id": 273,
+          "strValue": "Bosnia and Herzegovina",
+          "identifier": "",
+          "displayOrder": 27
+        },
+        {
+          "id": 274,
+          "strValue": "Botswana",
+          "identifier": "",
+          "displayOrder": 28
+        },
+        {
+          "id": 275,
+          "strValue": "Bouvet Island",
+          "identifier": "",
+          "displayOrder": 29
+        },
+        {
+          "id": 276,
+          "strValue": "Brazil",
+          "identifier": "",
+          "displayOrder": 30
+        },
+        {
+          "id": 277,
+          "strValue": "British Indian Ocean Territory",
+          "identifier": "",
+          "displayOrder": 31
+        },
+        {
+          "id": 278,
+          "strValue": "Brunei Darussalam",
+          "identifier": "",
+          "displayOrder": 32
+        },
+        {
+          "id": 279,
+          "strValue": "Bulgaria",
+          "identifier": "",
+          "displayOrder": 33
+        },
+        {
+          "id": 280,
+          "strValue": "Burkina Faso",
+          "identifier": "",
+          "displayOrder": 34
+        },
+        {
+          "id": 281,
+          "strValue": "Burundi",
+          "identifier": "",
+          "displayOrder": 35
+        },
+        {
+          "id": 282,
+          "strValue": "Cambodia",
+          "identifier": "",
+          "displayOrder": 36
+        },
+        {
+          "id": 283,
+          "strValue": "Cameroon",
+          "identifier": "",
+          "displayOrder": 37
+        },
+        {
+          "id": 284,
+          "strValue": "Canada",
+          "identifier": "",
+          "displayOrder": 38
+        },
+        {
+          "id": 285,
+          "strValue": "Cape Verde",
+          "identifier": "",
+          "displayOrder": 39
+        },
+        {
+          "id": 286,
+          "strValue": "Cayman Islands",
+          "identifier": "",
+          "displayOrder": 40
+        },
+        {
+          "id": 287,
+          "strValue": "Central African Republic",
+          "identifier": "",
+          "displayOrder": 41
+        },
+        {
+          "id": 288,
+          "strValue": "Chad",
+          "identifier": "",
+          "displayOrder": 42
+        },
+        {
+          "id": 289,
+          "strValue": "Chile",
+          "identifier": "",
+          "displayOrder": 43
+        },
+        {
+          "id": 290,
+          "strValue": "China",
+          "identifier": "",
+          "displayOrder": 44
+        },
+        {
+          "id": 291,
+          "strValue": "Christmas Island",
+          "identifier": "",
+          "displayOrder": 45
+        },
+        {
+          "id": 292,
+          "strValue": "Cocos (Keeling) Islands",
+          "identifier": "",
+          "displayOrder": 46
+        },
+        {
+          "id": 293,
+          "strValue": "Colombia",
+          "identifier": "",
+          "displayOrder": 47
+        },
+        {
+          "id": 294,
+          "strValue": "Comoros",
+          "identifier": "",
+          "displayOrder": 48
+        },
+        {
+          "id": 295,
+          "strValue": "Congo",
+          "identifier": "",
+          "displayOrder": 49
+        },
+        {
+          "id": 296,
+          "strValue": "Congo, the Democratic Republic of the",
+          "identifier": "",
+          "displayOrder": 50
+        },
+        {
+          "id": 297,
+          "strValue": "Cook Islands",
+          "identifier": "",
+          "displayOrder": 51
+        },
+        {
+          "id": 298,
+          "strValue": "Costa Rica",
+          "identifier": "",
+          "displayOrder": 52
+        },
+        {
+          "id": 299,
+          "strValue": "Croatia",
+          "identifier": "",
+          "displayOrder": 53
+        },
+        {
+          "id": 300,
+          "strValue": "Cuba",
+          "identifier": "",
+          "displayOrder": 54
+        },
+        {
+          "id": 301,
+          "strValue": "Curaçao",
+          "identifier": "",
+          "displayOrder": 55
+        },
+        {
+          "id": 302,
+          "strValue": "Cyprus",
+          "identifier": "",
+          "displayOrder": 56
+        },
+        {
+          "id": 303,
+          "strValue": "Czech Republic",
+          "identifier": "",
+          "displayOrder": 57
+        },
+        {
+          "id": 304,
+          "strValue": "Côte d'Ivoire",
+          "identifier": "",
+          "displayOrder": 58
+        },
+        {
+          "id": 305,
+          "strValue": "Denmark",
+          "identifier": "",
+          "displayOrder": 59
+        },
+        {
+          "id": 306,
+          "strValue": "Djibouti",
+          "identifier": "",
+          "displayOrder": 60
+        },
+        {
+          "id": 307,
+          "strValue": "Dominica",
+          "identifier": "",
+          "displayOrder": 61
+        },
+        {
+          "id": 308,
+          "strValue": "Dominican Republic",
+          "identifier": "",
+          "displayOrder": 62
+        },
+        {
+          "id": 309,
+          "strValue": "Ecuador",
+          "identifier": "",
+          "displayOrder": 63
+        },
+        {
+          "id": 310,
+          "strValue": "Egypt",
+          "identifier": "",
+          "displayOrder": 64
+        },
+        {
+          "id": 311,
+          "strValue": "El Salvador",
+          "identifier": "",
+          "displayOrder": 65
+        },
+        {
+          "id": 312,
+          "strValue": "Equatorial Guinea",
+          "identifier": "",
+          "displayOrder": 66
+        },
+        {
+          "id": 313,
+          "strValue": "Eritrea",
+          "identifier": "",
+          "displayOrder": 67
+        },
+        {
+          "id": 314,
+          "strValue": "Estonia",
+          "identifier": "",
+          "displayOrder": 68
+        },
+        {
+          "id": 315,
+          "strValue": "Ethiopia",
+          "identifier": "",
+          "displayOrder": 69
+        },
+        {
+          "id": 316,
+          "strValue": "Falkland Islands (Malvinas)",
+          "identifier": "",
+          "displayOrder": 70
+        },
+        {
+          "id": 317,
+          "strValue": "Faroe Islands",
+          "identifier": "",
+          "displayOrder": 71
+        },
+        {
+          "id": 318,
+          "strValue": "Fiji",
+          "identifier": "",
+          "displayOrder": 72
+        },
+        {
+          "id": 319,
+          "strValue": "Finland",
+          "identifier": "",
+          "displayOrder": 73
+        },
+        {
+          "id": 320,
+          "strValue": "France",
+          "identifier": "",
+          "displayOrder": 74
+        },
+        {
+          "id": 321,
+          "strValue": "French Guiana",
+          "identifier": "",
+          "displayOrder": 75
+        },
+        {
+          "id": 322,
+          "strValue": "French Polynesia",
+          "identifier": "",
+          "displayOrder": 76
+        },
+        {
+          "id": 323,
+          "strValue": "French Southern Territories",
+          "identifier": "",
+          "displayOrder": 77
+        },
+        {
+          "id": 324,
+          "strValue": "Gabon",
+          "identifier": "",
+          "displayOrder": 78
+        },
+        {
+          "id": 325,
+          "strValue": "Gambia",
+          "identifier": "",
+          "displayOrder": 79
+        },
+        {
+          "id": 326,
+          "strValue": "Georgia",
+          "identifier": "",
+          "displayOrder": 80
+        },
+        {
+          "id": 327,
+          "strValue": "Germany",
+          "identifier": "",
+          "displayOrder": 81
+        },
+        {
+          "id": 328,
+          "strValue": "Ghana",
+          "identifier": "",
+          "displayOrder": 82
+        },
+        {
+          "id": 329,
+          "strValue": "Gibraltar",
+          "identifier": "",
+          "displayOrder": 83
+        },
+        {
+          "id": 330,
+          "strValue": "Greece",
+          "identifier": "",
+          "displayOrder": 84
+        },
+        {
+          "id": 331,
+          "strValue": "Greenland",
+          "identifier": "",
+          "displayOrder": 85
+        },
+        {
+          "id": 332,
+          "strValue": "Grenada",
+          "identifier": "",
+          "displayOrder": 86
+        },
+        {
+          "id": 333,
+          "strValue": "Guadeloupe",
+          "identifier": "",
+          "displayOrder": 87
+        },
+        {
+          "id": 334,
+          "strValue": "Guam",
+          "identifier": "",
+          "displayOrder": 88
+        },
+        {
+          "id": 335,
+          "strValue": "Guatemala",
+          "identifier": "",
+          "displayOrder": 89
+        },
+        {
+          "id": 336,
+          "strValue": "Guernsey",
+          "identifier": "",
+          "displayOrder": 90
+        },
+        {
+          "id": 337,
+          "strValue": "Guinea",
+          "identifier": "",
+          "displayOrder": 91
+        },
+        {
+          "id": 338,
+          "strValue": "Guinea-Bissau",
+          "identifier": "",
+          "displayOrder": 92
+        },
+        {
+          "id": 339,
+          "strValue": "Guyana",
+          "identifier": "",
+          "displayOrder": 93
+        },
+        {
+          "id": 340,
+          "strValue": "Haiti",
+          "identifier": "",
+          "displayOrder": 94
+        },
+        {
+          "id": 341,
+          "strValue": "Heard Island and Mcdonald Islands",
+          "identifier": "",
+          "displayOrder": 95
+        },
+        {
+          "id": 342,
+          "strValue": "Holy See (Vatican City State)",
+          "identifier": "",
+          "displayOrder": 96
+        },
+        {
+          "id": 343,
+          "strValue": "Honduras",
+          "identifier": "",
+          "displayOrder": 97
+        },
+        {
+          "id": 344,
+          "strValue": "Hong Kong",
+          "identifier": "",
+          "displayOrder": 98
+        },
+        {
+          "id": 345,
+          "strValue": "Hungary",
+          "identifier": "",
+          "displayOrder": 99
+        },
+        {
+          "id": 346,
+          "strValue": "Iceland",
+          "identifier": "",
+          "displayOrder": 100
+        },
+        {
+          "id": 347,
+          "strValue": "India",
+          "identifier": "",
+          "displayOrder": 101
+        },
+        {
+          "id": 348,
+          "strValue": "Indonesia",
+          "identifier": "",
+          "displayOrder": 102
+        },
+        {
+          "id": 349,
+          "strValue": "Iran, Islamic Republic of",
+          "identifier": "",
+          "displayOrder": 103
+        },
+        {
+          "id": 350,
+          "strValue": "Iraq",
+          "identifier": "",
+          "displayOrder": 104
+        },
+        {
+          "id": 351,
+          "strValue": "Ireland",
+          "identifier": "",
+          "displayOrder": 105
+        },
+        {
+          "id": 352,
+          "strValue": "Isle of Man",
+          "identifier": "",
+          "displayOrder": 106
+        },
+        {
+          "id": 353,
+          "strValue": "Israel",
+          "identifier": "",
+          "displayOrder": 107
+        },
+        {
+          "id": 354,
+          "strValue": "Italy",
+          "identifier": "",
+          "displayOrder": 108
+        },
+        {
+          "id": 355,
+          "strValue": "Jamaica",
+          "identifier": "",
+          "displayOrder": 109
+        },
+        {
+          "id": 356,
+          "strValue": "Japan",
+          "identifier": "",
+          "displayOrder": 110
+        },
+        {
+          "id": 357,
+          "strValue": "Jersey",
+          "identifier": "",
+          "displayOrder": 111
+        },
+        {
+          "id": 358,
+          "strValue": "Jordan",
+          "identifier": "",
+          "displayOrder": 112
+        },
+        {
+          "id": 359,
+          "strValue": "Kazakhstan",
+          "identifier": "",
+          "displayOrder": 113
+        },
+        {
+          "id": 360,
+          "strValue": "Kenya",
+          "identifier": "",
+          "displayOrder": 114
+        },
+        {
+          "id": 361,
+          "strValue": "Kiribati",
+          "identifier": "",
+          "displayOrder": 115
+        },
+        {
+          "id": 362,
+          "strValue": "Korea, Democratic People's Republic of",
+          "identifier": "",
+          "displayOrder": 116
+        },
+        {
+          "id": 363,
+          "strValue": "Korea, Republic of",
+          "identifier": "",
+          "displayOrder": 117
+        },
+        {
+          "id": 364,
+          "strValue": "Kuwait",
+          "identifier": "",
+          "displayOrder": 118
+        },
+        {
+          "id": 365,
+          "strValue": "Kyrgyzstan",
+          "identifier": "",
+          "displayOrder": 119
+        },
+        {
+          "id": 366,
+          "strValue": "Lao People's Democratic Republic",
+          "identifier": "",
+          "displayOrder": 120
+        },
+        {
+          "id": 367,
+          "strValue": "Latvia",
+          "identifier": "",
+          "displayOrder": 121
+        },
+        {
+          "id": 368,
+          "strValue": "Lebanon",
+          "identifier": "",
+          "displayOrder": 122
+        },
+        {
+          "id": 369,
+          "strValue": "Lesotho",
+          "identifier": "",
+          "displayOrder": 123
+        },
+        {
+          "id": 370,
+          "strValue": "Liberia",
+          "identifier": "",
+          "displayOrder": 124
+        },
+        {
+          "id": 371,
+          "strValue": "Libya",
+          "identifier": "",
+          "displayOrder": 125
+        },
+        {
+          "id": 372,
+          "strValue": "Liechtenstein",
+          "identifier": "",
+          "displayOrder": 126
+        },
+        {
+          "id": 373,
+          "strValue": "Lithuania",
+          "identifier": "",
+          "displayOrder": 127
+        },
+        {
+          "id": 374,
+          "strValue": "Luxembourg",
+          "identifier": "",
+          "displayOrder": 128
+        },
+        {
+          "id": 375,
+          "strValue": "Macao",
+          "identifier": "",
+          "displayOrder": 129
+        },
+        {
+          "id": 376,
+          "strValue": "Macedonia, the Former Yugoslav Republic of",
+          "identifier": "",
+          "displayOrder": 130
+        },
+        {
+          "id": 377,
+          "strValue": "Madagascar",
+          "identifier": "",
+          "displayOrder": 131
+        },
+        {
+          "id": 378,
+          "strValue": "Malawi",
+          "identifier": "",
+          "displayOrder": 132
+        },
+        {
+          "id": 379,
+          "strValue": "Malaysia",
+          "identifier": "",
+          "displayOrder": 133
+        },
+        {
+          "id": 380,
+          "strValue": "Maldives",
+          "identifier": "",
+          "displayOrder": 134
+        },
+        {
+          "id": 381,
+          "strValue": "Mali",
+          "identifier": "",
+          "displayOrder": 135
+        },
+        {
+          "id": 382,
+          "strValue": "Malta",
+          "identifier": "",
+          "displayOrder": 136
+        },
+        {
+          "id": 383,
+          "strValue": "Marshall Islands",
+          "identifier": "",
+          "displayOrder": 137
+        },
+        {
+          "id": 384,
+          "strValue": "Martinique",
+          "identifier": "",
+          "displayOrder": 138
+        },
+        {
+          "id": 385,
+          "strValue": "Mauritania",
+          "identifier": "",
+          "displayOrder": 139
+        },
+        {
+          "id": 386,
+          "strValue": "Mauritius",
+          "identifier": "",
+          "displayOrder": 140
+        },
+        {
+          "id": 387,
+          "strValue": "Mayotte",
+          "identifier": "",
+          "displayOrder": 141
+        },
+        {
+          "id": 388,
+          "strValue": "Mexico",
+          "identifier": "",
+          "displayOrder": 142
+        },
+        {
+          "id": 389,
+          "strValue": "Micronesia, Federated States of",
+          "identifier": "",
+          "displayOrder": 143
+        },
+        {
+          "id": 390,
+          "strValue": "Moldova, Republic of",
+          "identifier": "",
+          "displayOrder": 144
+        },
+        {
+          "id": 391,
+          "strValue": "Monaco",
+          "identifier": "",
+          "displayOrder": 145
+        },
+        {
+          "id": 392,
+          "strValue": "Mongolia",
+          "identifier": "",
+          "displayOrder": 146
+        },
+        {
+          "id": 393,
+          "strValue": "Montenegro",
+          "identifier": "",
+          "displayOrder": 147
+        },
+        {
+          "id": 394,
+          "strValue": "Montserrat",
+          "identifier": "",
+          "displayOrder": 148
+        },
+        {
+          "id": 395,
+          "strValue": "Morocco",
+          "identifier": "",
+          "displayOrder": 149
+        },
+        {
+          "id": 396,
+          "strValue": "Mozambique",
+          "identifier": "",
+          "displayOrder": 150
+        },
+        {
+          "id": 397,
+          "strValue": "Myanmar",
+          "identifier": "",
+          "displayOrder": 151
+        },
+        {
+          "id": 398,
+          "strValue": "Namibia",
+          "identifier": "",
+          "displayOrder": 152
+        },
+        {
+          "id": 399,
+          "strValue": "Nauru",
+          "identifier": "",
+          "displayOrder": 153
+        },
+        {
+          "id": 400,
+          "strValue": "Nepal",
+          "identifier": "",
+          "displayOrder": 154
+        },
+        {
+          "id": 401,
+          "strValue": "Netherlands",
+          "identifier": "",
+          "displayOrder": 155
+        },
+        {
+          "id": 402,
+          "strValue": "New Caledonia",
+          "identifier": "",
+          "displayOrder": 156
+        },
+        {
+          "id": 403,
+          "strValue": "New Zealand",
+          "identifier": "",
+          "displayOrder": 157
+        },
+        {
+          "id": 404,
+          "strValue": "Nicaragua",
+          "identifier": "",
+          "displayOrder": 158
+        },
+        {
+          "id": 405,
+          "strValue": "Niger",
+          "identifier": "",
+          "displayOrder": 159
+        },
+        {
+          "id": 406,
+          "strValue": "Nigeria",
+          "identifier": "",
+          "displayOrder": 160
+        },
+        {
+          "id": 407,
+          "strValue": "Niue",
+          "identifier": "",
+          "displayOrder": 161
+        },
+        {
+          "id": 408,
+          "strValue": "Norfolk Island",
+          "identifier": "",
+          "displayOrder": 162
+        },
+        {
+          "id": 409,
+          "strValue": "Northern Mariana Islands",
+          "identifier": "",
+          "displayOrder": 163
+        },
+        {
+          "id": 410,
+          "strValue": "Norway",
+          "identifier": "",
+          "displayOrder": 164
+        },
+        {
+          "id": 411,
+          "strValue": "Oman",
+          "identifier": "",
+          "displayOrder": 165
+        },
+        {
+          "id": 412,
+          "strValue": "Pakistan",
+          "identifier": "",
+          "displayOrder": 166
+        },
+        {
+          "id": 413,
+          "strValue": "Palau",
+          "identifier": "",
+          "displayOrder": 167
+        },
+        {
+          "id": 414,
+          "strValue": "Palestine, State of",
+          "identifier": "",
+          "displayOrder": 168
+        },
+        {
+          "id": 415,
+          "strValue": "Panama",
+          "identifier": "",
+          "displayOrder": 169
+        },
+        {
+          "id": 416,
+          "strValue": "Papua New Guinea",
+          "identifier": "",
+          "displayOrder": 170
+        },
+        {
+          "id": 417,
+          "strValue": "Paraguay",
+          "identifier": "",
+          "displayOrder": 171
+        },
+        {
+          "id": 418,
+          "strValue": "Peru",
+          "identifier": "",
+          "displayOrder": 172
+        },
+        {
+          "id": 419,
+          "strValue": "Philippines",
+          "identifier": "",
+          "displayOrder": 173
+        },
+        {
+          "id": 420,
+          "strValue": "Pitcairn",
+          "identifier": "",
+          "displayOrder": 174
+        },
+        {
+          "id": 421,
+          "strValue": "Poland",
+          "identifier": "",
+          "displayOrder": 175
+        },
+        {
+          "id": 422,
+          "strValue": "Portugal",
+          "identifier": "",
+          "displayOrder": 176
+        },
+        {
+          "id": 423,
+          "strValue": "Puerto Rico",
+          "identifier": "",
+          "displayOrder": 177
+        },
+        {
+          "id": 424,
+          "strValue": "Qatar",
+          "identifier": "",
+          "displayOrder": 178
+        },
+        {
+          "id": 425,
+          "strValue": "Romania",
+          "identifier": "",
+          "displayOrder": 179
+        },
+        {
+          "id": 426,
+          "strValue": "Russian Federation",
+          "identifier": "",
+          "displayOrder": 180
+        },
+        {
+          "id": 427,
+          "strValue": "Rwanda",
+          "identifier": "",
+          "displayOrder": 181
+        },
+        {
+          "id": 428,
+          "strValue": "Réunion",
+          "identifier": "",
+          "displayOrder": 182
+        },
+        {
+          "id": 429,
+          "strValue": "Saint Barthélemy",
+          "identifier": "",
+          "displayOrder": 183
+        },
+        {
+          "id": 430,
+          "strValue": "Saint Helena, Ascension and Tristan da Cunha",
+          "identifier": "",
+          "displayOrder": 184
+        },
+        {
+          "id": 431,
+          "strValue": "Saint Kitts and Nevis",
+          "identifier": "",
+          "displayOrder": 185
+        },
+        {
+          "id": 432,
+          "strValue": "Saint Lucia",
+          "identifier": "",
+          "displayOrder": 186
+        },
+        {
+          "id": 433,
+          "strValue": "Saint Martin (French part)",
+          "identifier": "",
+          "displayOrder": 187
+        },
+        {
+          "id": 434,
+          "strValue": "Saint Pierre and Miquelon",
+          "identifier": "",
+          "displayOrder": 188
+        },
+        {
+          "id": 435,
+          "strValue": "Saint Vincent and the Grenadines",
+          "identifier": "",
+          "displayOrder": 189
+        },
+        {
+          "id": 436,
+          "strValue": "Samoa",
+          "identifier": "",
+          "displayOrder": 190
+        },
+        {
+          "id": 437,
+          "strValue": "San Marino",
+          "identifier": "",
+          "displayOrder": 191
+        },
+        {
+          "id": 438,
+          "strValue": "Sao Tome and Principe",
+          "identifier": "",
+          "displayOrder": 192
+        },
+        {
+          "id": 439,
+          "strValue": "Saudi Arabia",
+          "identifier": "",
+          "displayOrder": 193
+        },
+        {
+          "id": 440,
+          "strValue": "Senegal",
+          "identifier": "",
+          "displayOrder": 194
+        },
+        {
+          "id": 441,
+          "strValue": "Serbia",
+          "identifier": "",
+          "displayOrder": 195
+        },
+        {
+          "id": 442,
+          "strValue": "Seychelles",
+          "identifier": "",
+          "displayOrder": 196
+        },
+        {
+          "id": 443,
+          "strValue": "Sierra Leone",
+          "identifier": "",
+          "displayOrder": 197
+        },
+        {
+          "id": 444,
+          "strValue": "Singapore",
+          "identifier": "",
+          "displayOrder": 198
+        },
+        {
+          "id": 445,
+          "strValue": "Sint Maarten (Dutch part)",
+          "identifier": "",
+          "displayOrder": 199
+        },
+        {
+          "id": 446,
+          "strValue": "Slovakia",
+          "identifier": "",
+          "displayOrder": 200
+        },
+        {
+          "id": 447,
+          "strValue": "Slovenia",
+          "identifier": "",
+          "displayOrder": 201
+        },
+        {
+          "id": 448,
+          "strValue": "Solomon Islands",
+          "identifier": "",
+          "displayOrder": 202
+        },
+        {
+          "id": 449,
+          "strValue": "Somalia",
+          "identifier": "",
+          "displayOrder": 203
+        },
+        {
+          "id": 450,
+          "strValue": "South Africa",
+          "identifier": "",
+          "displayOrder": 204
+        },
+        {
+          "id": 451,
+          "strValue": "South Georgia and the South Sandwich Islands",
+          "identifier": "",
+          "displayOrder": 205
+        },
+        {
+          "id": 452,
+          "strValue": "South Sudan",
+          "identifier": "",
+          "displayOrder": 206
+        },
+        {
+          "id": 453,
+          "strValue": "Spain",
+          "identifier": "",
+          "displayOrder": 207
+        },
+        {
+          "id": 454,
+          "strValue": "Sri Lanka",
+          "identifier": "",
+          "displayOrder": 208
+        },
+        {
+          "id": 455,
+          "strValue": "Sudan",
+          "identifier": "",
+          "displayOrder": 209
+        },
+        {
+          "id": 456,
+          "strValue": "Suriname",
+          "identifier": "",
+          "displayOrder": 210
+        },
+        {
+          "id": 457,
+          "strValue": "Svalbard and Jan Mayen",
+          "identifier": "",
+          "displayOrder": 211
+        },
+        {
+          "id": 458,
+          "strValue": "Swaziland",
+          "identifier": "",
+          "displayOrder": 212
+        },
+        {
+          "id": 459,
+          "strValue": "Sweden",
+          "identifier": "",
+          "displayOrder": 213
+        },
+        {
+          "id": 460,
+          "strValue": "Switzerland",
+          "identifier": "",
+          "displayOrder": 214
+        },
+        {
+          "id": 461,
+          "strValue": "Syrian Arab Republic",
+          "identifier": "",
+          "displayOrder": 215
+        },
+        {
+          "id": 462,
+          "strValue": "Taiwan, Province of China",
+          "identifier": "",
+          "displayOrder": 216
+        },
+        {
+          "id": 463,
+          "strValue": "Tajikistan",
+          "identifier": "",
+          "displayOrder": 217
+        },
+        {
+          "id": 464,
+          "strValue": "Tanzania, United Republic of",
+          "identifier": "",
+          "displayOrder": 218
+        },
+        {
+          "id": 465,
+          "strValue": "Thailand",
+          "identifier": "",
+          "displayOrder": 219
+        },
+        {
+          "id": 466,
+          "strValue": "Timor-Leste",
+          "identifier": "",
+          "displayOrder": 220
+        },
+        {
+          "id": 467,
+          "strValue": "Togo",
+          "identifier": "",
+          "displayOrder": 221
+        },
+        {
+          "id": 468,
+          "strValue": "Tokelau",
+          "identifier": "",
+          "displayOrder": 222
+        },
+        {
+          "id": 469,
+          "strValue": "Tonga",
+          "identifier": "",
+          "displayOrder": 223
+        },
+        {
+          "id": 470,
+          "strValue": "Trinidad and Tobago",
+          "identifier": "",
+          "displayOrder": 224
+        },
+        {
+          "id": 471,
+          "strValue": "Tunisia",
+          "identifier": "",
+          "displayOrder": 225
+        },
+        {
+          "id": 472,
+          "strValue": "Turkey",
+          "identifier": "",
+          "displayOrder": 226
+        },
+        {
+          "id": 473,
+          "strValue": "Turkmenistan",
+          "identifier": "",
+          "displayOrder": 227
+        },
+        {
+          "id": 474,
+          "strValue": "Turks and Caicos Islands",
+          "identifier": "",
+          "displayOrder": 228
+        },
+        {
+          "id": 475,
+          "strValue": "Tuvalu",
+          "identifier": "",
+          "displayOrder": 229
+        },
+        {
+          "id": 476,
+          "strValue": "Uganda",
+          "identifier": "",
+          "displayOrder": 230
+        },
+        {
+          "id": 477,
+          "strValue": "Ukraine",
+          "identifier": "",
+          "displayOrder": 231
+        },
+        {
+          "id": 478,
+          "strValue": "United Arab Emirates",
+          "identifier": "",
+          "displayOrder": 232
+        },
+        {
+          "id": 479,
+          "strValue": "United Kingdom",
+          "identifier": "",
+          "displayOrder": 233
+        },
+        {
+          "id": 480,
+          "strValue": "United States",
+          "identifier": "",
+          "displayOrder": 234
+        },
+        {
+          "id": 481,
+          "strValue": "United States Minor Outlying Islands",
+          "identifier": "",
+          "displayOrder": 235
+        },
+        {
+          "id": 482,
+          "strValue": "Uruguay",
+          "identifier": "",
+          "displayOrder": 236
+        },
+        {
+          "id": 483,
+          "strValue": "Uzbekistan",
+          "identifier": "",
+          "displayOrder": 237
+        },
+        {
+          "id": 484,
+          "strValue": "Vanuatu",
+          "identifier": "",
+          "displayOrder": 238
+        },
+        {
+          "id": 485,
+          "strValue": "Venezuela, Bolivarian Republic of",
+          "identifier": "",
+          "displayOrder": 239
+        },
+        {
+          "id": 486,
+          "strValue": "Viet Nam",
+          "identifier": "",
+          "displayOrder": 240
+        },
+        {
+          "id": 487,
+          "strValue": "Virgin Islands, British",
+          "identifier": "",
+          "displayOrder": 241
+        },
+        {
+          "id": 488,
+          "strValue": "Virgin Islands, U.S.",
+          "identifier": "",
+          "displayOrder": 242
+        },
+        {
+          "id": 489,
+          "strValue": "Wallis and Futuna",
+          "identifier": "",
+          "displayOrder": 243
+        },
+        {
+          "id": 490,
+          "strValue": "Western Sahara",
+          "identifier": "",
+          "displayOrder": 244
+        },
+        {
+          "id": 491,
+          "strValue": "Yemen",
+          "identifier": "",
+          "displayOrder": 245
+        },
+        {
+          "id": 492,
+          "strValue": "Zambia",
+          "identifier": "",
+          "displayOrder": 246
+        },
+        {
+          "id": 493,
+          "strValue": "Zimbabwe",
+          "identifier": "",
+          "displayOrder": 247
+        },
+        {
+          "id": 494,
+          "strValue": "Åland Islands",
+          "identifier": "",
+          "displayOrder": 248
+        }
+      ],
+      "parentDatasetFieldType": {
+        "id": 79,
+        "name": "geographicCoverage",
+        "title": "Geographic Coverage",
+        "description": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 81,
+      "name": "state",
+      "title": "State / Province",
+      "description": "The state or province that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 2,
+      "displayFormat": "#VALUE, ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 79,
+        "name": "geographicCoverage",
+        "title": "Geographic Coverage",
+        "description": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 82,
+      "name": "city",
+      "title": "City",
+      "description": "The name of the city that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 3,
+      "displayFormat": "#VALUE, ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 79,
+        "name": "geographicCoverage",
+        "title": "Geographic Coverage",
+        "description": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 83,
+      "name": "otherGeographicCoverage",
+      "title": "Other",
+      "description": "Other information on the geographic coverage of the data.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 4,
+      "displayFormat": "#VALUE, ",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 79,
+        "name": "geographicCoverage",
+        "title": "Geographic Coverage",
+        "description": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 84,
+      "name": "geographicUnit",
+      "title": "Geographic Unit",
+      "description": "Lowest level of geographic aggregation covered by the Dataset, e.g., village, county, region.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 5,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 85,
+      "name": "geographicBoundingBox",
+      "title": "Geographic Bounding Box",
+      "description": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset's geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included. ",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 6,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 86,
+      "name": "westLongitude",
+      "title": "West Longitude",
+      "description": "Westernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 <= West  Bounding Longitude Value <= 180,0.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 7,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 85,
+        "name": "geographicBoundingBox",
+        "title": "Geographic Bounding Box",
+        "description": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset's geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included. ",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 6,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 87,
+      "name": "eastLongitude",
+      "title": "East Longitude",
+      "description": "Easternmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 <= East Bounding Longitude Value <= 180,0.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 8,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 85,
+        "name": "geographicBoundingBox",
+        "title": "Geographic Bounding Box",
+        "description": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset's geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included. ",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 6,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 88,
+      "name": "northLongitude",
+      "title": "North Latitude",
+      "description": "Northernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 <= North Bounding Latitude Value <= 90,0.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 9,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 85,
+        "name": "geographicBoundingBox",
+        "title": "Geographic Bounding Box",
+        "description": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset's geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included. ",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 6,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 89,
+      "name": "southLongitude",
+      "title": "South Latitude",
+      "description": "Southernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 <= South Bounding Latitude Value <= 90,0.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 10,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 85,
+        "name": "geographicBoundingBox",
+        "title": "Geographic Bounding Box",
+        "description": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset's geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included. ",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 6,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    }
+  ],
+  "empty": false,
+  "selected": false,
+  "hasRequired": false,
+  "showDatasetFieldTypes": false,
+  "required": false,
+  "localeDisplayFacet": "Geospatial",
+  "displayOnCreate": false,
+  "localeDisplayName": "Geospatial Metadata",
+  "idString": "2"
+}

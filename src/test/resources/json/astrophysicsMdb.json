@@ -1,0 +1,890 @@
+{
+  "id": 4,
+  "name": "astrophysics",
+  "displayName": "Astronomy and Astrophysics Metadata",
+  "namespaceUri": null,
+  "datasetFieldTypes": [
+    {
+      "id": 116,
+      "name": "astroType",
+      "title": "Type",
+      "description": "The nature or genre of the content of the files in the dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 0,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 495,
+          "strValue": "Image",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 496,
+          "strValue": "Mosaic",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 497,
+          "strValue": "EventList",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 498,
+          "strValue": "Spectrum",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 499,
+          "strValue": "Cube",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 500,
+          "strValue": "Table",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 501,
+          "strValue": "Catalog",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 502,
+          "strValue": "LightCurve",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 503,
+          "strValue": "Simulation",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 504,
+          "strValue": "Figure",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 505,
+          "strValue": "Artwork",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 506,
+          "strValue": "Animation",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 507,
+          "strValue": "PrettyPicture",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 508,
+          "strValue": "Documentation",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 509,
+          "strValue": "Other",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 510,
+          "strValue": "Library",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 511,
+          "strValue": "Press Release",
+          "identifier": "",
+          "displayOrder": 16
+        },
+        {
+          "id": 512,
+          "strValue": "Facsimile",
+          "identifier": "",
+          "displayOrder": 17
+        },
+        {
+          "id": 513,
+          "strValue": "Historical",
+          "identifier": "",
+          "displayOrder": 18
+        },
+        {
+          "id": 514,
+          "strValue": "Observation",
+          "identifier": "",
+          "displayOrder": 19
+        },
+        {
+          "id": 515,
+          "strValue": "Object",
+          "identifier": "",
+          "displayOrder": 20
+        },
+        {
+          "id": 516,
+          "strValue": "Value",
+          "identifier": "",
+          "displayOrder": 21
+        },
+        {
+          "id": 517,
+          "strValue": "ValuePair",
+          "identifier": "",
+          "displayOrder": 22
+        },
+        {
+          "id": 518,
+          "strValue": "Survey",
+          "identifier": "",
+          "displayOrder": 23
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 117,
+      "name": "astroFacility",
+      "title": "Facility",
+      "description": "The observatory or facility where the data was obtained. ",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 1,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 118,
+      "name": "astroInstrument",
+      "title": "Instrument",
+      "description": "The instrument used to collect the data.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 2,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 119,
+      "name": "astroObject",
+      "title": "Object",
+      "description": "Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 3,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 120,
+      "name": "resolution.Spatial",
+      "title": "Spatial Resolution",
+      "description": "The spatial (angular) resolution that is typical of the observations, in decimal degrees.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 4,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 121,
+      "name": "resolution.Spectral",
+      "title": "Spectral Resolution",
+      "description": "The spectral resolution that is typical of the observations, given as the ratio \\u03bb/\\u0394\\u03bb.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 5,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 122,
+      "name": "resolution.Temporal",
+      "title": "Time Resolution",
+      "description": "The temporal resolution that is typical of the observations, given in seconds.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 6,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 123,
+      "name": "coverage.Spectral.Bandpass",
+      "title": "Bandpass",
+      "description": "Conventional bandpass name",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 7,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 124,
+      "name": "coverage.Spectral.CentralWavelength",
+      "title": "Central Wavelength (m)",
+      "description": "The central wavelength of the spectral bandpass, in meters.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 8,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 125,
+      "name": "coverage.Spectral.Wavelength",
+      "title": "Wavelength Range",
+      "description": "The minimum and maximum wavelength of the spectral bandpass.",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 9,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 126,
+      "name": "coverage.Spectral.MinimumWavelength",
+      "title": "Minimum (m)",
+      "description": "The minimum wavelength of the spectral bandpass, in meters.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 10,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 125,
+        "name": "coverage.Spectral.Wavelength",
+        "title": "Wavelength Range",
+        "description": "The minimum and maximum wavelength of the spectral bandpass.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "Enter a floating-point number.",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 9,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 127,
+      "name": "coverage.Spectral.MaximumWavelength",
+      "title": "Maximum (m)",
+      "description": "The maximum wavelength of the spectral bandpass, in meters.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 11,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 125,
+        "name": "coverage.Spectral.Wavelength",
+        "title": "Wavelength Range",
+        "description": "The minimum and maximum wavelength of the spectral bandpass.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "Enter a floating-point number.",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 9,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 128,
+      "name": "coverage.Temporal",
+      "title": "Dataset Date Range",
+      "description": " Time period covered by the data.",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 12,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 129,
+      "name": "coverage.Temporal.StartTime",
+      "title": "Start",
+      "description": "Dataset Start Date",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 13,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 128,
+        "name": "coverage.Temporal",
+        "title": "Dataset Date Range",
+        "description": " Time period covered by the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 12,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 130,
+      "name": "coverage.Temporal.StopTime",
+      "title": "End",
+      "description": "Dataset End Date",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 14,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 128,
+        "name": "coverage.Temporal",
+        "title": "Dataset Date Range",
+        "description": " Time period covered by the data.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 12,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 131,
+      "name": "coverage.Spatial",
+      "title": "Sky Coverage",
+      "description": "The sky coverage of the data object.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 15,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 132,
+      "name": "coverage.Depth",
+      "title": "Depth Coverage",
+      "description": "The (typical) depth coverage, or sensitivity, of the data object in Jy.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 16,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 133,
+      "name": "coverage.ObjectDensity",
+      "title": "Object Density",
+      "description": "The (typical) density of objects, catalog entries, telescope pointings, etc., on the sky, in number per square degree.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 17,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 134,
+      "name": "coverage.ObjectCount",
+      "title": "Object Count",
+      "description": "The total number of objects, catalog entries, etc., in the data object.",
+      "fieldType": "INT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter an integer.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 18,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 135,
+      "name": "coverage.SkyFraction",
+      "title": "Fraction of Sky",
+      "description": "The fraction of the sky represented in the observations, ranging from 0 to 1.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 19,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 136,
+      "name": "coverage.Polarization",
+      "title": "Polarization",
+      "description": "The polarization coverage",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 20,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 137,
+      "name": "redshiftType",
+      "title": "RedshiftType",
+      "description": "RedshiftType string C \"Redshift\"; or \"Optical\" or \"Radio\" definitions of Doppler velocity used in the data object.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 21,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 138,
+      "name": "resolution.Redshift",
+      "title": "Redshift Resolution",
+      "description": "The resolution in redshift (unitless) or Doppler velocity (km/s) in the data object.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 22,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 139,
+      "name": "coverage.RedshiftValue",
+      "title": "Redshift Value",
+      "description": "The value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 23,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 140,
+      "name": "coverage.Redshift.MinimumValue",
+      "title": "Minimum",
+      "description": "The minimum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 24,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 139,
+        "name": "coverage.RedshiftValue",
+        "title": "Redshift Value",
+        "description": "The value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
+        "fieldType": "FLOAT",
+        "allowControlledVocabulary": false,
+        "watermark": "Enter a floating-point number.",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 23,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 141,
+      "name": "coverage.Redshift.MaximumValue",
+      "title": "Maximum",
+      "description": "The maximum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
+      "fieldType": "FLOAT",
+      "allowControlledVocabulary": false,
+      "watermark": "Enter a floating-point number.",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 25,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 139,
+        "name": "coverage.RedshiftValue",
+        "title": "Redshift Value",
+        "description": "The value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
+        "fieldType": "FLOAT",
+        "allowControlledVocabulary": false,
+        "watermark": "Enter a floating-point number.",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 23,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": false
+    }
+  ],
+  "empty": false,
+  "selected": false,
+  "hasRequired": false,
+  "showDatasetFieldTypes": false,
+  "required": false,
+  "localeDisplayFacet": "Astronomy and Astrophysics",
+  "displayOnCreate": false,
+  "localeDisplayName": "Astronomy and Astrophysics Metadata",
+  "idString": "4"
+}

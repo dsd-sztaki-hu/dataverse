@@ -1,0 +1,1996 @@
+{
+  "id": 5,
+  "name": "biomedical",
+  "displayName": "Life Sciences Metadata",
+  "namespaceUri": null,
+  "datasetFieldTypes": [
+    {
+      "id": 142,
+      "name": "studyDesignType",
+      "title": "Design Type",
+      "description": "Design types that are based on the overall experimental design.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 0,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 519,
+          "strValue": "Case Control",
+          "identifier": "EFO_0001427",
+          "displayOrder": 0
+        },
+        {
+          "id": 520,
+          "strValue": "Cross Sectional",
+          "identifier": "EFO_0001428",
+          "displayOrder": 1
+        },
+        {
+          "id": 521,
+          "strValue": "Cohort Study",
+          "identifier": "OCRE100078",
+          "displayOrder": 2
+        },
+        {
+          "id": 522,
+          "strValue": "Nested Case Control Design",
+          "identifier": "NCI_C48202",
+          "displayOrder": 3
+        },
+        {
+          "id": 523,
+          "strValue": "Not Specified",
+          "identifier": "NOT_SPECIFIED",
+          "displayOrder": 4
+        },
+        {
+          "id": 524,
+          "strValue": "Parallel Group Design",
+          "identifier": "OBI_0500006",
+          "displayOrder": 5
+        },
+        {
+          "id": 525,
+          "strValue": "Perturbation Design",
+          "identifier": "OBI_0001033",
+          "displayOrder": 6
+        },
+        {
+          "id": 526,
+          "strValue": "Randomized Controlled Trial",
+          "identifier": "MESH_D016449",
+          "displayOrder": 7
+        },
+        {
+          "id": 527,
+          "strValue": "Technological Design",
+          "identifier": "TECH_DESIGN",
+          "displayOrder": 8
+        },
+        {
+          "id": 528,
+          "strValue": "Other",
+          "identifier": "OTHER_DESIGN",
+          "displayOrder": 9
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 143,
+      "name": "studyOtherDesignType",
+      "title": "Other Design Type",
+      "description": "If Other was selected in Design Type, list any other design types that were used in this Dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 1,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 144,
+      "name": "studyFactorType",
+      "title": "Factor Type",
+      "description": "Factors used in the Dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 2,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 529,
+          "strValue": "Age",
+          "identifier": "EFO_0000246",
+          "displayOrder": 0
+        },
+        {
+          "id": 530,
+          "strValue": "Biomarkers",
+          "identifier": "BIOMARKERS",
+          "displayOrder": 1
+        },
+        {
+          "id": 531,
+          "strValue": "Cell Surface Markers",
+          "identifier": "CELL_SURFACE_M",
+          "displayOrder": 2
+        },
+        {
+          "id": 532,
+          "strValue": "Cell Type/Cell Line",
+          "identifier": "EFO_0000324;EFO_0000322",
+          "displayOrder": 3
+        },
+        {
+          "id": 533,
+          "strValue": "Developmental Stage",
+          "identifier": "EFO_0000399",
+          "displayOrder": 4
+        },
+        {
+          "id": 534,
+          "strValue": "Disease State",
+          "identifier": "OBI_0001293",
+          "displayOrder": 5
+        },
+        {
+          "id": 535,
+          "strValue": "Drug Susceptibility",
+          "identifier": "IDO_0000469",
+          "displayOrder": 6
+        },
+        {
+          "id": 536,
+          "strValue": "Extract Molecule",
+          "identifier": "FBcv_0010001",
+          "displayOrder": 7
+        },
+        {
+          "id": 537,
+          "strValue": "Genetic Characteristics",
+          "identifier": "OBI_0001404",
+          "displayOrder": 8
+        },
+        {
+          "id": 538,
+          "strValue": "Immunoprecipitation Antibody",
+          "identifier": "OBI_0000690",
+          "displayOrder": 9
+        },
+        {
+          "id": 539,
+          "strValue": "Organism",
+          "identifier": "OBI_0100026",
+          "displayOrder": 10
+        },
+        {
+          "id": 540,
+          "strValue": "Passages",
+          "identifier": "PASSAGES_FACTOR",
+          "displayOrder": 11
+        },
+        {
+          "id": 541,
+          "strValue": "Platform",
+          "identifier": "OBI_0000050",
+          "displayOrder": 12
+        },
+        {
+          "id": 542,
+          "strValue": "Sex",
+          "identifier": "EFO_0000695",
+          "displayOrder": 13
+        },
+        {
+          "id": 543,
+          "strValue": "Strain",
+          "identifier": "EFO_0005135",
+          "displayOrder": 14
+        },
+        {
+          "id": 544,
+          "strValue": "Time Point",
+          "identifier": "EFO_0000724",
+          "displayOrder": 15
+        },
+        {
+          "id": 545,
+          "strValue": "Tissue Type",
+          "identifier": "BTO_0001384",
+          "displayOrder": 16
+        },
+        {
+          "id": 546,
+          "strValue": "Treatment Compound",
+          "identifier": "EFO_0000369",
+          "displayOrder": 17
+        },
+        {
+          "id": 547,
+          "strValue": "Treatment Type",
+          "identifier": "EFO_0000727",
+          "displayOrder": 18
+        },
+        {
+          "id": 548,
+          "strValue": "Other",
+          "identifier": "OTHER_FACTOR",
+          "displayOrder": 19
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 145,
+      "name": "studyOtherFactorType",
+      "title": "Other Factor Type",
+      "description": "If Other was selected in Factor Type, list any other factor types that were used in this Dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 3,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 146,
+      "name": "studyAssayOrganism",
+      "title": "Organism",
+      "description": "The taxonomic name of the organism used in the Dataset or from which the  starting biological material derives.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 4,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 578,
+          "strValue": "Arabidopsis thaliana",
+          "identifier": "NCBITaxon_3702",
+          "displayOrder": 0
+        },
+        {
+          "id": 579,
+          "strValue": "Bos taurus",
+          "identifier": "NCBITaxon_9913",
+          "displayOrder": 1
+        },
+        {
+          "id": 580,
+          "strValue": "Caenorhabditis elegans",
+          "identifier": "NCBITaxon_6239",
+          "displayOrder": 2
+        },
+        {
+          "id": 581,
+          "strValue": "Chlamydomonas reinhardtii",
+          "identifier": "NCBITaxon_3055",
+          "displayOrder": 3
+        },
+        {
+          "id": 582,
+          "strValue": "Danio rerio (zebrafish)",
+          "identifier": "NCBITaxon_7955",
+          "displayOrder": 4
+        },
+        {
+          "id": 583,
+          "strValue": "Dictyostelium discoideum",
+          "identifier": "NCBITaxon_44689",
+          "displayOrder": 5
+        },
+        {
+          "id": 584,
+          "strValue": "Drosophila melanogaster",
+          "identifier": "NCBITaxon_7227",
+          "displayOrder": 6
+        },
+        {
+          "id": 585,
+          "strValue": "Escherichia coli",
+          "identifier": "NCBITaxon_562",
+          "displayOrder": 7
+        },
+        {
+          "id": 586,
+          "strValue": "Hepatitis C virus",
+          "identifier": "NCBITaxon_11103",
+          "displayOrder": 8
+        },
+        {
+          "id": 587,
+          "strValue": "Homo sapiens",
+          "identifier": "NCBITaxon_9606",
+          "displayOrder": 9
+        },
+        {
+          "id": 588,
+          "strValue": "Mus musculus",
+          "identifier": "NCBITaxon_10090",
+          "displayOrder": 10
+        },
+        {
+          "id": 589,
+          "strValue": "Mycobacterium africanum",
+          "identifier": "NCBITaxon_33894",
+          "displayOrder": 11
+        },
+        {
+          "id": 590,
+          "strValue": "Mycobacterium canetti",
+          "identifier": "NCBITaxon_78331",
+          "displayOrder": 12
+        },
+        {
+          "id": 591,
+          "strValue": "Mycobacterium tuberculosis",
+          "identifier": "NCBITaxon_1773",
+          "displayOrder": 13
+        },
+        {
+          "id": 592,
+          "strValue": "Mycoplasma pneumoniae",
+          "identifier": "NCBITaxon_2104",
+          "displayOrder": 14
+        },
+        {
+          "id": 593,
+          "strValue": "Oryza sativa",
+          "identifier": "NCBITaxon_4530",
+          "displayOrder": 15
+        },
+        {
+          "id": 594,
+          "strValue": "Plasmodium falciparum",
+          "identifier": "NCBITaxon_5833",
+          "displayOrder": 16
+        },
+        {
+          "id": 595,
+          "strValue": "Pneumocystis carinii",
+          "identifier": "NCBITaxon_4754",
+          "displayOrder": 17
+        },
+        {
+          "id": 596,
+          "strValue": "Rattus norvegicus",
+          "identifier": "NCBITaxon_10116",
+          "displayOrder": 18
+        },
+        {
+          "id": 597,
+          "strValue": "Saccharomyces cerevisiae (brewer's yeast)",
+          "identifier": "NCBITaxon_4932",
+          "displayOrder": 19
+        },
+        {
+          "id": 598,
+          "strValue": "Schizosaccharomyces pombe",
+          "identifier": "NCBITaxon_4896",
+          "displayOrder": 20
+        },
+        {
+          "id": 599,
+          "strValue": "Takifugu rubripes",
+          "identifier": "NCBITaxon_31033",
+          "displayOrder": 21
+        },
+        {
+          "id": 600,
+          "strValue": "Xenopus laevis",
+          "identifier": "NCBITaxon_8355",
+          "displayOrder": 22
+        },
+        {
+          "id": 601,
+          "strValue": "Zea mays",
+          "identifier": "NCBITaxon_4577",
+          "displayOrder": 23
+        },
+        {
+          "id": 602,
+          "strValue": "Other",
+          "identifier": "OTHER_TAXONOMY",
+          "displayOrder": 24
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 147,
+      "name": "studyAssayOtherOrganism",
+      "title": "Other Organism",
+      "description": "If Other was selected in Organism, list any other organisms that were used in this Dataset. Terms from the NCBI Taxonomy are recommended.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 5,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 148,
+      "name": "studyAssayMeasurementType",
+      "title": "Measurement Type",
+      "description": "A term to qualify the endpoint, or what is being measured (e.g. gene expression profiling; protein identification).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 6,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 549,
+          "strValue": "cell sorting",
+          "identifier": "CHMO_0001085",
+          "displayOrder": 1
+        },
+        {
+          "id": 550,
+          "strValue": "clinical chemistry analysis",
+          "identifier": "OBI_0000520",
+          "displayOrder": 2
+        },
+        {
+          "id": 551,
+          "strValue": "copy number variation profiling",
+          "identifier": "OBI_0000537",
+          "displayOrder": 3
+        },
+        {
+          "id": 552,
+          "strValue": "DNA methylation profiling",
+          "identifier": "OBI_0000634",
+          "displayOrder": 4
+        },
+        {
+          "id": 553,
+          "strValue": "DNA methylation profiling (Bisulfite-Seq)",
+          "identifier": "OBI_0000748",
+          "displayOrder": 5
+        },
+        {
+          "id": 554,
+          "strValue": "DNA methylation profiling (MeDIP-Seq)",
+          "identifier": "_OBI_0000634",
+          "displayOrder": 6
+        },
+        {
+          "id": 555,
+          "strValue": "drug susceptibility",
+          "identifier": "_IDO_0000469",
+          "displayOrder": 7
+        },
+        {
+          "id": 556,
+          "strValue": "environmental gene survey",
+          "identifier": "ENV_GENE_SURVEY",
+          "displayOrder": 8
+        },
+        {
+          "id": 557,
+          "strValue": "genome sequencing",
+          "identifier": "ERO_0001183",
+          "displayOrder": 9
+        },
+        {
+          "id": 558,
+          "strValue": "hematology",
+          "identifier": "OBI_0000630",
+          "displayOrder": 10
+        },
+        {
+          "id": 559,
+          "strValue": "histology",
+          "identifier": "OBI_0600020",
+          "displayOrder": 11
+        },
+        {
+          "id": 560,
+          "strValue": "Histone Modification (ChIP-Seq)",
+          "identifier": "OBI_0002017",
+          "displayOrder": 12
+        },
+        {
+          "id": 561,
+          "strValue": "loss of heterozygosity profiling",
+          "identifier": "SO_0001786",
+          "displayOrder": 13
+        },
+        {
+          "id": 562,
+          "strValue": "metabolite profiling",
+          "identifier": "OBI_0000366",
+          "displayOrder": 14
+        },
+        {
+          "id": 563,
+          "strValue": "metagenome sequencing",
+          "identifier": "METAGENOME_SEQ",
+          "displayOrder": 15
+        },
+        {
+          "id": 564,
+          "strValue": "protein expression profiling",
+          "identifier": "OBI_0000615",
+          "displayOrder": 16
+        },
+        {
+          "id": 565,
+          "strValue": "protein identification",
+          "identifier": "ERO_0000346",
+          "displayOrder": 17
+        },
+        {
+          "id": 566,
+          "strValue": "protein-DNA binding site identification",
+          "identifier": "PROTEIN_DNA_BINDING",
+          "displayOrder": 18
+        },
+        {
+          "id": 567,
+          "strValue": "protein-protein interaction detection",
+          "identifier": "OBI_0000288",
+          "displayOrder": 19
+        },
+        {
+          "id": 568,
+          "strValue": "protein-RNA binding (RIP-Seq)",
+          "identifier": "PROTEIN_RNA_BINDING",
+          "displayOrder": 20
+        },
+        {
+          "id": 569,
+          "strValue": "SNP analysis",
+          "identifier": "OBI_0000435",
+          "displayOrder": 21
+        },
+        {
+          "id": 570,
+          "strValue": "targeted sequencing",
+          "identifier": "TARGETED_SEQ",
+          "displayOrder": 22
+        },
+        {
+          "id": 571,
+          "strValue": "transcription factor binding (ChIP-Seq)",
+          "identifier": "OBI_0002018",
+          "displayOrder": 23
+        },
+        {
+          "id": 572,
+          "strValue": "transcription factor binding site identification",
+          "identifier": "OBI_0000291",
+          "displayOrder": 24
+        },
+        {
+          "id": 573,
+          "strValue": "transcription profiling",
+          "identifier": "EFO_0001032",
+          "displayOrder": 26
+        },
+        {
+          "id": 574,
+          "strValue": "transcription profiling (Microarray)",
+          "identifier": "TRANSCRIPTION_PROF",
+          "displayOrder": 27
+        },
+        {
+          "id": 575,
+          "strValue": "transcription profiling (RNA-Seq)",
+          "identifier": "OBI_0001271",
+          "displayOrder": 28
+        },
+        {
+          "id": 576,
+          "strValue": "TRAP translational profiling",
+          "identifier": "TRAP_TRANS_PROF",
+          "displayOrder": 29
+        },
+        {
+          "id": 577,
+          "strValue": "Other",
+          "identifier": "OTHER_MEASUREMENT",
+          "displayOrder": 30
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 149,
+      "name": "studyAssayOtherMeasurmentType",
+      "title": "Other Measurement Type",
+      "description": "If Other was selected in Measurement Type, list any other measurement types that were used. Terms from NCBO Bioportal are recommended.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 7,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 150,
+      "name": "studyAssayTechnologyType",
+      "title": "Technology Type",
+      "description": "A term to identify the technology used to perform the measurement (e.g. DNA microarray; mass spectrometry).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 8,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 603,
+          "strValue": "culture based drug susceptibility testing, single concentration",
+          "identifier": "CULTURE_DRUG_TEST_SINGLE",
+          "displayOrder": 0
+        },
+        {
+          "id": 604,
+          "strValue": "culture based drug susceptibility testing, two concentrations",
+          "identifier": "CULTURE_DRUG_TEST_TWO",
+          "displayOrder": 1
+        },
+        {
+          "id": 605,
+          "strValue": "culture based drug susceptibility testing, three or more concentrations (minimium inhibitory concentration measurement)",
+          "identifier": "CULTURE_DRUG_TEST_THREE",
+          "displayOrder": 2
+        },
+        {
+          "id": 606,
+          "strValue": "DNA microarray",
+          "identifier": "OBI_0400148",
+          "displayOrder": 3
+        },
+        {
+          "id": 607,
+          "strValue": "flow cytometry",
+          "identifier": "OBI_0000916",
+          "displayOrder": 4
+        },
+        {
+          "id": 608,
+          "strValue": "gel electrophoresis",
+          "identifier": "OBI_0600053",
+          "displayOrder": 5
+        },
+        {
+          "id": 609,
+          "strValue": "mass spectrometry",
+          "identifier": "OBI_0000470",
+          "displayOrder": 6
+        },
+        {
+          "id": 610,
+          "strValue": "NMR spectroscopy",
+          "identifier": "OBI_0000623",
+          "displayOrder": 7
+        },
+        {
+          "id": 611,
+          "strValue": "nucleotide sequencing",
+          "identifier": "OBI_0000626",
+          "displayOrder": 8
+        },
+        {
+          "id": 612,
+          "strValue": "protein microarray",
+          "identifier": "OBI_0400149",
+          "displayOrder": 9
+        },
+        {
+          "id": 613,
+          "strValue": "real time PCR",
+          "identifier": "OBI_0000893",
+          "displayOrder": 10
+        },
+        {
+          "id": 614,
+          "strValue": "no technology required",
+          "identifier": "NO_TECHNOLOGY",
+          "displayOrder": 11
+        },
+        {
+          "id": 615,
+          "strValue": "Other",
+          "identifier": "OTHER_TECHNOLOGY",
+          "displayOrder": 12
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 151,
+      "name": "studyAssayOtherTechnologyType",
+      "title": "Other Technology Type",
+      "description": "If Other was selected in Technology Type, list any other technology types that were used in this Dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 9,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 152,
+      "name": "studyAssayPlatform",
+      "title": "Technology Platform",
+      "description": "The manufacturer and name of the technology platform used in the assay (e.g. Bruker AVANCE).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 10,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 616,
+          "strValue": "210-MS GC Ion Trap (Varian)",
+          "identifier": "210_MS_GC",
+          "displayOrder": 0
+        },
+        {
+          "id": 617,
+          "strValue": "220-MS GC Ion Trap (Varian)",
+          "identifier": "220_MS_GC",
+          "displayOrder": 1
+        },
+        {
+          "id": 618,
+          "strValue": "225-MS GC Ion Trap (Varian)",
+          "identifier": "225_MS_GC",
+          "displayOrder": 2
+        },
+        {
+          "id": 619,
+          "strValue": "240-MS GC Ion Trap (Varian)",
+          "identifier": "240_MS_GC",
+          "displayOrder": 3
+        },
+        {
+          "id": 620,
+          "strValue": "300-MS quadrupole GC/MS (Varian)",
+          "identifier": "300_MS_GCMS",
+          "displayOrder": 4
+        },
+        {
+          "id": 621,
+          "strValue": "320-MS LC/MS (Varian)",
+          "identifier": "320_MS_LCMS",
+          "displayOrder": 5
+        },
+        {
+          "id": 622,
+          "strValue": "325-MS LC/MS (Varian)",
+          "identifier": "325_MS_LCMS",
+          "displayOrder": 6
+        },
+        {
+          "id": 623,
+          "strValue": "320-MS GC/MS (Varian)",
+          "identifier": "500_MS_GCMS",
+          "displayOrder": 7
+        },
+        {
+          "id": 624,
+          "strValue": "500-MS LC/MS (Varian)",
+          "identifier": "500_MS_LCMS",
+          "displayOrder": 8
+        },
+        {
+          "id": 625,
+          "strValue": "800D (Jeol)",
+          "identifier": "800D",
+          "displayOrder": 9
+        },
+        {
+          "id": 626,
+          "strValue": "910-MS TQ-FT (Varian)",
+          "identifier": "910_MS_TQFT",
+          "displayOrder": 10
+        },
+        {
+          "id": 627,
+          "strValue": "920-MS TQ-FT (Varian)",
+          "identifier": "920_MS_TQFT",
+          "displayOrder": 11
+        },
+        {
+          "id": 628,
+          "strValue": "3100 Mass Detector (Waters)",
+          "identifier": "3100_MASS_D",
+          "displayOrder": 12
+        },
+        {
+          "id": 629,
+          "strValue": "6110 Quadrupole LC/MS (Agilent)",
+          "identifier": "6110_QUAD_LCMS",
+          "displayOrder": 13
+        },
+        {
+          "id": 630,
+          "strValue": "6120 Quadrupole LC/MS (Agilent)",
+          "identifier": "6120_QUAD_LCMS",
+          "displayOrder": 14
+        },
+        {
+          "id": 631,
+          "strValue": "6130 Quadrupole LC/MS (Agilent)",
+          "identifier": "6130_QUAD_LCMS",
+          "displayOrder": 15
+        },
+        {
+          "id": 632,
+          "strValue": "6140 Quadrupole LC/MS (Agilent)",
+          "identifier": "6140_QUAD_LCMS",
+          "displayOrder": 16
+        },
+        {
+          "id": 633,
+          "strValue": "6310 Ion Trap LC/MS (Agilent)",
+          "identifier": "6310_ION_LCMS",
+          "displayOrder": 17
+        },
+        {
+          "id": 634,
+          "strValue": "6320 Ion Trap LC/MS (Agilent)",
+          "identifier": "6320_ION_LCMS",
+          "displayOrder": 18
+        },
+        {
+          "id": 635,
+          "strValue": "6330 Ion Trap LC/MS (Agilent)",
+          "identifier": "6330_ION_LCMS",
+          "displayOrder": 19
+        },
+        {
+          "id": 636,
+          "strValue": "6340 Ion Trap LC/MS (Agilent)",
+          "identifier": "6340_ION_LCMS",
+          "displayOrder": 20
+        },
+        {
+          "id": 637,
+          "strValue": "6410 Triple Quadrupole LC/MS (Agilent)",
+          "identifier": "6410_TRIPLE_LCMS",
+          "displayOrder": 21
+        },
+        {
+          "id": 638,
+          "strValue": "6430 Triple Quadrupole LC/MS (Agilent)",
+          "identifier": "6430_TRIPLE_LCMS",
+          "displayOrder": 22
+        },
+        {
+          "id": 639,
+          "strValue": "6460 Triple Quadrupole LC/MS (Agilent)",
+          "identifier": "6460_TRIPLE_LCMS",
+          "displayOrder": 23
+        },
+        {
+          "id": 640,
+          "strValue": "6490 Triple Quadrupole LC/MS (Agilent)",
+          "identifier": "6490_TRIPLE_LCMS",
+          "displayOrder": 24
+        },
+        {
+          "id": 641,
+          "strValue": "6530 Q-TOF LC/MS (Agilent)",
+          "identifier": "6530_Q_TOF_LCMS",
+          "displayOrder": 25
+        },
+        {
+          "id": 642,
+          "strValue": "6540 Q-TOF LC/MS (Agilent)",
+          "identifier": "6540_Q_TOF_LCMS",
+          "displayOrder": 26
+        },
+        {
+          "id": 643,
+          "strValue": "6210 TOF LC/MS (Agilent)",
+          "identifier": "6210_Q_TOF_LCMS",
+          "displayOrder": 27
+        },
+        {
+          "id": 644,
+          "strValue": "6220 TOF LC/MS (Agilent)",
+          "identifier": "6220_Q_TOF_LCMS",
+          "displayOrder": 28
+        },
+        {
+          "id": 645,
+          "strValue": "6230 TOF LC/MS (Agilent)",
+          "identifier": "6230_Q_TOF_LCMS",
+          "displayOrder": 29
+        },
+        {
+          "id": 646,
+          "strValue": "7000B Triple Quadrupole GC/MS (Agilent)",
+          "identifier": "700B_TRIPLE_GCMS",
+          "displayOrder": 30
+        },
+        {
+          "id": 647,
+          "strValue": "AccuTO DART (Jeol)",
+          "identifier": "ACCUTO_DART",
+          "displayOrder": 31
+        },
+        {
+          "id": 648,
+          "strValue": "AccuTOF GC (Jeol)",
+          "identifier": "ACCUTOF_GC",
+          "displayOrder": 32
+        },
+        {
+          "id": 649,
+          "strValue": "AccuTOF LC (Jeol)",
+          "identifier": "ACCUTOF_LC",
+          "displayOrder": 33
+        },
+        {
+          "id": 650,
+          "strValue": "ACQUITY SQD (Waters)",
+          "identifier": "ACQUITY_SQD",
+          "displayOrder": 34
+        },
+        {
+          "id": 651,
+          "strValue": "ACQUITY TQD (Waters)",
+          "identifier": "ACQUITY_TQD",
+          "displayOrder": 35
+        },
+        {
+          "id": 652,
+          "strValue": "Agilent",
+          "identifier": "AGILENT",
+          "displayOrder": 36
+        },
+        {
+          "id": 653,
+          "strValue": "Agilent 5975E GC/MSD (Agilent)",
+          "identifier": "AGILENT_ 5975E_GCMSD",
+          "displayOrder": 37
+        },
+        {
+          "id": 654,
+          "strValue": "Agilent 5975T LTM GC/MSD (Agilent)",
+          "identifier": "AGILENT_5975T_LTM_GCMSD",
+          "displayOrder": 38
+        },
+        {
+          "id": 655,
+          "strValue": "5975C Series GC/MSD (Agilent)",
+          "identifier": "5975C_GCMSD",
+          "displayOrder": 39
+        },
+        {
+          "id": 656,
+          "strValue": "Affymetrix",
+          "identifier": "AFFYMETRIX",
+          "displayOrder": 40
+        },
+        {
+          "id": 657,
+          "strValue": "amaZon ETD ESI Ion Trap (Bruker)",
+          "identifier": "AMAZON_ETD_ESI",
+          "displayOrder": 41
+        },
+        {
+          "id": 658,
+          "strValue": "amaZon X ESI Ion Trap (Bruker)",
+          "identifier": "AMAZON_X_ESI",
+          "displayOrder": 42
+        },
+        {
+          "id": 659,
+          "strValue": "apex-ultra hybrid Qq-FTMS (Bruker)",
+          "identifier": "APEX_ULTRA_QQ_FTMS",
+          "displayOrder": 43
+        },
+        {
+          "id": 660,
+          "strValue": "API 2000 (AB Sciex)",
+          "identifier": "API_2000",
+          "displayOrder": 44
+        },
+        {
+          "id": 661,
+          "strValue": "API 3200 (AB Sciex)",
+          "identifier": "API_3200",
+          "displayOrder": 45
+        },
+        {
+          "id": 662,
+          "strValue": "API 3200 QTRAP (AB Sciex)",
+          "identifier": "API_3200_QTRAP",
+          "displayOrder": 46
+        },
+        {
+          "id": 663,
+          "strValue": "API 4000 (AB Sciex)",
+          "identifier": "API_4000",
+          "displayOrder": 47
+        },
+        {
+          "id": 664,
+          "strValue": "API 4000 QTRAP (AB Sciex)",
+          "identifier": "API_4000_QTRAP",
+          "displayOrder": 48
+        },
+        {
+          "id": 665,
+          "strValue": "API 5000 (AB Sciex)",
+          "identifier": "API_5000",
+          "displayOrder": 49
+        },
+        {
+          "id": 666,
+          "strValue": "API 5500 (AB Sciex)",
+          "identifier": "API_5500",
+          "displayOrder": 50
+        },
+        {
+          "id": 667,
+          "strValue": "API 5500 QTRAP (AB Sciex)",
+          "identifier": "API_5500_QTRAP",
+          "displayOrder": 51
+        },
+        {
+          "id": 668,
+          "strValue": "Applied Biosystems Group (ABI)",
+          "identifier": "APPLIED_BIOSYSTEMS",
+          "displayOrder": 52
+        },
+        {
+          "id": 669,
+          "strValue": "AQI Biosciences",
+          "identifier": "AQI_BIOSCIENCES",
+          "displayOrder": 53
+        },
+        {
+          "id": 670,
+          "strValue": "Atmospheric Pressure GC (Waters)",
+          "identifier": "ATMOS_GC",
+          "displayOrder": 54
+        },
+        {
+          "id": 671,
+          "strValue": "autoflex III MALDI-TOF MS (Bruker)",
+          "identifier": "AUTOFLEX_III_MALDI_TOF_MS",
+          "displayOrder": 55
+        },
+        {
+          "id": 672,
+          "strValue": "autoflex speed(Bruker)",
+          "identifier": "AUTOFLEX_SPEED",
+          "displayOrder": 56
+        },
+        {
+          "id": 673,
+          "strValue": "AutoSpec Premier (Waters)",
+          "identifier": "AUTOSPEC_PREMIER",
+          "displayOrder": 57
+        },
+        {
+          "id": 674,
+          "strValue": "AXIMA Mega TOF (Shimadzu)",
+          "identifier": "AXIMA_MEGA_TOF",
+          "displayOrder": 58
+        },
+        {
+          "id": 675,
+          "strValue": "AXIMA Performance MALDI TOF/TOF (Shimadzu)",
+          "identifier": "AXIMA_PERF_MALDI_TOF",
+          "displayOrder": 59
+        },
+        {
+          "id": 676,
+          "strValue": "A-10 Analyzer (Apogee)",
+          "identifier": "A_10_ANALYZER",
+          "displayOrder": 60
+        },
+        {
+          "id": 677,
+          "strValue": "A-40-MiniFCM (Apogee)",
+          "identifier": "A_40_MINIFCM",
+          "displayOrder": 61
+        },
+        {
+          "id": 678,
+          "strValue": "Bactiflow (Chemunex SA)",
+          "identifier": "BACTIFLOW",
+          "displayOrder": 62
+        },
+        {
+          "id": 679,
+          "strValue": "Base4innovation",
+          "identifier": "BASE4INNOVATION",
+          "displayOrder": 63
+        },
+        {
+          "id": 680,
+          "strValue": "BD BACTEC MGIT 320",
+          "identifier": "BD_BACTEC_MGIT_320",
+          "displayOrder": 64
+        },
+        {
+          "id": 681,
+          "strValue": "BD BACTEC MGIT 960",
+          "identifier": "BD_BACTEC_MGIT_960",
+          "displayOrder": 65
+        },
+        {
+          "id": 682,
+          "strValue": "BD Radiometric BACTEC 460TB",
+          "identifier": "BD_RADIO_BACTEC_460TB",
+          "displayOrder": 66
+        },
+        {
+          "id": 683,
+          "strValue": "BioNanomatrix",
+          "identifier": "BIONANOMATRIX",
+          "displayOrder": 67
+        },
+        {
+          "id": 684,
+          "strValue": "Cell Lab Quanta SC (Becman Coulter)",
+          "identifier": "CELL_LAB_QUANTA_SC",
+          "displayOrder": 68
+        },
+        {
+          "id": 685,
+          "strValue": "Clarus 560 D GC/MS (PerkinElmer)",
+          "identifier": "CLARUS_560_D_GCMS",
+          "displayOrder": 69
+        },
+        {
+          "id": 686,
+          "strValue": "Clarus 560 S GC/MS (PerkinElmer)",
+          "identifier": "CLARUS_560_S_GCMS",
+          "displayOrder": 70
+        },
+        {
+          "id": 687,
+          "strValue": "Clarus 600 GC/MS (PerkinElmer)",
+          "identifier": "CLARUS_600_GCMS",
+          "displayOrder": 71
+        },
+        {
+          "id": 688,
+          "strValue": "Complete Genomics",
+          "identifier": "COMPLETE_GENOMICS",
+          "displayOrder": 72
+        },
+        {
+          "id": 689,
+          "strValue": "Cyan (Dako Cytomation)",
+          "identifier": "CYAN",
+          "displayOrder": 73
+        },
+        {
+          "id": 690,
+          "strValue": "CyFlow ML (Partec)",
+          "identifier": "CYFLOW_ML",
+          "displayOrder": 74
+        },
+        {
+          "id": 691,
+          "strValue": "Cyow SL (Partec)",
+          "identifier": "CYFLOW_SL",
+          "displayOrder": 75
+        },
+        {
+          "id": 692,
+          "strValue": "CyFlow SL3 (Partec)",
+          "identifier": "CYFLOW_SL3",
+          "displayOrder": 76
+        },
+        {
+          "id": 693,
+          "strValue": "CytoBuoy (Cyto Buoy Inc)",
+          "identifier": "CYTOBUOY",
+          "displayOrder": 77
+        },
+        {
+          "id": 694,
+          "strValue": "CytoSence (Cyto Buoy Inc)",
+          "identifier": "CYTOSENCE",
+          "displayOrder": 78
+        },
+        {
+          "id": 695,
+          "strValue": "CytoSub (Cyto Buoy Inc)",
+          "identifier": "CYTOSUB",
+          "displayOrder": 79
+        },
+        {
+          "id": 696,
+          "strValue": "Danaher",
+          "identifier": "DANAHER",
+          "displayOrder": 80
+        },
+        {
+          "id": 697,
+          "strValue": "DFS (Thermo Scientific)",
+          "identifier": "DFS",
+          "displayOrder": 81
+        },
+        {
+          "id": 698,
+          "strValue": "Exactive(Thermo Scientific)",
+          "identifier": "EXACTIVE",
+          "displayOrder": 82
+        },
+        {
+          "id": 699,
+          "strValue": "FACS Canto (Becton Dickinson)",
+          "identifier": "FACS_CANTO",
+          "displayOrder": 83
+        },
+        {
+          "id": 700,
+          "strValue": "FACS Canto2 (Becton Dickinson)",
+          "identifier": "FACS_CANTO2",
+          "displayOrder": 84
+        },
+        {
+          "id": 701,
+          "strValue": "FACS Scan (Becton Dickinson)",
+          "identifier": "FACS_SCAN",
+          "displayOrder": 85
+        },
+        {
+          "id": 702,
+          "strValue": "FC 500 (Becman Coulter)",
+          "identifier": "FC_500",
+          "displayOrder": 86
+        },
+        {
+          "id": 703,
+          "strValue": "GCmate II GC/MS (Jeol)",
+          "identifier": "GCMATE_II",
+          "displayOrder": 87
+        },
+        {
+          "id": 704,
+          "strValue": "GCMS-QP2010 Plus (Shimadzu)",
+          "identifier": "GCMS_QP2010_PLUS",
+          "displayOrder": 88
+        },
+        {
+          "id": 705,
+          "strValue": "GCMS-QP2010S Plus (Shimadzu)",
+          "identifier": "GCMS_QP2010S_PLUS",
+          "displayOrder": 89
+        },
+        {
+          "id": 706,
+          "strValue": "GCT Premier (Waters)",
+          "identifier": "GCT_PREMIER",
+          "displayOrder": 90
+        },
+        {
+          "id": 707,
+          "strValue": "GENEQ",
+          "identifier": "GENEQ",
+          "displayOrder": 91
+        },
+        {
+          "id": 708,
+          "strValue": "Genome Corp.",
+          "identifier": "GENOME_CORP",
+          "displayOrder": 92
+        },
+        {
+          "id": 709,
+          "strValue": "GenoVoxx",
+          "identifier": "GENOVOXX",
+          "displayOrder": 93
+        },
+        {
+          "id": 710,
+          "strValue": "GnuBio",
+          "identifier": "GNUBIO",
+          "displayOrder": 94
+        },
+        {
+          "id": 711,
+          "strValue": "Guava EasyCyte Mini (Millipore)",
+          "identifier": "GUAVA_EASYCYTE_MINI",
+          "displayOrder": 95
+        },
+        {
+          "id": 712,
+          "strValue": "Guava EasyCyte Plus (Millipore)",
+          "identifier": "GUAVA_EASYCYTE_PLUS",
+          "displayOrder": 96
+        },
+        {
+          "id": 713,
+          "strValue": "Guava Personal Cell Analysis (Millipore)",
+          "identifier": "GUAVA_PERSONAL_CELL",
+          "displayOrder": 97
+        },
+        {
+          "id": 714,
+          "strValue": "Guava Personal Cell Analysis-96 (Millipore)",
+          "identifier": "GUAVA_PERSONAL_CELL_96",
+          "displayOrder": 98
+        },
+        {
+          "id": 715,
+          "strValue": "Helicos BioSciences",
+          "identifier": "HELICOS_BIO",
+          "displayOrder": 99
+        },
+        {
+          "id": 716,
+          "strValue": "Illumina",
+          "identifier": "ILLUMINA",
+          "displayOrder": 100
+        },
+        {
+          "id": 717,
+          "strValue": "Indirect proportion method on LJ medium",
+          "identifier": "INDIRECT_LJ_MEDIUM",
+          "displayOrder": 101
+        },
+        {
+          "id": 718,
+          "strValue": "Indirect proportion method on Middlebrook Agar 7H9",
+          "identifier": "INDIRECT_AGAR_7H9",
+          "displayOrder": 102
+        },
+        {
+          "id": 719,
+          "strValue": "Indirect proportion method on Middlebrook Agar 7H10",
+          "identifier": "INDIRECT_AGAR_7H10",
+          "displayOrder": 103
+        },
+        {
+          "id": 720,
+          "strValue": "Indirect proportion method on Middlebrook Agar 7H11",
+          "identifier": "INDIRECT_AGAR_7H11",
+          "displayOrder": 104
+        },
+        {
+          "id": 721,
+          "strValue": "inFlux Analyzer (Cytopeia)",
+          "identifier": "INFLUX_ANALYZER",
+          "displayOrder": 105
+        },
+        {
+          "id": 722,
+          "strValue": "Intelligent Bio-Systems",
+          "identifier": "INTELLIGENT_BIOSYSTEMS",
+          "displayOrder": 106
+        },
+        {
+          "id": 723,
+          "strValue": "ITQ 700 (Thermo Scientific)",
+          "identifier": "ITQ_700",
+          "displayOrder": 107
+        },
+        {
+          "id": 724,
+          "strValue": "ITQ 900 (Thermo Scientific)",
+          "identifier": "ITQ_900",
+          "displayOrder": 108
+        },
+        {
+          "id": 725,
+          "strValue": "ITQ 1100 (Thermo Scientific)",
+          "identifier": "ITQ_1100",
+          "displayOrder": 109
+        },
+        {
+          "id": 726,
+          "strValue": "JMS-53000 SpiralTOF (Jeol)",
+          "identifier": "JMS_53000_SPIRAL",
+          "displayOrder": 110
+        },
+        {
+          "id": 727,
+          "strValue": "LaserGen",
+          "identifier": "LASERGEN",
+          "displayOrder": 111
+        },
+        {
+          "id": 728,
+          "strValue": "LCMS-2020 (Shimadzu)",
+          "identifier": "LCMS_2020",
+          "displayOrder": 112
+        },
+        {
+          "id": 729,
+          "strValue": "LCMS-2010EV (Shimadzu)",
+          "identifier": "LCMS_2010EV",
+          "displayOrder": 113
+        },
+        {
+          "id": 730,
+          "strValue": "LCMS-IT-TOF (Shimadzu)",
+          "identifier": "LCMS_IT_TOF",
+          "displayOrder": 114
+        },
+        {
+          "id": 731,
+          "strValue": "Li-Cor",
+          "identifier": "LI_COR",
+          "displayOrder": 115
+        },
+        {
+          "id": 732,
+          "strValue": "Life Tech",
+          "identifier": "LIFE_TECH",
+          "displayOrder": 116
+        },
+        {
+          "id": 733,
+          "strValue": "LightSpeed Genomics",
+          "identifier": "LIGHTSPEED_GENOMICS",
+          "displayOrder": 117
+        },
+        {
+          "id": 734,
+          "strValue": "LCT Premier XE (Waters)",
+          "identifier": "LCT_PREMIER_XE",
+          "displayOrder": 118
+        },
+        {
+          "id": 735,
+          "strValue": "LCQ Deca XP MAX (Thermo Scientific)",
+          "identifier": "LCQ_DECA_XP_MAX",
+          "displayOrder": 119
+        },
+        {
+          "id": 736,
+          "strValue": "LCQ Fleet (Thermo Scientific)",
+          "identifier": "LCQ_FLEET",
+          "displayOrder": 120
+        },
+        {
+          "id": 737,
+          "strValue": "LXQ (Thermo Scientific)",
+          "identifier": "LXQ_THERMO",
+          "displayOrder": 121
+        },
+        {
+          "id": 738,
+          "strValue": "LTQ Classic (Thermo Scientific)",
+          "identifier": "LTQ_CLASSIC",
+          "displayOrder": 122
+        },
+        {
+          "id": 739,
+          "strValue": "LTQ XL (Thermo Scientific)",
+          "identifier": "LTQ_XL",
+          "displayOrder": 123
+        },
+        {
+          "id": 740,
+          "strValue": "LTQ Velos (Thermo Scientific)",
+          "identifier": "LTQ_VELOS",
+          "displayOrder": 124
+        },
+        {
+          "id": 741,
+          "strValue": "LTQ Orbitrap Classic (Thermo Scientific)",
+          "identifier": "LTQ_ORBITRAP_CLASSIC",
+          "displayOrder": 125
+        },
+        {
+          "id": 742,
+          "strValue": "LTQ Orbitrap XL (Thermo Scientific)",
+          "identifier": "LTQ_ORBITRAP_XL",
+          "displayOrder": 126
+        },
+        {
+          "id": 743,
+          "strValue": "LTQ Orbitrap Discovery (Thermo Scientific)",
+          "identifier": "LTQ_ORBITRAP_DISCOVERY",
+          "displayOrder": 127
+        },
+        {
+          "id": 744,
+          "strValue": "LTQ Orbitrap Velos (Thermo Scientific)",
+          "identifier": "LTQ_ORBITRAP_VELOS",
+          "displayOrder": 128
+        },
+        {
+          "id": 745,
+          "strValue": "Luminex 100 (Luminex)",
+          "identifier": "LUMINEX_100",
+          "displayOrder": 129
+        },
+        {
+          "id": 746,
+          "strValue": "Luminex 200 (Luminex)",
+          "identifier": "LUMINEX_200",
+          "displayOrder": 130
+        },
+        {
+          "id": 747,
+          "strValue": "MACS Quant (Miltenyi)",
+          "identifier": "MACS_QUANT",
+          "displayOrder": 131
+        },
+        {
+          "id": 748,
+          "strValue": "MALDI SYNAPT G2 HDMS (Waters)",
+          "identifier": "MALDI_SYNAPT_G2_HDMS",
+          "displayOrder": 132
+        },
+        {
+          "id": 749,
+          "strValue": "MALDI SYNAPT G2 MS (Waters)",
+          "identifier": "MALDI_SYNAPT_G2_MS",
+          "displayOrder": 133
+        },
+        {
+          "id": 750,
+          "strValue": "MALDI SYNAPT HDMS (Waters)",
+          "identifier": "MALDI_SYNAPT_HDMS",
+          "displayOrder": 134
+        },
+        {
+          "id": 751,
+          "strValue": "MALDI SYNAPT MS (Waters)",
+          "identifier": "MALDI_SYNAPT_MS",
+          "displayOrder": 135
+        },
+        {
+          "id": 752,
+          "strValue": "MALDI micro MX (Waters)",
+          "identifier": "MALDI_MICROMX",
+          "displayOrder": 136
+        },
+        {
+          "id": 753,
+          "strValue": "maXis (Bruker)",
+          "identifier": "MAXIS",
+          "displayOrder": 137
+        },
+        {
+          "id": 754,
+          "strValue": "maXis G4 (Bruker)",
+          "identifier": "MAXISG4",
+          "displayOrder": 138
+        },
+        {
+          "id": 755,
+          "strValue": "microflex LT MALDI-TOF MS (Bruker)",
+          "identifier": "MICROFLEX_LT_MALDI_TOF_MS",
+          "displayOrder": 139
+        },
+        {
+          "id": 756,
+          "strValue": "microflex LRF MALDI-TOF MS (Bruker)",
+          "identifier": "MICROFLEX_LRF_MALDI_TOF_MS",
+          "displayOrder": 140
+        },
+        {
+          "id": 757,
+          "strValue": "microflex III MALDI-TOF MS (Bruker)",
+          "identifier": "MICROFLEX_III_TOF_MS",
+          "displayOrder": 141
+        },
+        {
+          "id": 758,
+          "strValue": "micrOTOF II ESI TOF (Bruker)",
+          "identifier": "MICROTOF_II_ESI_TOF",
+          "displayOrder": 142
+        },
+        {
+          "id": 759,
+          "strValue": "micrOTOF-Q II ESI-Qq-TOF (Bruker)",
+          "identifier": "MICROTOF_Q_II_ESI_QQ_TOF",
+          "displayOrder": 143
+        },
+        {
+          "id": 760,
+          "strValue": "microplate Alamar Blue (resazurin) colorimetric method",
+          "identifier": "MICROPLATE_ALAMAR_BLUE_COLORIMETRIC",
+          "displayOrder": 144
+        },
+        {
+          "id": 761,
+          "strValue": "Mstation (Jeol)",
+          "identifier": "MSTATION",
+          "displayOrder": 145
+        },
+        {
+          "id": 762,
+          "strValue": "MSQ Plus (Thermo Scientific)",
+          "identifier": "MSQ_PLUS",
+          "displayOrder": 146
+        },
+        {
+          "id": 763,
+          "strValue": "NABsys",
+          "identifier": "NABSYS",
+          "displayOrder": 147
+        },
+        {
+          "id": 764,
+          "strValue": "Nanophotonics Biosciences",
+          "identifier": "NANOPHOTONICS_BIOSCIENCES",
+          "displayOrder": 148
+        },
+        {
+          "id": 765,
+          "strValue": "Network Biosystems",
+          "identifier": "NETWORK_BIOSYSTEMS",
+          "displayOrder": 149
+        },
+        {
+          "id": 766,
+          "strValue": "Nimblegen",
+          "identifier": "NIMBLEGEN",
+          "displayOrder": 150
+        },
+        {
+          "id": 767,
+          "strValue": "Oxford Nanopore Technologies",
+          "identifier": "OXFORD_NANOPORE_TECHNOLOGIES",
+          "displayOrder": 151
+        },
+        {
+          "id": 768,
+          "strValue": "Pacific Biosciences",
+          "identifier": "PACIFIC_BIOSCIENCES",
+          "displayOrder": 152
+        },
+        {
+          "id": 769,
+          "strValue": "Population Genetics Technologies",
+          "identifier": "POPULATION_GENETICS_TECHNOLOGIES",
+          "displayOrder": 153
+        },
+        {
+          "id": 770,
+          "strValue": "Q1000GC UltraQuad (Jeol)",
+          "identifier": "Q1000GC_ULTRAQUAD",
+          "displayOrder": 154
+        },
+        {
+          "id": 771,
+          "strValue": "Quattro micro API (Waters)",
+          "identifier": "QUATTRO_MICRO_API",
+          "displayOrder": 155
+        },
+        {
+          "id": 772,
+          "strValue": "Quattro micro GC (Waters)",
+          "identifier": "QUATTRO_MICRO_GC",
+          "displayOrder": 156
+        },
+        {
+          "id": 773,
+          "strValue": "Quattro Premier XE (Waters)",
+          "identifier": "QUATTRO_PREMIER_XE",
+          "displayOrder": 157
+        },
+        {
+          "id": 774,
+          "strValue": "QSTAR (AB Sciex)",
+          "identifier": "QSTAR",
+          "displayOrder": 158
+        },
+        {
+          "id": 775,
+          "strValue": "Reveo",
+          "identifier": "REVEO",
+          "displayOrder": 159
+        },
+        {
+          "id": 776,
+          "strValue": "Roche",
+          "identifier": "ROCHE",
+          "displayOrder": 160
+        },
+        {
+          "id": 777,
+          "strValue": "Seirad",
+          "identifier": "SEIRAD",
+          "displayOrder": 161
+        },
+        {
+          "id": 778,
+          "strValue": "solariX hybrid Qq-FTMS (Bruker)",
+          "identifier": "SOLARIX_HYBRID_QQ_FTMS",
+          "displayOrder": 162
+        },
+        {
+          "id": 779,
+          "strValue": "Somacount (Bently Instruments)",
+          "identifier": "SOMACOUNT",
+          "displayOrder": 163
+        },
+        {
+          "id": 780,
+          "strValue": "SomaScope (Bently Instruments)",
+          "identifier": "SOMASCOPE",
+          "displayOrder": 164
+        },
+        {
+          "id": 781,
+          "strValue": "SYNAPT G2 HDMS (Waters)",
+          "identifier": "SYNAPT_G2_HDMS",
+          "displayOrder": 165
+        },
+        {
+          "id": 782,
+          "strValue": "SYNAPT G2 MS (Waters)",
+          "identifier": "SYNAPT_G2_MS",
+          "displayOrder": 166
+        },
+        {
+          "id": 783,
+          "strValue": "SYNAPT HDMS (Waters)",
+          "identifier": "SYNAPT_HDMS",
+          "displayOrder": 167
+        },
+        {
+          "id": 784,
+          "strValue": "SYNAPT MS (Waters)",
+          "identifier": "SYNAPT_MS",
+          "displayOrder": 168
+        },
+        {
+          "id": 785,
+          "strValue": "TripleTOF 5600 (AB Sciex)",
+          "identifier": "TRIPLETOF_5600",
+          "displayOrder": 169
+        },
+        {
+          "id": 786,
+          "strValue": "TSQ Quantum Ultra (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_ULTRA",
+          "displayOrder": 170
+        },
+        {
+          "id": 787,
+          "strValue": "TSQ Quantum Access (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_ACCESS",
+          "displayOrder": 171
+        },
+        {
+          "id": 788,
+          "strValue": "TSQ Quantum Access MAX (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_ACCESS_MAX",
+          "displayOrder": 172
+        },
+        {
+          "id": 789,
+          "strValue": "TSQ Quantum Discovery MAX (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_DISCOVERY_MAX",
+          "displayOrder": 173
+        },
+        {
+          "id": 790,
+          "strValue": "TSQ Quantum GC (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_GC",
+          "displayOrder": 174
+        },
+        {
+          "id": 791,
+          "strValue": "TSQ Quantum XLS (Thermo Scientific)",
+          "identifier": "TSQ_QUANTUM_XLS",
+          "displayOrder": 175
+        },
+        {
+          "id": 792,
+          "strValue": "TSQ Vantage (Thermo Scientific)",
+          "identifier": "TSQ_VANTAGE",
+          "displayOrder": 176
+        },
+        {
+          "id": 793,
+          "strValue": "ultrafleXtreme MALDI-TOF MS (Bruker)",
+          "identifier": "ULTRAFLEXTREME_MALDI_TOF_MS",
+          "displayOrder": 177
+        },
+        {
+          "id": 794,
+          "strValue": "VisiGen Biotechnologies",
+          "identifier": "VISIGEN_BIO",
+          "displayOrder": 178
+        },
+        {
+          "id": 795,
+          "strValue": "Xevo G2 QTOF (Waters)",
+          "identifier": "XEVO_G2_QTOF",
+          "displayOrder": 179
+        },
+        {
+          "id": 796,
+          "strValue": "Xevo QTof MS (Waters)",
+          "identifier": "XEVO_QTOF_MS",
+          "displayOrder": 180
+        },
+        {
+          "id": 797,
+          "strValue": "Xevo TQ MS (Waters)",
+          "identifier": "XEVO_TQ_MS",
+          "displayOrder": 181
+        },
+        {
+          "id": 798,
+          "strValue": "Xevo TQ-S (Waters)",
+          "identifier": "XEVO_TQ_S",
+          "displayOrder": 182
+        },
+        {
+          "id": 799,
+          "strValue": "Other",
+          "identifier": "OTHER_PLATFORM",
+          "displayOrder": 183
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 153,
+      "name": "studyAssayOtherPlatform",
+      "title": "Other Technology Platform",
+      "description": "If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 11,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 154,
+      "name": "studyAssayCellType",
+      "title": "Cell Type",
+      "description": "The name of the cell line from which the source or sample derives.",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 12,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    }
+  ],
+  "empty": false,
+  "selected": false,
+  "hasRequired": false,
+  "showDatasetFieldTypes": false,
+  "required": false,
+  "localeDisplayFacet": "Life Sciences",
+  "displayOnCreate": false,
+  "localeDisplayName": "Life Sciences Metadata",
+  "idString": "5"
+}

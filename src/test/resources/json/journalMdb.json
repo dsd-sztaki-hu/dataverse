@@ -1,0 +1,389 @@
+{
+  "id": 6,
+  "name": "journal",
+  "displayName": "Journal Metadata",
+  "namespaceUri": null,
+  "datasetFieldTypes": [
+    {
+      "id": 155,
+      "name": "journalVolumeIssue",
+      "title": "Journal",
+      "description": "Indicates the volume, issue and date of a journal, which this Dataset is associated with.",
+      "fieldType": "NONE",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 0,
+      "displayFormat": "",
+      "allowMultiples": true,
+      "facetable": false,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": false
+    },
+    {
+      "id": 156,
+      "name": "journalVolume",
+      "title": "Volume",
+      "description": "The journal volume which this Dataset is associated with (e.g., Volume 4).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 1,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 155,
+        "name": "journalVolumeIssue",
+        "title": "Journal",
+        "description": "Indicates the volume, issue and date of a journal, which this Dataset is associated with.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 157,
+      "name": "journalIssue",
+      "title": "Issue",
+      "description": "The journal issue number which this Dataset is associated with (e.g., Number 2, Autumn).",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": false,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 2,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 155,
+        "name": "journalVolumeIssue",
+        "title": "Journal",
+        "description": "Indicates the volume, issue and date of a journal, which this Dataset is associated with.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 158,
+      "name": "journalPubDate",
+      "title": "Publication Date",
+      "description": "The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).",
+      "fieldType": "DATE",
+      "allowControlledVocabulary": false,
+      "watermark": "YYYY or YYYY-MM or YYYY-MM-DD",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 3,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+
+      ],
+      "parentDatasetFieldType": {
+        "id": 155,
+        "name": "journalVolumeIssue",
+        "title": "Journal",
+        "description": "Indicates the volume, issue and date of a journal, which this Dataset is associated with.",
+        "fieldType": "NONE",
+        "allowControlledVocabulary": false,
+        "watermark": "",
+        "requiredDV": false,
+        "include": false,
+        "displayOrder": 0,
+        "displayFormat": "",
+        "allowMultiples": true,
+        "facetable": false,
+        "displayOnCreate": false,
+        "uri": null,
+        "controlledVocabularyValues": [
+
+        ],
+        "parentDatasetFieldType": null,
+        "required": false,
+        "advancedSearchFieldType": false
+      },
+      "required": false,
+      "advancedSearchFieldType": true
+    },
+    {
+      "id": 159,
+      "name": "journalArticleType",
+      "title": "Type of Article",
+      "description": "Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS). ",
+      "fieldType": "TEXT",
+      "allowControlledVocabulary": true,
+      "watermark": "",
+      "requiredDV": false,
+      "include": false,
+      "displayOrder": 4,
+      "displayFormat": "",
+      "allowMultiples": false,
+      "facetable": true,
+      "displayOnCreate": false,
+      "uri": null,
+      "controlledVocabularyValues": [
+        {
+          "id": 800,
+          "strValue": "abstract",
+          "identifier": "",
+          "displayOrder": 0
+        },
+        {
+          "id": 801,
+          "strValue": "addendum",
+          "identifier": "",
+          "displayOrder": 1
+        },
+        {
+          "id": 802,
+          "strValue": "announcement",
+          "identifier": "",
+          "displayOrder": 2
+        },
+        {
+          "id": 803,
+          "strValue": "article-commentary",
+          "identifier": "",
+          "displayOrder": 3
+        },
+        {
+          "id": 804,
+          "strValue": "book review",
+          "identifier": "",
+          "displayOrder": 4
+        },
+        {
+          "id": 805,
+          "strValue": "books received",
+          "identifier": "",
+          "displayOrder": 5
+        },
+        {
+          "id": 806,
+          "strValue": "brief report",
+          "identifier": "",
+          "displayOrder": 6
+        },
+        {
+          "id": 807,
+          "strValue": "calendar",
+          "identifier": "",
+          "displayOrder": 7
+        },
+        {
+          "id": 808,
+          "strValue": "case report",
+          "identifier": "",
+          "displayOrder": 8
+        },
+        {
+          "id": 809,
+          "strValue": "collection",
+          "identifier": "",
+          "displayOrder": 9
+        },
+        {
+          "id": 810,
+          "strValue": "correction",
+          "identifier": "",
+          "displayOrder": 10
+        },
+        {
+          "id": 811,
+          "strValue": "data paper",
+          "identifier": "",
+          "displayOrder": 11
+        },
+        {
+          "id": 812,
+          "strValue": "discussion",
+          "identifier": "",
+          "displayOrder": 12
+        },
+        {
+          "id": 813,
+          "strValue": "dissertation",
+          "identifier": "",
+          "displayOrder": 13
+        },
+        {
+          "id": 814,
+          "strValue": "editorial",
+          "identifier": "",
+          "displayOrder": 14
+        },
+        {
+          "id": 815,
+          "strValue": "in brief",
+          "identifier": "",
+          "displayOrder": 15
+        },
+        {
+          "id": 816,
+          "strValue": "introduction",
+          "identifier": "",
+          "displayOrder": 16
+        },
+        {
+          "id": 817,
+          "strValue": "letter",
+          "identifier": "",
+          "displayOrder": 17
+        },
+        {
+          "id": 818,
+          "strValue": "meeting report",
+          "identifier": "",
+          "displayOrder": 18
+        },
+        {
+          "id": 819,
+          "strValue": "news",
+          "identifier": "",
+          "displayOrder": 19
+        },
+        {
+          "id": 820,
+          "strValue": "obituary",
+          "identifier": "",
+          "displayOrder": 20
+        },
+        {
+          "id": 821,
+          "strValue": "oration",
+          "identifier": "",
+          "displayOrder": 21
+        },
+        {
+          "id": 822,
+          "strValue": "partial retraction",
+          "identifier": "",
+          "displayOrder": 22
+        },
+        {
+          "id": 823,
+          "strValue": "product review",
+          "identifier": "",
+          "displayOrder": 23
+        },
+        {
+          "id": 824,
+          "strValue": "rapid communication",
+          "identifier": "",
+          "displayOrder": 24
+        },
+        {
+          "id": 825,
+          "strValue": "reply",
+          "identifier": "",
+          "displayOrder": 25
+        },
+        {
+          "id": 826,
+          "strValue": "reprint",
+          "identifier": "",
+          "displayOrder": 26
+        },
+        {
+          "id": 827,
+          "strValue": "research article",
+          "identifier": "",
+          "displayOrder": 27
+        },
+        {
+          "id": 828,
+          "strValue": "retraction",
+          "identifier": "",
+          "displayOrder": 28
+        },
+        {
+          "id": 829,
+          "strValue": "review article",
+          "identifier": "",
+          "displayOrder": 29
+        },
+        {
+          "id": 830,
+          "strValue": "translation",
+          "identifier": "",
+          "displayOrder": 30
+        },
+        {
+          "id": 831,
+          "strValue": "other",
+          "identifier": "",
+          "displayOrder": 31
+        }
+      ],
+      "parentDatasetFieldType": null,
+      "required": false,
+      "advancedSearchFieldType": true
+    }
+  ],
+  "empty": false,
+  "selected": false,
+  "hasRequired": false,
+  "showDatasetFieldTypes": false,
+  "required": false,
+  "localeDisplayFacet": "Journal",
+  "displayOnCreate": false,
+  "localeDisplayName": "Journal Metadata",
+  "idString": "6"
+}
