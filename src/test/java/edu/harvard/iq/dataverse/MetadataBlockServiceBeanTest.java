@@ -2,7 +2,12 @@ package edu.harvard.iq.dataverse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.KeyDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -18,7 +23,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +34,16 @@ public class MetadataBlockServiceBeanTest {
     private static final Logger logger = Logger.getLogger(MetadataBlockServiceBeanTest.class.getCanonicalName());
     @Mock
     private MetadataBlockServiceBean metadataBlockSvc;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+    
+    @BeforeClass
+    public static void setupMapper() {
+        SimpleModule simpleModule = new SimpleModule();
+        simpleModule.addKeyDeserializer(DatasetField.class, new emptyKeyDeserializer());
+        simpleModule.addKeyDeserializer(MetadataBlock.class, new emptyKeyDeserializer());
+        mapper.registerModule(simpleModule);
+    }
     
     @Test
     public void testCitationTsvGeneration() throws IOException {
@@ -89,7 +103,7 @@ public class MetadataBlockServiceBeanTest {
         mdb.setDisplayName(testJson.getString("displayName"));
         mdb.setId(Long.valueOf(testJson.get("id").toString()));
         mdb.setNamespaceUri(testJson.get("namespaceUri").toString().replace("\"", ""));
-        List<DatasetFieldType> datasetFieldTypes = new ObjectMapper().readValue(testJson.getJsonArray("datasetFieldTypes").toString(), new TypeReference<>() {});
+        List<DatasetFieldType> datasetFieldTypes = mapper.readValue(testJson.getJsonArray("datasetFieldTypes").toString(), new TypeReference<>() {});
         mdb.setDatasetFieldTypes(datasetFieldTypes);
         
         Mockito.when(metadataBlockSvc.exportMdbAsTsv(anyString())).thenCallRealMethod();
@@ -100,5 +114,14 @@ public class MetadataBlockServiceBeanTest {
     private void logTsvContents(String mdbName, String expected, String generated) {
         logger.info("Expected " + mdbName + " tsv: \n" + expected);
         logger.info("Generated " + mdbName + " tsv: \n" + generated);
+    }
+
+    static class emptyKeyDeserializer extends KeyDeserializer
+    {
+        @Override
+        public Object deserializeKey(final String key, final DeserializationContext ctxt ) throws IOException, JsonProcessingException
+        {
+            return null;
+        }
     }
 }
