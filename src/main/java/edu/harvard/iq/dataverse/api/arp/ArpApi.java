@@ -83,7 +83,7 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     ArpServiceBean arpService;
-    
+
     @EJB
     RoCrateManager roCrateManager;
 
@@ -191,16 +191,12 @@ public class ArpApi extends AbstractApiBean {
     @Produces("text/tab-separated-values")
     public Response convertMdbToTsv(
             @PathParam("identifier") String mdbIdtf
-        )
-    public Response convertMdbToTsv(
-            @PathParam("identifier") String mdbIdtf,
-            @QueryParam("lang") String language
-        )
+    )
     {
         String mdbTsv;
 
         try {
-            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf, language == null ? "eng" : language);
+            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf);
         } catch (JsonProcessingException e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -379,7 +375,7 @@ public class ArpApi extends AbstractApiBean {
             @QueryParam("lang") String language
     ) {
         String describoProfile;
-        
+
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
             describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
@@ -481,10 +477,6 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
-    private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception
-    {
-        return convertTemplate(cedarTemplate, outputType, "eng", overridePropNames);
-    }
 
     /**
      * Updates MDB from an uploaded TSV file.

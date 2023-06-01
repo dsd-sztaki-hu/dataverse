@@ -420,7 +420,7 @@ public class ArpServiceBean implements java.io.Serializable {
     }
     
     public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) {
-        DatasetFieldTypeArp datasetFieldTypeArp = datasetFieldTypeOverrideService.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
         List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
         try {
             String externalVocabUrl = getExternalVocabValuesUrl(datasetFieldTypeArp);
