@@ -50,57 +50,64 @@ public class RoCrateUploadServiceBean implements Serializable {
         try {
             setRoCrateInputStream(processRoCrateZip(roCrateAsBase64));
         } catch (Exception e) {
+            setRoCrateJsonString(null);
             e.printStackTrace();
-            JsfHelper.addErrorMessage("Can not process the "+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+            JsfHelper.addErrorMessage("Can not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
         }
     }
 
     public DatasetVersionUI resetVersionUIRoCrate(DatasetVersionUI datasetVersionUI, DatasetVersion workingVersion, Dataset dataset) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
-        Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
-        JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> {
-            var typeNode = node.get("@type");
-            if (typeNode instanceof ArrayNode) {
-                for (int i = 0; i < typeNode.size(); i++) {
-                    var t = typeNode.get(i);
-                    if (t.textValue().equals("Dataset")) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-            return typeNode.textValue().equals("Dataset");
-        }).findFirst().get();
-
-        // process the Dataset node, from here we can get the primitive values
-        // and the type of the compound values
-        datasetNode.fields().forEachRemaining(prop -> {
-            String propName = prop.getKey();
-            if (!propName.equals("hasPart") && dsfTypeMap.containsKey(propName)) {
-                DatasetField datasetField = dsfTypeMap.get(propName);
-                DatasetFieldType datasetFieldType = datasetField.getDatasetFieldType();
-
-                // Process the values depending on the field's type
-                if (datasetFieldType.isCompound()) {
-                    JsonNode roCrateValue = datasetNode.get(propName);
-                    if (roCrateValue.isArray()) {
-                        for (JsonNode value : roCrateValue) {
-                            processCompoundField(value, datasetField, graphNode);
+        if (!roCrateJsonString.isBlank()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
+                Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
+                JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> {
+                    var typeNode = node.get("@type");
+                    if (typeNode instanceof ArrayNode) {
+                        for (int i = 0; i < typeNode.size(); i++) {
+                            var t = typeNode.get(i);
+                            if (t.textValue().equals("Dataset")) {
+                                return true;
+                            }
                         }
-                    } else {
-                        processCompoundField(roCrateValue, datasetField, graphNode);
+                        return false;
                     }
-                } else {
-                    if (datasetFieldType.isAllowControlledVocabulary()) {
-                        processControlledVocabularyField(datasetField, prop.getValue());
-                    } else {
-                        datasetField.getDatasetFieldValues().get(0).setValue(prop.getValue().textValue());
+                    return typeNode.textValue().equals("Dataset");
+                }).findFirst().get();
+    
+                // process the Dataset node, from here we can get the primitive values
+                // and the type of the compound values
+                datasetNode.fields().forEachRemaining(prop -> {
+                    String propName = prop.getKey();
+                    if (!propName.equals("hasPart") && dsfTypeMap.containsKey(propName)) {
+                        DatasetField datasetField = dsfTypeMap.get(propName);
+                        DatasetFieldType datasetFieldType = datasetField.getDatasetFieldType();
+    
+                        // Process the values depending on the field's type
+                        if (datasetFieldType.isCompound()) {
+                            JsonNode roCrateValue = datasetNode.get(propName);
+                            if (roCrateValue.isArray()) {
+                                for (JsonNode value : roCrateValue) {
+                                    processCompoundField(value, datasetField, graphNode);
+                                }
+                            } else {
+                                processCompoundField(roCrateValue, datasetField, graphNode);
+                            }
+                        } else {
+                            if (datasetFieldType.isAllowControlledVocabulary()) {
+                                processControlledVocabularyField(datasetField, prop.getValue());
+                            } else {
+                                datasetField.getDatasetFieldValues().get(0).setValue(prop.getValue().textValue());
+                            }
+                        }
                     }
-                }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        });
+        }
 
         setRoCrateJsonString(null);
         return datasetVersionUI;
@@ -170,6 +177,7 @@ public class RoCrateUploadServiceBean implements Serializable {
                 return null;
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
 
