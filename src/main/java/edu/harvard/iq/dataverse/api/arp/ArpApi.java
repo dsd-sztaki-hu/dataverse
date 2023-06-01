@@ -149,6 +149,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -158,6 +159,7 @@ public class ArpApi extends AbstractApiBean {
             mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
 
         } catch (CedarTemplateErrorsException cte) {
+            cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
@@ -166,6 +168,7 @@ public class ArpApi extends AbstractApiBean {
                     ).type(MediaType.APPLICATION_JSON_TYPE).header("Access-Control-Allow-Origin", "*").build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed", e);
             return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
         }
@@ -222,6 +225,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -238,9 +242,10 @@ public class ArpApi extends AbstractApiBean {
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
             res = arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -266,6 +271,7 @@ public class ArpApi extends AbstractApiBean {
         try {
             cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).getAsString();
         } catch (JsonProcessingException e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -291,6 +297,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -310,7 +317,7 @@ public class ArpApi extends AbstractApiBean {
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
             arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
@@ -345,6 +352,7 @@ public class ArpApi extends AbstractApiBean {
             }
             describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -372,6 +380,7 @@ public class ArpApi extends AbstractApiBean {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
             describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -490,6 +499,7 @@ public class ArpApi extends AbstractApiBean {
             metadataBlockName = ((javax.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
             arpService.updateMetadataBlock(dvIdtf, metadataBlockName);
         } catch (Exception e) {
+            e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
@@ -512,11 +522,13 @@ public class ArpApi extends AbstractApiBean {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
             roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
+            e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
         }
 
@@ -538,9 +550,10 @@ public class ArpApi extends AbstractApiBean {
                 writer.write(roCrateManager.preProcessRoCrateFromAroma(roCrateJson));
             }
         } catch (IOException e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         }
 
@@ -598,12 +611,15 @@ public class ArpApi extends AbstractApiBean {
             return ok( json(managedVersion) );
 
         } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
+            ex.printStackTrace();
             logger.log(Level.SEVERE, "Semantic error parsing dataset version Json: " + ex.getMessage(), ex);
             return error( Response.Status.BAD_REQUEST, "Error parsing dataset version: " + ex.getMessage() );
 
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return ex.getResponse();
         } catch (IOException ex) {
+            ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
         }

@@ -50,7 +50,8 @@ public class RoCrateUploadServiceBean implements Serializable {
         try {
             setRoCrateInputStream(processRoCrateZip(roCrateAsBase64));
         } catch (Exception e) {
-            JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+            e.printStackTrace();
+            JsfHelper.addErrorMessage("Can not process the "+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
         }
     }
 
@@ -146,7 +147,7 @@ public class RoCrateUploadServiceBean implements Serializable {
 
     private ByteArrayInputStream processRoCrateZip(String roCrateAsBase64) throws IOException {
         byte[] roCrateBytes = Base64.getDecoder().decode(roCrateAsBase64.split(",")[1]);
-        String entryNameToDelete = BundleUtil.getStringFromBundle("arp.rocrate.metadata.name");
+        String entryNameToDelete = ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try (baos; ByteArrayInputStream bais = new ByteArrayInputStream(roCrateBytes);

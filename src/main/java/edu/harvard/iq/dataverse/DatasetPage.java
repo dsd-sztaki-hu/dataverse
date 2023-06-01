@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -1803,7 +1804,7 @@ public class DatasetPage implements java.io.Serializable {
             try {
                 datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
             } catch (JsonProcessingException jsonProcessingException) {
-                JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+                JsfHelper.addErrorMessage("Can not process the "+ ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
             }
         }
         resetVersionUI();
@@ -2121,7 +2122,8 @@ public class DatasetPage implements java.io.Serializable {
                 try {
                     datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
                 } catch (JsonProcessingException jsonProcessingException) {
-                    JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+                    jsonProcessingException.printStackTrace();
+                    JsfHelper.addErrorMessage("Can not process the "+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
                 }
             }
 
@@ -6146,7 +6148,7 @@ public class DatasetPage implements java.io.Serializable {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         response.setContentType("application/json");
-        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
+        response.setHeader("Content-Disposition", "attachment;filename="+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
 
         OutputStream outputStream = response.getOutputStream();
         outputStream.write(json.getBytes());
@@ -6163,10 +6165,7 @@ public class DatasetPage implements java.io.Serializable {
     public String getCurrentUserApiKey() {
         User user = session.getUser();
         if (user instanceof AuthenticatedUser) {
-            var token = authService.findApiTokenByUser((AuthenticatedUser) user);
-            if (token == null) {
-                return null;
-            }
+            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
             return token.getTokenString();
         }
         return null;

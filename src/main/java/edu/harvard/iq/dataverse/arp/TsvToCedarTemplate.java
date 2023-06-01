@@ -43,10 +43,10 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private static void setupCedarTemplateParts() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String cedarTemplatePath = BundleUtil.getStringFromBundle("arp.cedar.template.schema");
-        String cedarTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.template.field");
-        String cedarStaticTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.static.template.field");
-        String cedarTemplateElementPath = BundleUtil.getStringFromBundle("arp.cedar.template.element");
+        String cedarTemplatePath = "arp/cedarSchemaTemplate.json";
+        String cedarTemplateFieldPath = "arp/cedarTemplateField.json";
+        String cedarStaticTemplateFieldPath = "arp/cedarStaticTemplateField.json";
+        String cedarTemplateElementPath = "arp/cedarTemplateElement.json";
 
         InputStream cedarTemplateInputStream = getCedarTemplateFromResources(cedarTemplatePath);
         InputStream cedarTemplateFieldInputStream = getCedarTemplateFromResources(cedarTemplateFieldPath);
