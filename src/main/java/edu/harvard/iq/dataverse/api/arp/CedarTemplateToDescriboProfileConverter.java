@@ -85,7 +85,9 @@ public class CedarTemplateToDescriboProfileConverter {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
-                    processTemplateField(property, false, inputId, processedDescriboProfileValues, parentName);
+                    JsonObject valueConstraints = property.getAsJsonObject("_valueConstraints");
+                    boolean allowMultiple = valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean();
+                    processTemplateField(property, allowMultiple, inputId, processedDescriboProfileValues, parentName);
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName);
                 }
@@ -151,7 +153,8 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setHelp(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
         describoInput.setType(List.of(propName));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
-        describoInput.setMultiple(allowMultiple);
+        boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
+        describoInput.setMultiple(allowsMultiple);
         
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
         
