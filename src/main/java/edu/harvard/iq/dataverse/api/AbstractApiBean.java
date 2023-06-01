@@ -25,6 +25,7 @@ import edu.harvard.iq.dataverse.RoleAssigneeServiceBean;
 import edu.harvard.iq.dataverse.UserNotificationServiceBean;
 import edu.harvard.iq.dataverse.UserServiceBean;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
@@ -261,6 +262,9 @@ public abstract class AbstractApiBean {
     @Context
     protected HttpServletRequest httpRequest;
 
+    @EJB
+    protected ArpCedarAuthenticationServiceBean cedarAuthSvc;
+
     /**
      * For pretty printing (indenting) of JSON output.
      */
@@ -405,6 +409,11 @@ public abstract class AbstractApiBean {
         if (key != null) {
             // No check for deactivated user because it's done in authSvc.lookupUser.
             AuthenticatedUser authUser = authSvc.lookupUser(key);
+
+            // Try as CEDAR token
+            if (authUser == null) {
+                authUser = cedarAuthSvc.lookupUser(key);
+            }
 
             if (authUser != null) {
                 authUser = userSvc.updateLastApiUseTime(authUser);

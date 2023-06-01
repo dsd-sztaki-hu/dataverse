@@ -217,7 +217,14 @@ public class RoCrateManager {
         }
 
         var conformsToArray = mapper.createArrayNode();
-        var conformsToIds = conformsToMdbs.stream().map(mdb -> arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb).getRoCrateConformsToId()).collect(Collectors.toList());
+        var conformsToIds = conformsToMdbs.stream().map(mdb -> {
+            var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
+            if (mdbArp == null) {
+                throw new Error("No ARP metadatablock found for metadatablock '"+mdb.getName()+
+                        "'. You need to upload the metadatablock to CEDAR and back to Dataverse to connect it with its CEDAR template representation");
+            }
+            return mdbArp.getRoCrateConformsToId();
+        }).collect(Collectors.toList());
 
         conformsToIds.forEach(id -> {
             conformsToArray.add(mapper.createObjectNode().put("@id", id));

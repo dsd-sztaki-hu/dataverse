@@ -104,7 +104,7 @@ public class ArpApi extends AbstractApiBean {
     public Response checkCedarTemplateCall(String templateJson) {
         CedarTemplateErrors errors;
         try {
-            errors = checkTemplate(templateJson);
+            errors = arpService.checkTemplate(templateJson);
         } catch (Exception e) {
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
@@ -153,46 +153,18 @@ public class ArpApi extends AbstractApiBean {
         }
 
         String mdbTsv;
-        List<String> lines;
-        Set<String> overridePropNames = new HashSet<>();
-        String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
 
         try {
-            CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
-            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty())) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity( NullSafeJsonBuilder.jsonObjectBuilder()
-                                .add("status", STATUS_ERROR)
-                                .add( "message", cedarTemplateErrors.toJson() ).build()
-                        ).type(MediaType.APPLICATION_JSON_TYPE).header("Access-Control-Allow-Origin", "*").build();
-            }
-            if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
-                overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
-            }
+            mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
 
-            mdbTsv = convertTemplate(templateJson, "dv", overridePropNames);
-            lines = List.of(mdbTsv.split("\n"));
-            if (!skipUpload) {
-                loadDatasetFields(lines, metadataBlockName, templateJson);
-                // at this point the new mdb is already in the db
-                if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
-                    MetadataBlock newMdb = metadataBlockService.findByName(metadataBlockName);
-                    cedarTemplateErrors.incompatiblePairs.values().forEach(override -> override.setMetadataBlock(newMdb));
-                    arpMetadataBlockServiceBean.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
-                }
-                updateMetadataBlock(dvIdtf, metadataBlockName);
-            }
+        } catch (CedarTemplateErrorsException cte) {
+            logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity( NullSafeJsonBuilder.jsonObjectBuilder()
+                            .add("status", STATUS_ERROR)
+                            .add( "message", cte.getErrors().toJson() ).build()
+                    ).type(MediaType.APPLICATION_JSON_TYPE).header("Access-Control-Allow-Origin", "*").build();
 
-            String langDirPath = System.getProperty("dataverse.lang.directory");
-            if (langDirPath != null) {
-                String fileName = metadataBlockName + "_hu.properties";
-                List<String> hunTranslations = collectHunTranslations(templateJson, "/properties", new ArrayList<>());
-                FileWriter writer = new FileWriter(langDirPath + "/" + fileName);
-                writer.write(String.join("\n", hunTranslations));
-                writer.close();
-            }
-            // Force reloading language bundles/
-            ResourceBundle.clearCache();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "CEDAR template upload failed", e);
             return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
@@ -253,6 +225,7 @@ public class ArpApi extends AbstractApiBean {
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
+        String res = null;
         try {
             ObjectMapper mapper = new ObjectMapper();
             String cedarDomain = cedarParams.cedarDomain;
@@ -263,7 +236,7 @@ public class ArpApi extends AbstractApiBean {
             cedarParams.cedarDomain = cedarDomain;
 
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
-            arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
+            res = arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
             System.out.println(ex.getResponse());
             return error(FORBIDDEN, "Authorized users only.");
@@ -271,7 +244,7 @@ public class ArpApi extends AbstractApiBean {
             return Response.serverError().entity(e.getMessage()).build();
         }
 
-        return Response.ok().build();
+        return Response.ok(res).build();
     }
 
     /**
@@ -370,7 +343,7 @@ public class ArpApi extends AbstractApiBean {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-            describoProfile = convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -397,7 +370,7 @@ public class ArpApi extends AbstractApiBean {
         
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
-            describoProfile = convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -432,13 +405,9 @@ public class ArpApi extends AbstractApiBean {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
             for (int i=0; i<ids.length; i++) {
-                MetadataBlockArp mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlockById(Long.valueOf(ids[i]));
-                String templateJson = mdbArp != null
-                        // If we have the CEDAr temlate ready in MetadataBlockArp, use that
-                        ? mdbArp.getCedarDefinition()
-                        // OtherwisecConvert TSV to CEDAR template without converting '.' to ':' in field names
-                        : arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
-                String profile = convertTemplate(templateJson, "describo", language, new HashSet<>());
+                // Convert TSV to CEDAR template without converting '.' to ':' in field names
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
+                String profile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 
                 if (mergedProfile == null) {
@@ -499,29 +468,6 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
-    private String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception
-    {
-        return convertTemplate(cedarTemplate, outputType, "eng", overridePropNames);
-    }
-
-    private String convertTemplate(String cedarTemplate, String outputType, String language, Set<String> overridePropNames) throws Exception {
-        String conversionResult;
-
-        try {
-            if (outputType.equals("dv")) {
-                CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
-                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
-            } else {
-                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language, arpService);
-                conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
-            }
-
-        } catch (Exception exception) {
-            throw new Exception("An error occurred during converting the template", exception);
-        }
-
-        return conversionResult;
-    }
 
     /**
      * Updates MDB from an uploaded TSV file.
@@ -542,7 +488,7 @@ public class ArpApi extends AbstractApiBean {
                 throw new Exception("Failed to load dataset fields");
             }
             metadataBlockName = ((javax.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
-            updateMetadataBlock(dvIdtf, metadataBlockName);
+            arpService.updateMetadataBlock(dvIdtf, metadataBlockName);
         } catch (Exception e) {
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
