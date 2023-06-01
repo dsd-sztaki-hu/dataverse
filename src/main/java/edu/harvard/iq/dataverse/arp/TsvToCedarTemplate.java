@@ -35,16 +35,18 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private boolean convertDotToColon = true;
 
+    private Locale hunLocale = new Locale("hu");
+
     static {
         setupCedarTemplateParts();
     }
 
     private static void setupCedarTemplateParts() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String cedarTemplatePath = BundleUtil.getStringFromBundle("arp.cedar.template.schema");
-        String cedarTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.template.field");
-        String cedarStaticTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.static.template.field");
-        String cedarTemplateElementPath = BundleUtil.getStringFromBundle("arp.cedar.template.element");
+        String cedarTemplatePath = "arp/cedarSchemaTemplate.json";
+        String cedarTemplateFieldPath = "arp/cedarTemplateField.json";
+        String cedarStaticTemplateFieldPath = "arp/cedarStaticTemplateField.json";
+        String cedarTemplateElementPath = "arp/cedarTemplateElement.json";
 
         InputStream cedarTemplateInputStream = getCedarTemplateFromResources(cedarTemplatePath);
         InputStream cedarTemplateFieldInputStream = getCedarTemplateFromResources(cedarTemplateFieldPath);
@@ -221,6 +223,18 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         jsonSchema.addProperty("title", dataverseMetadataBlock.getName() + jsonSchema.get("title").getAsString());
         jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + jsonSchema.get("description").getAsString());
         jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getDisplayName().isBlank() ? dataverseMetadataBlock.getName() : dataverseMetadataBlock.getDisplayName());
+        try {
+            var name = BundleUtil.getStringFromPropertyFile("metadatablock.displayName", dataverseMetadataBlock.getName(), hunLocale);
+            jsonSchema.addProperty("hunName", name);
+        }
+        catch(MissingResourceException ex) {
+            try {
+                var name = BundleUtil.getStringFromPropertyFile("metadatablock.name", dataverseMetadataBlock.getName(), hunLocale);
+                jsonSchema.addProperty("name", name);
+            } catch (MissingResourceException ex2) {
+                // ignore
+            }
+        }
         jsonSchema.addProperty("schema:identifier", dataverseMetadataBlock.getName());
         JsonHelper.getJsonElement(jsonSchema, "properties.@type.oneOf").getAsJsonArray().forEach(jsonElement -> {
             JsonObject oneOf = jsonElement.getAsJsonObject();
@@ -327,8 +341,20 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
         cedarTemplate.addProperty("schema:name", propName);
         cedarTemplate.addProperty("schema:description", datasetField.getDescription());
+        try {
+            cedarTemplate.addProperty("hunDescription", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName + ".description", datasetField.getmetadatablock_id(), hunLocale));
+        }
+        catch(MissingResourceException ex) {
+            // ignore
+        }
         if (datasetField.getTitle() != null) {
             cedarTemplate.addProperty("skos:prefLabel", datasetField.getTitle());
+            try {
+                cedarTemplate.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName + ".title", datasetField.getmetadatablock_id(), hunLocale));
+            }
+            catch (MissingResourceException ex) {
+                // ignore
+            }
         }
         if (parentIsTemplateField && datasetField.isAllowmultiples()) {
             cedarTemplate.addProperty("minItems", 1);

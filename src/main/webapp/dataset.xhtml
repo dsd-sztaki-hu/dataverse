@@ -892,13 +892,13 @@
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}/dataset/#{DatasetPage.uriEncodedPersistentId}?apiKey=#{DatasetPage.currentUserApiKey}"
+                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}"
                                             rendered="#{!widgetWrapper.widgetView
                                                                and (DatasetPage.sessionUserAuthenticated
                                                                and empty DatasetPage.editMode and !widgetWrapper.widgetView
                                                                and DatasetPage.canUpdateDataset())}"
                                             target="_blank">
-                                        Open AROMA
+                                        #{bundle['arp.dataset.openAroma']}
                                     </h:outputLink>
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.edit('METADATA')}" update="@form,:messagePanel"
                                                    disabled="#{DatasetPage.lockedFromEdits or !DatasetPage.hasValidTermsOfAccess}"

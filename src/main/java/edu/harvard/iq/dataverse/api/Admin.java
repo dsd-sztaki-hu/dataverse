@@ -14,6 +14,12 @@ import edu.harvard.iq.dataverse.DataverseRequestServiceBean;
 import edu.harvard.iq.dataverse.DataverseServiceBean;
 import edu.harvard.iq.dataverse.DataverseSession;
 import edu.harvard.iq.dataverse.DvObject;
+import edu.harvard.iq.dataverse.api.arp.ArpInitialSetupParams;
+import edu.harvard.iq.dataverse.api.arp.SetCedarKeyParams;
+import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.AuthenticatedUserArp;
+import edu.harvard.iq.dataverse.authorization.*;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.validation.EMailValidator;
 import edu.harvard.iq.dataverse.EjbDataverseEngine;
@@ -23,9 +29,6 @@ import edu.harvard.iq.dataverse.TemplateServiceBean;
 import edu.harvard.iq.dataverse.UserServiceBean;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.dto.RoleDTO;
-import edu.harvard.iq.dataverse.authorization.AuthenticatedUserDisplayInfo;
-import edu.harvard.iq.dataverse.authorization.AuthenticationProvider;
-import edu.harvard.iq.dataverse.authorization.UserIdentifier;
 import edu.harvard.iq.dataverse.authorization.exceptions.AuthenticationProviderFactoryNotFoundException;
 import edu.harvard.iq.dataverse.authorization.exceptions.AuthorizationSetupException;
 import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
@@ -77,11 +80,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.io.IOUtils;
 
 import java.util.List;
-import edu.harvard.iq.dataverse.authorization.AuthTestDataServiceBean;
-import edu.harvard.iq.dataverse.authorization.AuthenticationProvidersRegistrationServiceBean;
-import edu.harvard.iq.dataverse.authorization.DataverseRole;
-import edu.harvard.iq.dataverse.authorization.RoleAssignee;
-import edu.harvard.iq.dataverse.authorization.UserRecordIdentifier;
+
 import edu.harvard.iq.dataverse.authorization.groups.impl.explicit.ExplicitGroupServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.dataaccess.ImageThumbConverter;
@@ -2296,5 +2295,95 @@ public class Admin extends AbstractApiBean {
         
         return ok(Json.createObjectBuilder().add(ExternalToolHandler.SIGNED_URL, signedUrl));
     }
- 
+
+	@EJB
+	protected ArpCedarAuthenticationServiceBean cedarAuthSvc;
+
+	/**
+	 * Associate a CEDAR key with a given user. Once set, one can execute API calls using either the
+	 * DV api token or the CEDAR key.
+	 *
+	 * curl -X POST \
+	 *   http://localhost:8080/api/admin/arp/setCedarKey \
+	 *   -H 'Content-Type: application/json' \
+	 *   -d '{
+	 *     "userIdentifier": "dataverseAdmin",
+	 *     "cedarKey": "<<CEDAR KEY>"
+	 *   }'
+	 *
+	 * @param params
+	 * @return
+	 */
+	@POST
+	@Path("arp/setCedarKey")
+	@Consumes("application/json")
+	public Response arpCetCedarKey(SetCedarKeyParams params)
+	{
+		AuthenticatedUser user = authSvc.getAuthenticatedUser(params.userIdentifier);
+
+		if (user == null) {
+			return error(Response.Status.FORBIDDEN, "User not found.");
+		}
+
+		AuthenticatedUserArp userArp = cedarAuthSvc.findAuthenticatedUserArpById(user.getId());
+
+		if (userArp == null) {
+			userArp = cedarAuthSvc.createNewAuthenticatedUserArp();
+			userArp.setUser(user);
+		}
+		userArp.setCedarToken(params.cedarKey);
+
+		return Response.ok().build();
+	}
+
+	@EJB
+	ArpServiceBean arpService;
+
+	/**
+	 * Should be called only once when ARP is first installed.
+	 * - Sets default namespaces for MDB-s specified in mdbNamespaceUris
+	 * - Syncs MDB-s with CEDAR listed in syncCedar
+	 * @param params
+	 * @return
+	 */
+	// curl -X POST \
+	//  http://localhost:8080/api/admin/arp/initialSetup \
+	//  -H 'Content-Type: application/json' \
+	//  -d '{
+	//        "mdbNamespaceUris": {
+	//          "geospatial": "https://dataverse.org/schema/geospatial/",
+	//          "socialscience": "https://dataverse.org/schema/socialscience/",
+	//          "biomedical": "https://dataverse.org/schema/biomedical/",
+	//          "astrophysics": "https://dataverse.org/schema/astrophysics/",
+	//          "journal": "https://dataverse.org/schema/journal/"
+	//        },
+	//        "syncCedar": {
+	//          "mdbs": [
+	//            "citation", "journal", "geospatial", "socialscience", "astrophysics", "biomedical"
+	//          ],
+	//          "cedarParams": {
+	//            "cedarDomain": "arp.orgx",
+	//            "apiKey": "xxx",
+	//            "folderId": "https:%2F%2Frepo.arp.orgx%2Ffolders%2F9559c51c-33e3-4429-890d-e4fa8a7de859"
+	//          }
+	//        }
+	//      }'
+	@POST
+	@Path("arp/initialSetup")
+	@Consumes("application/json")
+	public Response arpInitialSetup(ArpInitialSetupParams params) {
+		try {
+			if (params.getMdbNamespaceUris() != null) {
+				arpService.updateMetadatablockNamesaceUris(params.getMdbNamespaceUris());
+			}
+			if (params.syncCedar != null && params.syncCedar.mdbs != null) {
+				params.syncCedar.mdbs.forEach(mdbIdtf -> {
+					arpService.syncMetadataBlockWithCedar(mdbIdtf, params.syncCedar.cedarParams);
+				});
+			}
+			return Response.ok("Done").build();
+		} catch (Throwable ex) {
+			return Response.serverError().entity(ex.getLocalizedMessage()).build();
+		}
+	}
 }

@@ -1227,6 +1227,7 @@ public class EditDatafilesPage implements java.io.Serializable {
             try {
                 roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
             } catch (Exception e) {
+                e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
             }
         }
