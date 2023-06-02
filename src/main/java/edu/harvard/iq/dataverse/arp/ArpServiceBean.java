@@ -468,25 +468,26 @@ public class ArpServiceBean implements java.io.Serializable {
             }
         });
     }
-
-
-    public String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception
-    {
-        return convertTemplate(cedarTemplate, outputType, "eng", overridePropNames);
+    
+    public String convertTemplateToDvMdb(String cedarTemplate, Set<String> overridePropNames) throws Exception {
+        String conversionResult;
+        
+        try {
+            CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
+            conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
+        } catch (Exception exception) {
+            throw new Exception("An error occurred during converting the template", exception);
+        }
+        
+        return conversionResult;
     }
 
-    public String convertTemplate(String cedarTemplate, String outputType, String language, Set<String> overridePropNames) throws Exception {
+    public String convertTemplateToDescriboProfile(String cedarTemplate, String language) throws Exception {
         String conversionResult;
 
         try {
-            if (outputType.equals("dv")) {
-                CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
-                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
-            } else {
-                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
-                conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
-            }
-
+            CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
+            conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
         } catch (Exception exception) {
             throw new Exception("An error occurred during converting the template", exception);
         }
@@ -986,7 +987,7 @@ public class ArpServiceBean implements java.io.Serializable {
                 overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
             }
 
-            mdbTsv = convertTemplate(templateJson, "dv", overridePropNames);
+            mdbTsv = convertTemplateToDvMdb(templateJson, overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
                 loadDatasetFields(lines, metadataBlockName, templateJson);

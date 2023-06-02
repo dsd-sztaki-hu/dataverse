@@ -350,7 +350,7 @@ public class ArpApi extends AbstractApiBean {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
@@ -378,7 +378,7 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
-            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
@@ -416,7 +416,7 @@ public class ArpApi extends AbstractApiBean {
             for (int i=0; i<ids.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
                 String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
-                String profile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+                String profile = arpService.convertTemplateToDescriboProfile(templateJson, language);
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
 
                 if (mergedProfile == null) {
