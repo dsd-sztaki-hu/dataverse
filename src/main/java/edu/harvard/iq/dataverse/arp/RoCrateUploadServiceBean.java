@@ -51,6 +51,7 @@ public class RoCrateUploadServiceBean implements Serializable {
             setRoCrateInputStream(processRoCrateZip(roCrateAsBase64));
         } catch (Exception e) {
             setRoCrateJsonString(null);
+            setRoCrateInputStream(null);
             e.printStackTrace();
             JsfHelper.addErrorMessage("Can not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
         }
