@@ -28,7 +28,6 @@ import javax.json.JsonArrayBuilder;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-<<<<<<<<< Temporary merge branch 1
 import java.io.IOException;
 import java.io.InputStream;
 import javax.persistence.EntityManager;
