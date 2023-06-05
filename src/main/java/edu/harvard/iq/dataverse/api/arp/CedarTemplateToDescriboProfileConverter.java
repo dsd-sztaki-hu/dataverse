@@ -1,15 +1,12 @@
 package edu.harvard.iq.dataverse.api.arp;
 
 import com.google.gson.*;
-import edu.harvard.iq.dataverse.DatasetPage;
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -20,19 +17,17 @@ public class CedarTemplateToDescriboProfileConverter {
     private static final Logger logger = Logger.getLogger(ArpApi.class.getCanonicalName());
 
     private String language;
+    private ArpServiceBean arpService;
 
-    public CedarTemplateToDescriboProfileConverter()
-    {
-        this("eng");
-    }
 
-    public CedarTemplateToDescriboProfileConverter(String language) {
+    public CedarTemplateToDescriboProfileConverter(String language, ArpServiceBean arpService) {
         if (language == null) {
             this.language = "eng";
         }
         else {
             this.language = language;
         }
+        this.arpService = arpService;
     }
 
     // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file
@@ -105,6 +100,10 @@ public class CedarTemplateToDescriboProfileConverter {
     public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
+        JsonObject externalVocab = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]");
+        if (externalVocab != null) {
+            fieldType = "list";
+        }
 
         describoInput.setId(inputId);
         describoInput.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
@@ -124,15 +123,24 @@ public class CedarTemplateToDescriboProfileConverter {
             help = Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null);
         }
         describoInput.setHelp(help);
-        describoInput.setType(getDescriboType(templateField));
+        describoInput.setType(getDescriboType(fieldType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         describoInput.setMultiple(allowMultiple);
 
+        List<String> literalValues;
         if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio"))) {
-            JsonElement jsonElement = getJsonElement(templateField, "_valueConstraints.literals");
-            JsonArray literals = jsonElement == null ? new JsonArray() : jsonElement.getAsJsonArray();
-            List<String> literalValues = new ArrayList<>();
-            literals.forEach(literal -> literalValues.add(literal.getAsJsonObject().get("label").getAsString()));
+            if (externalVocab != null) {
+                literalValues = arpService.getExternalVocabValues(templateField);
+                if (!literalValues.isEmpty()) {
+                    describoInput.setValues(literalValues);
+                }
+            }
+            else {
+                JsonElement jsonElement = getJsonElement(templateField, "_valueConstraints.literals");
+                JsonArray literals = jsonElement == null ? new JsonArray() : jsonElement.getAsJsonArray();
+                literalValues = new ArrayList<>();
+                literals.forEach(literal -> literalValues.add(literal.getAsJsonObject().get("label").getAsString()));
+            }
             if (!literalValues.isEmpty()) {
                 describoInput.setValues(literalValues);
             }
@@ -184,19 +192,20 @@ public class CedarTemplateToDescriboProfileConverter {
         
     }
 
+    Map<String, List<String>> cedarDescriboFieldTypes = Map.of(
+            "textfield", List.of("Text"),
+            "temporal", List.of("Date"),
+            "numeric", List.of("Number"),
+            "richtext", List.of("TextArea"),
+            "textarea", List.of("TextArea"),
+            "link", List.of("URL"),
+            "list", List.of("Select"),
+            "radio", List.of("Select"),
+            "attribute-value", List.of("Text"),
+            "email", List.of("Text")
+    );
+
     public List<String> getDescriboType(JsonObject templateField) {
-        Map<String, List<String>> cedarDescriboFieldTypes = Map.of(
-                "textfield", List.of("Text"),
-                "temporal", List.of("Date"),
-                "numeric", List.of("Number"),
-                "richtext", List.of("TextArea"),
-                "textarea", List.of("TextArea"),
-                "link", List.of("URL"),
-                "list", List.of("Select"),
-                "radio", List.of("Select"),
-                "attribute-value", List.of("Text"),
-                "email", List.of("Text")
-        );
 
         List<String> dataverseFieldType = null;
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
@@ -208,7 +217,17 @@ public class CedarTemplateToDescriboProfileConverter {
         return dataverseFieldType;
     }
 
-    private static class DescriboInput {
+    public List<String> getDescriboType(String cedarFieldType)
+    {
+        List<String> describoType = null;
+        if (cedarFieldType == null) {
+            return describoType;
+        }
+
+        return cedarDescriboFieldTypes.get(cedarFieldType);
+    }
+
+        private static class DescriboInput {
         private String id;
 //        schema:name
         private String name;

@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
+import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
@@ -27,6 +28,7 @@ import javax.json.JsonArrayBuilder;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+<<<<<<<<< Temporary merge branch 1
 import java.io.IOException;
 import java.io.InputStream;
 import javax.persistence.EntityManager;
@@ -388,19 +390,29 @@ public class ArpServiceBean implements java.io.Serializable {
                 .build();
     }
 
-    private String getExternalVocabValuesUrl(DatasetFieldTypeArp datasetFieldTypeArp) {
-        String terminologyTemplate = System.getProperty("terminology.url.template") != null ? System.getProperty("terminology.url.template") : arpConfig.get("terminology.url.template");
+    public List<String> getExternalVocabValues(JsonObject cedarFieldTemplate)
+    {
+        String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+        try {
+            return collectExternalVocabStrings(externalVocabUrl);
+        }catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed collecting external vocabulary values for field: " + cedarFieldTemplate.get("schema:name").getAsString() + " with error: " + ex.getMessage(), ex);
+            return new ArrayList<>();
+        }
+    }
+
+    private String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
         String externalVocabUrl = null;
-        JsonObject cedarJson = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
-        JsonObject externalVocabProps = cedarJson.has("items") && cedarJson.has("type") ? JsonHelper.getJsonObject(cedarJson, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarJson, "_valueConstraints.branches[0]");
+        String terminologyTemplate = arpConfig.get("terminology.url.template");
+        JsonObject externalVocabProps = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints.branches[0]");
         if (externalVocabProps != null) {
             String encodedUri = URLEncoder.encode(externalVocabProps.get("uri").getAsString(), StandardCharsets.UTF_8);
             externalVocabUrl = String.format(terminologyTemplate, externalVocabProps.get("acronym").getAsString(), encodedUri);
         }
-        
+
         return externalVocabUrl;
     }
-    
+
     private List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
         List<String > externalVocabStrings = new ArrayList<>();
         //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
@@ -418,12 +430,13 @@ public class ArpServiceBean implements java.io.Serializable {
         return externalVocabStrings;
         
     }
-    
+
     public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) {
         DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
         List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
         try {
-            String externalVocabUrl = getExternalVocabValuesUrl(datasetFieldTypeArp);
+            JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+            String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
             int i = 0;
             var controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
             if (externalVocabUrl != null) {
@@ -452,6 +465,7 @@ public class ArpServiceBean implements java.io.Serializable {
         
         return externalVocabValues;
     }
+
 
     public void updateMetadatablockNamesaceUris(Map<String, String> mdbToNamespaceUri) {
         mdbToNamespaceUri.keySet().forEach(name -> {

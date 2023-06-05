@@ -83,7 +83,7 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     ArpServiceBean arpService;
-
+    
     @EJB
     RoCrateManager roCrateManager;
 
@@ -376,7 +376,7 @@ public class ArpApi extends AbstractApiBean {
             @QueryParam("lang") String language
     ) {
         String describoProfile;
-
+        
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
             describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
