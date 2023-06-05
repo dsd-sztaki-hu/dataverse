@@ -210,7 +210,7 @@ public class DataFileZipper {
         return 0L;
     }
     
-    public void addRoCrateToZipStream(byte[] roCrateBytes) throws IOException {
+    public void addRoCrateToZipStream(byte[] roCrateBytes, String fileName, String mimeType) throws IOException {
         if (zipOutputStream == null) {
             openZipStream();
         }
@@ -218,9 +218,6 @@ public class DataFileZipper {
         boolean createManifest = fileManifest != null;
 
         long byteSize = 0;
-
-        String fileName = ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
-        String mimeType = "application/json";
 
         InputStream instream = new ByteArrayInputStream(roCrateBytes);
         
