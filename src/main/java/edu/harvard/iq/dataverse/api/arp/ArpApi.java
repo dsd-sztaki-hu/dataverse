@@ -106,6 +106,7 @@ public class ArpApi extends AbstractApiBean {
         try {
             errors = arpService.checkTemplate(templateJson);
         } catch (Exception e) {
+            e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 

@@ -115,17 +115,22 @@ public class RoCrateUploadServiceBean implements Serializable {
     }
 
     private void processCompoundField(JsonNode roCrateValue, DatasetField datasetField, ArrayNode graphNode) {
-        String id = roCrateValue.get("@id").textValue();
-        JsonNode valueNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> node.get("@id").textValue().equals(id)).findFirst().get();
-        List<DatasetField> childFields;
-        if (datasetField.isEmpty()) {
-            childFields = datasetField.getDatasetFieldCompoundValues().get(0).getChildDatasetFields();
-            processCompoundFieldValue(childFields, valueNode);
-        } else {
-            var newEmptyDatasetFieldCompoundValue = createNewEmptyDatasetFieldCompoundValue(datasetField);
-            childFields = newEmptyDatasetFieldCompoundValue.getChildDatasetFields();
-            processCompoundFieldValue(childFields, valueNode);
-            datasetField.getDatasetFieldCompoundValues().add(newEmptyDatasetFieldCompoundValue);
+        try {
+            String id = roCrateValue.get("@id").textValue();
+            JsonNode valueNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> node.get("@id").textValue().equals(id)).findFirst().get();
+            List<DatasetField> childFields;
+            if (datasetField.isEmpty()) {
+                childFields = datasetField.getDatasetFieldCompoundValues().get(0).getChildDatasetFields();
+                processCompoundFieldValue(childFields, valueNode);
+            } else {
+                var newEmptyDatasetFieldCompoundValue = createNewEmptyDatasetFieldCompoundValue(datasetField);
+                childFields = newEmptyDatasetFieldCompoundValue.getChildDatasetFields();
+                processCompoundFieldValue(childFields, valueNode);
+                datasetField.getDatasetFieldCompoundValues().add(newEmptyDatasetFieldCompoundValue);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage("An error occurred during processing compound field: \"" + datasetField.getDatasetFieldType().getName() + "\". Details: \"" + e.getMessage() + "\".");
         }
     }
 
@@ -142,14 +147,25 @@ public class RoCrateUploadServiceBean implements Serializable {
     }
 
     private void processControlledVocabularyField(DatasetField datasetField, JsonNode fieldValue) {
-        if (fieldValue.isArray()) {
-            for (var val : fieldValue) {
-                var cvv = fieldService.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(datasetField.getDatasetFieldType(), val.textValue(), true);
+        try {
+            if (fieldValue.isArray()) {
+                for (var val : fieldValue) {
+                    var cvv = fieldService.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(datasetField.getDatasetFieldType(), val.textValue(), true);
+                    if (cvv == null) {
+                        throw new RuntimeException("No controlled vocabulary value was found for value: " + val.textValue());
+                    }
+                    datasetField.getControlledVocabularyValues().add(cvv);
+                }
+            } else {
+                var cvv = fieldService.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(datasetField.getDatasetFieldType(), fieldValue.textValue(), true);
+                if (cvv == null) {
+                    throw new RuntimeException("No controlled vocabulary value was found for value: " + fieldValue.textValue());
+                }
                 datasetField.getControlledVocabularyValues().add(cvv);
             }
-        } else {
-            var cvv = fieldService.findControlledVocabularyValueByDatasetFieldTypeAndStrValue(datasetField.getDatasetFieldType(), fieldValue.textValue(), true);
-            datasetField.getControlledVocabularyValues().add(cvv);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage("An error occurred during processing controlled vocabulary value for field: \"" + datasetField.getDatasetFieldType().getName() + "\". Details: \"" + e.getMessage() + "\".");
         }
     }
 
@@ -179,6 +195,7 @@ public class RoCrateUploadServiceBean implements Serializable {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            JsfHelper.addErrorMessage("Could not process the content of the uploaded RO-Crate.zip " + e.getMessage());
             return null;
         }
 
