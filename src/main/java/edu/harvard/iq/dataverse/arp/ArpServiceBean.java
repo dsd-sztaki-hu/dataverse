@@ -574,14 +574,20 @@ public class ArpServiceBean implements java.io.Serializable {
                             // Make sure we convert '.' to ':' (CEDAR doesn't support file dnames with dots)
                             var cedarFieldDef = cedarFieldJsonDefs.get(fieldName.replace(".", ":")).getAsJsonObject();
                             dsfArp.setCedarDefinition(cedarFieldDef.toString());
-
+                            // if it is an array, get the actual field def where we store the _arp values
+                            if (cedarFieldDef.has("items")) {
+                                cedarFieldDef = cedarFieldDef.getAsJsonObject("items");
+                            }
                             // Set values form _arp.dataverse
                             var _arpData = cedarFieldDef.has("_arp")
                                     ? cedarFieldDef.get("_arp").getAsJsonObject() : null;
                             if (_arpData != null) {
                                 var dataverseData = _arpData.getAsJsonObject("dataverse");
                                 if (dataverseData.has("displayNameField")) {
-                                    dsfArp.setDisplayNameField(dataverseData.get("displayNameField").getAsString());
+                                    var displayNameField = dataverseData.get("displayNameField").getAsString().strip();
+                                    if (displayNameField.length() != 0) {
+                                        dsfArp.setDisplayNameField(displayNameField);
+                                    }
                                 }
                             }
 

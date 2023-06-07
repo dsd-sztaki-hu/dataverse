@@ -88,7 +88,7 @@ public class RoCrateManager {
                 if (!rootDataEntity.getProperties().has(fieldName)) {
                     //Add new contextual entity to the RO-Crate
                     for (var compoundValue : compoundValues) {
-                        addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, false);
+                        addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, false);
                     }
                 } else {
                     // First, if the property is an array, remove every entity from the RO-Crate that had been deleted in DV,
@@ -134,13 +134,13 @@ public class RoCrateManager {
                             }
                             if (matchingId.isBlank()) {
                                 // There was no matching compoundValueId, this is a new entity
-                                addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, true);
+                                addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, true);
                                 continue;
                             } else {
                                 entityToUpdateId = matchingId;
                             }
                         } else {
-                            addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, false);
+                            addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, false);
                             continue;
                         }
 
@@ -352,14 +352,64 @@ public class RoCrateManager {
         }
     }
 
-    public void addNewContextualEntity(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, DatasetFieldCompoundValue compoundValue, ObjectMapper mapper, String parentFieldName, String parentFieldUri, boolean isCreation, boolean reorderCompoundValues) throws JsonProcessingException {
+    public void addNewContextualEntity(
+            RoCrate roCrate,
+            RoCrate.RoCrateBuilder roCrateContextUpdater,
+            DatasetFieldCompoundValue compoundValue,
+            ObjectMapper mapper,
+            DatasetField parentField,
+            boolean isCreation,
+            boolean reorderCompoundValues
+    ) throws JsonProcessingException
+    {
+        DatasetFieldType parentFieldType = parentField.getDatasetFieldType();
+        String parentFieldName = parentFieldType.getName();
+        String parentFieldUri = parentFieldType.getUri();
+        DatasetFieldTypeArp dsfArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(parentFieldType);
+
         ContextualEntity.ContextualEntityBuilder contextualEntityBuilder = new ContextualEntity.ContextualEntityBuilder();
         buildNewContextualEntity(roCrate, roCrateContextUpdater, contextualEntityBuilder, compoundValue, mapper, parentFieldName, parentFieldUri, isCreation);
+
         // The hashmark before the uuid is required in AROMA
         // "@id's starting with # as these signify the reference is internal to the crate"
         // the compoundIdAndUuidSeparator separates the id of the parent compound value from the uuid
         // the parent compound id is used to get the correct values upon modifying the RO-Crate with data from AROMA
         contextualEntityBuilder.setId("#" + compoundValue.getId() + compoundIdAndUuidSeparator + UUID.randomUUID());
+
+        String nameFieldValue = null;
+
+        // If compound value has a "name" field, use its value by default
+        var nameField = compoundValue.getChildDatasetFields().stream()
+                .filter(datasetField -> datasetField.getDatasetFieldType().getName().equals("name"))
+                .findFirst();
+        if (nameField.isPresent()) {
+            // No need to set anything, since the context entity will already have a "name" field with a value
+        }
+        // Find an explicit displayNameField set in dsfArp
+        else if (dsfArp.getDisplayNameField() != null) {
+            var displayNameField = dsfArp.getDisplayNameField();
+            var displayNameFieldValue = compoundValue.getChildDatasetFields().stream()
+                    .filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(displayNameField))
+                    .findFirst();
+            if (displayNameFieldValue.isPresent()) {
+                nameFieldValue = displayNameFieldValue.get().getDisplayValue();
+            }
+        }
+        // Fall back to DV's own display value
+        else {
+            // Similar to metadataFragment.xhtml, but we separate using ';' instead of space
+            // <ui:repeat value="#{compoundValue.displayValueMap.entrySet().toArray()}" var="cvPart" varStatus="partStatus">
+            nameFieldValue = compoundValue.getDisplayValueMap().entrySet().stream()
+                    .map(o -> o.getValue())
+                    .collect(Collectors.joining("; "));
+        }
+
+        // if we have set any value for nameFieldValue use that
+        if (nameFieldValue != null) {
+            contextualEntityBuilder.addProperty("name", nameFieldValue);
+        }
+
+        //contextualEntity.addProperty("name", "displayNameField");
         ContextualEntity contextualEntity = contextualEntityBuilder.build();
         // The "@id" is always a prop in a contextualEntity
         if (contextualEntity.getProperties().size() > 1) {
@@ -369,7 +419,10 @@ public class RoCrateManager {
             // in the RO-Crate as their displayPosition in DV, since the order of the values are displayed in AROMA 
             // based on the order of the values in the RO-Crate
             if (reorderCompoundValues) {
-                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(compoundValue.getDisplayOrder(), mapper.createObjectNode().put("@id", contextualEntity.getId()));
+                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(
+                        compoundValue.getDisplayOrder(),
+                        mapper.createObjectNode().put("@id", contextualEntity.getId())
+                );
             } else {
                 roCrate.getRootDataEntity().addIdProperty(parentFieldName, contextualEntity.getId());
             }
