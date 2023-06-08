@@ -1,5 +1,7 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -51,31 +53,24 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.FileSortFieldAndOrder;
 import edu.harvard.iq.dataverse.util.FileUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
+
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 import static edu.harvard.iq.dataverse.util.StringUtil.isEmpty;
 
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
-import edu.harvard.iq.dataverse.util.URLTokenUtil;
 import edu.harvard.iq.dataverse.util.WebloaderUtil;
 import edu.harvard.iq.dataverse.validation.URLValidator;
 import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Collection;
@@ -103,6 +98,7 @@ import javax.faces.model.SelectItem;
 import javax.faces.validator.ValidatorException;
 
 import java.util.logging.Level;
+
 import edu.harvard.iq.dataverse.engine.command.exception.IllegalCommandException;
 import edu.harvard.iq.dataverse.engine.command.impl.AbstractSubmitToArchiveCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateNewDatasetCommand;
@@ -154,6 +150,9 @@ import org.apache.solr.common.SolrDocumentList;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 
 /**
  *
@@ -230,6 +229,12 @@ public class DatasetPage implements java.io.Serializable {
     ExternalToolServiceBean externalToolService;
     @EJB
     SolrClientService solrClientService;
+    @EJB
+    RoCrateManager roCrateManager;
+    @Inject
+    RoCrateUploadServiceBean roCrateUploadService;
+    @EJB
+    ArpConfig arpConfig;
     @Inject
     DataverseRequestServiceBean dvRequestService;
     @Inject
@@ -256,6 +261,8 @@ public class DatasetPage implements java.io.Serializable {
     DataFileCategoryServiceBean dataFileCategoryService;
     @Inject
     GlobusServiceBean globusService;
+
+    private String aromaAddress = "";
 
     private Dataset dataset = new Dataset();
 
@@ -1549,6 +1556,14 @@ public class DatasetPage implements java.io.Serializable {
         this.dropBoxSelection = dropBoxSelection;
     }
 
+    public String getAromaAddress() {
+        return aromaAddress;
+    }
+
+    public void setAromaAddress(String aromaAddress) {
+        this.aromaAddress = aromaAddress;
+    }
+
     public Dataset getDataset() {
         return dataset;
     }
@@ -1740,9 +1755,12 @@ public class DatasetPage implements java.io.Serializable {
                 DatasetField dsf = mapDatasetFields.get(oneDSFieldTypeInputLevel.getDatasetFieldType().getId());
                 if (dsf != null){
                     // Yes, call "setInclude"
-                    dsf.setInclude(oneDSFieldTypeInputLevel.isInclude());
-                    // remove from hash
-                    mapDatasetFields.remove(oneDSFieldTypeInputLevel.getDatasetFieldType().getId());
+                    // In case its dsf tye has an override, ignore setting this as this already taken care of
+                    if (dsf.getFieldTypeOverride() == null) {
+                        dsf.setInclude(oneDSFieldTypeInputLevel.isInclude());
+                        // remove from hash
+                        mapDatasetFields.remove(oneDSFieldTypeInputLevel.getDatasetFieldType().getId());
+                    }
                 }
             }
         }  // end: updateDatasetFieldInputLevels
@@ -1779,7 +1797,15 @@ public class DatasetPage implements java.io.Serializable {
         */
         setFileAccessRequest(workingVersion.getTermsOfUseAndAccess().isFileAccessRequest());
         setTermsOfAccess(workingVersion.getTermsOfUseAndAccess().getTermsOfAccess());
-        
+        if (roCrateUploadService.getRoCrateJsonString() == null) {
+            resetVersionUI();
+        } else {
+            try {
+                datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
+            } catch (JsonProcessingException jsonProcessingException) {
+                JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+            }
+        }
         resetVersionUI();
     }
 
@@ -1861,6 +1887,7 @@ public class DatasetPage implements java.io.Serializable {
         String nonNullDefaultIfKeyNotFound = "";
         protocol = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Protocol, nonNullDefaultIfKeyNotFound);
         authority = settingsWrapper.getValueForKey(SettingsServiceBean.Key.Authority, nonNullDefaultIfKeyNotFound);
+        setAromaAddress(arpConfig.get("arp.aroma.address"));
         if (this.getId() != null || versionId != null || persistentId != null) { // view mode for a dataset
 
             DatasetVersionServiceBean.RetrieveDatasetVersionResponse retrieveDatasetVersionResponse = null;
@@ -1921,6 +1948,10 @@ public class DatasetPage implements java.io.Serializable {
                 case "versionsTab":
                     selectedTabIndex = 3;
                     break;
+                case "describoTab":
+                    selectedTabIndex = 4;
+                    break;
+
             }
 
             //this.dataset = this.workingVersion.getDataset();
@@ -2069,7 +2100,7 @@ public class DatasetPage implements java.io.Serializable {
                         selectedTemplate = testT;
                     }
                 }
-                //Initalize with the default if there is one 
+                //Initalize with the default if there is one
                 dataset.setTemplate(selectedTemplate);
                 workingVersion = dataset.getOrCreateEditVersion(selectedTemplate, null);
                 updateDatasetFieldInputLevels();
@@ -2084,7 +2115,15 @@ public class DatasetPage implements java.io.Serializable {
             }
             setFileAccessRequest(workingVersion.getTermsOfUseAndAccess().isFileAccessRequest());
             setTermsOfAccess(workingVersion.getTermsOfUseAndAccess().getTermsOfAccess());
-            resetVersionUI();
+            if (roCrateUploadService.getRoCrateJsonString() == null) {
+                resetVersionUI();
+            } else {
+                try {
+                    datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
+                } catch (JsonProcessingException jsonProcessingException) {
+                    JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+                }
+            }
 
             // FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Add New Dataset", " - Enter metadata to create the dataset's citation. You can add more metadata about this dataset after it's created."));
         } else {
@@ -3101,6 +3140,19 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
+    public void startRoCrateZipDownload() {
+        this.setSelectedFiles(workingVersion.getFileMetadatas());
+        boolean validate = validateFilesForDownload(false, false);
+        if (validate) {
+            updateGuestbookResponse(false, false);
+            if(!getValidateFilesOutcome().equals("Mixed")){
+                var dataset = guestbookResponse.getDataset();
+                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId);
+            }
+        }
+    }
+
     //A string that is used to determine step(s) taken after files are requested for download
     /*
     Values of "Pass"; "FailSize"; "FailEmpty"; "FailRestricted"; "Mixed"; "GuestbookRequired"
@@ -3727,6 +3779,13 @@ public class DatasetPage implements java.io.Serializable {
             } else {
                 JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataset.message.filesSuccess"));
             }
+        }
+
+        try {
+            roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
 
         editMode = null;
@@ -6081,4 +6140,39 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
+    public void downloadRoCrate() throws IOException {
+        String json = Files.readString(Paths.get(roCrateManager.getRoCratePath(dataset)));
+
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
+        response.setContentType("application/json");
+        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
+
+        OutputStream outputStream = response.getOutputStream();
+        outputStream.write(json.getBytes());
+        outputStream.flush();
+        outputStream.close();
+
+        facesContext.responseComplete();
+    }
+
+    public String getUriEncodedPersistentId() {
+        return java.net.URLEncoder.encode(persistentId);
+    }
+
+    public String getCurrentUserApiKey() {
+        User user = session.getUser();
+        if (user instanceof AuthenticatedUser) {
+            var token = authService.findApiTokenByUser((AuthenticatedUser) user);
+            if (token == null) {
+                return null;
+            }
+            return token.getTokenString();
+        }
+        return null;
+    }
+
+    public String getLanguage() {
+        return session.getLocaleCode().equals("en") ? "eng" : "hun";
+    }
 }

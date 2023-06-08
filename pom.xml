@@ -25,6 +25,7 @@
         <jacoco.version>0.8.7</jacoco.version>
         <poi.version>5.2.1</poi.version>
         <tika.version>2.4.1</tika.version>
+        <jackson.verion>2.12.6</jackson.verion>
         <netcdf.version>5.5.3</netcdf.version>
     </properties>
     
@@ -53,6 +54,25 @@
     -->
     <!-- TODO: Housekeeping is utterly needed. -->
     <dependencies>
+
+        <dependency>
+            <groupId>edu.kit.datamanager</groupId>
+            <artifactId>ro-crate-java</artifactId>
+            <version>1.0.5</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->
+        <dependency>
+            <groupId>com.thetransactioncompany</groupId>
+            <artifactId>cors-filter</artifactId>
+            <version>2.10</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-csv</artifactId>
+            <version>${jackson.verion}</version>
+        </dependency>
 
         <!-- This dependency ensures the lib is on the classpath. That way, anything coming from
              SLF4J should flow through our usual ways of using java.util.logging.
@@ -125,12 +145,14 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
+            <version>${jackson.verion}</version>
             <scope>provided</scope>
         </dependency>
         <!-- Should be refactored and moved to transitive section above once on Java EE 8 (makes WAR smaller) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>${jackson.verion}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -622,6 +644,7 @@
                     <include>**/*.sql</include>
                     <include>**/*.xml</include>
                     <include>**/firstNames/*.*</include>
+                    <include>arp/*.*</include>
                     <include>**/*.xsl</include>
                     <include>**/services/*</include>
                 </includes>

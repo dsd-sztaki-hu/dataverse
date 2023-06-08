@@ -873,10 +873,42 @@
                                    rendered="#{(!DatasetPage.workingVersion.deaccessioned or (DatasetPage.workingVersion.deaccessioned and DatasetPage.canUpdateDataset())) 
                                                and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
                                 <div class="button-block tab-header margin-bottom text-right" jsf:rendered="#{empty DatasetPage.editMode}">
-                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.edit('METADATA')}" update="@form,:messagePanel" 
-                                                   disabled="#{DatasetPage.lockedFromEdits or !DatasetPage.hasValidTermsOfAccess}" 
-                                                   rendered="#{!widgetWrapper.widgetView 
-                                                               and (DatasetPage.sessionUserAuthenticated 
+                                    <!--<p:commandButton value="#{bundle['file.dataFilesTab.metadata.downloadRoCrate']}"
+                                                     action="#{DatasetPage.downloadRoCrate()}"
+                                                     ajax="false"
+                                    />-->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateZipDownload()}" update="@form"
+                                                   rendered="#{!(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                    </p:commandLink>
+                                    <p:commandLink styleClass="btn btn-default btn-access" title="#{bundle['dataset.email.datasetContactTitle']}"
+                                                   update=":downloadRoCrate" oncomplete="PF('downloadRoCrate').show()"
+                                                   rendered="#{DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                    </p:commandLink>
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
+                                                   rendered="#{empty DatasetPage.workingVersion.fileMetadatas and (!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                    </p:commandLink>
+                                    <h:outputLink
+                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}/dataset/#{DatasetPage.uriEncodedPersistentId}?apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}"
+                                            rendered="#{!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView
+                                                               and DatasetPage.canUpdateDataset())}"
+                                            target="_blank">
+                                        Open AROMA
+                                    </h:outputLink>
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.edit('METADATA')}" update="@form,:messagePanel"
+                                                   disabled="#{DatasetPage.lockedFromEdits or !DatasetPage.hasValidTermsOfAccess}"
+                                                   rendered="#{!widgetWrapper.widgetView
+                                                               and (DatasetPage.sessionUserAuthenticated
                                                                and empty DatasetPage.editMode and !widgetWrapper.widgetView
                                                                and DatasetPage.canUpdateDataset())}"><!-- and !DatasetPage.dataset.deaccessioned -->
                                         <f:setPropertyActionListener target="#{DatasetPage.selectedTabIndex}" value="0"/>
@@ -928,6 +960,15 @@
                             <p:tab id="versionsTab" title="#{bundle['file.dataFilesTab.versions']}" rendered="#{empty DatasetPage.editMode}">
                                 <ui:include src="dataset-versions.xhtml">
                                     <ui:param name="anonymized" value="#{DatasetPage.anonymizedAccess}"/>
+                                </ui:include>
+                            </p:tab>
+
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
+                                   rendered="#{DatasetPage.sessionUserAuthenticated and (empty DatasetPage.editMode) and DatasetPage.canUpdateDataset()}">
+                                <ui:include src="aroma.xhtml">
+                                    <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                    <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>
+                                    <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
                                 </ui:include>
                             </p:tab>
                         </p:tabView>
@@ -1794,8 +1835,12 @@
                     </p:remoteCommand>
                     <p:remoteCommand name="datasetSaveCommand" action="#{DatasetPage.save()}" update=":datasetForm,:messagePanel"/>
                     <!-- END: Publish/Submit for Review Dialogs -->
+                    <p:remoteCommand name="sendRoCrateAsBase64" actionListener="#{EditDatafilesPage.handleRoCrateUpload}" />
                 </h:form>
                 <c:set var="descriptionText" value="#{DatasetPage.datasetVersionUI.description.datasetFieldType.localeTitle}" />
+                <script>
+                    sendRoCrateAsBase64();
+                </script>
                 <script>
                     //<![CDATA[
                     $(document).ready(function () {

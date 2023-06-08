@@ -68,6 +68,9 @@
                             <ui:fragment rendered="#{permissionsWrapper.canIssueCreateDatasetCommand(SearchIncludeFragment.dataverse) }">
                                 <li><a href="/dataset.xhtml?ownerId=#{SearchIncludeFragment.dataverse.id}">#{bundle['dataverse.results.btn.addData.newDataset']}</a></li>
                             </ui:fragment>
+                            <ui:fragment rendered="#{permissionsWrapper.canIssueCreateDatasetCommand(SearchIncludeFragment.dataverse) }">
+                                <li><a href="/uploadRoCrate.xhtml?ownerId=#{SearchIncludeFragment.dataverse.id}">#{bundle['arp.dataverse.results.btn.addData.newRoCrate']}</a></li>
+                            </ui:fragment>
                         </ul>
                     </div>
                 </h:form>
