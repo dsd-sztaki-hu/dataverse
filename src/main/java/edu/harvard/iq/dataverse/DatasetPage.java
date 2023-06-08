@@ -3790,7 +3790,7 @@ public class DatasetPage implements java.io.Serializable {
             roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
         } catch (Exception e) {
             e.printStackTrace();
-            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
         }
 
         editMode = null;
