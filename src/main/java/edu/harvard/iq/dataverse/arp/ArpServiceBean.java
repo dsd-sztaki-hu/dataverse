@@ -572,13 +572,32 @@ public class ArpServiceBean implements java.io.Serializable {
                                 dsfArp = new DatasetFieldTypeArp();
                             }
                             // Make sure we convert '.' to ':' (CEDAR doesn't support file dnames with dots)
-                            dsfArp.setCedarDefinition(cedarFieldJsonDefs.get(fieldName.replace(".", ":")).toString());
+                            var cedarFieldDef = cedarFieldJsonDefs.get(fieldName.replace(".", ":")).getAsJsonObject();
+                            dsfArp.setCedarDefinition(cedarFieldDef.toString());
+                            // if it is an array, get the actual field def where we store the _arp values
+                            if (cedarFieldDef.has("items")) {
+                                cedarFieldDef = cedarFieldDef.getAsJsonObject("items");
+                            }
+                            // Set values form _arp.dataverse
+                            var _arpData = cedarFieldDef.has("_arp")
+                                    ? cedarFieldDef.get("_arp").getAsJsonObject() : null;
+                            if (_arpData != null) {
+                                var dataverseData = _arpData.getAsJsonObject("dataverse");
+                                if (dataverseData.has("displayNameField")) {
+                                    var displayNameField = dataverseData.get("displayNameField").getAsString().strip();
+                                    if (displayNameField.length() != 0) {
+                                        dsfArp.setDisplayNameField(displayNameField);
+                                    }
+                                }
+                            }
+
+                            // Connect dsfArp with the original dsf
                             dsfArp.setFieldType(dsf);
                             var override = arpMetadataBlockServiceBean.findOverrideByOriginal(dsf);
                             dsfArp.setOverride(override);
                             JsonElement cedarDef = cedarFieldJsonDefs.get(fieldName).getAsJsonObject().has("items") ? cedarFieldJsonDefs.get(fieldName).getAsJsonObject().get("items") : cedarFieldJsonDefs.get(fieldName);
                             dsfArp.setHasExternalValues(JsonHelper.getJsonObject(cedarDef, "_valueConstraints.branches[0]") != null);
-                            arpMetadataBlockServiceBean.save(dsfArp);
+                            dsfArp = arpMetadataBlockServiceBean.save(dsfArp);
                             break;
 
                         case CONTROLLEDVOCABULARY:

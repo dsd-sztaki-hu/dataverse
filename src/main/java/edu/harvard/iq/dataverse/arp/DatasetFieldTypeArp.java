@@ -34,8 +34,21 @@ public class DatasetFieldTypeArp implements Serializable
 
     @Column(columnDefinition="TEXT")
     private String cedarDefinition;
-    
+
+    /**
+     * Mark whether this field uses an OntoPortal provided external vocabulary
+     */
     private boolean hasExternalValues;
+
+    /**
+     * Name of the field in a compound field to use as the display name for the compound. This is usually the
+     * most descriptive field of the record. By default it should be the name of a field, but we may also support
+     * and expression language here allowing more complex display name generation. eg. concatWithSpace(fiel1, field2),
+     * which would result in the space concatenated version of field1 and field2.
+     * Display names are used for RO-Crate "name" field generation for now, later we may use it for other purposes
+     * as well
+     */
+    private String displayNameField;
 
     public Long getId()
     {
@@ -83,5 +96,15 @@ public class DatasetFieldTypeArp implements Serializable
 
     public void setHasExternalValues(boolean hasExternalValues) {
         this.hasExternalValues = hasExternalValues;
+    }
+
+    public String getDisplayNameField()
+    {
+        return displayNameField;
+    }
+
+    public void setDisplayNameField(String displayNameField)
+    {
+        this.displayNameField = displayNameField;
     }
 }
