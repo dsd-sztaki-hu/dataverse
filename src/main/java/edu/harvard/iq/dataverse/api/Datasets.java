@@ -543,22 +543,41 @@ public class Datasets extends AbstractApiBean {
     }
 
     @GET
-    @Path("{id}/versions/{versionId}/storageSite")
+    @Path("{id}/versions/{versionId}/storageSites")
     public Response getVersionStorageSite( @PathParam("id") String datasetId,
 			                               @PathParam("versionId") String versionId,
 										   @Context UriInfo uriInfo,
 										   @Context HttpHeaders headers) {
 		return response( req -> {
-				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers );
+				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
 				return ok(json(dsv.getStorageSites()));
 		});
 		
 	}
 	
     @PUT
-    @Path("{id}/versions/{versionId}/storageSite")
-    public Response setVersionStorageSite( @PathParam("id") String datasetId, @PathParam("versionId") String versionId, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
-		
+	@Consumes("application/json")
+    @Path("{id}/versions/{versionId}/storageSites")
+    public Response setVersionStorageSites( @PathParam("id") String datasetId,
+			                                @PathParam("versionId") String versionId,
+											@Context UriInfo uriInfo,
+											@Context HttpHeaders headers,
+											String storageSitesJson) {
+		return response( req -> {
+			try ( StringReader rdr = new StringReader(storageSitesJson) ) {
+				javax.json.JsonObject storageSitesJsonObj = Json.createReader(rdr).readObject();
+				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
+				List<DatasetVersionStorageSite> storageSites = jsonParser().parseDatasetVersionStorageSites(storageSitesJsonObj);
+				dsv.setStorageSites(storageSites);
+				execCommand( new UpdateDatasetVersionCommand(dsv.getDataset(), req, dsv));
+	            return ok("Dataset "+ datasetId + " version " + versionId + " storagesites updated to " + storageSitesJson );
+			} catch (WrappedResponse ex) {
+				return ex.getResponse();
+			} catch (JsonParseException ex) {
+	            logger.log(Level.SEVERE, "Semantic error parsing DatasetVersionStorageSites Json: " + ex.getMessage(), ex);
+                return error( Response.Status.BAD_REQUEST, "Error parsing DatasetVersionStorageSites Json: " + ex.getMessage() );
+			}
+        });
 	}
 
 	
