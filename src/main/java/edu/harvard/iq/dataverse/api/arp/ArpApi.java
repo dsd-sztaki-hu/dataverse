@@ -471,6 +471,25 @@ public class ArpApi extends AbstractApiBean {
                 datasetLayout.add(layoutObj);
             }
 
+            var hasPartInput = new JsonObject();
+            hasPartInput.addProperty("id", "http://schema.org/hasPart");
+            hasPartInput.addProperty("name", "hasPart");
+            if (language.equals("hun")) {
+                hasPartInput.addProperty("label", "Tartalmaz");
+                hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+
+            }
+            else {
+                hasPartInput.addProperty("label", "Has Part");
+                hasPartInput.addProperty("help", "Part of a Dataset");
+            }
+            hasPartInput.addProperty("multiple", "true");
+            var typeVals = new JsonArray();
+            typeVals.add("Dataset");
+            typeVals.add("File");
+            hasPartInput.add("type", typeVals);
+
+            mergedProfileInputs.add(hasPartInput);
             return Response.ok(gson.toJson(mergedProfile)).build();
         } catch (Exception e) {
             e.printStackTrace();
