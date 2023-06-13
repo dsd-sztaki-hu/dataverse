@@ -6,10 +6,8 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import edu.harvard.iq.dataverse.arp.ArpServiceBean;
-import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
-import edu.harvard.iq.dataverse.arp.DatasetFieldTypeOverride;
-import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.harvard.iq.dataverse.util.MarkupChecker;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,6 +17,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.faces.view.ViewScoped;
 import javax.persistence.EntityManager;
@@ -30,6 +29,8 @@ import javax.persistence.PersistenceContext;
  */
 @ViewScoped
 public class DatasetVersionUI implements Serializable {
+
+    private static final Logger logger = Logger.getLogger(DatasetVersionUI.class.getCanonicalName());
 
     @EJB
     DataverseServiceBean dataverseService;
@@ -346,7 +347,7 @@ public class DatasetVersionUI implements Serializable {
         return dsf;
     }
     
-    private void setExternalVocabularyValues(DatasetFieldType datasetFieldType) {
+    private void setExternalVocabularyValues(DatasetFieldType datasetFieldType) throws ArpException {
         if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.TEXT)) {
             List<ControlledVocabularyValue> externalVocabValues = arpServiceBean.collectExternalVocabValues(datasetFieldType);
             if (!externalVocabValues.isEmpty()) {
@@ -355,7 +356,7 @@ public class DatasetVersionUI implements Serializable {
         }
     }
     
-    private void initExternalVocabularyValues(List<DatasetField> datasetFields) {
+    private void initExternalVocabularyValues(List<DatasetField> datasetFields) throws ArpException {
         for (var dsf : datasetFields) {
             if (dsf.getDatasetFieldType().isCompound()) {
                 for (DatasetFieldType dsfType : dsf.getDatasetFieldType().getChildDatasetFieldTypes()) {
@@ -406,7 +407,15 @@ public class DatasetVersionUI implements Serializable {
         });
         
         if (createBlanks) {
-            initExternalVocabularyValues(retList);
+            try {
+                initExternalVocabularyValues(retList);
+            } catch (ArpException arpException) {
+                JsfHelper.addErrorMessage(arpException.getMessage());
+                logger.severe(arpException.getMessage());
+            } catch (Exception e) {
+                JsfHelper.addErrorMessage("Failed to collect external vocabulary values.");
+                logger.severe("Failed to collect external vocabulary values.");
+            }
         }
 
         return sortDatasetFields(retList);

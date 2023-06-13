@@ -430,7 +430,7 @@ public class ArpServiceBean implements java.io.Serializable {
         
     }
 
-    public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) {
+    public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) throws ArpException {
         DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
         List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
         try {
@@ -459,7 +459,14 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
             }
         } catch (Exception e) {
-            logger.severe("Failed to collect external vocabulary values for " + datasetFieldTypeArp.getFieldType().getName() + ". " + e.getMessage());
+            String errorMessage;
+            if (datasetFieldTypeArp != null && datasetFieldTypeArp.getFieldType() != null && datasetFieldTypeArp.getFieldType().getName() != null) {
+                errorMessage = "Failed to collect external vocabulary values for " + datasetFieldTypeArp.getFieldType().getName()  + ". Details: " + e.getMessage();
+            } else {
+                errorMessage = "Failed to collect external vocabulary values. Details: " + e.getMessage();
+            }
+            logger.severe(errorMessage);
+            throw new ArpException(errorMessage);
         }
         
         return externalVocabValues;
