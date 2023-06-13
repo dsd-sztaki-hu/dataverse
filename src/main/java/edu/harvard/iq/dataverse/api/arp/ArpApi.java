@@ -480,7 +480,7 @@ public class ArpApi extends AbstractApiBean {
             var hasPartInput = new JsonObject();
             hasPartInput.addProperty("id", "http://schema.org/hasPart");
             hasPartInput.addProperty("name", "hasPart");
-            if (language.equals("hun")) {
+            if (language.equals("hu")) {
                 hasPartInput.addProperty("label", "Tartalma");
                 hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
 

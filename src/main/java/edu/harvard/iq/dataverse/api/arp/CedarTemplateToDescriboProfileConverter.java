@@ -22,7 +22,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public CedarTemplateToDescriboProfileConverter(String language) {
         if (language == null) {
-            this.language = "eng";
+            this.language = "en";
         }
         else {
             this.language = language;
@@ -42,7 +42,7 @@ public class CedarTemplateToDescriboProfileConverter {
         ProcessedDescriboProfileValues profValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
 
         // Add default values for bultin types
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
             profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
         }
@@ -186,7 +186,7 @@ public class CedarTemplateToDescriboProfileConverter {
     
     private void processProfileMetadata(JsonObject cedarTemplate, JsonObject describoProfile) {
         String name = cedarTemplate.get("schema:name").getAsString();
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             name = cedarTemplate.has("hunName")
                     ? cedarTemplate.get("hunName").getAsString()
                     : name;
@@ -234,7 +234,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public String getLocalizedLabel(JsonObject obj) {
         String label = "";
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             label = Optional.ofNullable(obj.get("hunLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
         }
         else {
@@ -245,7 +245,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public String getLocalizedHelp(JsonObject obj) {
         String help = "";
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             help = Optional.ofNullable(obj.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
         }
         else {
