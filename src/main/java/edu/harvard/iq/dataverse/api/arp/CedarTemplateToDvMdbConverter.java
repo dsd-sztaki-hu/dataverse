@@ -104,7 +104,14 @@ public class CedarTemplateToDvMdbConverter {
         dataverseMetadataBlock.setName(metadataBlockId);
         dataverseMetadataBlock.setDisplayName(cedarTemplate.get("schema:name").getAsString());
 //        dataverseMetadataBlock.setBlockURI(cedarTemplate.get("@id").getAsString());
-
+        try {
+            JsonElement dvBlockUri = JsonHelper.getJsonElement(cedarTemplate, "properties.@type.oneOf[0].enum[0]");
+            if (dvBlockUri != null) {
+                dataverseMetadataBlock.setBlockURI(dvBlockUri.getAsString());
+            }
+        } catch (Exception e) {
+            // There was no blockUri provided for the mdb
+        }
         return dataverseMetadataBlock;
     }
 
