@@ -20,13 +20,13 @@ public class CedarTemplateToDvMdbConverter {
     private String language;
 
     public CedarTemplateToDvMdbConverter() {
-        this("eng");
+        this("en");
     }
 
     public CedarTemplateToDvMdbConverter(String language)
     {
         if (language == null) {
-            this.language = "eng";
+            this.language = "en";
         }
         else {
             this.language = language;

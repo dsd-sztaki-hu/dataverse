@@ -6190,6 +6190,6 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public String getLanguage() {
-        return session.getLocaleCode().equals("en") ? "eng" : "hun";
+        return session.getLocaleCode().equals("en") ? "en" : "hu";
     }
 }

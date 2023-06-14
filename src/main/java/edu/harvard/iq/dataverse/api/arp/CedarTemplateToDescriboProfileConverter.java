@@ -22,7 +22,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public CedarTemplateToDescriboProfileConverter(String language) {
         if (language == null) {
-            this.language = "eng";
+            this.language = "en";
         }
         else {
             this.language = language;
@@ -39,21 +39,37 @@ public class CedarTemplateToDescriboProfileConverter {
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         processProfileMetadata(cedarTemplateJson, describoProfile);
-        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
+        ProcessedDescriboProfileValues profValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
+
+        // Add default values for bultin types
+        if (language.equals("hu")) {
+            profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
+            profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
+        }
+        else  {
+            profValues.classLocalizations.put("Dataset", new ClassLocalization("Dataset", "A collection of files with metadata"));
+            profValues.classLocalizations.put("File", new ClassLocalization("File", "Data file"));
+        }
 
         JsonObject classes = describoProfile.getAsJsonObject("classes");
         
-        for (var input : processedDescriboProfileValues.inputs) {
+        for (var input : profValues.inputs) {
             String className = input.getKey();
             if (!classes.has(className)) {
                 classes.add(className, gson.fromJson(classTemplate, JsonObject.class));
             }
-            classes.getAsJsonObject(className).getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
-            
+            var classJson = classes.getAsJsonObject(className);
+            classJson.getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
+
+            var classLoc = profValues.classLocalizations.get(className);
+            if (classLoc != null) {
+                classJson.addProperty("label", classLoc.label);
+                classJson.addProperty("help", classLoc.help);
+            }
         }
         
         JsonArray enabledClasses = new JsonArray();
-        processedDescriboProfileValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
+        profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
         
         describoProfile.add("enabledClasses", enabledClasses);
         
@@ -106,21 +122,9 @@ public class CedarTemplateToDescriboProfileConverter {
 
         describoInput.setId(inputId);
         describoInput.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
-        String label = "";
-        if (language.equals("hun")) {
-            label = Optional.ofNullable(templateField.get("hunLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
-        }
-        else {
-            label = Optional.ofNullable(templateField.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
-        }
+        String label = getLocalizedLabel(templateField);
         describoInput.setLabel(label);
-        String help = "";
-        if (language.equals("hun")) {
-            help = Optional.ofNullable(templateField.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
-        }
-        else {
-            help = Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null);
-        }
+        String help = getLocalizedHelp(templateField);
         describoInput.setHelp(help);
         describoInput.setType(getDescriboType(fieldType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
@@ -155,14 +159,16 @@ public class CedarTemplateToDescriboProfileConverter {
         
         describoInput.setId(inputId);
         describoInput.setName(propName);
-        String label = Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
+        String label = getLocalizedLabel(templateElement); //Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
         describoInput.setLabel(label);
-        describoInput.setHelp(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
+        String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
+        describoInput.setHelp(help);
         describoInput.setType(List.of(propName));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
-        
+
+        processedDescriboProfileValues.classLocalizations.put(propName, new ClassLocalization(label, help));
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
         
         processTemplate(templateElement, processedDescriboProfileValues, propName);
@@ -180,7 +186,7 @@ public class CedarTemplateToDescriboProfileConverter {
     
     private void processProfileMetadata(JsonObject cedarTemplate, JsonObject describoProfile) {
         String name = cedarTemplate.get("schema:name").getAsString();
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             name = cedarTemplate.has("hunName")
                     ? cedarTemplate.get("hunName").getAsString()
                     : name;
@@ -226,7 +232,30 @@ public class CedarTemplateToDescriboProfileConverter {
         return cedarDescriboFieldTypes.get(cedarFieldType);
     }
 
-        private static class DescriboInput {
+    public String getLocalizedLabel(JsonObject obj) {
+        String label = "";
+        if (language.equals("hu")) {
+            label = Optional.ofNullable(obj.get("hunLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+        }
+        else {
+            label = Optional.ofNullable(obj.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+        }
+        return label;
+    }
+
+    public String getLocalizedHelp(JsonObject obj) {
+        String help = "";
+        if (language.equals("hu")) {
+            help = Optional.ofNullable(obj.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
+        }
+        else {
+            help = Optional.ofNullable(obj.get("schema:description")).map(JsonElement::getAsString).orElse(null);
+        }
+        return help;
+    }
+
+
+    private static class DescriboInput {
         private String id;
 //        schema:name
         private String name;
@@ -318,7 +347,9 @@ public class CedarTemplateToDescriboProfileConverter {
 
 
     private static class ProcessedDescriboProfileValues {
-        private List<Pair<String, DescriboInput>> inputs;
+        protected List<Pair<String, DescriboInput>> inputs;
+
+        protected Map<String, ClassLocalization> classLocalizations = new HashMap<>();
 
         public ProcessedDescriboProfileValues(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
@@ -330,6 +361,17 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setInputs(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
+        }
+    }
+
+    private static class ClassLocalization {
+        protected String label;
+        protected String help;
+
+        public ClassLocalization(String label, String help)
+        {
+            this.label = label;
+            this.help = help;
         }
     }
 }

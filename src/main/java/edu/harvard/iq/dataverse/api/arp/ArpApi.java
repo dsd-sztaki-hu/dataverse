@@ -419,9 +419,11 @@ public class ArpApi extends AbstractApiBean {
                 String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
                 String profile = arpService.convertTemplateToDescriboProfile(templateJson, language);
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
+                boolean profileJsonAdded = false;
 
                 if (mergedProfile == null) {
                     mergedProfile = profileJson;
+                    profileJsonAdded = true;
                     mergedProfileClasses = mergedProfile.getAsJsonObject("classes");
                     mergedProfileInputs = mergedProfileClasses
                             .getAsJsonObject("Dataset")
@@ -442,7 +444,11 @@ public class ArpApi extends AbstractApiBean {
                     String name = metadata.get("name").getAsString();
                     metadata.addProperty("name", name.substring(0, name.length()-" Metadata".length()));
                 }
-                mergedProfileInputs.addAll(inputs);
+
+                // If it is not the initial profile, add the inputs
+                if (!profileJsonAdded) {
+                    mergedProfileInputs.addAll(inputs);
+                }
 
                 // Add all classes from the profile to the merged profile
                 final var finalMergedProfileClasses = mergedProfileClasses;
@@ -471,6 +477,25 @@ public class ArpApi extends AbstractApiBean {
                 datasetLayout.add(layoutObj);
             }
 
+            var hasPartInput = new JsonObject();
+            hasPartInput.addProperty("id", "http://schema.org/hasPart");
+            hasPartInput.addProperty("name", "hasPart");
+            if (language.equals("hu")) {
+                hasPartInput.addProperty("label", "Tartalma");
+                hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+
+            }
+            else {
+                hasPartInput.addProperty("label", "Has Part");
+                hasPartInput.addProperty("help", "Part of a Dataset");
+            }
+            hasPartInput.addProperty("multiple", "true");
+            var typeVals = new JsonArray();
+            typeVals.add("Dataset");
+            typeVals.add("File");
+            hasPartInput.add("type", typeVals);
+
+            mergedProfileInputs.add(hasPartInput);
             return Response.ok(gson.toJson(mergedProfile)).build();
         } catch (Exception e) {
             e.printStackTrace();
