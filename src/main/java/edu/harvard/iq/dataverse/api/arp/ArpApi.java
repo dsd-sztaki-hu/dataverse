@@ -261,7 +261,7 @@ public class ArpApi extends AbstractApiBean {
      * @param mdbTsv
      * @return
      */
-    @GET
+    @POST
     @Path("/convertTsvToCedarTemplate")
     @Consumes("text/tab-separated-values")
     @Produces("application/json")
@@ -270,7 +270,7 @@ public class ArpApi extends AbstractApiBean {
         String cedarTemplate;
 
         try {
-            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).getAsString();
+            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).toString();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
