@@ -143,12 +143,13 @@ public class CedarTemplateToDvMdbConverter {
         return processedCedarTemplateValues;
     }
 
-    // TODO: handle watermark, displayFormat, advancedSearchField, facetable
     public void processTemplateField(JsonObject templateField, int displayOrder, boolean allowMultiple, String metadataBlockName, String propertyTermUri, String parentName, ProcessedCedarTemplateValues processedCedarTemplateValues) {
         DataverseDatasetField dataverseDatasetField = new DataverseDatasetField();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         boolean allowCtrlVocab = Objects.equals(fieldType, "list") || Objects.equals(fieldType, "radio");
         boolean hasExternalVocabValues = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]") != null;
+        String displayFormat = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.displayFormat")).map(JsonElement::getAsString).orElse(null);
+        String watermark = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.watermark")).map(JsonElement::getAsString).orElse(null);
 
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
@@ -165,11 +166,21 @@ public class CedarTemplateToDvMdbConverter {
         // adding a default datasetFieldValue to the datasetField
         dataverseDatasetField.setAllowControlledVocabulary(allowCtrlVocab || hasExternalVocabValues);
         dataverseDatasetField.setAllowmultiples(allowMultiple);
-        dataverseDatasetField.setDisplayoncreate(true);
+        dataverseDatasetField.setDisplayoncreate(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.displayoncreate")).map(JsonElement::getAsBoolean).orElse(false));
+        dataverseDatasetField.setFacetable(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.facetable")).map(JsonElement::getAsBoolean).orElse(false));
+        dataverseDatasetField.setAdvancedSearchField(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.advancedSearchField")).map(JsonElement::getAsBoolean).orElse(false));
         dataverseDatasetField.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         dataverseDatasetField.setParent(parentName);
         dataverseDatasetField.setmetadatablock_id(metadataBlockName);
         dataverseDatasetField.setTermUri(propertyTermUri);
+        
+        if (displayFormat != null) {
+            dataverseDatasetField.setDisplayFormat(displayFormat);
+        }
+
+        if (watermark != null) {
+            dataverseDatasetField.setWatermark(watermark);
+        }
 
         processedCedarTemplateValues.datasetFieldValues.add(dataverseDatasetField);
 
