@@ -3,10 +3,7 @@ package edu.harvard.iq.dataverse.arp;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
@@ -359,6 +356,43 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         if (parentIsTemplateField && datasetField.isAllowmultiples()) {
             cedarTemplate.addProperty("minItems", 1);
             cedarTemplate.addProperty("maxItems ", 0);
+        }
+        processArpFields(cedarTemplate, datasetField);
+    }
+    
+    private void processArpFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {
+        addArpProperty(cedarTemplate, "watermark", datasetField.getWatermark());
+        addArpProperty(cedarTemplate, "displayFormat", datasetField.getDisplayFormat());
+        addArpProperty(cedarTemplate, "advancedSearchField", datasetField.isAdvancedSearchField());
+        addArpProperty(cedarTemplate, "facetable", datasetField.isFacetable());
+        addArpProperty(cedarTemplate, "displayoncreate", datasetField.isDisplayoncreate());
+    }
+    
+    private void addArpProperty(JsonObject cedarTemplate, String propName, Object value) {
+        if (value != null) {
+            if (value instanceof String) {
+                if (((String) value).isBlank()) {
+                    return;
+                }
+            }
+            JsonElement jsonValue = value instanceof String ? new JsonPrimitive((String) value) : new JsonPrimitive((boolean) value);
+            if (cedarTemplate.has("_arp")) {
+                var arpPart = cedarTemplate.getAsJsonObject("_arp");
+                if (arpPart.has("dataverse")) {
+                    var dvPart = arpPart.getAsJsonObject("dataverse");
+                    dvPart.add(propName, jsonValue);
+                } else {
+                    JsonObject dvValue = new JsonObject();
+                    dvValue.add(propName, jsonValue);
+                    arpPart.add("dataverse", dvValue);
+                }
+            } else {
+                JsonObject arpPart = new JsonObject();
+                JsonObject dvValue = new JsonObject();
+                dvValue.add(propName, jsonValue);
+                arpPart.add("dataverse", dvValue);
+                cedarTemplate.add("_arp", arpPart);
+            }   
         }
     }
 
