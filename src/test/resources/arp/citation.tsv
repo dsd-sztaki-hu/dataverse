@@ -2,83 +2,83 @@
 	citation		Citation Metadata	https://dataverse.org/schema/citation/
 #datasetField	name	title	description	watermark	fieldType	displayOrder	displayFormat	advancedSearchField	allowControlledVocabulary	allowmultiples	facetable	displayoncreate	required	parent	metadatablock_id	termURI
 	title	Title	The main title of the Dataset		TEXT	0		true	false	false	false	true	true		citation	http://purl.org/dc/terms/title
-	subtitle	Subtitle	A secondary title that amplifies or states certain limitations on the main title		TEXT	1		false	false	false	false	false	false		citation	
+	subtitle	Subtitle	A secondary title that amplifies or states certain limitations on the main title		TEXT	1		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/subtitle
 	alternativeTitle	Alternative Title	Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title		TEXT	2		false	false	false	false	false	false		citation	http://purl.org/dc/terms/alternative
 	alternativeURL	Alternative URL	Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage	https://	URL	3	<a href="#VALUE" target="_blank">#VALUE</a>	false	false	false	false	false	false		citation	https://schema.org/distribution
-	otherId	Other Identifier	Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)		NONE	4	:	false	false	true	false	false	false		citation	
-	otherIdAgency	Agency	The name of the agency that generated the other identifier		TEXT	5	#VALUE	false	false	false	false	false	false	otherId	citation	
-	otherIdValue	Identifier	Another identifier uniquely identifies the Dataset		TEXT	6	#VALUE	false	false	false	false	false	false	otherId	citation	
-	author	Author	The entity, e.g. a person or organization, that created the Dataset		NONE	7		false	false	true	false	true	true		citation	http://purl.org/dc/terms/creator
-	authorName	Name	The name of the author, such as the person's name or the name of an organization	1) Family Name, Given Name or 2) Organization XYZ	TEXT	8	#VALUE	true	false	false	true	true	true	author	citation	
-	authorAffiliation	Affiliation	The name of the entity affiliated with the author, e.g. an organization's name	Organization XYZ	TEXT	9	(#VALUE)	true	false	false	true	true	false	author	citation	
+	otherId	Other Identifier	Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)		NONE	4	:	false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/otherId
+	otherIdAgency	Agency	The name of the agency that generated the other identifier		TEXT	5	#VALUE	false	false	false	false	false	false	otherId	citation	https://dataverse.org/schema/citation/otherIdAgency
+	otherIdValue	Identifier	Another identifier uniquely identifies the Dataset		TEXT	6	#VALUE	false	false	false	false	false	false	otherId	citation	https://dataverse.org/schema/citation/otherIdValue
+	author	Author	The entity, e.g. a person or organization, that created the Dataset		NONE	7		false	false	true	false	true	false		citation	http://purl.org/dc/terms/creator
+	authorName	Name	The name of the author, such as the person's name or the name of an organization	1) Family Name, Given Name or 2) Organization XYZ	TEXT	8	#VALUE	true	false	false	true	true	true	author	citation	https://dataverse.org/schema/citation/authorName
+	authorAffiliation	Affiliation	The name of the entity affiliated with the author, e.g. an organization's name	Organization XYZ	TEXT	9	(#VALUE)	true	false	false	true	true	false	author	citation	https://dataverse.org/schema/citation/authorAffiliation
 	authorIdentifierScheme	Identifier Type	The type of identifier that uniquely identifies the author (e.g. ORCID, ISNI)		TEXT	10	- #VALUE:	false	true	false	false	true	false	author	citation	http://purl.org/spar/datacite/AgentIdentifierScheme
 	authorIdentifier	Identifier	Uniquely identifies the author when paired with an identifier type		TEXT	11	#VALUE	false	false	false	false	true	false	author	citation	http://purl.org/spar/datacite/AgentIdentifier
-	datasetContact	Point of Contact	The entity, e.g. a person or organization, that users of the Dataset can contact with questions		NONE	12		false	false	true	false	true	true		citation	
-	datasetContactName	Name	The name of the point of contact, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	13	#VALUE	false	false	false	false	true	false	datasetContact	citation	
-	datasetContactAffiliation	Affiliation	The name of the entity affiliated with the point of contact, e.g. an organization's name	Organization XYZ	TEXT	14	(#VALUE)	false	false	false	false	true	false	datasetContact	citation	
-	datasetContactEmail	E-mail	The point of contact's email address	name@email.xyz	EMAIL	15	#EMAIL	false	false	false	false	true	true	datasetContact	citation	
-	dsDescription	Description	A summary describing the purpose, nature, and scope of the Dataset		NONE	16		false	false	true	false	true	true		citation	
-	dsDescriptionValue	Text	A summary describing the purpose, nature, and scope of the Dataset		TEXTBOX	17	#VALUE	true	false	false	false	true	true	dsDescription	citation	
-	dsDescriptionDate	Date	The date when the description was added to the Dataset. If the Dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions	YYYY-MM-DD	DATE	18	(#VALUE)	false	false	false	false	true	false	dsDescription	citation	
+	datasetContact	Point of Contact	The entity, e.g. a person or organization, that users of the Dataset can contact with questions		NONE	12		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/datasetContact
+	datasetContactName	Name	The name of the point of contact, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	13	#VALUE	false	false	false	false	true	false	datasetContact	citation	https://dataverse.org/schema/citation/datasetContactName
+	datasetContactAffiliation	Affiliation	The name of the entity affiliated with the point of contact, e.g. an organization's name	Organization XYZ	TEXT	14	(#VALUE)	false	false	false	false	true	false	datasetContact	citation	https://dataverse.org/schema/citation/datasetContactAffiliation
+	datasetContactEmail	E-mail	The point of contact's email address	name@email.xyz	EMAIL	15	#EMAIL	false	false	false	false	true	true	datasetContact	citation	https://dataverse.org/schema/citation/datasetContactEmail
+	dsDescription	Description	A summary describing the purpose, nature, and scope of the Dataset		NONE	16		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/dsDescription
+	dsDescriptionValue	Text	A summary describing the purpose, nature, and scope of the Dataset		TEXTBOX	17	#VALUE	true	false	false	false	true	true	dsDescription	citation	https://dataverse.org/schema/citation/dsDescriptionValue
+	dsDescriptionDate	Date	The date when the description was added to the Dataset. If the Dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions	YYYY-MM-DD	DATE	18	(#VALUE)	false	false	false	false	true	false	dsDescription	citation	https://dataverse.org/schema/citation/dsDescriptionDate
 	subject	Subject	The area of study relevant to the Dataset		TEXT	19		true	true	true	true	true	true		citation	http://purl.org/dc/terms/subject
-	keyword	Keyword	A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used		NONE	20		false	false	true	false	true	false		citation	
-	keywordValue	Term	A key term that describes important aspects of the Dataset		TEXT	21	#VALUE	true	false	false	true	true	false	keyword	citation	
-	keywordVocabulary	Controlled Vocabulary Name	The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)		TEXT	22	(#VALUE)	false	false	false	false	true	false	keyword	citation	
-	keywordVocabularyURI	Controlled Vocabulary URL	The URL where one can access information about the term's controlled vocabulary	https://	URL	23	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	true	false	keyword	citation	
-	topicClassification	Topic Classification	Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used		NONE	24		false	false	true	false	false	false		citation	
-	topicClassValue	Term	A topic or subject term		TEXT	25	#VALUE	true	false	false	true	false	false	topicClassification	citation	
-	topicClassVocab	Controlled Vocabulary Name	The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)		TEXT	26	(#VALUE)	false	false	false	false	false	false	topicClassification	citation	
-	topicClassVocabURI	Controlled Vocabulary URL	The URL where one can access information about the term's controlled vocabulary	https://	URL	27	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	topicClassification	citation	
+	keyword	Keyword	A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used		NONE	20		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/keyword
+	keywordValue	Term	A key term that describes important aspects of the Dataset		TEXT	21	#VALUE	true	false	false	true	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordValue
+	keywordVocabulary	Controlled Vocabulary Name	The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)		TEXT	22	(#VALUE)	false	false	false	false	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordVocabulary
+	keywordVocabularyURI	Controlled Vocabulary URL	The URL where one can access information about the term's controlled vocabulary	https://	URL	23	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordVocabularyURI
+	topicClassification	Topic Classification	Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used		NONE	24		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/topicClassification
+	topicClassValue	Term	A topic or subject term		TEXT	25	#VALUE	true	false	false	true	false	false	topicClassification	citation	https://dataverse.org/schema/citation/topicClassValue
+	topicClassVocab	Controlled Vocabulary Name	The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)		TEXT	26	(#VALUE)	false	false	false	false	false	false	topicClassification	citation	https://dataverse.org/schema/citation/topicClassVocab
+	topicClassVocabURI	Controlled Vocabulary URL	The URL where one can access information about the term's controlled vocabulary	https://	URL	27	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	topicClassification	citation	https://dataverse.org/schema/citation/topicClassVocabURI
 	publication	Related Publication	The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab		NONE	28		false	false	true	false	true	false		citation	http://purl.org/dc/terms/isReferencedBy
 	publicationCitation	Citation	The full bibliographic citation for the related publication		TEXTBOX	29	#VALUE	true	false	false	false	true	false	publication	citation	http://purl.org/dc/terms/bibliographicCitation
 	publicationIDType	Identifier Type	The type of identifier that uniquely identifies a related publication		TEXT	30	#VALUE: 	true	true	false	false	true	false	publication	citation	http://purl.org/spar/datacite/ResourceIdentifierScheme
 	publicationIDNumber	Identifier	The identifier for a related publication		TEXT	31	#VALUE	true	false	false	false	true	false	publication	citation	http://purl.org/spar/datacite/ResourceIdentifier
 	publicationURL	URL	The URL form of the identifier entered in the Identifier field, e.g. the DOI URL if a DOI was entered in the Identifier field. Used to display what was entered in the ID Type and ID Number fields as a link. If what was entered in the Identifier field has no URL form, the URL of the publication webpage is used, e.g. a journal article webpage	https://	URL	32	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	publication	citation	https://schema.org/distribution
-	notesText	Notes	Additional information about the Dataset		TEXTBOX	33		false	false	false	false	true	false		citation	
+	notesText	Notes	Additional information about the Dataset		TEXTBOX	33		false	false	false	false	true	false		citation	https://dataverse.org/schema/citation/notesText
 	language	Language	A language that the Dataset's files is written in		TEXT	34		true	true	true	true	false	false		citation	http://purl.org/dc/terms/language
-	producer	Producer	The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset		NONE	35		false	false	true	false	false	false		citation	
-	producerName	Name	The name of the entity, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	36	#VALUE	true	false	false	true	false	true	producer	citation	
-	producerAffiliation	Affiliation	The name of the entity affiliated with the producer, e.g. an organization's name	Organization XYZ	TEXT	37	(#VALUE)	false	false	false	false	false	false	producer	citation	
-	producerAbbreviation	Abbreviated Name	The producer's abbreviated name (e.g. IQSS, ICPSR)		TEXT	38	(#VALUE)	false	false	false	false	false	false	producer	citation	
-	producerURL	URL	The URL of the producer's website	https://	URL	39	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	producer	citation	
-	producerLogoURL	Logo URL	The URL of the producer's logo	https://	URL	40	<img src="#VALUE" alt="#NAME" class="metadata-logo"/><br/>	false	false	false	false	false	false	producer	citation	
-	productionDate	Production Date	The date when the data were produced (not distributed, published, or archived)	YYYY-MM-DD	DATE	41		true	false	false	true	false	false		citation	
-	productionPlace	Production Location	The location where the data and any related materials were produced or collected		TEXT	42		true	false	true	true	false	false		citation	
+	producer	Producer	The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset		NONE	35		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/producer
+	producerName	Name	The name of the entity, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	36	#VALUE	true	false	false	true	false	true	producer	citation	https://dataverse.org/schema/citation/producerName
+	producerAffiliation	Affiliation	The name of the entity affiliated with the producer, e.g. an organization's name	Organization XYZ	TEXT	37	(#VALUE)	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerAffiliation
+	producerAbbreviation	Abbreviated Name	The producer's abbreviated name (e.g. IQSS, ICPSR)		TEXT	38	(#VALUE)	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerAbbreviation
+	producerURL	URL	The URL of the producer's website	https://	URL	39	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerURL
+	producerLogoURL	Logo URL	The URL of the producer's logo	https://	URL	40	<img src="#VALUE" alt="#NAME" class="metadata-logo"/><br/>	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerLogoURL
+	productionDate	Production Date	The date when the data were produced (not distributed, published, or archived)	YYYY-MM-DD	DATE	41		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/productionDate
+	productionPlace	Production Location	The location where the data and any related materials were produced or collected		TEXT	42		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/productionPlace
 	contributor	Contributor	The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset		NONE	43	:	false	false	true	false	false	false		citation	http://purl.org/dc/terms/contributor
-	contributorType	Type	Indicates the type of contribution made to the dataset		TEXT	44	#VALUE 	true	true	false	true	false	false	contributor	citation	
-	contributorName	Name	The name of the contributor, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	45	#VALUE	true	false	false	true	false	false	contributor	citation	
+	contributorType	Type	Indicates the type of contribution made to the dataset		TEXT	44	#VALUE 	true	true	false	true	false	false	contributor	citation	https://dataverse.org/schema/citation/contributorType
+	contributorName	Name	The name of the contributor, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	45	#VALUE	true	false	false	true	false	false	contributor	citation	https://dataverse.org/schema/citation/contributorName
 	grantNumber	Funding Information	Information about the Dataset's financial support		NONE	46	:	false	false	true	false	false	false		citation	https://schema.org/sponsor
-	grantNumberAgency	Agency	The agency that provided financial support for the Dataset	Organization XYZ	TEXT	47	#VALUE	true	false	false	true	false	false	grantNumber	citation	
-	grantNumberValue	Identifier	The grant identifier or contract identifier of the agency that provided financial support for the Dataset		TEXT	48	#VALUE	true	false	false	true	false	false	grantNumber	citation	
-	distributor	Distributor	The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions		NONE	49		false	false	true	false	false	false		citation	
-	distributorName	Name	The name of the entity, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	50	#VALUE	true	false	false	true	false	false	distributor	citation	
-	distributorAffiliation	Affiliation	The name of the entity affiliated with the distributor, e.g. an organization's name	Organization XYZ	TEXT	51	(#VALUE)	false	false	false	false	false	false	distributor	citation	
-	distributorAbbreviation	Abbreviated Name	The distributor's abbreviated name (e.g. IQSS, ICPSR)		TEXT	52	(#VALUE)	false	false	false	false	false	false	distributor	citation	
-	distributorURL	URL	The URL of the distributor's webpage	https://	URL	53	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	distributor	citation	
-	distributorLogoURL	Logo URL	The URL of the distributor's logo image, used to show the image on the Dataset's page	https://	URL	54	<img src="#VALUE" alt="#NAME" class="metadata-logo"/><br/>	false	false	false	false	false	false	distributor	citation	
-	distributionDate	Distribution Date	The date when the Dataset was made available for distribution/presentation	YYYY-MM-DD	DATE	55		true	false	false	true	false	false		citation	
-	depositor	Depositor	The entity, such as a person or organization, that deposited the Dataset in the repository	1) FamilyName, GivenName or 2) Organization	TEXT	56		false	false	false	false	false	false		citation	
+	grantNumberAgency	Agency	The agency that provided financial support for the Dataset	Organization XYZ	TEXT	47	#VALUE	true	false	false	true	false	false	grantNumber	citation	https://dataverse.org/schema/citation/grantNumberAgency
+	grantNumberValue	Identifier	The grant identifier or contract identifier of the agency that provided financial support for the Dataset		TEXT	48	#VALUE	true	false	false	true	false	false	grantNumber	citation	https://dataverse.org/schema/citation/grantNumberValue
+	distributor	Distributor	The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions		NONE	49		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/distributor
+	distributorName	Name	The name of the entity, e.g. the person's name or the name of an organization	1) FamilyName, GivenName or 2) Organization	TEXT	50	#VALUE	true	false	false	true	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorName
+	distributorAffiliation	Affiliation	The name of the entity affiliated with the distributor, e.g. an organization's name	Organization XYZ	TEXT	51	(#VALUE)	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorAffiliation
+	distributorAbbreviation	Abbreviated Name	The distributor's abbreviated name (e.g. IQSS, ICPSR)		TEXT	52	(#VALUE)	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorAbbreviation
+	distributorURL	URL	The URL of the distributor's webpage	https://	URL	53	<a href="#VALUE" target="_blank" rel="noopener">#VALUE</a>	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorURL
+	distributorLogoURL	Logo URL	The URL of the distributor's logo image, used to show the image on the Dataset's page	https://	URL	54	<img src="#VALUE" alt="#NAME" class="metadata-logo"/><br/>	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorLogoURL
+	distributionDate	Distribution Date	The date when the Dataset was made available for distribution/presentation	YYYY-MM-DD	DATE	55		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/distributionDate
+	depositor	Depositor	The entity, such as a person or organization, that deposited the Dataset in the repository	1) FamilyName, GivenName or 2) Organization	TEXT	56		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/depositor
 	dateOfDeposit	Deposit Date	The date when the Dataset was deposited into the repository	YYYY-MM-DD	DATE	57		false	false	false	true	false	false		citation	http://purl.org/dc/terms/dateSubmitted
 	timePeriodCovered	Time Period	The time period that the data refer to. Also known as span. This is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable		NONE	58	;	false	false	true	false	false	false		citation	https://schema.org/temporalCoverage
-	timePeriodCoveredStart	Start Date	The start date of the time period that the data refer to	YYYY-MM-DD	DATE	59	#NAME: #VALUE 	true	false	false	true	false	false	timePeriodCovered	citation	
-	timePeriodCoveredEnd	End Date	The end date of the time period that the data refer to	YYYY-MM-DD	DATE	60	#NAME: #VALUE 	true	false	false	true	false	false	timePeriodCovered	citation	
-	dateOfCollection	Date of Collection	The dates when the data were collected or generated		NONE	61	;	false	false	true	false	false	false		citation	
-	dateOfCollectionStart	Start Date	The date when the data collection started	YYYY-MM-DD	DATE	62	#NAME: #VALUE 	false	false	false	false	false	false	dateOfCollection	citation	
-	dateOfCollectionEnd	End Date	The date when the data collection ended	YYYY-MM-DD	DATE	63	#NAME: #VALUE 	false	false	false	false	false	false	dateOfCollection	citation	
-	kindOfData	Data Type	The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)		TEXT	64		true	false	true	true	false	false		citation	http://rdf-vocabulary.ddialliance.org/discovery#kindOfData
-	series	Series	Information about the dataset series to which the Dataset belong		NONE	65	:	false	false	false	false	false	false		citation	
-	seriesName	Name	The name of the dataset series		TEXT	66	#VALUE	true	false	false	true	false	false	series	citation	
-	seriesInformation	Information	Can include 1) a history of the series and 2) a summary of features that apply to the series		TEXTBOX	67	#VALUE	false	false	false	false	false	false	series	citation	
+	timePeriodCoveredStart	Start Date	The start date of the time period that the data refer to	YYYY-MM-DD	DATE	59	#NAME: #VALUE 	true	false	false	true	false	false	timePeriodCovered	citation	https://dataverse.org/schema/citation/timePeriodCoveredStart
+	timePeriodCoveredEnd	End Date	The end date of the time period that the data refer to	YYYY-MM-DD	DATE	60	#NAME: #VALUE 	true	false	false	true	false	false	timePeriodCovered	citation	https://dataverse.org/schema/citation/timePeriodCoveredEnd
+	dateOfCollection	Date of Collection	The dates when the data were collected or generated		NONE	61	;	false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/dateOfCollection
+	dateOfCollectionStart	Start Date	The date when the data collection started	YYYY-MM-DD	DATE	62	#NAME: #VALUE 	false	false	false	false	false	false	dateOfCollection	citation	https://dataverse.org/schema/citation/dateOfCollectionStart
+	dateOfCollectionEnd	End Date	The date when the data collection ended	YYYY-MM-DD	DATE	63	#NAME: #VALUE 	false	false	false	false	false	false	dateOfCollection	citation	https://dataverse.org/schema/citation/dateOfCollectionEnd
+	kindOfData	Data Type	The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)		TEXT	64		true	false	false	true	false	false		citation	http://rdf-vocabulary.ddialliance.org/discovery#kindOfData
+	series	Series	Information about the dataset series to which the Dataset belong		NONE	65	:	false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/series
+	seriesName	Name	The name of the dataset series		TEXT	66	#VALUE	true	false	false	true	false	false	series	citation	https://dataverse.org/schema/citation/seriesName
+	seriesInformation	Information	Can include 1) a history of the series and 2) a summary of features that apply to the series		TEXTBOX	67	#VALUE	false	false	false	false	false	false	series	citation	https://dataverse.org/schema/citation/seriesInformation
 	software	Software	Information about the software used to generate the Dataset		NONE	68	,	false	false	true	false	false	false		citation	https://www.w3.org/TR/prov-o/#wasGeneratedBy
-	softwareName	Name	The name of software used to generate the Dataset		TEXT	69	#VALUE	false	true	false	false	false	false	software	citation	
-	softwareVersion	Version	The version of the software used to generate the Dataset, e.g. 4.11		TEXT	70	#NAME: #VALUE	false	false	false	false	false	false	software	citation	
-	relatedMaterial	Related Material	Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset		TEXTBOX	71		false	false	true	false	false	false		citation	
-	relatedDatasets	Related Dataset	Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject		TEXTBOX	72		false	false	true	false	false	false		citation	http://purl.org/dc/terms/relation
-	otherReferences	Other Reference	Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset		TEXT	73		false	false	true	false	false	false		citation	http://purl.org/dc/terms/references
-	dataSources	Data Source	Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)		TEXTBOX	74		false	false	true	false	false	false		citation	https://www.w3.org/TR/prov-o/#wasDerivedFrom
-	originOfSources	Origin of Historical Sources	For historical sources, the origin and any rules followed in establishing them as sources		TEXTBOX	75		false	false	false	false	false	false		citation	
-	characteristicOfSources	Characteristic of Sources	Characteristics not already noted elsewhere		TEXTBOX	76		false	false	false	false	false	false		citation	
-	accessToSources	Documentation and Access to Sources	1) Methods or procedures for accessing data sources and 2) any special permissions needed for access		TEXTBOX	77		false	false	false	false	false	false		citation
+	softwareName	Name	The name of software used to generate the Dataset		TEXT	69	#VALUE	false	true	false	false	false	false	software	citation	https://dataverse.org/schema/citation/softwareName
+	softwareVersion	Version	The version of the software used to generate the Dataset, e.g. 4.11		TEXT	70	#NAME: #VALUE	false	false	false	false	false	false	software	citation	https://dataverse.org/schema/citation/softwareVersion
+	relatedMaterial	Related Material	Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset		TEXTBOX	71		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/relatedMaterial
+	relatedDatasets	Related Dataset	Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject		TEXTBOX	72		false	false	false	false	false	false		citation	http://purl.org/dc/terms/relation
+	otherReferences	Other Reference	Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset		TEXT	73		false	false	false	false	false	false		citation	http://purl.org/dc/terms/references
+	dataSources	Data Source	Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)		TEXTBOX	74		false	false	false	false	false	false		citation	https://www.w3.org/TR/prov-o/#wasDerivedFrom
+	originOfSources	Origin of Historical Sources	For historical sources, the origin and any rules followed in establishing them as sources		TEXTBOX	75		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/originOfSources
+	characteristicOfSources	Characteristic of Sources	Characteristics not already noted elsewhere		TEXTBOX	76		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/characteristicOfSources
+	accessToSources	Documentation and Access to Sources	1) Methods or procedures for accessing data sources and 2) any special permissions needed for access		TEXTBOX	77		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/accessToSources
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder
 	authorIdentifierScheme	ORCID		0
 	authorIdentifierScheme	ISNI		1
@@ -88,20 +88,20 @@
 	authorIdentifierScheme	DAI		5
 	authorIdentifierScheme	ResearcherID		6
 	authorIdentifierScheme	ScopusID		7
-	subject	Agricultural Sciences	D01	0
-	subject	Arts and Humanities	D0	1
-	subject	Astronomy and Astrophysics	D1	2
-	subject	Business and Management	D2	3
-	subject	Chemistry	D3	4
-	subject	Computer and Information Science	D7	5
-	subject	Earth and Environmental Sciences	D4	6
-	subject	Engineering	D5	7
-	subject	Law	D8	8
-	subject	Mathematical Sciences	D9	9
-	subject	Medicine, Health and Life Sciences	D6	10
-	subject	Physics	D10	11
-	subject	Social Sciences	D11	12
-	subject	Other	D12	13
+	subject	Agricultural Sciences		0
+	subject	Arts and Humanities		1
+	subject	Astronomy and Astrophysics		2
+	subject	Business and Management		3
+	subject	Chemistry		4
+	subject	Computer and Information Science		5
+	subject	Earth and Environmental Sciences		6
+	subject	Engineering		7
+	subject	Law		8
+	subject	Mathematical Sciences		9
+	subject	Medicine, Health and Life Sciences		10
+	subject	Physics		11
+	subject	Social Sciences		12
+	subject	Other		13
 	publicationIDType	ark		0
 	publicationIDType	arXiv		1
 	publicationIDType	bibcode		2

@@ -133,7 +133,9 @@
           "required": false,
           "multiple": false
         }
-      ]
+      ],
+      "label": "Dataset",
+      "help": "A collection of files with metadata"
     },
     "creatorName_test": {
       "definition": "override",
@@ -161,7 +163,9 @@
           "required": false,
           "multiple": false
         }
-      ]
+      ],
+      "label": "Creator Name_test",
+      "help": ""
     }
   },
   "enabledClasses": [
