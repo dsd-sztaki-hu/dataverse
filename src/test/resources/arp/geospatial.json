@@ -204,17 +204,17 @@
         },
         "geographicCoverage": {
           "enum": [
-            "/geographicCoverage"
+            "https://dataverse.org/schema/geospatial/geographicCoverage"
           ]
         },
         "geographicUnit": {
           "enum": [
-            "/geographicUnit"
+            "https://dataverse.org/schema/geospatial/geographicUnit"
           ]
         },
         "geographicBoundingBox": {
           "enum": [
-            "/geographicBoundingBox"
+            "https://dataverse.org/schema/geospatial/geographicBoundingBox"
           ]
         }
       },
@@ -248,7 +248,7 @@
           "type": "string",
           "format": "uri",
           "enum": [
-            ""
+            "https://dataverse.org/schema/geospatial/"
           ]
         },
         {
@@ -258,7 +258,7 @@
             "type": "string",
             "format": "uri",
             "enum": [
-              ""
+              "https://dataverse.org/schema/geospatial/"
             ]
           },
           "uniqueItems": true
@@ -367,22 +367,22 @@
             "properties": {
               "country": {
                 "enum": [
-                  "/country"
+                  "https://dataverse.org/schema/geospatial/country"
                 ]
               },
               "state": {
                 "enum": [
-                  "/state"
+                  "https://dataverse.org/schema/geospatial/state"
                 ]
               },
               "city": {
                 "enum": [
-                  "/city"
+                  "https://dataverse.org/schema/geospatial/city"
                 ]
               },
               "otherGeographicCoverage": {
                 "enum": [
-                  "/otherGeographicCoverage"
+                  "https://dataverse.org/schema/geospatial/otherGeographicCoverage"
                 ]
               }
             },
@@ -1239,14 +1239,24 @@
             ],
             "schema:name": "country",
             "schema:description": "The country or nation that the Dataset is about.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The country or nation that the Dataset is about.",
             "skos:prefLabel": "Country / Nation",
-            "@id": "https://repo.arp.orgx/template-fields/19dd8e20-6ed3-4f70-9f6b-20ae4e167ff6",
+            "hunLabel": "Country / Nation",
+            "_arp": {
+              "dataverse": {
+                "displayFormat": "#VALUE, ",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/3a7cbfb6-1da5-4750-b12a-d80cf4a363cc",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "state": {
@@ -1328,14 +1338,24 @@
             ],
             "schema:name": "state",
             "schema:description": "The state or province that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The state or province that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
             "skos:prefLabel": "State / Province",
-            "@id": "https://repo.arp.orgx/template-fields/446f95bc-24ad-4eb2-802a-ec020fc0089a",
+            "hunLabel": "State / Province",
+            "_arp": {
+              "dataverse": {
+                "displayFormat": "#VALUE, ",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/6e400ff7-3bf3-44bc-a5cb-a6d557666842",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "city": {
@@ -1417,14 +1437,24 @@
             ],
             "schema:name": "city",
             "schema:description": "The name of the city that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The name of the city that the Dataset is about. Use GeoNames for correct spelling and avoid abbreviations.",
             "skos:prefLabel": "City",
-            "@id": "https://repo.arp.orgx/template-fields/b8981d29-7abf-47e1-8ce2-4b3daa2bfcbf",
+            "hunLabel": "City",
+            "_arp": {
+              "dataverse": {
+                "displayFormat": "#VALUE, ",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/c7104c7c-da55-409c-9cc6-57ad7358ea38",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "otherGeographicCoverage": {
@@ -1506,14 +1536,24 @@
             ],
             "schema:name": "otherGeographicCoverage",
             "schema:description": "Other information on the geographic coverage of the data.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "Other information on the geographic coverage of the data.",
             "skos:prefLabel": "Other",
-            "@id": "https://repo.arp.orgx/template-fields/f9886e83-24d2-485b-9c26-99b8dbbfeb20",
+            "hunLabel": "Other",
+            "_arp": {
+              "dataverse": {
+                "displayFormat": "#VALUE, ",
+                "advancedSearchField": false,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/5075511a-feaf-460c-908b-caa8b17164f1",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -1527,16 +1567,25 @@
           "city",
           "otherGeographicCoverage"
         ],
-        "pav:createdOn": "2023-03-24T11:47:33+01:00",
+        "pav:createdOn": "2023-06-19T10:31:59+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
+        "hunDescription": "Information on the geographic coverage of the data. Includes the total geographic scope of the data.",
         "skos:prefLabel": "Geographic Coverage",
-        "@id": "https://repo.arp.orgx/template-elements/0182d505-48e8-4fb7-8c61-3ed62c85ad9c",
+        "hunLabel": "Geographic Coverage",
+        "_arp": {
+          "dataverse": {
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/6707b5df-289a-4f56-bfae-25b3ec8cdd0a",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -1619,16 +1668,23 @@
       ],
       "schema:name": "geographicUnit",
       "schema:description": "Lowest level of geographic aggregation covered by the Dataset, e.g., village, county, region.",
-      "pav:createdOn": "2023-03-24T11:47:33+01:00",
+      "pav:createdOn": "2023-06-19T10:31:59+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Lowest level of geographic aggregation covered by the Dataset, e.g., village, county, region.",
       "skos:prefLabel": "Geographic Unit",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/238a9ca7-889b-44cf-88cf-560e17de244d",
+      "hunLabel": "Geographic Unit",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/f28f275b-6193-456b-9845-2151c4912716",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "geographicBoundingBox": {
@@ -1690,22 +1746,22 @@
             "properties": {
               "westLongitude": {
                 "enum": [
-                  "/westLongitude"
+                  "https://dataverse.org/schema/geospatial/westLongitude"
                 ]
               },
               "eastLongitude": {
                 "enum": [
-                  "/eastLongitude"
+                  "https://dataverse.org/schema/geospatial/eastLongitude"
                 ]
               },
               "northLongitude": {
                 "enum": [
-                  "/northLongitude"
+                  "https://dataverse.org/schema/geospatial/northLongitude"
                 ]
               },
               "southLongitude": {
                 "enum": [
-                  "/southLongitude"
+                  "https://dataverse.org/schema/geospatial/southLongitude"
                 ]
               }
             },
@@ -1812,14 +1868,23 @@
             ],
             "schema:name": "westLongitude",
             "schema:description": "Westernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 \u003c\u003d West  Bounding Longitude Value \u003c\u003d 180,0.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "Westernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 \u003c\u003d West  Bounding Longitude Value \u003c\u003d 180,0.",
             "skos:prefLabel": "West Longitude",
-            "@id": "https://repo.arp.orgx/template-fields/b6bd8b6c-1f77-4ec8-9ab7-82cd98f9019c",
+            "hunLabel": "West Longitude",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/2c35ba66-4c3c-45bc-a8eb-4a4ddfc18e66",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "eastLongitude": {
@@ -1901,14 +1966,23 @@
             ],
             "schema:name": "eastLongitude",
             "schema:description": "Easternmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 \u003c\u003d East Bounding Longitude Value \u003c\u003d 180,0.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "Easternmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -180,0 \u003c\u003d East Bounding Longitude Value \u003c\u003d 180,0.",
             "skos:prefLabel": "East Longitude",
-            "@id": "https://repo.arp.orgx/template-fields/4f20b6e6-be32-475f-acf6-2c8c81dc1dc3",
+            "hunLabel": "East Longitude",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/1ac7d066-e7c5-406c-88af-063ff6657f50",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "northLongitude": {
@@ -1990,14 +2064,23 @@
             ],
             "schema:name": "northLongitude",
             "schema:description": "Northernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 \u003c\u003d North Bounding Latitude Value \u003c\u003d 90,0.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "Northernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 \u003c\u003d North Bounding Latitude Value \u003c\u003d 90,0.",
             "skos:prefLabel": "North Latitude",
-            "@id": "https://repo.arp.orgx/template-fields/41565d4a-23f8-4bae-86ee-720f571e5354",
+            "hunLabel": "North Latitude",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/e80224e7-54b2-4863-8a79-ea824c4c791b",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "southLongitude": {
@@ -2079,14 +2162,23 @@
             ],
             "schema:name": "southLongitude",
             "schema:description": "Southernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 \u003c\u003d South Bounding Latitude Value \u003c\u003d 90,0.",
-            "pav:createdOn": "2023-03-24T11:47:33+01:00",
+            "pav:createdOn": "2023-06-19T10:31:59+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "Southernmost coordinate delimiting the geographic extent of the Dataset. A valid range of values,  expressed in decimal degrees, is -90,0 \u003c\u003d South Bounding Latitude Value \u003c\u003d 90,0.",
             "skos:prefLabel": "South Latitude",
-            "@id": "https://repo.arp.orgx/template-fields/75037750-f263-4b84-8f31-4b61cf1787cc",
+            "hunLabel": "South Latitude",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/d29dd42a-490f-44ad-ae94-2ffb708dd94f",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -2100,16 +2192,25 @@
           "northLongitude",
           "southLongitude"
         ],
-        "pav:createdOn": "2023-03-24T11:47:33+01:00",
+        "pav:createdOn": "2023-06-19T10:31:59+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
+        "hunDescription": "The fundamental geometric description for any Dataset that models geography is the geographic bounding box. It describes the minimum box, defined by west and east longitudes and north and south latitudes, which includes the largest geographic extent of the  Dataset\u0027s geographic coverage. This element is used in the first pass of a coordinate-based search. Inclusion of this element in the codebook is recommended, but is required if the bound polygon box is included.",
         "skos:prefLabel": "Geographic Bounding Box",
-        "@id": "https://repo.arp.orgx/template-elements/281c574b-a8dc-46b5-8048-cd2ca3169ff4",
+        "hunLabel": "Geographic Bounding Box",
+        "_arp": {
+          "dataverse": {
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/cc08974f-376b-4e01-a436-c157ab268d5f",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     }
@@ -2130,15 +2231,16 @@
   ],
   "schema:name": "Geospatial Metadata",
   "schema:description": "",
-  "pav:createdOn": "2023-03-24T11:47:33+01:00",
+  "pav:createdOn": "2023-06-19T10:31:59+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-24T11:47:33+01:00",
+  "pav:lastUpdatedOn": "2023-06-19T10:31:59+02:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
+  "hunName": "Geospatial Metadata",
   "schema:identifier": "geospatial",
-  "@id": "https://repo.arp.orgx/templates/2e841432-f586-4aec-bbb9-6c204f8e3e95",
+  "@id": "https://repo.arp.orgx/templates/3ec75808-aef1-4714-954d-76828dd573f7",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }

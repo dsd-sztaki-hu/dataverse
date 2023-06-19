@@ -234,67 +234,67 @@
         },
         "studyDesignType": {
           "enum": [
-            "/studyDesignType"
+            "https://dataverse.org/schema/biomedical/studyDesignType"
           ]
         },
         "studyOtherDesignType": {
           "enum": [
-            "/studyOtherDesignType"
+            "https://dataverse.org/schema/biomedical/studyOtherDesignType"
           ]
         },
         "studyFactorType": {
           "enum": [
-            "/studyFactorType"
+            "https://dataverse.org/schema/biomedical/studyFactorType"
           ]
         },
         "studyOtherFactorType": {
           "enum": [
-            "/studyOtherFactorType"
+            "https://dataverse.org/schema/biomedical/studyOtherFactorType"
           ]
         },
         "studyAssayOrganism": {
           "enum": [
-            "/studyAssayOrganism"
+            "https://dataverse.org/schema/biomedical/studyAssayOrganism"
           ]
         },
         "studyAssayOtherOrganism": {
           "enum": [
-            "/studyAssayOtherOrganism"
+            "https://dataverse.org/schema/biomedical/studyAssayOtherOrganism"
           ]
         },
         "studyAssayMeasurementType": {
           "enum": [
-            "/studyAssayMeasurementType"
+            "https://dataverse.org/schema/biomedical/studyAssayMeasurementType"
           ]
         },
         "studyAssayOtherMeasurmentType": {
           "enum": [
-            "/studyAssayOtherMeasurmentType"
+            "https://dataverse.org/schema/biomedical/studyAssayOtherMeasurmentType"
           ]
         },
         "studyAssayTechnologyType": {
           "enum": [
-            "/studyAssayTechnologyType"
+            "https://dataverse.org/schema/biomedical/studyAssayTechnologyType"
           ]
         },
         "studyAssayOtherTechnologyType": {
           "enum": [
-            "/studyAssayOtherTechnologyType"
+            "https://dataverse.org/schema/biomedical/studyAssayOtherTechnologyType"
           ]
         },
         "studyAssayPlatform": {
           "enum": [
-            "/studyAssayPlatform"
+            "https://dataverse.org/schema/biomedical/studyAssayPlatform"
           ]
         },
         "studyAssayOtherPlatform": {
           "enum": [
-            "/studyAssayOtherPlatform"
+            "https://dataverse.org/schema/biomedical/studyAssayOtherPlatform"
           ]
         },
         "studyAssayCellType": {
           "enum": [
-            "/studyAssayCellType"
+            "https://dataverse.org/schema/biomedical/studyAssayCellType"
           ]
         }
       },
@@ -326,7 +326,7 @@
           "type": "string",
           "format": "uri",
           "enum": [
-            ""
+            "https://dataverse.org/schema/biomedical/"
           ]
         },
         {
@@ -336,7 +336,7 @@
             "type": "string",
             "format": "uri",
             "enum": [
-              ""
+              "https://dataverse.org/schema/biomedical/"
             ]
           },
           "uniqueItems": true
@@ -498,16 +498,25 @@
       ],
       "schema:name": "studyDesignType",
       "schema:description": "Design types that are based on the overall experimental design.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Design types that are based on the overall experimental design.",
       "skos:prefLabel": "Design Type",
+      "hunLabel": "Design Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/98e9c264-d90b-49ad-b393-a70880d1448e",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/35abbc56-8208-49ab-ba05-1472b4ecb39a",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyOtherDesignType": {
@@ -589,16 +598,23 @@
       ],
       "schema:name": "studyOtherDesignType",
       "schema:description": "If Other was selected in Design Type, list any other design types that were used in this Dataset.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Design Type, list any other design types that were used in this Dataset.",
       "skos:prefLabel": "Other Design Type",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/032f0fc6-d6fb-45b2-b61c-dea5dcdf680c",
+      "hunLabel": "Other Design Type",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/4705287f-ece8-49ff-8252-f888cd98cf90",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyFactorType": {
@@ -743,16 +759,25 @@
       ],
       "schema:name": "studyFactorType",
       "schema:description": "Factors used in the Dataset.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Factors used in the Dataset.",
       "skos:prefLabel": "Factor Type",
+      "hunLabel": "Factor Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/9354fbdb-5b3f-414c-a3b2-52da9d4b3f03",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/c9d0be71-9daa-4791-baea-9a4af7a327a2",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyOtherFactorType": {
@@ -834,16 +859,23 @@
       ],
       "schema:name": "studyOtherFactorType",
       "schema:description": "If Other was selected in Factor Type, list any other factor types that were used in this Dataset.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Factor Type, list any other factor types that were used in this Dataset.",
       "skos:prefLabel": "Other Factor Type",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/b2763b5f-6307-4273-a5d3-4e92d10672b4",
+      "hunLabel": "Other Factor Type",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/2b1ab680-8641-45ce-b6ba-e47c0cacad60",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayOrganism": {
@@ -1003,16 +1035,25 @@
       ],
       "schema:name": "studyAssayOrganism",
       "schema:description": "The taxonomic name of the organism used in the Dataset or from which the  starting biological material derives.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The taxonomic name of the organism used in the Dataset or from which the  starting biological material derives.",
       "skos:prefLabel": "Organism",
+      "hunLabel": "Organism",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/b9a938f4-f438-4b86-9242-69ca4e9897ef",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/2caa54cd-2364-4b79-83bd-85f8b27472b1",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayOtherOrganism": {
@@ -1094,16 +1135,23 @@
       ],
       "schema:name": "studyAssayOtherOrganism",
       "schema:description": "If Other was selected in Organism, list any other organisms that were used in this Dataset. Terms from the NCBI Taxonomy are recommended.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Organism, list any other organisms that were used in this Dataset. Terms from the NCBI Taxonomy are recommended.",
       "skos:prefLabel": "Other Organism",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/7a5dc299-c9c7-443b-992b-77a2372ead43",
+      "hunLabel": "Other Organism",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/c8735c3d-77da-45ff-9ad5-24cb72e06ac7",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayMeasurementType": {
@@ -1275,16 +1323,25 @@
       ],
       "schema:name": "studyAssayMeasurementType",
       "schema:description": "A term to qualify the endpoint, or what is being measured (e.g. gene expression profiling; protein identification).",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "A term to qualify the endpoint, or what is being measured (e.g. gene expression profiling; protein identification).",
       "skos:prefLabel": "Measurement Type",
+      "hunLabel": "Measurement Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/b7ba0d40-5aae-4275-bdb7-bd1fcddcac68",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/11aba71e-1713-41af-9912-b186ff736e89",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayOtherMeasurmentType": {
@@ -1366,16 +1423,23 @@
       ],
       "schema:name": "studyAssayOtherMeasurmentType",
       "schema:description": "If Other was selected in Measurement Type, list any other measurement types that were used. Terms from NCBO Bioportal are recommended.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Measurement Type, list any other measurement types that were used. Terms from NCBO Bioportal are recommended.",
       "skos:prefLabel": "Other Measurement Type",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/6ce386f9-9a74-45f9-bbcc-efcf6354df7a",
+      "hunLabel": "Other Measurement Type",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/54f1b778-4ce3-4dbb-a3ab-6d8b4d52a0c6",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayTechnologyType": {
@@ -1499,16 +1563,25 @@
       ],
       "schema:name": "studyAssayTechnologyType",
       "schema:description": "A term to identify the technology used to perform the measurement (e.g. DNA microarray; mass spectrometry).",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "A term to identify the technology used to perform the measurement (e.g. DNA microarray; mass spectrometry).",
       "skos:prefLabel": "Technology Type",
+      "hunLabel": "Technology Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/e089c518-93f6-4f24-891a-36f1e960f8a4",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/f66c793c-d6f7-4a27-98ad-e00dfe27d441",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayOtherTechnologyType": {
@@ -1590,16 +1663,23 @@
       ],
       "schema:name": "studyAssayOtherTechnologyType",
       "schema:description": "If Other was selected in Technology Type, list any other technology types that were used in this Dataset.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Technology Type, list any other technology types that were used in this Dataset.",
       "skos:prefLabel": "Other Technology Type",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/69fae457-a646-43cb-93bd-fb007b3b55e2",
+      "hunLabel": "Other Technology Type",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/64ca6eef-23c4-42fe-8b80-229c24f328d7",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayPlatform": {
@@ -1646,6 +1726,9 @@
         "requiredValue": false,
         "multipleChoice": true,
         "literals": [
+          {
+            "label": "Agilent"
+          },
           {
             "label": "210-MS GC Ion Trap (Varian)"
           },
@@ -1753,9 +1836,6 @@
           },
           {
             "label": "ACQUITY TQD (Waters)"
-          },
-          {
-            "label": "Agilent"
           },
           {
             "label": "Agilent 5975E GC/MSD (Agilent)"
@@ -2236,16 +2316,25 @@
       ],
       "schema:name": "studyAssayPlatform",
       "schema:description": "The manufacturer and name of the technology platform used in the assay (e.g. Bruker AVANCE).",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The manufacturer and name of the technology platform used in the assay (e.g. Bruker AVANCE).",
       "skos:prefLabel": "Technology Platform",
+      "hunLabel": "Technology Platform",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/a9342357-e22b-4f48-b0e1-e7f34aaf2a63",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/92a92e95-2242-4206-9e16-17422363030c",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayOtherPlatform": {
@@ -2327,16 +2416,23 @@
       ],
       "schema:name": "studyAssayOtherPlatform",
       "schema:description": "If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.",
       "skos:prefLabel": "Other Technology Platform",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/63200dea-c0b7-4b1c-af65-0e7a02383376",
+      "hunLabel": "Other Technology Platform",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/741cea32-dc75-489a-a137-ff4fe6c71402",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "studyAssayCellType": {
@@ -2420,16 +2516,25 @@
       ],
       "schema:name": "studyAssayCellType",
       "schema:description": "The name of the cell line from which the source or sample derives.",
-      "pav:createdOn": "2023-03-24T11:47:34+01:00",
+      "pav:createdOn": "2023-06-19T10:32:01+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The name of the cell line from which the source or sample derives.",
       "skos:prefLabel": "Cell Type",
+      "hunLabel": "Cell Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/241698c6-748d-4d56-a12c-d13df39ba2b6",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/26820c8e-d348-4d9d-8457-f9916ebfbd2d",
       "$schema": "http://json-schema.org/draft-04/schema#"
     }
   },
@@ -2459,15 +2564,16 @@
   ],
   "schema:name": "Life Sciences Metadata",
   "schema:description": "",
-  "pav:createdOn": "2023-03-24T11:47:34+01:00",
+  "pav:createdOn": "2023-06-19T10:32:01+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-24T11:47:34+01:00",
+  "pav:lastUpdatedOn": "2023-06-19T10:32:01+02:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
+  "hunName": "Life Sciences Metadata",
   "schema:identifier": "biomedical",
-  "@id": "https://repo.arp.orgx/templates/9789cda3-3529-43a7-a294-f597a9e1630f",
+  "@id": "https://repo.arp.orgx/templates/978aaeb1-4814-4886-b31d-cb27e5018931",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }
