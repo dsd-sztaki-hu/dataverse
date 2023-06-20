@@ -446,8 +446,8 @@ public class RoCrateManager {
 
         //contextualEntity.addProperty("name", "displayNameField");
         ContextualEntity contextualEntity = contextualEntityBuilder.build();
-        // The "@id" is always a prop in a contextualEntity
-        if (contextualEntity.getProperties().size() > 1) {
+        // The "@id" and "name" are always props in a contextualEntity
+        if (contextualEntity.getProperties().size() > 2) {
             contextualEntity.addType(parentFieldName);
             // To keep the order of the compound field values synchronised with their corresponding root data entity values
             // the new compound field values need to be inserted to the same position
