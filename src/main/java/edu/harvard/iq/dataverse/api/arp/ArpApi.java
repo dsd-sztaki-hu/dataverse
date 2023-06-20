@@ -629,11 +629,7 @@ public class ArpApi extends AbstractApiBean {
             }
 
             ObjectMapper mapper = (new ObjectMapper()).enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED).enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS);
-            RoCrate postProcessedRoCrate = roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset());
-            String postProcessedRoCrateString = mapper.readTree(postProcessedRoCrate.getJsonMetadata()).toPrettyString();
-            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
-                writer.write(postProcessedRoCrateString);
-            }
+            roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset());
             return ok( json(managedVersion) );
 
         } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {

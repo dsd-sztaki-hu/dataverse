@@ -761,9 +761,10 @@ public class RoCrateManager {
         return rootNode.toPrettyString();
     }
 
-    public RoCrate postProcessRoCrateFromAroma(Dataset dataset) throws JsonProcessingException {
+    public void postProcessRoCrateFromAroma(Dataset dataset) throws JsonProcessingException {
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
         RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        String roCrateFolderPath = getRoCrateFolder(dataset);
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
         // Updates the id of the entities in the RO-Crate with their new ids from DV
@@ -810,9 +811,11 @@ public class RoCrateManager {
                 roCrate.deleteValuePairFromContext(entry.getKey());
             }
         });
+        
+        roCrate.setRoCratePreview(new AutomaticPreview());
 
-
-        return roCrate;
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
     private void updateIdForFileEntity(RoCrate roCrate, JsonNode rootDataEntity) {
