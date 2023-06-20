@@ -6146,12 +6146,12 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public void downloadRoCrate() throws Exception {
-        String json = Files.readString(Paths.get(roCrateManager.getRoCratePath(dataset)));
-
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
-        response.setContentType("application/json");
-        response.setHeader("Content-Disposition", "attachment;filename="+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+        String dsId = dataset.getIdentifier().split("/")[1];
+        String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
         outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset))));
