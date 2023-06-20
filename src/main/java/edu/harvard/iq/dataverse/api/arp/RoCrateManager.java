@@ -992,7 +992,7 @@ public class RoCrateManager {
                 controlledVocabValue = fieldValue.toString();
             }
             if (datasetFieldType.isAllowMultiples()) {
-                field.set("value", TextNode.valueOf(controlledVocabValue));
+                field.set("value", mapper.createArrayNode().add(controlledVocabValue));
             } else {
                 field.put("value", controlledVocabValue);
             }
