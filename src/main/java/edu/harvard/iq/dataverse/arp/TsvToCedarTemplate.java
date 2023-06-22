@@ -250,7 +250,6 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         JsonObject templateField = cedarTemplateField.deepCopy();
 
         processCommonFields(templateField, datasetField, true);
-        templateField.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
         
 
         switch (fieldType) {
@@ -357,6 +356,14 @@ public class TsvToCedarTemplate implements java.io.Serializable {
             cedarTemplate.addProperty("minItems", 1);
             cedarTemplate.addProperty("maxItems ", 0);
         }
+        if (cedarTemplate.has("_valueConstraints")) {
+            cedarTemplate.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
+        } else {
+            var valueConstraint = new JsonObject();
+            valueConstraint.addProperty("requiredValue", datasetField.isRequired());
+            cedarTemplate.add("_valueConstraints", valueConstraint);
+        }
+        
         processArpFields(cedarTemplate, datasetField);
     }
     
