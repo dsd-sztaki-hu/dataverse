@@ -249,7 +249,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         String fieldType = datasetField.getFieldType().toLowerCase();
         JsonObject templateField = cedarTemplateField.deepCopy();
 
-        processCommonFields(templateField, datasetField, true);
+        processCommonFields(templateField, datasetField);
         
 
         switch (fieldType) {
@@ -304,7 +304,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues, DataverseMetadataBlock dataverseMetadataBlock) {
         JsonObject templateElement = cedarTemplateElement.deepCopy();
-        processCommonFields(templateElement, datasetField, false);
+        processCommonFields(templateElement, datasetField);
         children.forEach(child -> {
             JsonArray cvvs = new JsonArray();
             controlledVocabularyValues.stream()
@@ -321,7 +321,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
     }
 
-    private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField, boolean parentIsTemplateField) {
+    private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
          * upon importing from CEDAR the colons are replaced with dots again
@@ -352,7 +352,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                 // ignore
             }
         }
-        if (parentIsTemplateField && datasetField.isAllowmultiples()) {
+        if (datasetField.isAllowmultiples()) {
             cedarTemplate.addProperty("minItems", 1);
             cedarTemplate.addProperty("maxItems ", 0);
         }
