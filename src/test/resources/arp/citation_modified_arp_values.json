@@ -1474,12 +1474,15 @@
             "hunLabel": "Name",
             "_arp": {
               "dataverse": {
-                "watermark": "1) Family Name, Given Name or 2) Organization XYZ",
+                "watermark": "1) Modified Family Name, Given Name or 2) Modified Organization XYZ",
                 "displayFormat": "#VALUE",
-                "advancedSearchField": true,
-                "facetable": true,
-                "displayoncreate": true
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
               }
+            },
+            "_valueConstraints": {
+              "requiredValue": false
             },
             "@id": "https://repo.arp.orgx/template-fields/4f3a7ba7-1c9a-477f-93a9-073e856977a6",
             "$schema": "http://json-schema.org/draft-04/schema#"
@@ -1838,9 +1841,6 @@
             "displayoncreate": true
           }
         },
-        "_valueConstraints": {
-          "requiredValue": true
-        },
         "@id": "https://repo.arp.orgx/template-elements/9f014fff-d48c-4ac8-ac53-e1de28656148",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
@@ -2180,7 +2180,7 @@
               "inputType": "email"
             },
             "_valueConstraints": {
-              "requiredValue": true
+              "requiredValue": false
             },
             "properties": {
               "@type": {
@@ -2229,11 +2229,11 @@
             "hunLabel": "E-mail",
             "_arp": {
               "dataverse": {
-                "watermark": "name@email.xyz",
+                "watermark": "modifiedname@email.xyz",
                 "displayFormat": "#EMAIL",
-                "advancedSearchField": false,
-                "facetable": false,
-                "displayoncreate": true
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
               }
             },
             "@id": "https://repo.arp.orgx/template-fields/8608f653-95b3-45e3-82f0-e153dc1d689a",
@@ -2266,9 +2266,6 @@
             "facetable": false,
             "displayoncreate": true
           }
-        },
-        "_valueConstraints": {
-          "requiredValue": true
         },
         "@id": "https://repo.arp.orgx/template-elements/dce118e8-21ee-45ec-8a3a-d98720b03368",
         "$schema": "http://json-schema.org/draft-04/schema#"
@@ -2587,9 +2584,6 @@
             "facetable": false,
             "displayoncreate": true
           }
-        },
-        "_valueConstraints": {
-          "requiredValue": true
         },
         "@id": "https://repo.arp.orgx/template-elements/4e084f4b-06ad-4f71-92c5-2547dd1e6203",
         "$schema": "http://json-schema.org/draft-04/schema#"
