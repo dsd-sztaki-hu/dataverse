@@ -75,7 +75,9 @@ public class RoCrateManager {
             String fieldName = fieldType.getName();
             String fieldUri = fieldType.getUri();
             
-            conformsToMdbs.add(datasetField.getDatasetFieldType().getMetadataBlock());
+            if (!datasetField.isEmpty()) {
+                conformsToMdbs.add(datasetField.getDatasetFieldType().getMetadataBlock());
+            }
             
             // Update the contextual entities with the new compound values
             if (fieldType.isCompound()) {
