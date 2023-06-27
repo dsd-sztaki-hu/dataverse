@@ -705,7 +705,9 @@ public class RoCrateManager {
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream().collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
 
-        rootDataEntity.getProperties().fields().forEachRemaining(field -> {
+        var fieldsIterator = rootDataEntity.getProperties().fields();
+        while (fieldsIterator.hasNext()) {
+            var field = fieldsIterator.next();
             String fieldName = field.getKey();
             if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
@@ -714,7 +716,7 @@ public class RoCrateManager {
                 // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
                 // wich must be an error.`
                 if (fieldName.equals("name") && datasetFieldType == null) {
-                    return;
+                    break;
                 }
                 MetadataBlock metadataBlock = datasetFieldType.getMetadataBlock();
                 // Check if the import format already contains the field's parent metadata block
@@ -734,7 +736,7 @@ public class RoCrateManager {
                     }
                 }
             }
-        });
+        }
 
         ObjectNode importFormatJson = mapper.createObjectNode();
         importFormatJson.set("metadataBlocks", importFormatMetadataBlocks);
