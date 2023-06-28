@@ -30,6 +30,8 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Named;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,6 +56,9 @@ public class RoCrateManager {
 
     @EJB
     ControlledVocabularyValueServiceBean controlledVocabularyValueService;
+    
+    @EJB
+    MetadataBlockServiceBean metadataBlockServiceBean;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -245,7 +250,11 @@ public class RoCrateManager {
             conformsToArray.add(mapper.createObjectNode().put("@id", id));
         });
 
-        rootDataEntity.addProperty("conformsTo", conformsToArray);
+        if (rootDataEntity.getProperties().has("conformsTo")) {
+            rootDataEntity.getProperties().set("conformsTo", conformsToArray);
+        } else {
+            rootDataEntity.addProperty("conformsTo", conformsToArray);
+        }
     }
     
     private void removeDeletedEntities(RoCrate roCrate, Dataset dataset, List<DatasetField> datasetFields, Map<String, DatasetFieldType> datasetFieldTypeMap) {
@@ -695,12 +704,9 @@ public class RoCrateManager {
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
-    public String importRoCrate(Dataset dataset) {
+    public String importRoCrate(RoCrate roCrate) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode importFormatMetadataBlocks = mapper.createObjectNode();
-
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
         Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream().collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
@@ -758,16 +764,57 @@ public class RoCrateManager {
         return fieldService.findAllOrderedById().stream().filter(datasetFieldType -> mdbIds.contains(datasetFieldType.getMetadataBlock().getIdString())).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
     }
 
-    public String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
+    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(roCrateJson);
         removeReverseProperties(rootNode);
-        return rootNode.toPrettyString();
-    }
+        
+        try (FileWriter writer = new FileWriter(getRoCratePath(dataset))) {
+            writer.write(rootNode.toPrettyString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
-    public void postProcessRoCrateFromAroma(Dataset dataset) throws JsonProcessingException {
+        List<MetadataBlock> mdbs = metadataBlockServiceBean.listMetadataBlocks();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
         RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
+        List<String> rootDataEntityPropNames = new ArrayList<>();
+        Set<MetadataBlock> conformsToMdbs = new HashSet<>();
+        RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
+        var roCrateContext = new ObjectMapper().readTree(roCrate.getJsonMetadata()).get("@context").get(1);
+        
+        rootDataEntityProps.fieldNames().forEachRemaining(fieldName -> {
+            if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
+                rootDataEntityPropNames.add(fieldName);
+                if (!roCrateContext.has(fieldName)) {
+                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldService.findByName(fieldName).getUri());
+                }
+                for (var mdb : mdbs) {
+                    if (mdb.getDatasetFieldTypes().stream().anyMatch(datasetFieldType -> datasetFieldType.getName().equals(fieldName))) {
+                        conformsToMdbs.add(mdb);
+                        break;
+                    }
+                }
+            }
+        });
+        
+        collectConformsToIds(roCrate.getRootDataEntity(), conformsToMdbs, new ObjectMapper());
+        
+        // Delete properties from the @context, because AROMA only deletes them if they were added in aroma
+        // props added in DV won't be removed from the @context if they were deleted in AROMA
+        roCrateContext.fields().forEachRemaining(entry -> {
+            if (!rootDataEntityPropNames.contains(entry.getKey()) && 
+                    roCrate.getAllContextualEntities().stream().noneMatch(ce -> ce.getProperties().has(entry.getKey()))) {
+                roCrate.deleteValuePairFromContext(entry.getKey());
+            }
+        });
+        
+        return roCrate;
+    }
+
+    public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws JsonProcessingException {
         String roCrateFolderPath = getRoCrateFolder(dataset);
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
@@ -807,13 +854,6 @@ public class RoCrateManager {
                     }
                 }
             } // else it's a string property, there's nothing to update
-        });
-        // Delete properties from the @context, because AROMA only sets them to "null" if the entity is deleted
-        var roCrateContext = new ObjectMapper().readTree(roCrate.getJsonMetadata()).get("@context").get(1);
-        roCrateContext.fields().forEachRemaining(entry -> {
-            if (entry.getValue().textValue().equals("null")) {
-                roCrate.deleteValuePairFromContext(entry.getKey());
-            }
         });
         
         roCrate.setRoCratePreview(new AutomaticPreview());

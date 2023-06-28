@@ -566,15 +566,12 @@ public class ArpApi extends AbstractApiBean {
     @Consumes("application/json")
     @Produces("application/json")
     public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) throws JsonProcessingException {
-        Map<String, DatasetFieldType> datasetFieldTypeMap;
         Dataset dataset;
+        RoCrate preProcessedRoCrate;
         try {
             findAuthenticatedUserOrDie();
-            // TODO: collect only from mdbs in conformsTo
             dataset = datasetService.findByGlobalId(persistentId);
-            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
-                writer.write(roCrateManager.preProcessRoCrateFromAroma(roCrateJson));
-            }
+            preProcessedRoCrate = roCrateManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
         } catch (IOException e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
@@ -583,7 +580,7 @@ public class ArpApi extends AbstractApiBean {
             return error(FORBIDDEN, "Authorized users only.");
         }
 
-        String importFormat = roCrateManager.importRoCrate(dataset);
+        String importFormat = roCrateManager.importRoCrate(preProcessedRoCrate);
 
         //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
         try ( StringReader rdr = new StringReader(importFormat) ) {
@@ -628,8 +625,7 @@ public class ArpApi extends AbstractApiBean {
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
             }
 
-            ObjectMapper mapper = (new ObjectMapper()).enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED).enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS);
-            roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset());
+            roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
             return ok( json(managedVersion) );
 
         } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
