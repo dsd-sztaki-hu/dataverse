@@ -3,7 +3,7 @@
 SCRIPTDIR=`dirname $0`
 [ -f $SCRIPTDIR/dataverse_script_config ] && . $SCRIPTDIR/dataverse_script_config
 
-GLASSFISH_DIR=${GLASSFISH_DIR:-/usr/local/glassfish5}
+GLASSFISH_DIR=${GLASSFISH_DIR:-/usr/local/payara5}
 ASADMIN=$GLASSFISH_DIR/bin/asadmin
 
 DVNDB=${DVNDB:-dvndb}
