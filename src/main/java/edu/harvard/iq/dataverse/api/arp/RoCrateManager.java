@@ -862,17 +862,18 @@ public class RoCrateManager {
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
+    // Update the id of the file entity in case it not following the format: #UUID
     private void updateIdForFileEntity(RoCrate roCrate, JsonNode rootDataEntity) {
         String oldId = rootDataEntity.get("@id").textValue();
         boolean idNeedsToBeUpdated = false;
         try {
-            UUID.fromString(oldId);
+            UUID.fromString(oldId.startsWith("#") ? oldId.substring(1) : oldId);
         } catch (IllegalArgumentException ex) {
             idNeedsToBeUpdated = true;
         }
 
         if (idNeedsToBeUpdated) {
-            String newId  = UUID.randomUUID().toString();
+            String newId  = "#" + UUID.randomUUID();
             ((ObjectNode) rootDataEntity).put("@id", newId);
             roCrate.getAllContextualEntities().stream().filter(contextualEntity -> contextualEntity.getId().equals(oldId)).findFirst().get().getProperties().put("@id", newId);
         }
