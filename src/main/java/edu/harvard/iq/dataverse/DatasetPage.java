@@ -2769,6 +2769,13 @@ public class DatasetPage implements java.io.Serializable {
         } else {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.only.authenticatedUsers"));
         }
+        
+        try {
+            roCrateManager.saveRoCrateVersion(dataset, false, minor);
+        } catch (IOException e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+        }
+
         return returnToDraftVersion();
     }
 
@@ -2838,6 +2845,13 @@ public class DatasetPage implements java.io.Serializable {
         } else {
             JsfHelper.addSuccessMessage(successMsg);
         }
+        
+        try {
+            roCrateManager.saveRoCrateVersion(dataset, true, false);
+        } catch (IOException e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+        }
+        
         return returnToDatasetOnly();
     }
 
@@ -6150,11 +6164,12 @@ public class DatasetPage implements java.io.Serializable {
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
         String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+        String versionNumber = dataset.getLatestVersionForCopy().getFriendlyVersionNumber();
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset))));
+        outputStream.write(zipFolder(Path.of(versionNumber.equals("DRAFT") ? roCrateManager.getRoCrateFolder(dataset) : roCrateManager.getRoCrateFolder(dataset, versionNumber))));
         outputStream.flush();
         outputStream.close();
 

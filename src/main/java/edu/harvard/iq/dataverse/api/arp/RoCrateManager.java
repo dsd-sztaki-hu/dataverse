@@ -24,6 +24,7 @@ import edu.kit.datamanager.ro_crate.reader.FolderReader;
 import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
 import edu.kit.datamanager.ro_crate.writer.FolderWriter;
 import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.ejb.EJB;
@@ -676,6 +677,28 @@ public class RoCrateManager {
         }
 
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+    }
+
+    public String getRoCratePath(Dataset dataset, String versionNumber) {
+        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    public String getRoCrateHtmlPreviewPath(Dataset dataset, String versionNumber) {
+        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name"));
+    }
+    public String getRoCrateFolder(Dataset dataset, String versionNumber) {
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata_v" + versionNumber);
+    }
+    
+    public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
+        String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
+        String roCrateFolderPath = getRoCrateFolder(dataset);
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {

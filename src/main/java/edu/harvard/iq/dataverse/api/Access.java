@@ -1157,12 +1157,13 @@ public class Access extends AbstractApiBean {
     }
     
     private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset) throws IOException {
-        byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dataset)));
+        String versionNumber = dataset.getLatestVersionForCopy().getFriendlyVersionNumber();
+        byte[] roCrateBytes = Files.readAllBytes(Paths.get(versionNumber.equals("DRAFT") ? roCrateManager.getRoCratePath(dataset) : roCrateManager.getRoCratePath(dataset, versionNumber)));
         String metadataFileName = BundleUtil.getStringFromBundle("arp.rocrate.metadata.name");
         String metadataMimeType = "application/json";
         zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);
 
-        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dataset)));
+        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(versionNumber.equals("DRAFT") ? roCrateManager.getRoCrateHtmlPreviewPath(dataset) : roCrateManager.getRoCrateHtmlPreviewPath(dataset, versionNumber)));
         String previewFileName = BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name");
         String previewMimeType = "text/html";
         zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);

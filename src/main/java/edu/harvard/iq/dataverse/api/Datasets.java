@@ -3,6 +3,7 @@ package edu.harvard.iq.dataverse.api;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.DatasetLock.Reason;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -82,12 +83,7 @@ import edu.harvard.iq.dataverse.makedatacount.MakeDataCountLoggingServiceBean.Ma
 import edu.harvard.iq.dataverse.metrics.MetricsUtil;
 import edu.harvard.iq.dataverse.makedatacount.MakeDataCountUtil;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
-import edu.harvard.iq.dataverse.util.ArchiverUtil;
-import edu.harvard.iq.dataverse.util.BundleUtil;
-import edu.harvard.iq.dataverse.util.EjbUtil;
-import edu.harvard.iq.dataverse.util.FileUtil;
-import edu.harvard.iq.dataverse.util.MarkupChecker;
-import edu.harvard.iq.dataverse.util.SystemConfig;
+import edu.harvard.iq.dataverse.util.*;
 import edu.harvard.iq.dataverse.util.bagit.OREMap;
 import edu.harvard.iq.dataverse.util.json.JSONLDUtil;
 import edu.harvard.iq.dataverse.util.json.JsonLDTerm;
@@ -228,6 +224,9 @@ public class Datasets extends AbstractApiBean {
 
     @EJB
     DatasetVersionServiceBean datasetversionService;
+
+    @EJB
+    RoCrateManager roCrateManager;
 
     /**
      * Used to consolidate the way we parse and handle dataset versions.
@@ -1197,6 +1196,13 @@ public class Datasets extends AbstractApiBean {
                 if (errorMsg != null) {
                     return error(Response.Status.INTERNAL_SERVER_ERROR, errorMsg);
                 } else {
+                    
+                    try {
+                        roCrateManager.saveRoCrateVersion(ds, true, false);
+                    } catch (IOException e) {
+                        JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+                    }
+                    
                     return Response.ok(Json.createObjectBuilder()
                             .add("status", STATUS_OK)
                             .add("status_details", successMsg)
@@ -1208,6 +1214,13 @@ public class Datasets extends AbstractApiBean {
                 PublishDatasetResult res = execCommand(new PublishDatasetCommand(ds,
                         createDataverseRequest(user),
                         isMinor));
+
+                try {
+                    roCrateManager.saveRoCrateVersion(ds, false, isMinor);
+                } catch (IOException e) {
+                    JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+                }
+                
                 return res.isWorkflow() ? accepted(json(res.getDataset())) : ok(json(res.getDataset()));
             }
         } catch (WrappedResponse ex) {
