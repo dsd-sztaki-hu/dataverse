@@ -12,6 +12,9 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// Note: this class have been copied from the original ro_crate project and updated to call our preview generation
+// service running as a standalone service.
+
 /**
  * Class responsible for the generation of the human-readable representation of the metadata.
  */
@@ -19,18 +22,6 @@ public class PreviewGenerator {
 
     private static final Logger logger = Logger.getLogger(ArpConfig.class.getCanonicalName());
 
-    private static final Properties defaultProperties = new Properties();
-
-    static {
-        try (InputStream input = PreviewGenerator.class.getClassLoader().getResourceAsStream("arp/default.properties")) {
-            if (input == null) {
-                logger.log(Level.SEVERE, "ArpConfigBean was unable to load config.properties");
-            }
-            defaultProperties.load(input);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
 
     /**
      * The method that from the location of the crate generates the html file.
@@ -42,7 +33,7 @@ public class PreviewGenerator {
         String[] parts = location.split("/");
         int numParts = parts.length;
         String roCratePath = String.join("/", parts[numParts - 4], parts[numParts - 3], parts[numParts - 2], parts[numParts - 1]);
-        String previewGeneratorAddress = defaultProperties.getProperty("arp.ro.crate.preview.generator.address");
+        String previewGeneratorAddress = ArpConfig.instance.get("arp.rocrate.previewgenerator.address");
         String uriString = previewGeneratorAddress + "/" + roCratePath;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(uriString))

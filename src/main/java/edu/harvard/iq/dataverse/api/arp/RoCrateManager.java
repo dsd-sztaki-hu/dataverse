@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
@@ -60,6 +61,9 @@ public class RoCrateManager {
     
     @EJB
     MetadataBlockServiceBean metadataBlockServiceBean;
+
+    @EJB
+    ArpConfig arpConfig;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -667,7 +671,7 @@ public class RoCrateManager {
     }
 
     public String getRoCrateHtmlPreviewPath(Dataset dataset) {
-        return String.join(File.separator, getRoCrateFolder(dataset), BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name"));
+        return String.join(File.separator, getRoCrateFolder(dataset), arpConfig.get("arp.rocrate.html.preview.name"));
     }
 
     public String getRoCrateFolder(Dataset dataset) {
@@ -684,7 +688,7 @@ public class RoCrateManager {
     }
 
     public String getRoCrateHtmlPreviewPath(Dataset dataset, String versionNumber) {
-        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), BundleUtil.getStringFromBundle("arp.rocrate.html.preview.name"));
+        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), arpConfig.get("arp.rocrate.html.preview.name"));
     }
     public String getRoCrateFolder(Dataset dataset, String versionNumber) {
         String filesRootDirectory = System.getProperty("dataverse.files.directory");

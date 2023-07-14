@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Named;
@@ -22,6 +23,11 @@ public class ArpConfig
 
     private static final Properties defaultProperties = new Properties();
 
+    /**
+        Static singleton instance to be accessed outside the EJB infrastructure, eg. {@link edu.kit.datamanager.ro_crate.preview.PreviewGenerator}
+     */
+    public static ArpConfig instance;
+
     static {
         try (InputStream input = ArpConfig.class.getClassLoader().getResourceAsStream("arp/default.properties")) {
             if (input == null) {
@@ -31,6 +37,11 @@ public class ArpConfig
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    @PostConstruct
+    public void init() {
+        instance = this;
     }
 
     /**
