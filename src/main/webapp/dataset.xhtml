@@ -893,10 +893,7 @@
                                     </p:commandLink>
                                     <h:outputLink
                                             styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}"
-                                            rendered="#{!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView
-                                                               and DatasetPage.canUpdateDataset())}"
+                                            rendered="#{!widgetWrapper.widgetView}"
                                             target="_blank">
                                         #{bundle['arp.dataset.openAroma']}
                                     </h:outputLink>
@@ -958,8 +955,7 @@
                                 </ui:include>
                             </p:tab>
 
-                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
-                                   rendered="#{DatasetPage.sessionUserAuthenticated and (empty DatasetPage.editMode) and DatasetPage.canUpdateDataset()}">
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}">
                                 <ui:include src="aroma.xhtml">
                                     <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
                                     <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>

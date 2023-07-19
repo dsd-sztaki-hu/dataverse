@@ -16,8 +16,9 @@ import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
@@ -25,7 +26,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.ejb.EJB;
 import javax.json.Json;
-import javax.json.JsonArrayBuilder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -503,6 +503,25 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
+    @GET
+    @Path("/describoProfileForDataset/{persistentId}")
+    @Produces("application/json")
+    public Response getDescriboProfileForDataset(
+            @PathParam("persistentId") String persistentId,
+            @QueryParam("lang") String language
+    ) throws WrappedResponse
+    {
+        var ds = datasetSvc.findByGlobalId(persistentId);
+        if (ds == null) {
+            throw new WrappedResponse(notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset.not.found.persistentId", Collections.singletonList(persistentId))));
+        }
+        Dataverse dv = ds.getDataverseContext();
+        String mdbIds = dv.getMetadataBlocks().stream()
+                .map(MetadataBlock::getId)
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        return convertMdbsToDescriboProfile(mdbIds, language);
+    }
 
     /**
      * Updates MDB from an uploaded TSV file.
@@ -534,31 +553,48 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
-    public Response getRoCrate(@PathParam("persistentId") String persistentId) {
-        JsonObject roCrateJson;
+    public Response getRoCrate(@PathParam("persistentId") String persistentId) throws WrappedResponse
+    {
+        // Get the dataset by pid so that we get is actual ID.
+        Dataset dataset = datasetService.findByGlobalId(persistentId);
 
-        try {
-            findAuthenticatedUserOrDie();
-            Dataset dataset = datasetService.findByGlobalId(persistentId);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String roCratePath = roCrateManager.getRoCratePath(dataset);
-            if (!Files.exists(Paths.get(roCratePath))) {
-                roCrateManager.createOrUpdateRoCrate(dataset);
+        return response( req -> {
+            // When we get here user's auth is already checked. We are either an authenticated user or guest.
+            final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
+            // The latest version is the latest version accessible to the user. Fro guest it must be a published version
+            // for an author it is either the published version or DRAFT.
+            final DatasetVersion latest = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            try {
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                var versionNumber = latest.getFriendlyVersionNumber();
+                String roCratePath = versionNumber.equals("DRAFT")
+                        ? roCrateManager.getRoCratePath(dataset)
+                        : roCrateManager.getRoCratePath(dataset, versionNumber);
+                if (!Files.exists(Paths.get(roCratePath))) {
+                    roCrateManager.createOrUpdateRoCrate(dataset);
+                }
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
+                JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                var resp = Response.ok(roCrateJson.toString());
+                // If returning the released version it is readonly
+                // In any other case the user is already checked to have access to a draft version and can edit
+                // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
+                if (latest.isReleased()) {
+                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
+                                .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+                }
+                return resp.build();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return Response.serverError().entity(e.getMessage()).build();
+            } catch (WrappedResponse ex) {
+                ex.printStackTrace();
+                return error(FORBIDDEN, "Authorized users only.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
-            roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return Response.serverError().entity(e.getMessage()).build();
-        } catch (WrappedResponse ex) {
-            ex.printStackTrace();
-            return error(FORBIDDEN, "Authorized users only.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
-        }
-
-        return Response.ok(roCrateJson.toString()).build();
+        });
     }
 
     @POST
