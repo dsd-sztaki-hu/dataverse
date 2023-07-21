@@ -247,7 +247,11 @@ public class ArpServiceBean implements java.io.Serializable {
         String folderJson = client.send(listFolderRequest, ofString()).body();
 
         AtomicReference<String> folderId = new AtomicReference<>("");
-        JsonNode listFolderResources = new ObjectMapper().readTree(folderJson).get("resources");
+        JsonNode rootNode = new ObjectMapper().readTree(folderJson);
+        if (rootNode.get("errorMessage") != null) {
+            throw new Exception("Error received from CEDAR: "+folderJson);
+        }
+        JsonNode listFolderResources = rootNode.get("resources");
         listFolderResources.forEach(resource -> {if (resource.get("resourceType").asText().equals("folder") && resource.get("schema:name").asText().equals(folderName)) {
             folderId.set(resource.get("@id").textValue());
         }
@@ -1074,7 +1078,7 @@ public class ArpServiceBean implements java.io.Serializable {
             String templateJson = exportTemplateToCedar(cedarTemplate, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {
-            throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed.",  e);
+            throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
     }
 }
