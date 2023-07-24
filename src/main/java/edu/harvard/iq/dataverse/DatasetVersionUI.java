@@ -412,9 +412,11 @@ public class DatasetVersionUI implements Serializable {
             } catch (ArpException arpException) {
                 JsfHelper.addErrorMessage(arpException.getMessage());
                 logger.severe(arpException.getMessage());
+                arpException.printStackTrace();
             } catch (Exception e) {
                 JsfHelper.addErrorMessage("Failed to collect external vocabulary values.");
                 logger.severe("Failed to collect external vocabulary values.");
+                e.printStackTrace();
             }
         }
 
