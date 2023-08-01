@@ -504,7 +504,7 @@ public class ArpApi extends AbstractApiBean {
     }
 
     @GET
-    @Path("/describoProfileForDataset/{persistentId}")
+    @Path("/describoProfileForDataset/{persistentId : .+}")
     @Produces("application/json")
     public Response getDescriboProfileForDataset(
             @PathParam("persistentId") String persistentId,
