@@ -709,7 +709,7 @@ public class RoCrateManager {
     }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
-        logger.fine("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
+        logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
         var roCratePath = Paths.get(getRoCratePath(dataset));
         RoCrate roCrate;
         String roCrateFolderPath = getRoCrateFolder(dataset);
@@ -738,9 +738,9 @@ public class RoCrateManager {
         // This can be the case for older Datasets which have not been synced with ro-crate editing before.
         var latest = dataset.getLatestVersion();
         var versionNumber = latest.getFriendlyVersionNumber();
-        logger.fine("createOrUpdateRoCrate: latest version is " + versionNumber);
+        logger.info("createOrUpdateRoCrate: latest version is " + versionNumber);
         if (!versionNumber.equals("DRAFT")) {
-            logger.fine("createOrUpdateRoCrate: calling saveRoCrateVersion");
+            logger.info("createOrUpdateRoCrate: calling saveRoCrateVersion");
             // idUpdate=true causes creation of rocrate dir with the current versionNumber
             saveRoCrateVersion(dataset, true, false);
         }
