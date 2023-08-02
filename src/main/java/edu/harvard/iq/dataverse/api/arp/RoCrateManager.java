@@ -707,6 +707,11 @@ public class RoCrateManager {
         String roCrateFolderPath = getRoCrateFolder(dataset);
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
+    public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException
+    {
+        String roCrateFolderPath = getRoCrateFolder(dataset);
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+    }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
         logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
@@ -734,17 +739,17 @@ public class RoCrateManager {
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
 
-        // If the latest version is not draft, then copy the version we generated as the current version.
-        // This can be the case for older Datasets which have not been synced with ro-crate editing before.
-        var latest = dataset.getLatestVersion();
-        var versionNumber = latest.getFriendlyVersionNumber();
-        logger.info("createOrUpdateRoCrate: latest version is " + versionNumber);
-        if (!versionNumber.equals("DRAFT")) {
-            logger.info("createOrUpdateRoCrate: calling saveRoCrateVersion");
-            // idUpdate=true causes creation of rocrate dir with the current versionNumber
-            saveRoCrateVersion(dataset, true, false);
+        // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
+        // from the beginning
+        var released = dataset.getReleasedVersion();
+        if (released != null) {
+            var releasedVersion = released.getFriendlyVersionNumber();
+            var releasedPath = getRoCratePath(dataset, releasedVersion);
+            if (!Files.exists(Paths.get(releasedPath))) {
+                logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
+                saveRoCrateVersion(dataset, releasedVersion);
+            }
         }
-
     }
 
     public String importRoCrate(RoCrate roCrate) {
