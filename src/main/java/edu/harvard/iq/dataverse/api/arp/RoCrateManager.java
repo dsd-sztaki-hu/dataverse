@@ -40,11 +40,14 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Stateless
 @Named
 public class RoCrateManager {
+
+    private static final Logger logger = Logger.getLogger(RoCrateManager.class.getCanonicalName());
 
     private final String compoundIdAndUuidSeparator = "::";
     
@@ -706,6 +709,7 @@ public class RoCrateManager {
     }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
+        logger.fine("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
         var roCratePath = Paths.get(getRoCratePath(dataset));
         RoCrate roCrate;
         String roCrateFolderPath = getRoCrateFolder(dataset);
@@ -734,7 +738,9 @@ public class RoCrateManager {
         // This can be the case for older Datasets which have not been synced with ro-crate editing before.
         var latest = dataset.getLatestVersion();
         var versionNumber = latest.getFriendlyVersionNumber();
+        logger.fine("createOrUpdateRoCrate: latest version is " + versionNumber);
         if (!versionNumber.equals("DRAFT")) {
+            logger.fine("createOrUpdateRoCrate: calling saveRoCrateVersion");
             // idUpdate=true causes creation of rocrate dir with the current versionNumber
             saveRoCrateVersion(dataset, true, false);
         }
