@@ -12,7 +12,7 @@ public class CedarTemplateErrorsException extends Exception
 
     public CedarTemplateErrorsException(CedarTemplateErrors errors)
     {
-        super();
+        super(errors.toJson().toString());
         this.errors = errors;
     }
 

@@ -750,8 +750,15 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         //endregion
 
-        String mdbId = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier").textValue();
-        return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
+        // Check whether template has an identifier. TODO: we should make sure it is unique
+        var errors = new CedarTemplateErrors();
+        var idNode = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier");
+        if (idNode == null) {
+            errors.errors.add("Template identifier missing");
+            return errors;
+        }
+        String mdbId = idNode.textValue();
+        return checkCedarTemplate(cedarTemplate, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
     }
 
     public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) throws Exception {
@@ -1020,17 +1027,18 @@ public class ArpServiceBean implements java.io.Serializable {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
-        String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
 
         try {
-
             CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
-            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty())) {
+            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty() && cedarTemplateErrors.errors.isEmpty())) {
                 throw new CedarTemplateErrorsException(cedarTemplateErrors);
             }
             if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
                 overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
             }
+
+            // At this point we must have schema:identifier
+            String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
 
             mdbTsv = convertTemplateToDvMdb(templateJson, overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
