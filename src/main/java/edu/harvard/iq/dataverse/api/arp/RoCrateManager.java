@@ -729,6 +729,16 @@ public class RoCrateManager {
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+
+        // If the latest version is not draft, then copy the version we generated as the current version.
+        // This can be the case for older Datasets which have not been synced with ro-crate editing before.
+        var latest = dataset.getLatestVersion();
+        var versionNumber = latest.getFriendlyVersionNumber();
+        if (!versionNumber.equals("DRAFT")) {
+            // idUpdate=true causes creation of rocrate dir with the current versionNumber
+            saveRoCrateVersion(dataset, true, false);
+        }
+
     }
 
     public String importRoCrate(RoCrate roCrate) {
