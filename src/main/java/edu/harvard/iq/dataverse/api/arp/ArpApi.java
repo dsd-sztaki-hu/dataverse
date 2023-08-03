@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
@@ -25,6 +26,7 @@ import edu.kit.datamanager.ro_crate.RoCrate;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ejb.EJB;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -89,6 +91,12 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     ArpConfig arpConfig;
+
+    @EJB
+    PermissionServiceBean permissionService;
+
+    @Inject
+    DataverseSession dataverseSession;
 
     /**
      * Checks whether a CEDAR template is valid for use as a Metadatablock.
@@ -579,10 +587,18 @@ public class ArpApi extends AbstractApiBean {
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                if (latest.isReleased()) {
-                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
-                                .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+                AuthenticatedUser authenticatedUser = null;
+                try {
+                    authenticatedUser = findAuthenticatedUserOrDie();
+                } catch (WrappedResponse ex) {
+                    // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
+                    // otherwise this is a token authenticated user and we check EditDataset permission
                 }
+                if (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
+                            .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+                }
+
                 return resp.build();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
