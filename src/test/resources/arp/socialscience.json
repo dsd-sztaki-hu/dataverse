@@ -258,107 +258,107 @@
         },
         "unitOfAnalysis": {
           "enum": [
-            "/unitOfAnalysis"
+            "https://dataverse.org/schema/socialscience/unitOfAnalysis"
           ]
         },
         "universe": {
           "enum": [
-            "/universe"
+            "https://dataverse.org/schema/socialscience/universe"
           ]
         },
         "timeMethod": {
           "enum": [
-            "/timeMethod"
+            "https://dataverse.org/schema/socialscience/timeMethod"
           ]
         },
         "dataCollector": {
           "enum": [
-            "/dataCollector"
+            "https://dataverse.org/schema/socialscience/dataCollector"
           ]
         },
         "collectorTraining": {
           "enum": [
-            "/collectorTraining"
+            "https://dataverse.org/schema/socialscience/collectorTraining"
           ]
         },
         "frequencyOfDataCollection": {
           "enum": [
-            "/frequencyOfDataCollection"
+            "https://dataverse.org/schema/socialscience/frequencyOfDataCollection"
           ]
         },
         "samplingProcedure": {
           "enum": [
-            "/samplingProcedure"
+            "https://dataverse.org/schema/socialscience/samplingProcedure"
           ]
         },
         "targetSampleSize": {
           "enum": [
-            "/targetSampleSize"
+            "https://dataverse.org/schema/socialscience/targetSampleSize"
           ]
         },
         "deviationsFromSampleDesign": {
           "enum": [
-            "/deviationsFromSampleDesign"
+            "https://dataverse.org/schema/socialscience/deviationsFromSampleDesign"
           ]
         },
         "collectionMode": {
           "enum": [
-            "/collectionMode"
+            "https://dataverse.org/schema/socialscience/collectionMode"
           ]
         },
         "researchInstrument": {
           "enum": [
-            "/researchInstrument"
+            "https://dataverse.org/schema/socialscience/researchInstrument"
           ]
         },
         "dataCollectionSituation": {
           "enum": [
-            "/dataCollectionSituation"
+            "https://dataverse.org/schema/socialscience/dataCollectionSituation"
           ]
         },
         "actionsToMinimizeLoss": {
           "enum": [
-            "/actionsToMinimizeLoss"
+            "https://dataverse.org/schema/socialscience/actionsToMinimizeLoss"
           ]
         },
         "controlOperations": {
           "enum": [
-            "/controlOperations"
+            "https://dataverse.org/schema/socialscience/controlOperations"
           ]
         },
         "weighting": {
           "enum": [
-            "/weighting"
+            "https://dataverse.org/schema/socialscience/weighting"
           ]
         },
         "cleaningOperations": {
           "enum": [
-            "/cleaningOperations"
+            "https://dataverse.org/schema/socialscience/cleaningOperations"
           ]
         },
         "datasetLevelErrorNotes": {
           "enum": [
-            "/datasetLevelErrorNotes"
+            "https://dataverse.org/schema/socialscience/datasetLevelErrorNotes"
           ]
         },
         "responseRate": {
           "enum": [
-            "/responseRate"
+            "https://dataverse.org/schema/socialscience/responseRate"
           ]
         },
         "samplingErrorEstimates": {
           "enum": [
-            "/samplingErrorEstimates"
+            "https://dataverse.org/schema/socialscience/samplingErrorEstimates"
           ]
         },
         "otherDataAppraisal": {
           "enum": [
-            "/otherDataAppraisal"
+            "https://dataverse.org/schema/socialscience/otherDataAppraisal"
           ]
         },
         "socialScienceNotes": {
           "enum": [
-            "/socialScienceNotes"
+            "https://dataverse.org/schema/socialscience/socialScienceNotes"
           ]
         }
       },
@@ -392,7 +392,7 @@
           "type": "string",
           "format": "uri",
           "enum": [
-            ""
+            "https://dataverse.org/schema/socialscience/"
           ]
         },
         {
@@ -402,7 +402,7 @@
             "type": "string",
             "format": "uri",
             "enum": [
-              ""
+              "https://dataverse.org/schema/socialscience/"
             ]
           },
           "uniqueItems": true
@@ -531,16 +531,23 @@
       ],
       "schema:name": "unitOfAnalysis",
       "schema:description": "Basic unit of analysis or observation that this Dataset describes, such as individuals, families/households, groups, institutions/organizations, administrative units, and more. For information about the DDI\u0027s controlled vocabulary for this element, please refer to the DDI web page at http://www.ddialliance.org/controlled-vocabularies.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Basic unit of analysis or observation that this Dataset describes, such as individuals, families/households, groups, institutions/organizations, administrative units, and more. For information about the DDI\u0027s controlled vocabulary for this element, please refer to the DDI web page at http://www.ddialliance.org/controlled-vocabularies.",
       "skos:prefLabel": "Unit of Analysis",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/6b490480-9cc9-4ade-9ca3-4f07f1249d5c",
+      "hunLabel": "Unit of Analysis",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/102ffb38-63ba-44bf-b2ac-344260cb041a",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "universe": {
@@ -622,16 +629,23 @@
       ],
       "schema:name": "universe",
       "schema:description": "Description of the population covered by the data in the file; the group of people or other elements that are the object of the study and to which the study results refer. Age, nationality, and residence commonly help to  delineate a given universe, but any number of other factors may be used, such as age limits, sex, marital status, race, ethnic group, nationality, income, veteran status, criminal convictions, and more. The universe may consist of elements other than persons, such as housing units, court cases, deaths, countries, and so on. In general, it should be possible to tell from the description of the universe whether a given individual or element is a member of the population under study. Also known as the universe of interest, population of interest, and target population.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Description of the population covered by the data in the file; the group of people or other elements that are the object of the study and to which the study results refer. Age, nationality, and residence commonly help to  delineate a given universe, but any number of other factors may be used, such as age limits, sex, marital status, race, ethnic group, nationality, income, veteran status, criminal convictions, and more. The universe may consist of elements other than persons, such as housing units, court cases, deaths, countries, and so on. In general, it should be possible to tell from the description of the universe whether a given individual or element is a member of the population under study. Also known as the universe of interest, population of interest, and target population.",
       "skos:prefLabel": "Universe",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/319f2df3-a0f3-4653-84f1-54d6b00d06c4",
+      "hunLabel": "Universe",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/07622a9a-d2d0-4caa-b8d0-fb7d6e1d89aa",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "timeMethod": {
@@ -713,14 +727,23 @@
       ],
       "schema:name": "timeMethod",
       "schema:description": "The time method or time dimension of the data collection, such as panel, cross-sectional, trend, time- series, or other.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The time method or time dimension of the data collection, such as panel, cross-sectional, trend, time- series, or other.",
       "skos:prefLabel": "Time Method",
-      "@id": "https://repo.arp.orgx/template-fields/4545fe7a-33ed-4130-bd77-f185669c2caf",
+      "hunLabel": "Time Method",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/79f2a2de-dcb0-4712-9eb0-526db91f083a",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "dataCollector": {
@@ -802,14 +825,24 @@
       ],
       "schema:name": "dataCollector",
       "schema:description": "Individual, agency or organization responsible for  administering the questionnaire or interview or compiling the data.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Individual, agency or organization responsible for  administering the questionnaire or interview or compiling the data.",
       "skos:prefLabel": "Data Collector",
-      "@id": "https://repo.arp.orgx/template-fields/2aab5999-ebe5-4670-ac5a-951ba5a1d15d",
+      "hunLabel": "Data Collector",
+      "_arp": {
+        "dataverse": {
+          "watermark": "FamilyName, GivenName or Organization",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/2c626837-e30e-4787-bd90-d9e6b571123b",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "collectorTraining": {
@@ -891,14 +924,23 @@
       ],
       "schema:name": "collectorTraining",
       "schema:description": "Type of training provided to the data collector",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Type of training provided to the data collector",
       "skos:prefLabel": "Collector Training",
-      "@id": "https://repo.arp.orgx/template-fields/211f694d-dae7-4eb2-9d06-2b3768871c99",
+      "hunLabel": "Collector Training",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/c167c60f-6cdd-45ce-a4c8-48bc2bf12d06",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "frequencyOfDataCollection": {
@@ -980,14 +1022,23 @@
       ],
       "schema:name": "frequencyOfDataCollection",
       "schema:description": "If the data collected includes more than one point in time, indicate the frequency with which the data was collected; that is, monthly, quarterly, or other.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "If the data collected includes more than one point in time, indicate the frequency with which the data was collected; that is, monthly, quarterly, or other.",
       "skos:prefLabel": "Frequency",
-      "@id": "https://repo.arp.orgx/template-fields/cd548f5a-4d8a-4731-a2df-c7f3224f7160",
+      "hunLabel": "Frequency",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/b444e430-e955-402f-b7fe-dfaa2b8063eb",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "samplingProcedure": {
@@ -1069,14 +1120,23 @@
       ],
       "schema:name": "samplingProcedure",
       "schema:description": "Type of sample and sample design used to select the survey respondents to represent the population. May include reference to the target sample size and the sampling fraction.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Type of sample and sample design used to select the survey respondents to represent the population. May include reference to the target sample size and the sampling fraction.",
       "skos:prefLabel": "Sampling Procedure",
-      "@id": "https://repo.arp.orgx/template-fields/d9e5d1fe-d8cf-4966-a8d1-8883b7261b8c",
+      "hunLabel": "Sampling Procedure",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/e1c50f61-a06e-4c3c-80db-d53d1bd5f89e",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "targetSampleSize": {
@@ -1129,12 +1189,12 @@
           "properties": {
             "targetSampleActualSize": {
               "enum": [
-                "/targetSampleActualSize"
+                "https://dataverse.org/schema/socialscience/targetSampleActualSize"
               ]
             },
             "targetSampleSizeFormula": {
               "enum": [
-                "/targetSampleSizeFormula"
+                "https://dataverse.org/schema/socialscience/targetSampleSizeFormula"
               ]
             }
           },
@@ -1230,14 +1290,24 @@
           ],
           "schema:name": "targetSampleActualSize",
           "schema:description": "Actual sample size.",
-          "pav:createdOn": "2023-03-24T11:47:36+01:00",
+          "pav:createdOn": "2023-06-19T10:32:02+02:00",
           "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-          "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+          "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
           "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
           "schema:schemaVersion": "1.6.0",
           "additionalProperties": false,
+          "hunDescription": "Actual sample size.",
           "skos:prefLabel": "Actual",
-          "@id": "https://repo.arp.orgx/template-fields/f6cf8dab-83bb-4e39-9d68-bfe3a87f9ddf",
+          "hunLabel": "Actual",
+          "_arp": {
+            "dataverse": {
+              "watermark": "Enter an integer...",
+              "advancedSearchField": false,
+              "facetable": false,
+              "displayoncreate": false
+            }
+          },
+          "@id": "https://repo.arp.orgx/template-fields/566b182f-f7b7-4430-ad76-54d85f531a52",
           "$schema": "http://json-schema.org/draft-04/schema#"
         },
         "targetSampleSizeFormula": {
@@ -1319,14 +1389,23 @@
           ],
           "schema:name": "targetSampleSizeFormula",
           "schema:description": "Formula used to determine target sample size.",
-          "pav:createdOn": "2023-03-24T11:47:36+01:00",
+          "pav:createdOn": "2023-06-19T10:32:02+02:00",
           "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-          "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+          "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
           "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
           "schema:schemaVersion": "1.6.0",
           "additionalProperties": false,
+          "hunDescription": "Formula used to determine target sample size.",
           "skos:prefLabel": "Formula",
-          "@id": "https://repo.arp.orgx/template-fields/b340a953-be21-4a6a-ab33-bcced6baf2db",
+          "hunLabel": "Formula",
+          "_arp": {
+            "dataverse": {
+              "advancedSearchField": false,
+              "facetable": false,
+              "displayoncreate": false
+            }
+          },
+          "@id": "https://repo.arp.orgx/template-fields/73b04947-187e-4fd1-a55f-610f5b8670aa",
           "$schema": "http://json-schema.org/draft-04/schema#"
         }
       },
@@ -1338,16 +1417,25 @@
         "targetSampleActualSize",
         "targetSampleSizeFormula"
       ],
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "pav:version": "0.0.1",
       "bibo:status": "bibo:draft",
+      "hunDescription": "Specific information regarding the target sample size, actual  sample size, and the formula used to determine this.",
       "skos:prefLabel": "Target Sample Size",
-      "@id": "https://repo.arp.orgx/template-elements/914eef7d-7c90-46a3-86f6-7301123c67b3",
+      "hunLabel": "Target Sample Size",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-elements/0c5090bd-53b9-4034-8297-b92964e3e25d",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "deviationsFromSampleDesign": {
@@ -1429,14 +1517,23 @@
       ],
       "schema:name": "deviationsFromSampleDesign",
       "schema:description": "Show correspondence as well as discrepancies between the sampled units (obtained) and available statistics for the population (age, sex-ratio, marital status, etc.) as a whole.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Show correspondence as well as discrepancies between the sampled units (obtained) and available statistics for the population (age, sex-ratio, marital status, etc.) as a whole.",
       "skos:prefLabel": "Major Deviations for Sample Design",
-      "@id": "https://repo.arp.orgx/template-fields/ab01f67c-4c16-4821-b886-539b0c245aca",
+      "hunLabel": "Major Deviations for Sample Design",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/f3911e1f-5a3c-4e76-b05a-cf0fc096404d",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "collectionMode": {
@@ -1518,16 +1615,23 @@
       ],
       "schema:name": "collectionMode",
       "schema:description": "Method used to collect the data; instrumentation characteristics (e.g., telephone interview, mail questionnaire, or other).",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Method used to collect the data; instrumentation characteristics (e.g., telephone interview, mail questionnaire, or other).",
       "skos:prefLabel": "Collection Mode",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/287bb7a8-d1e1-4ef4-9ae3-f5fc95859181",
+      "hunLabel": "Collection Mode",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/952f8ab9-bee2-408f-9218-a58f37ab5da9",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "researchInstrument": {
@@ -1609,14 +1713,23 @@
       ],
       "schema:name": "researchInstrument",
       "schema:description": "Type of data collection instrument used. Structured indicates an instrument in which all respondents are asked the same questions/tests, possibly with precoded answers. If a small portion of such a questionnaire includes open-ended questions, provide appropriate comments. Semi-structured indicates that the research instrument contains mainly open-ended questions. Unstructured indicates that in-depth interviews were conducted.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Type of data collection instrument used. Structured indicates an instrument in which all respondents are asked the same questions/tests, possibly with precoded answers. If a small portion of such a questionnaire includes open-ended questions, provide appropriate comments. Semi-structured indicates that the research instrument contains mainly open-ended questions. Unstructured indicates that in-depth interviews were conducted.",
       "skos:prefLabel": "Type of Research Instrument",
-      "@id": "https://repo.arp.orgx/template-fields/f8e91959-a7e5-478b-b588-123c9bd41b93",
+      "hunLabel": "Type of Research Instrument",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/ec4ba10c-4a0e-4a93-97be-3001977e7d09",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "dataCollectionSituation": {
@@ -1698,14 +1811,23 @@
       ],
       "schema:name": "dataCollectionSituation",
       "schema:description": "Description of noteworthy aspects of the data collection situation. Includes information on factors such as cooperativeness of respondents, duration of interviews, number of call backs, or similar.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Description of noteworthy aspects of the data collection situation. Includes information on factors such as cooperativeness of respondents, duration of interviews, number of call backs, or similar.",
       "skos:prefLabel": "Characteristics of Data Collection Situation",
-      "@id": "https://repo.arp.orgx/template-fields/ce5172dc-bdc6-4dd0-9d74-c2f60511d610",
+      "hunLabel": "Characteristics of Data Collection Situation",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/a50b3048-448c-4ab3-930b-3ca1183e7e73",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "actionsToMinimizeLoss": {
@@ -1787,14 +1909,23 @@
       ],
       "schema:name": "actionsToMinimizeLoss",
       "schema:description": "Summary of actions taken to minimize data loss. Include information on actions such as follow-up visits, supervisory checks, historical matching, estimation, and so on.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Summary of actions taken to minimize data loss. Include information on actions such as follow-up visits, supervisory checks, historical matching, estimation, and so on.",
       "skos:prefLabel": "Actions to Minimize Losses",
-      "@id": "https://repo.arp.orgx/template-fields/9ddeaffe-f8de-4cd9-98e2-b5bb1089aeeb",
+      "hunLabel": "Actions to Minimize Losses",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/e32d4059-4dc6-4b0f-80bc-6c2749b9c388",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "controlOperations": {
@@ -1876,14 +2007,23 @@
       ],
       "schema:name": "controlOperations",
       "schema:description": "Control OperationsMethods to facilitate data control performed by the primary investigator or by the data archive.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Control OperationsMethods to facilitate data control performed by the primary investigator or by the data archive.",
       "skos:prefLabel": "Control Operations",
-      "@id": "https://repo.arp.orgx/template-fields/0bc4e4d0-f470-4ce4-8572-7f9248a6aa71",
+      "hunLabel": "Control Operations",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/c6db7d54-f214-462d-9d6c-a32b4c716c1f",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "weighting": {
@@ -1965,14 +2105,23 @@
       ],
       "schema:name": "weighting",
       "schema:description": "The use of sampling procedures might make it necessary to apply weights to produce accurate statistical results. Describes the criteria for using weights in analysis of a collection. If a weighting formula or coefficient was developed, the formula is provided, its elements are defined, and it is indicated how the formula was applied to the data.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The use of sampling procedures might make it necessary to apply weights to produce accurate statistical results. Describes the criteria for using weights in analysis of a collection. If a weighting formula or coefficient was developed, the formula is provided, its elements are defined, and it is indicated how the formula was applied to the data.",
       "skos:prefLabel": "Weighting",
-      "@id": "https://repo.arp.orgx/template-fields/3c73c5e6-0ca4-499a-9222-d40796d2d5d8",
+      "hunLabel": "Weighting",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/60f3f9a0-46c7-4f9c-8375-daf794c7a385",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "cleaningOperations": {
@@ -2054,14 +2203,23 @@
       ],
       "schema:name": "cleaningOperations",
       "schema:description": "Methods used to clean the data collection, such as consistency checking, wildcode checking, or other.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Methods used to clean the data collection, such as consistency checking, wildcode checking, or other.",
       "skos:prefLabel": "Cleaning Operations",
-      "@id": "https://repo.arp.orgx/template-fields/2fc83b4b-d291-4c14-85b5-ea36c5a6cbd0",
+      "hunLabel": "Cleaning Operations",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/800ea65e-d7a1-41d9-9450-6cfbefd09dab",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "datasetLevelErrorNotes": {
@@ -2143,14 +2301,23 @@
       ],
       "schema:name": "datasetLevelErrorNotes",
       "schema:description": "Note element used for any information annotating or clarifying the methodology and processing of the study. ",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Note element used for any information annotating or clarifying the methodology and processing of the study.",
       "skos:prefLabel": "Study Level Error Notes",
-      "@id": "https://repo.arp.orgx/template-fields/7a3cdfc2-de22-4558-964a-a91ceca8e61f",
+      "hunLabel": "Study Level Error Notes",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/5d6f13a9-34d1-4210-894a-0561de665578",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "responseRate": {
@@ -2232,14 +2399,23 @@
       ],
       "schema:name": "responseRate",
       "schema:description": "Percentage of sample members who provided information.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Percentage of sample members who provided information.",
       "skos:prefLabel": "Response Rate",
-      "@id": "https://repo.arp.orgx/template-fields/a1909d31-825f-4fa0-a2d2-34cf4b9ccc16",
+      "hunLabel": "Response Rate",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/a21a1f0b-8f81-4602-bdab-b69bf5531319",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "samplingErrorEstimates": {
@@ -2321,14 +2497,23 @@
       ],
       "schema:name": "samplingErrorEstimates",
       "schema:description": "Measure of how precisely one can estimate a population value from a given sample.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Measure of how precisely one can estimate a population value from a given sample.",
       "skos:prefLabel": "Estimates of Sampling Error",
-      "@id": "https://repo.arp.orgx/template-fields/b3e3ddfb-393f-408b-99ce-1997e746a360",
+      "hunLabel": "Estimates of Sampling Error",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/56e9a00b-d512-4a5a-bd3d-1494291ddeda",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "otherDataAppraisal": {
@@ -2410,14 +2595,23 @@
       ],
       "schema:name": "otherDataAppraisal",
       "schema:description": "Other issues pertaining to the data appraisal. Describe issues such as response variance, nonresponse rate  and testing for bias, interviewer and response bias, confidence levels, question bias, or similar.",
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Other issues pertaining to the data appraisal. Describe issues such as response variance, nonresponse rate  and testing for bias, interviewer and response bias, confidence levels, question bias, or similar.",
       "skos:prefLabel": "Other Forms of Data Appraisal",
-      "@id": "https://repo.arp.orgx/template-fields/18b3d174-03e4-4558-85e8-eb4236cfba0b",
+      "hunLabel": "Other Forms of Data Appraisal",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/a7906570-5cdf-4480-bbf8-da14c828dfc5",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "socialScienceNotes": {
@@ -2473,17 +2667,17 @@
           "properties": {
             "socialScienceNotesType": {
               "enum": [
-                "/socialScienceNotesType"
+                "https://dataverse.org/schema/socialscience/socialScienceNotesType"
               ]
             },
             "socialScienceNotesSubject": {
               "enum": [
-                "/socialScienceNotesSubject"
+                "https://dataverse.org/schema/socialscience/socialScienceNotesSubject"
               ]
             },
             "socialScienceNotesText": {
               "enum": [
-                "/socialScienceNotesText"
+                "https://dataverse.org/schema/socialscience/socialScienceNotesText"
               ]
             }
           },
@@ -2590,14 +2784,23 @@
           ],
           "schema:name": "socialScienceNotesType",
           "schema:description": "Type of note.",
-          "pav:createdOn": "2023-03-24T11:47:36+01:00",
+          "pav:createdOn": "2023-06-19T10:32:02+02:00",
           "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-          "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+          "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
           "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
           "schema:schemaVersion": "1.6.0",
           "additionalProperties": false,
+          "hunDescription": "Type of note.",
           "skos:prefLabel": "Type",
-          "@id": "https://repo.arp.orgx/template-fields/ac8e5559-0810-4456-981b-51d3f64c575d",
+          "hunLabel": "Type",
+          "_arp": {
+            "dataverse": {
+              "advancedSearchField": false,
+              "facetable": false,
+              "displayoncreate": false
+            }
+          },
+          "@id": "https://repo.arp.orgx/template-fields/979fab2b-8274-45e1-a241-859b73c148cf",
           "$schema": "http://json-schema.org/draft-04/schema#"
         },
         "socialScienceNotesSubject": {
@@ -2679,14 +2882,23 @@
           ],
           "schema:name": "socialScienceNotesSubject",
           "schema:description": "Note subject.",
-          "pav:createdOn": "2023-03-24T11:47:36+01:00",
+          "pav:createdOn": "2023-06-19T10:32:02+02:00",
           "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-          "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+          "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
           "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
           "schema:schemaVersion": "1.6.0",
           "additionalProperties": false,
+          "hunDescription": "Note subject.",
           "skos:prefLabel": "Subject",
-          "@id": "https://repo.arp.orgx/template-fields/88345bb5-8c7f-49d8-8eb3-acde8ce0d30a",
+          "hunLabel": "Subject",
+          "_arp": {
+            "dataverse": {
+              "advancedSearchField": false,
+              "facetable": false,
+              "displayoncreate": false
+            }
+          },
+          "@id": "https://repo.arp.orgx/template-fields/3221eee8-a7eb-4172-956c-abbab042d0e5",
           "$schema": "http://json-schema.org/draft-04/schema#"
         },
         "socialScienceNotesText": {
@@ -2768,14 +2980,23 @@
           ],
           "schema:name": "socialScienceNotesText",
           "schema:description": "Text for this note.",
-          "pav:createdOn": "2023-03-24T11:47:36+01:00",
+          "pav:createdOn": "2023-06-19T10:32:02+02:00",
           "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-          "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+          "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
           "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
           "schema:schemaVersion": "1.6.0",
           "additionalProperties": false,
+          "hunDescription": "Text for this note.",
           "skos:prefLabel": "Text",
-          "@id": "https://repo.arp.orgx/template-fields/a1e45a2d-3b53-4cca-bbe6-389f5e4d3e0f",
+          "hunLabel": "Text",
+          "_arp": {
+            "dataverse": {
+              "advancedSearchField": false,
+              "facetable": false,
+              "displayoncreate": false
+            }
+          },
+          "@id": "https://repo.arp.orgx/template-fields/eea6f49b-2265-4b21-8a83-394be9dc8ff9",
           "$schema": "http://json-schema.org/draft-04/schema#"
         }
       },
@@ -2788,16 +3009,25 @@
         "socialScienceNotesSubject",
         "socialScienceNotesText"
       ],
-      "pav:createdOn": "2023-03-24T11:47:36+01:00",
+      "pav:createdOn": "2023-06-19T10:32:02+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "pav:version": "0.0.1",
       "bibo:status": "bibo:draft",
+      "hunDescription": "General notes about this Dataset.",
       "skos:prefLabel": "Notes",
-      "@id": "https://repo.arp.orgx/template-elements/924fb2b1-9389-496e-b4b5-46113a4e1a14",
+      "hunLabel": "Notes",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-elements/4027887e-27d9-4d31-80be-cecaf3fbc8b2",
       "$schema": "http://json-schema.org/draft-04/schema#"
     }
   },
@@ -2835,15 +3065,16 @@
   ],
   "schema:name": "Social Science and Humanities Metadata",
   "schema:description": "",
-  "pav:createdOn": "2023-03-24T11:47:36+01:00",
+  "pav:createdOn": "2023-06-19T10:32:02+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-24T11:47:36+01:00",
+  "pav:lastUpdatedOn": "2023-06-19T10:32:02+02:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
+  "hunName": "Social Science and Humanities Metadata",
   "schema:identifier": "socialscience",
-  "@id": "https://repo.arp.orgx/templates/af1ac35d-4881-4a9d-98e5-dfd4bceb4ec6",
+  "@id": "https://repo.arp.orgx/templates/c3c8722a-73c5-4e8e-af34-05690d4ebb59",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }

@@ -2065,60 +2065,69 @@ public class EditDatafilesPage implements java.io.Serializable {
     }
 
     public void handleRoCrateUpload() throws IOException {
-        if (uploadInProgress != null) {
-            String roCrateName = roCrateUploadService.getRoCrateName();
-            String roCrateType = roCrateUploadService.getRoCrateType();
-            InputStream roCrateInputStream = roCrateUploadService.getRoCrateInputStream();
-
-            if (uploadInProgress.isFalse()) {
-                uploadInProgress.setValue(true);
-            }
-
-            //resetting marked as dup in case there are multiple uploads
-            //we only want to delete as dupes those that we uploaded in this
-            //session
-            newFiles.forEach((df) -> {
-                df.setMarkedAsDuplicate(false);
-            });
-
-            List<DataFile> dFileList = null;
-
-            if (roCrateInputStream != null) {
+        if (roCrateUploadService.getRoCrateInputStream() != null) {
+            if (uploadInProgress != null) {
                 try {
-                    // Note: A single uploaded file may produce multiple datafiles -
-                    // for example, multiple files can be extracted from an uncompressed
-                    // zip file.
-                    CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
-                    dFileList = createDataFilesResult.getDataFiles();
-                    String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
-                    if (createDataFilesError != null) {
-                        errorMessages.add(createDataFilesError);
+                    String roCrateName = roCrateUploadService.getRoCrateName();
+                    String roCrateType = roCrateUploadService.getRoCrateType();
+                    InputStream roCrateInputStream = roCrateUploadService.getRoCrateInputStream();
+
+                    if (uploadInProgress.isFalse()) {
+                        uploadInProgress.setValue(true);
                     }
 
-                } catch (IOException ioex) {
-                    logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
-                    return;
+                    //resetting marked as dup in case there are multiple uploads
+                    //we only want to delete as dupes those that we uploaded in this
+                    //session
+                    newFiles.forEach((df) -> {
+                        df.setMarkedAsDuplicate(false);
+                    });
+
+                    List<DataFile> dFileList = null;
+
+                    if (roCrateInputStream != null) {
+                        try {
+                            // Note: A single uploaded file may produce multiple datafiles -
+                            // for example, multiple files can be extracted from an uncompressed
+                            // zip file.
+                            CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+                            dFileList = createDataFilesResult.getDataFiles();
+                            String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
+                            if (createDataFilesError != null) {
+                                errorMessages.add(createDataFilesError);
+                            }
+
+                        } catch (IOException ioex) {
+                            logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
+                            return;
+                        }
+                    }
+
+                    // -----------------------------------------------------------
+                    // These raw datafiles are then post-processed, in order to drop any files
+                    // already in the dataset/already uploaded, and to correct duplicate file names, etc.
+                    // -----------------------------------------------------------
+                    String warningMessage = processUploadedFileList(dFileList);
+
+                    if (warningMessage != null) {
+                        uploadWarningMessage = warningMessage;
+                    }
+
+                    if (uploadInProgress.isFalse()) {
+                        logger.warning("Upload in progress cancelled");
+                        for (DataFile newFile : dFileList) {
+                            FileUtil.deleteTempFile(newFile, dataset, ingestService);
+                        }
+                    }
+
+                    roCrateUploadService.setRoCrateInputStream(null);
+                    uploadFinished();
+                } catch (Exception e) {
+                    logger.severe("Could not process the uploaded files from the RO-Crate" + e.getMessage());
+                    e.printStackTrace();
                 }
+                
             }
-
-            // -----------------------------------------------------------
-            // These raw datafiles are then post-processed, in order to drop any files
-            // already in the dataset/already uploaded, and to correct duplicate file names, etc.
-            // -----------------------------------------------------------
-            String warningMessage = processUploadedFileList(dFileList);
-
-            if (warningMessage != null) {
-                uploadWarningMessage = warningMessage;
-            }
-
-            if (uploadInProgress.isFalse()) {
-                logger.warning("Upload in progress cancelled");
-                for (DataFile newFile : dFileList) {
-                    FileUtil.deleteTempFile(newFile, dataset, ingestService);
-                }
-            }
-
-            uploadFinished();
         }
     }
 

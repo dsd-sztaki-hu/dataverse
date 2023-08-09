@@ -13,6 +13,7 @@
                 <h:form id="uploadForm" method="post" enctype="multipart/form-data">
                     <label for="fileInput">Choose a file to upload:</label>
                     <input type="file" id="fileInput" name="fileInput" accept="application/zip" />
+                    <span id="emptyFileError"></span>
                     <br />
                     <input type="submit" value="Upload" />
                     <p:remoteCommand name="sendRoCrateData" actionListener="#{roCrateUploadServiceBean.handleRoCrateUpload}" />
@@ -34,6 +35,10 @@
 
                     async function readFiles(files) {
                         const {entries} = await unzip(files);
+                        Object.values(entries).forEach(f => console.log(f.name + " " + f.size))
+                        if (Object.values(entries).some(f => !f.isDirectory &amp;&amp; f.size === 0)) {
+                            return false;
+                        }
                         return Object.values(entries).find(f => f.name === 'ro-crate-metadata.json');
                     }
 
@@ -53,6 +58,10 @@
                         if (roCrateJson) {
                             const roCrateJsonText = await roCrateJson.text();
                             roCrateData.push({name: 'roCrateJson', value: roCrateJsonText})
+                        } else {
+                            const error = document.getElementById("emptyFileError");
+                            error.innerHTML = "The .zip can not contain empty files."
+                            return false;
                         }
                         await sendRoCrateData(roCrateData)
                         location.href = "dataset.xhtml?ownerId=" + ownerId;

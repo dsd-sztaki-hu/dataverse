@@ -201,12 +201,12 @@
         },
         "journalVolumeIssue": {
           "enum": [
-            "/journalVolumeIssue"
+            "https://dataverse.org/schema/journal/journalVolumeIssue"
           ]
         },
         "journalArticleType": {
           "enum": [
-            "/journalArticleType"
+            "https://dataverse.org/schema/journal/journalArticleType"
           ]
         }
       },
@@ -239,7 +239,7 @@
           "type": "string",
           "format": "uri",
           "enum": [
-            ""
+            "https://dataverse.org/schema/journal/"
           ]
         },
         {
@@ -249,7 +249,7 @@
             "type": "string",
             "format": "uri",
             "enum": [
-              ""
+              "https://dataverse.org/schema/journal/"
             ]
           },
           "uniqueItems": true
@@ -355,17 +355,17 @@
             "properties": {
               "journalVolume": {
                 "enum": [
-                  "/journalVolume"
+                  "https://dataverse.org/schema/journal/journalVolume"
                 ]
               },
               "journalIssue": {
                 "enum": [
-                  "/journalIssue"
+                  "https://dataverse.org/schema/journal/journalIssue"
                 ]
               },
               "journalPubDate": {
                 "enum": [
-                  "/journalPubDate"
+                  "https://dataverse.org/schema/journal/journalPubDate"
                 ]
               }
             },
@@ -472,14 +472,23 @@
             ],
             "schema:name": "journalVolume",
             "schema:description": "The journal volume which this Dataset is associated with (e.g., Volume 4).",
-            "pav:createdOn": "2023-03-24T11:47:32+01:00",
+            "pav:createdOn": "2023-06-19T10:31:58+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The journal volume which this Dataset is associated with (e.g., Volume 4).",
             "skos:prefLabel": "Volume",
-            "@id": "https://repo.arp.orgx/template-fields/8f284a1a-09c7-4949-9588-91e25789fb67",
+            "hunLabel": "Volume",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/ed0282a8-7850-48dc-a4e7-4e5f3ed9b768",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "journalIssue": {
@@ -561,14 +570,23 @@
             ],
             "schema:name": "journalIssue",
             "schema:description": "The journal issue number which this Dataset is associated with (e.g., Number 2, Autumn).",
-            "pav:createdOn": "2023-03-24T11:47:32+01:00",
+            "pav:createdOn": "2023-06-19T10:31:58+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The journal issue number which this Dataset is associated with (e.g., Number 2, Autumn).",
             "skos:prefLabel": "Issue",
-            "@id": "https://repo.arp.orgx/template-fields/783ffc8c-ff22-4202-9f7d-c57cec4ac7e8",
+            "hunLabel": "Issue",
+            "_arp": {
+              "dataverse": {
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/830b4daa-314a-4c2d-a0c2-67a8289c5ac5",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "journalPubDate": {
@@ -652,14 +670,24 @@
             ],
             "schema:name": "journalPubDate",
             "schema:description": "The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).",
-            "pav:createdOn": "2023-03-24T11:47:32+01:00",
+            "pav:createdOn": "2023-06-19T10:31:58+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
+            "hunDescription": "The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).",
             "skos:prefLabel": "Publication Date",
-            "@id": "https://repo.arp.orgx/template-fields/fc4616b4-75b5-422d-8253-c975af1b8263",
+            "hunLabel": "Publication Date",
+            "_arp": {
+              "dataverse": {
+                "watermark": "YYYY or YYYY-MM or YYYY-MM-DD",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/d6f33e2e-3ec3-48bf-afae-ae3943d10d98",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -672,16 +700,25 @@
           "journalIssue",
           "journalPubDate"
         ],
-        "pav:createdOn": "2023-03-24T11:47:32+01:00",
+        "pav:createdOn": "2023-06-19T10:31:58+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
+        "hunDescription": "Indicates the volume, issue and date of a journal, which this Dataset is associated with.",
         "skos:prefLabel": "Journal",
-        "@id": "https://repo.arp.orgx/template-elements/31cd7acc-646e-46a1-9571-4159dc8dead1",
+        "hunLabel": "Journal",
+        "_arp": {
+          "dataverse": {
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/01a88d1e-b6ad-4665-b507-9a466f161a49",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -729,6 +766,24 @@
         "requiredValue": false,
         "multipleChoice": false,
         "literals": [
+          {
+            "label": "reprint"
+          },
+          {
+            "label": "research article"
+          },
+          {
+            "label": "retraction"
+          },
+          {
+            "label": "review article"
+          },
+          {
+            "label": "translation"
+          },
+          {
+            "label": "other"
+          },
           {
             "label": "rapid communication"
           },
@@ -806,24 +861,6 @@
           },
           {
             "label": "product review"
-          },
-          {
-            "label": "reprint"
-          },
-          {
-            "label": "research article"
-          },
-          {
-            "label": "retraction"
-          },
-          {
-            "label": "review article"
-          },
-          {
-            "label": "translation"
-          },
-          {
-            "label": "other"
           }
         ]
       },
@@ -863,14 +900,23 @@
       ],
       "schema:name": "journalArticleType",
       "schema:description": "Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS). ",
-      "pav:createdOn": "2023-03-24T11:47:32+01:00",
+      "pav:createdOn": "2023-06-19T10:31:58+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS).",
       "skos:prefLabel": "Type of Article",
-      "@id": "https://repo.arp.orgx/template-fields/96a26df8-f4e9-48c6-b832-36721524836e",
+      "hunLabel": "Type of Article",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/99062515-0dd6-4bed-aaad-32995b31c76a",
       "$schema": "http://json-schema.org/draft-04/schema#"
     }
   },
@@ -889,15 +935,16 @@
   ],
   "schema:name": "Journal Metadata",
   "schema:description": "",
-  "pav:createdOn": "2023-03-24T11:47:32+01:00",
+  "pav:createdOn": "2023-06-19T10:31:58+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-24T11:47:32+01:00",
+  "pav:lastUpdatedOn": "2023-06-19T10:31:58+02:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
+  "hunName": "Journal Metadata",
   "schema:identifier": "journal",
-  "@id": "https://repo.arp.orgx/templates/790fc404-9846-4dab-b119-bb238fd7747f",
+  "@id": "https://repo.arp.orgx/templates/212ee846-3d98-44da-96fd-ece56add625b",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }

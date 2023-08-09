@@ -1,15 +1,12 @@
 package edu.harvard.iq.dataverse.api.arp;
 
 import com.google.gson.*;
-import edu.harvard.iq.dataverse.DatasetPage;
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.*;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -20,15 +17,12 @@ public class CedarTemplateToDescriboProfileConverter {
     private static final Logger logger = Logger.getLogger(ArpApi.class.getCanonicalName());
 
     private String language;
+    private ArpServiceBean arpService;
 
-    public CedarTemplateToDescriboProfileConverter()
-    {
-        this("eng");
-    }
 
     public CedarTemplateToDescriboProfileConverter(String language) {
         if (language == null) {
-            this.language = "eng";
+            this.language = "en";
         }
         else {
             this.language = language;
@@ -45,21 +39,37 @@ public class CedarTemplateToDescriboProfileConverter {
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         processProfileMetadata(cedarTemplateJson, describoProfile);
-        ProcessedDescriboProfileValues processedDescriboProfileValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
+        ProcessedDescriboProfileValues profValues = processTemplate(cedarTemplateJson, new ProcessedDescriboProfileValues(new ArrayList<>()), "Dataset");
+
+        // Add default values for bultin types
+        if (language.equals("hu")) {
+            profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
+            profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
+        }
+        else  {
+            profValues.classLocalizations.put("Dataset", new ClassLocalization("Dataset", "A collection of files with metadata"));
+            profValues.classLocalizations.put("File", new ClassLocalization("File", "Data file"));
+        }
 
         JsonObject classes = describoProfile.getAsJsonObject("classes");
         
-        for (var input : processedDescriboProfileValues.inputs) {
+        for (var input : profValues.inputs) {
             String className = input.getKey();
             if (!classes.has(className)) {
                 classes.add(className, gson.fromJson(classTemplate, JsonObject.class));
             }
-            classes.getAsJsonObject(className).getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
-            
+            var classJson = classes.getAsJsonObject(className);
+            classJson.getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
+
+            var classLoc = profValues.classLocalizations.get(className);
+            if (classLoc != null) {
+                classJson.addProperty("label", classLoc.label);
+                classJson.addProperty("help", classLoc.help);
+            }
         }
         
         JsonArray enabledClasses = new JsonArray();
-        processedDescriboProfileValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
+        profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
         
         describoProfile.add("enabledClasses", enabledClasses);
         
@@ -85,7 +95,9 @@ public class CedarTemplateToDescriboProfileConverter {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
-                    processTemplateField(property, false, inputId, processedDescriboProfileValues, parentName);
+                    JsonObject valueConstraints = property.getAsJsonObject("_valueConstraints");
+                    boolean allowMultiple = valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean();
+                    processTemplateField(property, allowMultiple, inputId, processedDescriboProfileValues, parentName);
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName);
                 }
@@ -103,34 +115,35 @@ public class CedarTemplateToDescriboProfileConverter {
     public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
+        JsonObject externalVocab = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]");
+        if (externalVocab != null) {
+            fieldType = "list";
+        }
 
         describoInput.setId(inputId);
         describoInput.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
-        String label = "";
-        if (language.equals("hun")) {
-            label = Optional.ofNullable(templateField.get("hunLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
-        }
-        else {
-            label = Optional.ofNullable(templateField.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(templateField.get("schema:name").getAsString());
-        }
+        String label = getLocalizedLabel(templateField);
         describoInput.setLabel(label);
-        String help = "";
-        if (language.equals("hun")) {
-            help = Optional.ofNullable(templateField.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
-        }
-        else {
-            help = Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null);
-        }
+        String help = getLocalizedHelp(templateField);
         describoInput.setHelp(help);
-        describoInput.setType(getDescriboType(templateField));
+        describoInput.setType(getDescriboType(fieldType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         describoInput.setMultiple(allowMultiple);
 
+        List<String> literalValues;
         if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio"))) {
-            JsonElement jsonElement = getJsonElement(templateField, "_valueConstraints.literals");
-            JsonArray literals = jsonElement == null ? new JsonArray() : jsonElement.getAsJsonArray();
-            List<String> literalValues = new ArrayList<>();
-            literals.forEach(literal -> literalValues.add(literal.getAsJsonObject().get("label").getAsString()));
+            if (externalVocab != null) {
+                literalValues = arpService.getExternalVocabValues(templateField);
+                if (!literalValues.isEmpty()) {
+                    describoInput.setValues(literalValues);
+                }
+            }
+            else {
+                JsonElement jsonElement = getJsonElement(templateField, "_valueConstraints.literals");
+                JsonArray literals = jsonElement == null ? new JsonArray() : jsonElement.getAsJsonArray();
+                literalValues = new ArrayList<>();
+                literals.forEach(literal -> literalValues.add(literal.getAsJsonObject().get("label").getAsString()));
+            }
             if (!literalValues.isEmpty()) {
                 describoInput.setValues(literalValues);
             }
@@ -146,13 +159,16 @@ public class CedarTemplateToDescriboProfileConverter {
         
         describoInput.setId(inputId);
         describoInput.setName(propName);
-        String label = Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
+        String label = getLocalizedLabel(templateElement); //Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
         describoInput.setLabel(label);
-        describoInput.setHelp(Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null));
+        String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
+        describoInput.setHelp(help);
         describoInput.setType(List.of(propName));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
-        describoInput.setMultiple(allowMultiple);
-        
+        boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
+        describoInput.setMultiple(allowsMultiple);
+
+        processedDescriboProfileValues.classLocalizations.put(propName, new ClassLocalization(label, help));
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
         
         processTemplate(templateElement, processedDescriboProfileValues, propName);
@@ -170,7 +186,7 @@ public class CedarTemplateToDescriboProfileConverter {
     
     private void processProfileMetadata(JsonObject cedarTemplate, JsonObject describoProfile) {
         String name = cedarTemplate.get("schema:name").getAsString();
-        if (language.equals("hun")) {
+        if (language.equals("hu")) {
             name = cedarTemplate.has("hunName")
                     ? cedarTemplate.get("hunName").getAsString()
                     : name;
@@ -181,19 +197,20 @@ public class CedarTemplateToDescriboProfileConverter {
         
     }
 
+    Map<String, List<String>> cedarDescriboFieldTypes = Map.of(
+            "textfield", List.of("Text"),
+            "temporal", List.of("Date"),
+            "numeric", List.of("Number"),
+            "richtext", List.of("TextArea"),
+            "textarea", List.of("TextArea"),
+            "link", List.of("URL"),
+            "list", List.of("Select"),
+            "radio", List.of("Select"),
+            "attribute-value", List.of("Text"),
+            "email", List.of("Text")
+    );
+
     public List<String> getDescriboType(JsonObject templateField) {
-        Map<String, List<String>> cedarDescriboFieldTypes = Map.of(
-                "textfield", List.of("Text"),
-                "temporal", List.of("Date"),
-                "numeric", List.of("Number"),
-                "richtext", List.of("TextArea"),
-                "textarea", List.of("TextArea"),
-                "link", List.of("URL"),
-                "list", List.of("Select"),
-                "radio", List.of("Select"),
-                "attribute-value", List.of("Text"),
-                "email", List.of("Text")
-        );
 
         List<String> dataverseFieldType = null;
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
@@ -204,6 +221,39 @@ public class CedarTemplateToDescriboProfileConverter {
 
         return dataverseFieldType;
     }
+
+    public List<String> getDescriboType(String cedarFieldType)
+    {
+        List<String> describoType = null;
+        if (cedarFieldType == null) {
+            return describoType;
+        }
+
+        return cedarDescriboFieldTypes.get(cedarFieldType);
+    }
+
+    public String getLocalizedLabel(JsonObject obj) {
+        String label = "";
+        if (language.equals("hu")) {
+            label = Optional.ofNullable(obj.get("hunLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+        }
+        else {
+            label = Optional.ofNullable(obj.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+        }
+        return label;
+    }
+
+    public String getLocalizedHelp(JsonObject obj) {
+        String help = "";
+        if (language.equals("hu")) {
+            help = Optional.ofNullable(obj.get("hunDescription")).map(JsonElement::getAsString).orElse(null);
+        }
+        else {
+            help = Optional.ofNullable(obj.get("schema:description")).map(JsonElement::getAsString).orElse(null);
+        }
+        return help;
+    }
+
 
     private static class DescriboInput {
         private String id;
@@ -297,7 +347,9 @@ public class CedarTemplateToDescriboProfileConverter {
 
 
     private static class ProcessedDescriboProfileValues {
-        private List<Pair<String, DescriboInput>> inputs;
+        protected List<Pair<String, DescriboInput>> inputs;
+
+        protected Map<String, ClassLocalization> classLocalizations = new HashMap<>();
 
         public ProcessedDescriboProfileValues(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
@@ -309,6 +361,17 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setInputs(List<Pair<String, DescriboInput>> inputs) {
             this.inputs = inputs;
+        }
+    }
+
+    private static class ClassLocalization {
+        protected String label;
+        protected String help;
+
+        public ClassLocalization(String label, String help)
+        {
+            this.label = label;
+            this.help = help;
         }
     }
 }

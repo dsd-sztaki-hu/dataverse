@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -66,8 +67,8 @@ import edu.harvard.iq.dataverse.workflows.WorkflowComment;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -141,6 +142,9 @@ import edu.harvard.iq.dataverse.search.SearchUtil;
 import edu.harvard.iq.dataverse.search.SolrClientService;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 import java.util.Comparator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.FacetField;
@@ -1803,7 +1807,7 @@ public class DatasetPage implements java.io.Serializable {
             try {
                 datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
             } catch (JsonProcessingException jsonProcessingException) {
-                JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+                JsfHelper.addErrorMessage("Can not process the "+ ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
             }
         }
         resetVersionUI();
@@ -2121,7 +2125,8 @@ public class DatasetPage implements java.io.Serializable {
                 try {
                     datasetVersionUI = roCrateUploadService.resetVersionUIRoCrate(datasetVersionUI, workingVersion, dataset);
                 } catch (JsonProcessingException jsonProcessingException) {
-                    JsfHelper.addErrorMessage("Can not process the " + BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+                    jsonProcessingException.printStackTrace();
+                    JsfHelper.addErrorMessage("Can not process the "+ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
                 }
             }
 
@@ -2764,6 +2769,13 @@ public class DatasetPage implements java.io.Serializable {
         } else {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.only.authenticatedUsers"));
         }
+        
+        try {
+            roCrateManager.saveRoCrateVersion(dataset, false, minor);
+        } catch (IOException e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+        }
+
         return returnToDraftVersion();
     }
 
@@ -2833,6 +2845,13 @@ public class DatasetPage implements java.io.Serializable {
         } else {
             JsfHelper.addSuccessMessage(successMsg);
         }
+        
+        try {
+            roCrateManager.saveRoCrateVersion(dataset, true, false);
+        } catch (IOException e) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
+        }
+        
         return returnToDatasetOnly();
     }
 
@@ -3785,7 +3804,7 @@ public class DatasetPage implements java.io.Serializable {
             roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
         } catch (Exception e) {
             e.printStackTrace();
-            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
         }
 
         editMode = null;
@@ -6140,20 +6159,36 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    public void downloadRoCrate() throws IOException {
-        String json = Files.readString(Paths.get(roCrateManager.getRoCratePath(dataset)));
-
+    public void downloadRoCrate() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
-        response.setContentType("application/json");
-        response.setHeader("Content-Disposition", "attachment;filename=ro-crate-metadata.json");
+        String dsId = dataset.getIdentifier().split("/")[1];
+        String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+        String versionNumber = dataset.getLatestVersionForCopy().getFriendlyVersionNumber();
+        response.setContentType("application/zip");
+        response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(json.getBytes());
+        outputStream.write(zipFolder(Path.of(versionNumber.equals("DRAFT") ? roCrateManager.getRoCrateFolder(dataset) : roCrateManager.getRoCrateFolder(dataset, versionNumber))));
         outputStream.flush();
         outputStream.close();
 
         facesContext.responseComplete();
+    }
+
+    private static byte[] zipFolder(Path sourceFolderPath) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(baos);
+        Files.walkFileTree(sourceFolderPath, new SimpleFileVisitor<Path>() {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                zos.putNextEntry(new ZipEntry(sourceFolderPath.relativize(file).toString()));
+                Files.copy(file, zos);
+                zos.closeEntry();
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        zos.close();
+        return baos.toByteArray();
     }
 
     public String getUriEncodedPersistentId() {
@@ -6163,16 +6198,13 @@ public class DatasetPage implements java.io.Serializable {
     public String getCurrentUserApiKey() {
         User user = session.getUser();
         if (user instanceof AuthenticatedUser) {
-            var token = authService.findApiTokenByUser((AuthenticatedUser) user);
-            if (token == null) {
-                return null;
-            }
+            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
             return token.getTokenString();
         }
         return null;
     }
 
     public String getLanguage() {
-        return session.getLocaleCode().equals("en") ? "eng" : "hun";
+        return session.getLocaleCode().equals("en") ? "en" : "hu";
     }
 }

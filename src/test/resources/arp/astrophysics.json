@@ -255,102 +255,102 @@
         },
         "astroType": {
           "enum": [
-            "/astroType"
+            "https://dataverse.org/schema/astrophysics/astroType"
           ]
         },
         "astroFacility": {
           "enum": [
-            "/astroFacility"
+            "https://dataverse.org/schema/astrophysics/astroFacility"
           ]
         },
         "astroInstrument": {
           "enum": [
-            "/astroInstrument"
+            "https://dataverse.org/schema/astrophysics/astroInstrument"
           ]
         },
         "astroObject": {
           "enum": [
-            "/astroObject"
+            "https://dataverse.org/schema/astrophysics/astroObject"
           ]
         },
         "resolution:Spatial": {
           "enum": [
-            "/resolution.Spatial"
+            "https://dataverse.org/schema/astrophysics/resolution.Spatial"
           ]
         },
         "resolution:Spectral": {
           "enum": [
-            "/resolution.Spectral"
+            "https://dataverse.org/schema/astrophysics/resolution.Spectral"
           ]
         },
         "resolution:Temporal": {
           "enum": [
-            "/resolution.Temporal"
+            "https://dataverse.org/schema/astrophysics/resolution.Temporal"
           ]
         },
         "coverage:Spectral:Bandpass": {
           "enum": [
-            "/coverage.Spectral.Bandpass"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.Bandpass"
           ]
         },
         "coverage:Spectral:CentralWavelength": {
           "enum": [
-            "/coverage.Spectral.CentralWavelength"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.CentralWavelength"
           ]
         },
         "coverage:Spectral:Wavelength": {
           "enum": [
-            "/coverage.Spectral.Wavelength"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.Wavelength"
           ]
         },
         "coverage:Temporal": {
           "enum": [
-            "/coverage.Temporal"
+            "https://dataverse.org/schema/astrophysics/coverage.Temporal"
           ]
         },
         "coverage:Spatial": {
           "enum": [
-            "/coverage.Spatial"
+            "https://dataverse.org/schema/astrophysics/coverage.Spatial"
           ]
         },
         "coverage:Depth": {
           "enum": [
-            "/coverage.Depth"
+            "https://dataverse.org/schema/astrophysics/coverage.Depth"
           ]
         },
         "coverage:ObjectDensity": {
           "enum": [
-            "/coverage.ObjectDensity"
+            "https://dataverse.org/schema/astrophysics/coverage.ObjectDensity"
           ]
         },
         "coverage:ObjectCount": {
           "enum": [
-            "/coverage.ObjectCount"
+            "https://dataverse.org/schema/astrophysics/coverage.ObjectCount"
           ]
         },
         "coverage:SkyFraction": {
           "enum": [
-            "/coverage.SkyFraction"
+            "https://dataverse.org/schema/astrophysics/coverage.SkyFraction"
           ]
         },
         "coverage:Polarization": {
           "enum": [
-            "/coverage.Polarization"
+            "https://dataverse.org/schema/astrophysics/coverage.Polarization"
           ]
         },
         "redshiftType": {
           "enum": [
-            "/redshiftType"
+            "https://dataverse.org/schema/astrophysics/redshiftType"
           ]
         },
         "resolution:Redshift": {
           "enum": [
-            "/resolution.Redshift"
+            "https://dataverse.org/schema/astrophysics/resolution.Redshift"
           ]
         },
         "coverage:RedshiftValue": {
           "enum": [
-            "/coverage.RedshiftValue"
+            "https://dataverse.org/schema/astrophysics/coverage.RedshiftValue"
           ]
         }
       },
@@ -385,7 +385,7 @@
           "type": "string",
           "format": "uri",
           "enum": [
-            ""
+            "https://dataverse.org/schema/astrophysics/"
           ]
         },
         {
@@ -395,7 +395,7 @@
             "type": "string",
             "format": "uri",
             "enum": [
-              ""
+              "https://dataverse.org/schema/astrophysics/"
             ]
           },
           "uniqueItems": true
@@ -599,16 +599,25 @@
       ],
       "schema:name": "astroType",
       "schema:description": "The nature or genre of the content of the files in the dataset.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The nature or genre of the content of the files in the dataset.",
       "skos:prefLabel": "Type",
+      "hunLabel": "Type",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/2a2ceae1-e328-4924-a797-6d71344d10c2",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/1b7b38c4-2e8c-4f67-b42e-94f16be51a89",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "astroFacility": {
@@ -692,16 +701,25 @@
       ],
       "schema:name": "astroFacility",
       "schema:description": "The observatory or facility where the data was obtained. ",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The observatory or facility where the data was obtained. ",
       "skos:prefLabel": "Facility",
+      "hunLabel": "Facility",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/1b3dd45e-55cf-44ab-8b6c-22c7d82713c6",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/ffc40fd0-117b-4429-8eb3-b6e74d8113bb",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "astroInstrument": {
@@ -785,16 +803,25 @@
       ],
       "schema:name": "astroInstrument",
       "schema:description": "The instrument used to collect the data.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "The instrument used to collect the data.",
       "skos:prefLabel": "Instrument",
+      "hunLabel": "Instrument",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/4f5de7c1-ed1a-4d39-9015-ce6251b33c20",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/fe9a587c-b4f6-49ee-925c-6ee36c711293",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "astroObject": {
@@ -876,16 +903,23 @@
       ],
       "schema:name": "astroObject",
       "schema:description": "Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).",
       "skos:prefLabel": "Object",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/2d4bc326-ebc6-4882-9db8-ddcecf78e7dc",
+      "hunLabel": "Object",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/7e1d5ffb-ee25-4489-aedb-774af589e0c9",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "resolution:Spatial": {
@@ -967,14 +1001,21 @@
       ],
       "schema:name": "resolution:Spatial",
       "schema:description": "The spatial (angular) resolution that is typical of the observations, in decimal degrees.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Spatial Resolution",
-      "@id": "https://repo.arp.orgx/template-fields/a711b3b0-8953-4572-a41d-84e19e235e33",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/6d95e5ea-87c9-4ae8-baae-daf7525592d9",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "resolution:Spectral": {
@@ -1056,14 +1097,21 @@
       ],
       "schema:name": "resolution:Spectral",
       "schema:description": "The spectral resolution that is typical of the observations, given as the ratio \\u03bb/\\u0394\\u03bb.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Spectral Resolution",
-      "@id": "https://repo.arp.orgx/template-fields/d7b851af-a896-4637-b047-4c5441011d6d",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/3a4d05f5-297c-405d-8131-1c12244213fe",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "resolution:Temporal": {
@@ -1145,14 +1193,21 @@
       ],
       "schema:name": "resolution:Temporal",
       "schema:description": "The temporal resolution that is typical of the observations, given in seconds.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Time Resolution",
-      "@id": "https://repo.arp.orgx/template-fields/7128b418-5336-4f5c-932e-1a4420ae3bb4",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/ba7a2b96-1767-44bd-ac1a-bc0ddf7c1760",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:Spectral:Bandpass": {
@@ -1236,16 +1291,23 @@
       ],
       "schema:name": "coverage:Spectral:Bandpass",
       "schema:description": "Conventional bandpass name",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Bandpass",
       "minItems": 1,
       "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/9ed6d93b-d166-480f-aa4d-66c6f20daba0",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/e998aa58-6fad-4880-8dd0-d18be3657811",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:Spectral:CentralWavelength": {
@@ -1316,16 +1378,22 @@
       ],
       "schema:name": "coverage:Spectral:CentralWavelength",
       "schema:description": "The central wavelength of the spectral bandpass, in meters.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Central Wavelength (m)",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/248b2104-f84a-4a5a-89b2-406aefa2f8b7",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter a floating-point number.",
+          "advancedSearchField": true,
+          "facetable": true,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/da283679-37c4-4b18-841e-57b8d330070d",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:Spectral:Wavelength": {
@@ -1381,12 +1449,12 @@
             "properties": {
               "coverage:Spectral:MinimumWavelength": {
                 "enum": [
-                  "/coverage.Spectral.MinimumWavelength"
+                  "https://dataverse.org/schema/astrophysics/coverage.Spectral.MinimumWavelength"
                 ]
               },
               "coverage:Spectral:MaximumWavelength": {
                 "enum": [
-                  "/coverage.Spectral.MaximumWavelength"
+                  "https://dataverse.org/schema/astrophysics/coverage.Spectral.MaximumWavelength"
                 ]
               }
             },
@@ -1482,14 +1550,22 @@
             ],
             "schema:name": "coverage:Spectral:MinimumWavelength",
             "schema:description": "The minimum wavelength of the spectral bandpass, in meters.",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:03+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:03+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "Minimum (m)",
-            "@id": "https://repo.arp.orgx/template-fields/7496fe1a-93a9-48ac-81a7-c8465bd5b604",
+            "_arp": {
+              "dataverse": {
+                "watermark": "Enter a floating-point number.",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/d270cfad-402f-472d-ab49-3521e9e4f2ae",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "coverage:Spectral:MaximumWavelength": {
@@ -1560,14 +1636,22 @@
             ],
             "schema:name": "coverage:Spectral:MaximumWavelength",
             "schema:description": "The maximum wavelength of the spectral bandpass, in meters.",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:03+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:03+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "Maximum (m)",
-            "@id": "https://repo.arp.orgx/template-fields/338ecd91-71ab-460a-a10a-6f5c28bcb3f3",
+            "_arp": {
+              "dataverse": {
+                "watermark": "Enter a floating-point number.",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/b614d73a-2e46-4d74-a88c-c0b952da879b",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -1579,16 +1663,24 @@
           "coverage:Spectral:MinimumWavelength",
           "coverage:Spectral:MaximumWavelength"
         ],
-        "pav:createdOn": "2023-03-24T11:47:38+01:00",
+        "pav:createdOn": "2023-06-19T10:32:04+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Wavelength Range",
-        "@id": "https://repo.arp.orgx/template-elements/365edf2a-f2db-4f17-bf81-09e792d70fd7",
+        "_arp": {
+          "dataverse": {
+            "watermark": "Enter a floating-point number.",
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/282eb998-944c-4ec4-8c18-5cd6d7b515a7",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -1645,12 +1737,12 @@
             "properties": {
               "coverage:Temporal:StartTime": {
                 "enum": [
-                  "/coverage.Temporal.StartTime"
+                  "https://dataverse.org/schema/astrophysics/coverage.Temporal.StartTime"
                 ]
               },
               "coverage:Temporal:StopTime": {
                 "enum": [
-                  "/coverage.Temporal.StopTime"
+                  "https://dataverse.org/schema/astrophysics/coverage.Temporal.StopTime"
                 ]
               }
             },
@@ -1759,14 +1851,22 @@
             ],
             "schema:name": "coverage:Temporal:StartTime",
             "schema:description": "Dataset Start Date",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:04+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "Start",
-            "@id": "https://repo.arp.orgx/template-fields/c85dceb4-3493-49e6-ab35-145a0e7890fd",
+            "_arp": {
+              "dataverse": {
+                "watermark": "YYYY-MM-DD",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/8eee1668-6061-4508-8bd8-1cfe10a134df",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "coverage:Temporal:StopTime": {
@@ -1850,14 +1950,22 @@
             ],
             "schema:name": "coverage:Temporal:StopTime",
             "schema:description": "Dataset End Date",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:04+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "End",
-            "@id": "https://repo.arp.orgx/template-fields/111541f7-a714-4b49-b6a6-d9cd85cbb0cb",
+            "_arp": {
+              "dataverse": {
+                "watermark": "YYYY-MM-DD",
+                "advancedSearchField": true,
+                "facetable": true,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/8e32b5bf-3a9d-4e58-a4c8-b24835544690",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -1869,16 +1977,23 @@
           "coverage:Temporal:StartTime",
           "coverage:Temporal:StopTime"
         ],
-        "pav:createdOn": "2023-03-24T11:47:38+01:00",
+        "pav:createdOn": "2023-06-19T10:32:04+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Dataset Date Range",
-        "@id": "https://repo.arp.orgx/template-elements/0c4bbe11-e2ae-445b-b1b0-bebc8d34caae",
+        "_arp": {
+          "dataverse": {
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/6f080cbd-c695-487d-a066-9e48ba315144",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     },
@@ -1961,16 +2076,21 @@
       ],
       "schema:name": "coverage:Spatial",
       "schema:description": "The sky coverage of the data object.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Sky Coverage",
-      "minItems": 1,
-      "maxItems ": 0,
-      "@id": "https://repo.arp.orgx/template-fields/2abccc21-b765-4255-ad52-5ecccfaa34f3",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/529e305e-7a0b-46ee-859d-640a4121b0bd",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:Depth": {
@@ -2041,14 +2161,22 @@
       ],
       "schema:name": "coverage:Depth",
       "schema:description": "The (typical) depth coverage, or sensitivity, of the data object in Jy.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Depth Coverage",
-      "@id": "https://repo.arp.orgx/template-fields/6230ba98-6569-468f-b931-ad19e3ccf1be",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter a floating-point number.",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/edb2823e-9e7e-46e5-ade3-07d1ef258972",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:ObjectDensity": {
@@ -2119,14 +2247,22 @@
       ],
       "schema:name": "coverage:ObjectDensity",
       "schema:description": "The (typical) density of objects, catalog entries, telescope pointings, etc., on the sky, in number per square degree.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Object Density",
-      "@id": "https://repo.arp.orgx/template-fields/6d585130-688c-4f9e-aa6e-969b9e4a55de",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter a floating-point number.",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/cb51d5cd-5946-45fe-9419-f77cab564ac5",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:ObjectCount": {
@@ -2197,14 +2333,22 @@
       ],
       "schema:name": "coverage:ObjectCount",
       "schema:description": "The total number of objects, catalog entries, etc., in the data object.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Object Count",
-      "@id": "https://repo.arp.orgx/template-fields/97d8b169-2216-4d15-9125-8a6b0f524a3d",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter an integer.",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/1ac0d88d-4447-46d6-8d4e-829c5dd2c891",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:SkyFraction": {
@@ -2275,14 +2419,22 @@
       ],
       "schema:name": "coverage:SkyFraction",
       "schema:description": "The fraction of the sky represented in the observations, ranging from 0 to 1.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Fraction of Sky",
-      "@id": "https://repo.arp.orgx/template-fields/f743dc65-fd84-40d7-a97f-b30844c799aa",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter a floating-point number.",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/545df238-481c-4633-9cc2-4044e506008c",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:Polarization": {
@@ -2364,14 +2516,21 @@
       ],
       "schema:name": "coverage:Polarization",
       "schema:description": "The polarization coverage",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Polarization",
-      "@id": "https://repo.arp.orgx/template-fields/74938c3b-cc86-423b-90ca-cd9003b42bba",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/29b29e4e-157f-4c78-a651-f438536944ae",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "redshiftType": {
@@ -2453,14 +2612,23 @@
       ],
       "schema:name": "redshiftType",
       "schema:description": "RedshiftType string C \"Redshift\"; or \"Optical\" or \"Radio\" definitions of Doppler velocity used in the data object.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
+      "hunDescription": "RedshiftType string C \"Redshift\"; or \"Optical\" or \"Radio\" definitions of Doppler velocity used in the data object.",
       "skos:prefLabel": "RedshiftType",
-      "@id": "https://repo.arp.orgx/template-fields/d0a067c1-ffc2-445b-a0d7-2ce9c8d89343",
+      "hunLabel": "RedshiftType",
+      "_arp": {
+        "dataverse": {
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/50e20a54-e4e3-4136-967b-19f8daee3257",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "resolution:Redshift": {
@@ -2531,14 +2699,22 @@
       ],
       "schema:name": "resolution:Redshift",
       "schema:description": "The resolution in redshift (unitless) or Doppler velocity (km/s) in the data object.",
-      "pav:createdOn": "2023-03-24T11:47:38+01:00",
+      "pav:createdOn": "2023-06-19T10:32:04+02:00",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+      "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "skos:prefLabel": "Redshift Resolution",
-      "@id": "https://repo.arp.orgx/template-fields/b4fd55ae-e5e1-4fe0-b7a4-9a120ec31b85",
+      "_arp": {
+        "dataverse": {
+          "watermark": "Enter a floating-point number.",
+          "advancedSearchField": false,
+          "facetable": false,
+          "displayoncreate": false
+        }
+      },
+      "@id": "https://repo.arp.orgx/template-fields/e4e17ce7-dae3-4b45-be3b-3cf1dea2b352",
       "$schema": "http://json-schema.org/draft-04/schema#"
     },
     "coverage:RedshiftValue": {
@@ -2594,12 +2770,12 @@
             "properties": {
               "coverage:Redshift:MinimumValue": {
                 "enum": [
-                  "/coverage.Redshift.MinimumValue"
+                  "https://dataverse.org/schema/astrophysics/coverage.Redshift.MinimumValue"
                 ]
               },
               "coverage:Redshift:MaximumValue": {
                 "enum": [
-                  "/coverage.Redshift.MaximumValue"
+                  "https://dataverse.org/schema/astrophysics/coverage.Redshift.MaximumValue"
                 ]
               }
             },
@@ -2695,14 +2871,22 @@
             ],
             "schema:name": "coverage:Redshift:MinimumValue",
             "schema:description": "The minimum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:04+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "Minimum",
-            "@id": "https://repo.arp.orgx/template-fields/1e221016-c8dd-4830-8c6b-d7a82a2d0571",
+            "_arp": {
+              "dataverse": {
+                "watermark": "Enter a floating-point number.",
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/553d533c-b061-43ef-80a9-47e2b2d26813",
             "$schema": "http://json-schema.org/draft-04/schema#"
           },
           "coverage:Redshift:MaximumValue": {
@@ -2773,14 +2957,22 @@
             ],
             "schema:name": "coverage:Redshift:MaximumValue",
             "schema:description": "The maximum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
-            "pav:createdOn": "2023-03-24T11:47:38+01:00",
+            "pav:createdOn": "2023-06-19T10:32:04+02:00",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+            "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "skos:prefLabel": "Maximum",
-            "@id": "https://repo.arp.orgx/template-fields/4aa168f1-6665-4212-b690-b62408598c58",
+            "_arp": {
+              "dataverse": {
+                "watermark": "Enter a floating-point number.",
+                "advancedSearchField": false,
+                "facetable": false,
+                "displayoncreate": false
+              }
+            },
+            "@id": "https://repo.arp.orgx/template-fields/53255201-c6ed-43f7-937b-4612e3f52f77",
             "$schema": "http://json-schema.org/draft-04/schema#"
           }
         },
@@ -2792,16 +2984,24 @@
           "coverage:Redshift:MinimumValue",
           "coverage:Redshift:MaximumValue"
         ],
-        "pav:createdOn": "2023-03-24T11:47:38+01:00",
+        "pav:createdOn": "2023-06-19T10:32:04+02:00",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+        "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
         "pav:version": "0.0.1",
         "bibo:status": "bibo:draft",
         "skos:prefLabel": "Redshift Value",
-        "@id": "https://repo.arp.orgx/template-elements/b8256737-4ed4-4403-8a75-b0b3ca990bd4",
+        "_arp": {
+          "dataverse": {
+            "watermark": "Enter a floating-point number.",
+            "advancedSearchField": false,
+            "facetable": false,
+            "displayoncreate": false
+          }
+        },
+        "@id": "https://repo.arp.orgx/template-elements/1eac358b-b0dc-47db-9628-821a2aa79c5f",
         "$schema": "http://json-schema.org/draft-04/schema#"
       }
     }
@@ -2839,15 +3039,16 @@
   ],
   "schema:name": "Astronomy and Astrophysics Metadata",
   "schema:description": "",
-  "pav:createdOn": "2023-03-24T11:47:38+01:00",
+  "pav:createdOn": "2023-06-19T10:32:04+02:00",
   "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-  "pav:lastUpdatedOn": "2023-03-24T11:47:38+01:00",
+  "pav:lastUpdatedOn": "2023-06-19T10:32:04+02:00",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
   "pav:version": "0.0.1",
   "bibo:status": "bibo:draft",
+  "hunName": "Astronomy and Astrophysics Metadata",
   "schema:identifier": "astrophysics",
-  "@id": "https://repo.arp.orgx/templates/206beeac-4dfe-487b-b931-18973fe059c8",
+  "@id": "https://repo.arp.orgx/templates/7f60ad50-8080-44f0-8736-e3cea027f2ee",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }

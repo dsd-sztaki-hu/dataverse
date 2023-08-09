@@ -3,10 +3,7 @@ package edu.harvard.iq.dataverse.arp;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
@@ -43,10 +40,10 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private static void setupCedarTemplateParts() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String cedarTemplatePath = BundleUtil.getStringFromBundle("arp.cedar.template.schema");
-        String cedarTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.template.field");
-        String cedarStaticTemplateFieldPath = BundleUtil.getStringFromBundle("arp.cedar.static.template.field");
-        String cedarTemplateElementPath = BundleUtil.getStringFromBundle("arp.cedar.template.element");
+        String cedarTemplatePath = "arp/cedarSchemaTemplate.json";
+        String cedarTemplateFieldPath = "arp/cedarTemplateField.json";
+        String cedarStaticTemplateFieldPath = "arp/cedarStaticTemplateField.json";
+        String cedarTemplateElementPath = "arp/cedarTemplateElement.json";
 
         InputStream cedarTemplateInputStream = getCedarTemplateFromResources(cedarTemplatePath);
         InputStream cedarTemplateFieldInputStream = getCedarTemplateFromResources(cedarTemplateFieldPath);
@@ -252,8 +249,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         String fieldType = datasetField.getFieldType().toLowerCase();
         JsonObject templateField = cedarTemplateField.deepCopy();
 
-        processCommonFields(templateField, datasetField, true);
-        templateField.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
+        processCommonFields(templateField, datasetField);
         
 
         switch (fieldType) {
@@ -308,7 +304,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues, DataverseMetadataBlock dataverseMetadataBlock) {
         JsonObject templateElement = cedarTemplateElement.deepCopy();
-        processCommonFields(templateElement, datasetField, false);
+        processCommonFields(templateElement, datasetField);
         children.forEach(child -> {
             JsonArray cvvs = new JsonArray();
             controlledVocabularyValues.stream()
@@ -325,7 +321,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
     }
 
-    private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField, boolean parentIsTemplateField) {
+    private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
          * upon importing from CEDAR the colons are replaced with dots again
@@ -356,9 +352,54 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                 // ignore
             }
         }
-        if (parentIsTemplateField && datasetField.isAllowmultiples()) {
+        if (datasetField.isAllowmultiples()) {
             cedarTemplate.addProperty("minItems", 1);
             cedarTemplate.addProperty("maxItems ", 0);
+        }
+        if (cedarTemplate.has("_valueConstraints")) {
+            cedarTemplate.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
+        } else {
+            var valueConstraint = new JsonObject();
+            valueConstraint.addProperty("requiredValue", datasetField.isRequired());
+            cedarTemplate.add("_valueConstraints", valueConstraint);
+        }
+        
+        processArpFields(cedarTemplate, datasetField);
+    }
+    
+    private void processArpFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {
+        addArpProperty(cedarTemplate, "watermark", datasetField.getWatermark());
+        addArpProperty(cedarTemplate, "displayFormat", datasetField.getDisplayFormat());
+        addArpProperty(cedarTemplate, "advancedSearchField", datasetField.isAdvancedSearchField());
+        addArpProperty(cedarTemplate, "facetable", datasetField.isFacetable());
+        addArpProperty(cedarTemplate, "displayoncreate", datasetField.isDisplayoncreate());
+    }
+    
+    private void addArpProperty(JsonObject cedarTemplate, String propName, Object value) {
+        if (value != null) {
+            if (value instanceof String) {
+                if (((String) value).isBlank()) {
+                    return;
+                }
+            }
+            JsonElement jsonValue = value instanceof String ? new JsonPrimitive((String) value) : new JsonPrimitive((boolean) value);
+            if (cedarTemplate.has("_arp")) {
+                var arpPart = cedarTemplate.getAsJsonObject("_arp");
+                if (arpPart.has("dataverse")) {
+                    var dvPart = arpPart.getAsJsonObject("dataverse");
+                    dvPart.add(propName, jsonValue);
+                } else {
+                    JsonObject dvValue = new JsonObject();
+                    dvValue.add(propName, jsonValue);
+                    arpPart.add("dataverse", dvValue);
+                }
+            } else {
+                JsonObject arpPart = new JsonObject();
+                JsonObject dvValue = new JsonObject();
+                dvValue.add(propName, jsonValue);
+                arpPart.add("dataverse", dvValue);
+                cedarTemplate.add("_arp", arpPart);
+            }   
         }
     }
 

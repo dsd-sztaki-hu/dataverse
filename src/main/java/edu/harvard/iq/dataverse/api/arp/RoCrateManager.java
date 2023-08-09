@@ -6,35 +6,48 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.databind.util.RawValue;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.FolderReader;
 import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
+import edu.kit.datamanager.ro_crate.writer.FolderWriter;
+import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.inject.Named;
-import javax.json.JsonObject;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Stateless
 @Named
 public class RoCrateManager {
+
+    private static final Logger logger = Logger.getLogger(RoCrateManager.class.getCanonicalName());
 
     private final String compoundIdAndUuidSeparator = "::";
     
@@ -46,12 +59,20 @@ public class RoCrateManager {
     @EJB
     ArpMetadataBlockServiceBean arpMetadataBlockServiceBean;
 
+    @EJB
+    ControlledVocabularyValueServiceBean controlledVocabularyValueService;
+    
+    @EJB
+    MetadataBlockServiceBean metadataBlockServiceBean;
+
+    @EJB
+    ArpConfig arpConfig;
+
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
     public void createOrUpdate(RoCrate roCrate, Dataset dataset, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
-        List<ContextualEntity> contextualEntities = roCrate.getAllContextualEntities();
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
         List<DatasetField> datasetFields = dataset.getLatestVersion().getDatasetFields();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
@@ -63,148 +84,166 @@ public class RoCrateManager {
 
         // Update the RO-Crate with the values from DV
         for (var datasetField : datasetFields) {
-            List<DatasetFieldCompoundValue> compoundValues = datasetField.getDatasetFieldCompoundValues();
-            List<DatasetFieldValue> fieldValues = datasetField.getDatasetFieldValues();
-            List<ControlledVocabularyValue> controlledVocabValues = datasetField.getControlledVocabularyValues();
             DatasetFieldType fieldType = datasetField.getDatasetFieldType();
             String fieldName = fieldType.getName();
             String fieldUri = fieldType.getUri();
             
-            conformsToMdbs.add(datasetField.getDatasetFieldType().getMetadataBlock());
+            if (!datasetField.isEmpty()) {
+                conformsToMdbs.add(datasetField.getDatasetFieldType().getMetadataBlock());
+            }
             
             // Update the contextual entities with the new compound values
             if (fieldType.isCompound()) {
-                if (!rootDataEntity.getProperties().has(fieldName)) {
-                    //Add new contextual entity to the RO-Crate
-                    for (var compoundValue : compoundValues) {
-                        addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, false);
-                    }
-                } else {
-                    // First, if the property is an array, remove every entity from the RO-Crate that had been deleted in DV,
-                    // then update the entities in the RO-Crate with the new values from DV
-                    var entityToUpdate = rootDataEntity.getProperties().get(fieldName);
-                    if (entityToUpdate.isArray()) {
-                        List<String> compoundValueIds = compoundValues.stream().map(compoundValue -> compoundValue.getId().toString()).collect(Collectors.toList());
-                        for (Iterator<JsonNode> it = entityToUpdate.elements(); it.hasNext();) {
-                            JsonNode entity = it.next();
-                            String rootEntityId = entity.get("@id").textValue();
-                            if (!compoundValueIds.contains(rootEntityId.split(compoundIdAndUuidSeparator)[0].substring(1))) {
-                                ContextualEntity contextualEntityToDelete = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(rootEntityId)).findFirst().get();
-                                List<String> compoundValueProps = datasetField.getDatasetFieldType().getChildDatasetFieldTypes().stream().map(DatasetFieldType::getName).collect(Collectors.toList());
-                                // Delete the properties from the contextual entity that was removed from DV,
-                                // if the contextual entity does not contain any other props than @id and @type, just delete it
-                                // else, the contextual entity still contains properties and those props are from AROMA, we can not delete the contextual entity
-                                for (var prop : compoundValueProps) {
-                                    contextualEntityToDelete.getProperties().remove(prop);
-                                }
-                                var actProperties = contextualEntityToDelete.getProperties();
-                                if (actProperties.size() == 2 && actProperties.has("@id") && actProperties.has("@type")) {
-                                    it.remove();
-                                    roCrate.deleteEntityById(contextualEntityToDelete.getId());
-                                }
-                            }
-                        }
-                    }
-
-                    // The entityToUpdate value has to be updated after every modification, in case its value is changed in the RO-Crate,
-                    // eg: from object to array
-                    for (var compoundValue : compoundValues) {
-                        String entityToUpdateId;
-                        entityToUpdate = rootDataEntity.getProperties().get(fieldName);
-                        if (entityToUpdate.isObject() && compoundValue.getDisplayOrder() == 0) {
-                            entityToUpdateId = entityToUpdate.get("@id").textValue();
-                        } else if (entityToUpdate.isArray()) {
-                            String matchingId = "";
-                            for (var idObj : entityToUpdate) {
-                                if (idObj.get("@id").textValue().split(compoundIdAndUuidSeparator)[0].substring(1).equals(compoundValue.getId().toString())) {
-                                    matchingId = idObj.get("@id").textValue();
-                                    break;
-                                }
-                            }
-                            if (matchingId.isBlank()) {
-                                // There was no matching compoundValueId, this is a new entity
-                                addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, true);
-                                continue;
-                            } else {
-                                entityToUpdateId = matchingId;
-                            }
-                        } else {
-                            addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, fieldName, fieldUri, isCreation, false);
-                            continue;
-                        }
-
-                        //Update the fields of the entity with the values from DV
-                        var actEntityToUpdate = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(entityToUpdateId)).findFirst().get();
-                        //Loop through the properties of the compoundValue (the entity) and update the values
-                        for (var childDatasetFieldType : datasetField.getDatasetFieldType().getChildDatasetFieldTypes()) {
-                            String childFieldName = childDatasetFieldType.getName();
-                            String childFieldUri = childDatasetFieldType.getUri();
-                            Optional<DatasetField> optChildDatasetField = compoundValue.getChildDatasetFields().stream().filter(childDsf -> childDsf.getDatasetFieldType().getName().equals(childFieldName)).findFirst();
-                            if (optChildDatasetField.isPresent()) {
-                                DatasetField childDatasetField = optChildDatasetField.get();
-                                List<DatasetFieldValue> childFieldValues = childDatasetField.getDatasetFieldValues();
-                                List<ControlledVocabularyValue> childControlledVocabValues = childDatasetField.getControlledVocabularyValues();
-                                DatasetFieldType childFieldType = childDatasetField.getDatasetFieldType();
-                                if (!childFieldValues.isEmpty() || !childControlledVocabValues.isEmpty()) {
-                                    var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
-                                    //Update the property with the new value(s)
-                                    if (isCreation || !roCrateContext.has(fieldName)) {
-                                        roCrateContextUpdater.addValuePairToContext(fieldName, fieldUri);
-                                    }
-                                    if (isCreation || !roCrateContext.has(childFieldName)) {
-                                        roCrateContextUpdater.addValuePairToContext(childFieldName, childFieldUri);
-                                    }
-                                    if (!childFieldValues.isEmpty()) {
-                                        for (var childFieldValue : childFieldValues) {
-                                            actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
-                                        }
-                                    }
-                                    if (!childControlledVocabValues.isEmpty()) {
-                                        for (var controlledVocabValue : childControlledVocabValues) {
-                                            actEntityToUpdate.addProperty(childFieldName, controlledVocabValue.getStrValue());
-                                        }
-                                    }
-                                }
-                            } else {
-                                //Remove the property, because the value was deleted in DV
-                                actEntityToUpdate.getProperties().remove(childFieldName);
-                                roCrate.deleteValuePairFromContext(childFieldName);
-                            }
-                        }
-                    }
-                }
-
+                processCompoundFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
             } else {
-                var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
-                if (isCreation || !roCrateContext.has(fieldName)) {
-                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldUri);
-                }
-                if (!fieldValues.isEmpty()) {
-                    if (fieldValues.size() == 1) {
-                        rootDataEntity.addProperty(fieldName, fieldValues.get(0).getValue());
-                    } else {
-                        ArrayNode valuesNode = mapper.createArrayNode();
-                        for (var fieldValue : fieldValues) {
-                            valuesNode.add(fieldValue.getValue());
-                        }
-                        rootDataEntity.addProperty(fieldName, valuesNode);
-                    }
-                }
-                if (!controlledVocabValues.isEmpty()) {
-                    if (controlledVocabValues.size() == 1) {
-                        rootDataEntity.addProperty(fieldName, controlledVocabValues.get(0).getStrValue());
-                    } else {
-                        ArrayNode strValuesNode = mapper.createArrayNode();
-                        for (var controlledVocabValue : controlledVocabValues) {
-                            strValuesNode.add(controlledVocabValue.getStrValue());
-                        }
-                        rootDataEntity.addProperty(fieldName, strValuesNode);
-                    }
-                }
-
+                processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
             }
         }
+        
+        collectConformsToIds(rootDataEntity, conformsToMdbs, mapper);
+    }
+    
+    private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+        List<DatasetFieldValue> fieldValues = datasetField.getDatasetFieldValues();
+        List<ControlledVocabularyValue> controlledVocabValues = datasetField.getControlledVocabularyValues();
+        var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
+        if (isCreation || !roCrateContext.has(fieldName)) {
+            roCrateContextUpdater.addValuePairToContext(fieldName, fieldUri);
+        }
+        if (!fieldValues.isEmpty()) {
+            if (fieldValues.size() == 1) {
+                rootDataEntity.addProperty(fieldName, fieldValues.get(0).getValue());
+            } else {
+                ArrayNode valuesNode = mapper.createArrayNode();
+                for (var fieldValue : fieldValues) {
+                    valuesNode.add(fieldValue.getValue());
+                }
+                rootDataEntity.addProperty(fieldName, valuesNode);
+            }
+        }
+        processControlledVocabularyValues(controlledVocabValues, rootDataEntity, fieldName, mapper);
+    }
+    
+    private void processCompoundFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+        List<DatasetFieldCompoundValue> compoundValues = datasetField.getDatasetFieldCompoundValues();
+        List<ContextualEntity> contextualEntities = roCrate.getAllContextualEntities();
+        
+        if (!rootDataEntity.getProperties().has(fieldName)) {
+            //Add new contextual entity to the RO-Crate
+            for (var compoundValue : compoundValues) {
+                addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, false);
+            }
+        } else {
+            // First, if the property is an array, remove every entity from the RO-Crate that had been deleted in DV,
+            // then update the entities in the RO-Crate with the new values from DV
+            var entityToUpdate = rootDataEntity.getProperties().get(fieldName);
+            if (entityToUpdate.isArray()) {
+                List<String> compoundValueIds = compoundValues.stream().map(compoundValue -> compoundValue.getId().toString()).collect(Collectors.toList());
+                for (Iterator<JsonNode> it = entityToUpdate.elements(); it.hasNext();) {
+                    JsonNode entity = it.next();
+                    String rootEntityId = entity.get("@id").textValue();
+                    if (!compoundValueIds.contains(rootEntityId.split(compoundIdAndUuidSeparator)[0].substring(1))) {
+                        ContextualEntity contextualEntityToDelete = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(rootEntityId)).findFirst().get();
+                        List<String> compoundValueProps = datasetField.getDatasetFieldType().getChildDatasetFieldTypes().stream().map(DatasetFieldType::getName).collect(Collectors.toList());
+                        // Delete the properties from the contextual entity that was removed from DV,
+                        // if the contextual entity does not contain any other props than @id and @type, just delete it
+                        // else, the contextual entity still contains properties and those props are from AROMA, we can not delete the contextual entity
+                        for (var prop : compoundValueProps) {
+                            contextualEntityToDelete.getProperties().remove(prop);
+                        }
+                        var actProperties = contextualEntityToDelete.getProperties();
+                        if (actProperties.size() == 2 && actProperties.has("@id") && actProperties.has("@type")) {
+                            it.remove();
+                            roCrate.deleteEntityById(contextualEntityToDelete.getId());
+                        }
+                    }
+                }
+            }
 
+            processCompoundValues(roCrate, roCrateContextUpdater, compoundValues, contextualEntities, entityToUpdate, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+        }
+    }
+    
+    private void processCompoundValues(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, List<DatasetFieldCompoundValue> compoundValues, List<ContextualEntity> contextualEntities, JsonNode entityToUpdate, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+        // The entityToUpdate value has to be updated after every modification, in case its value is changed in the RO-Crate,
+        // eg: from object to array
+        for (var compoundValue : compoundValues) {
+            String entityToUpdateId;
+            entityToUpdate = rootDataEntity.getProperties().get(fieldName);
+            if (entityToUpdate.isObject() && compoundValue.getDisplayOrder() == 0) {
+                entityToUpdateId = entityToUpdate.get("@id").textValue();
+            } else if (entityToUpdate.isArray()) {
+                String matchingId = "";
+                for (var idObj : entityToUpdate) {
+                    if (idObj.get("@id").textValue().split(compoundIdAndUuidSeparator)[0].substring(1).equals(compoundValue.getId().toString())) {
+                        matchingId = idObj.get("@id").textValue();
+                        break;
+                    }
+                }
+                if (matchingId.isBlank()) {
+                    // There was no matching compoundValueId, this is a new entity
+                    addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, true);
+                    continue;
+                } else {
+                    entityToUpdateId = matchingId;
+                }
+            } else {
+                addNewContextualEntity(roCrate, roCrateContextUpdater, compoundValue, mapper, datasetField, isCreation, false);
+                continue;
+            }
+
+            //Update the fields of the entity with the values from DV
+            var actEntityToUpdate = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(entityToUpdateId)).findFirst().get();
+            //Loop through the properties of the compoundValue (the entity) and update the values
+            for (var childDatasetFieldType : datasetField.getDatasetFieldType().getChildDatasetFieldTypes()) {
+                String childFieldName = childDatasetFieldType.getName();
+                String childFieldUri = childDatasetFieldType.getUri();
+                Optional<DatasetField> optChildDatasetField = compoundValue.getChildDatasetFields().stream().filter(childDsf -> childDsf.getDatasetFieldType().getName().equals(childFieldName)).findFirst();
+                if (optChildDatasetField.isPresent()) {
+                    DatasetField childDatasetField = optChildDatasetField.get();
+                    List<DatasetFieldValue> childFieldValues = childDatasetField.getDatasetFieldValues();
+                    List<ControlledVocabularyValue> childControlledVocabValues = childDatasetField.getControlledVocabularyValues();
+                    DatasetFieldType childFieldType = childDatasetField.getDatasetFieldType();
+                    if (!childFieldValues.isEmpty() || !childControlledVocabValues.isEmpty()) {
+                        var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
+                        //Update the property with the new value(s)
+                        if (isCreation || !roCrateContext.has(fieldName)) {
+                            roCrateContextUpdater.addValuePairToContext(fieldName, fieldUri);
+                        }
+                        if (isCreation || !roCrateContext.has(childFieldName)) {
+                            roCrateContextUpdater.addValuePairToContext(childFieldName, childFieldUri);
+                        }
+                        if (!childFieldValues.isEmpty()) {
+                            for (var childFieldValue : childFieldValues) {
+                                actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
+                            }
+                        }
+                        processControlledVocabularyValues(childControlledVocabValues, actEntityToUpdate, childFieldName, mapper);
+                    }
+                } else {
+                    //Remove the property, because the value was deleted in DV
+                    actEntityToUpdate.getProperties().remove(childFieldName);
+                    roCrate.deleteValuePairFromContext(childFieldName);
+                }
+            }
+        }
+    }
+    
+    private void processControlledVocabularyValues(List<ControlledVocabularyValue> controlledVocabValues, AbstractEntity parentEntity, String fieldName, ObjectMapper mapper) {
+        if (!controlledVocabValues.isEmpty()) {
+            if (controlledVocabValues.size() == 1) {
+                parentEntity.addProperty(fieldName, controlledVocabValues.get(0).getStrValue());
+            } else {
+                ArrayNode strValuesNode = mapper.createArrayNode();
+                for (var controlledVocabValue : controlledVocabValues) {
+                    strValuesNode.add(controlledVocabValue.getStrValue());
+                }
+                parentEntity.addProperty(fieldName, strValuesNode);
+            }
+        }
+    }
+    
+    private void collectConformsToIds(RootDataEntity rootDataEntity, Set<MetadataBlock> conformsToMdbs, ObjectMapper mapper) {
         var conformsToArray = mapper.createArrayNode();
         var conformsToIds = conformsToMdbs.stream().map(mdb -> {
             var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
@@ -218,9 +257,12 @@ public class RoCrateManager {
         conformsToIds.forEach(id -> {
             conformsToArray.add(mapper.createObjectNode().put("@id", id));
         });
-        
-        rootDataEntity.addProperty("conformsTo", conformsToArray);
-        
+
+        if (rootDataEntity.getProperties().has("conformsTo")) {
+            rootDataEntity.getProperties().set("conformsTo", conformsToArray);
+        } else {
+            rootDataEntity.addProperty("conformsTo", conformsToArray);
+        }
     }
     
     private void removeDeletedEntities(RoCrate roCrate, Dataset dataset, List<DatasetField> datasetFields, Map<String, DatasetFieldType> datasetFieldTypeMap) {
@@ -278,15 +320,45 @@ public class RoCrateManager {
         }
 
         // Check and remove deleted files
-        var fileNames = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getLabel).collect(Collectors.toList());
-        var dataEntityNameAndIdPairs = roCrate.getAllDataEntities().stream().map(dataEntity -> Pair.of(dataEntity.getProperties().get("name").textValue(), dataEntity.getId())).collect(Collectors.toList());
+        List<String> fileNames = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getLabel).collect(Collectors.toList());
+        List<Pair<String, String>> fileNameAndIdPairs = roCrate.getAllContextualEntities().stream().filter(dataEntity -> getTypeAsString(dataEntity.getProperties()).equals("File")).map(dataEntity -> Pair.of(dataEntity.getProperties().get("name").textValue(), dataEntity.getId())).collect(Collectors.toList());
+        List<ContextualEntity> datasets = roCrate.getAllContextualEntities().stream().filter(ce -> getTypeAsString(ce.getProperties()).equals("Dataset")).collect(Collectors.toList());
 
-        dataEntityNameAndIdPairs.forEach(entityNameAndIdPair -> {
+        fileNameAndIdPairs.forEach(entityNameAndIdPair -> {
             if (!fileNames.contains(entityNameAndIdPair.getKey())) {
                 roCrate.deleteEntityById(entityNameAndIdPair.getValue());
+                // Delete datasets that are empty
+                deleteEmptyChildDatasets(roCrate);
+                var emptyParentDatasetOptional = roCrate.getAllDataEntities().stream().filter(ce -> getTypeAsString(ce.getProperties()).equals("Dataset") && ce.getProperty("hasPart").isEmpty()).findFirst();
+                if (emptyParentDatasetOptional.isPresent()) {
+                    var emptyParentDatasetId = emptyParentDatasetOptional.get().getId();
+                    roCrate.deleteEntityById(emptyParentDatasetId);
+                }
             }
         });
 
+    }
+    
+    private void deleteEmptyChildDatasets(RoCrate roCrate) {
+        Optional<ContextualEntity> emptyChildDatasetOptional = roCrate.getAllContextualEntities().stream().filter(ce -> getTypeAsString(ce.getProperties()).equals("Dataset") && ce.getProperty("hasPart").isEmpty()).findFirst();
+        if (emptyChildDatasetOptional.isPresent()) {
+            var emptyChildDatasetId = emptyChildDatasetOptional.get().getId();
+            roCrate.deleteEntityById(emptyChildDatasetId);
+            deleteEmptyChildDatasets(roCrate);
+        }
+    }
+    
+    private String getTypeAsString(JsonNode jsonNode) {
+        JsonNode typeProp = jsonNode.get("@type");
+        String typeString;
+        
+        if (typeProp.isArray()) {
+            typeString = typeProp.get(0).textValue();
+        } else {
+            typeString = typeProp.textValue();
+        }
+        
+        return typeString;
     }
 
     private boolean deleteCompoundValue(RoCrate roCrate, String entityId, DatasetFieldType datasetFieldType) {
@@ -334,52 +406,275 @@ public class RoCrateManager {
         }
     }
 
-    public void addNewContextualEntity(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, DatasetFieldCompoundValue compoundValue, ObjectMapper mapper, String parentFieldName, String parentFieldUri, boolean isCreation, boolean reorderCompoundValues) throws JsonProcessingException {
+    public void addNewContextualEntity(
+            RoCrate roCrate,
+            RoCrate.RoCrateBuilder roCrateContextUpdater,
+            DatasetFieldCompoundValue compoundValue,
+            ObjectMapper mapper,
+            DatasetField parentField,
+            boolean isCreation,
+            boolean reorderCompoundValues
+    ) throws JsonProcessingException
+    {
+        DatasetFieldType parentFieldType = parentField.getDatasetFieldType();
+        String parentFieldName = parentFieldType.getName();
+        String parentFieldUri = parentFieldType.getUri();
+        DatasetFieldTypeArp dsfArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(parentFieldType);
+
         ContextualEntity.ContextualEntityBuilder contextualEntityBuilder = new ContextualEntity.ContextualEntityBuilder();
         buildNewContextualEntity(roCrate, roCrateContextUpdater, contextualEntityBuilder, compoundValue, mapper, parentFieldName, parentFieldUri, isCreation);
+
         // The hashmark before the uuid is required in AROMA
         // "@id's starting with # as these signify the reference is internal to the crate"
         // the compoundIdAndUuidSeparator separates the id of the parent compound value from the uuid
         // the parent compound id is used to get the correct values upon modifying the RO-Crate with data from AROMA
         contextualEntityBuilder.setId("#" + compoundValue.getId() + compoundIdAndUuidSeparator + UUID.randomUUID());
+
+        String nameFieldValue = null;
+
+        // If compound value has a "name" field, use its value by default
+        var nameField = compoundValue.getChildDatasetFields().stream()
+                .filter(datasetField -> datasetField.getDatasetFieldType().getName().equals("name"))
+                .findFirst();
+        if (nameField.isPresent()) {
+            // No need to set anything, since the context entity will already have a "name" field with a value
+        }
+        // Find an explicit displayNameField set in dsfArp
+        else if (dsfArp.getDisplayNameField() != null) {
+            var displayNameField = dsfArp.getDisplayNameField();
+            var displayNameFieldValue = compoundValue.getChildDatasetFields().stream()
+                    .filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(displayNameField))
+                    .findFirst();
+            if (displayNameFieldValue.isPresent()) {
+                nameFieldValue = displayNameFieldValue.get().getDisplayValue();
+            }
+        }
+        // Fall back to DV's own display value
+        else {
+            // Similar to metadataFragment.xhtml, but we separate using ';' instead of space
+            // <ui:repeat value="#{compoundValue.displayValueMap.entrySet().toArray()}" var="cvPart" varStatus="partStatus">
+            nameFieldValue = compoundValue.getDisplayValueMap().entrySet().stream()
+                    .map(o -> o.getValue())
+                    .collect(Collectors.joining("; "));
+        }
+
+        // if we have set any value for nameFieldValue use that
+        if (nameFieldValue != null) {
+            contextualEntityBuilder.addProperty("name", nameFieldValue);
+        }
+
+        //contextualEntity.addProperty("name", "displayNameField");
         ContextualEntity contextualEntity = contextualEntityBuilder.build();
-        // The "@id" is always a prop in a contextualEntity
-        if (contextualEntity.getProperties().size() > 1) {
+        // The "@id" and "name" are always props in a contextualEntity
+        if (contextualEntity.getProperties().size() > 2) {
             contextualEntity.addType(parentFieldName);
             // To keep the order of the compound field values synchronised with their corresponding root data entity values
             // the new compound field values need to be inserted to the same position
             // in the RO-Crate as their displayPosition in DV, since the order of the values are displayed in AROMA 
             // based on the order of the values in the RO-Crate
             if (reorderCompoundValues) {
-                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(compoundValue.getDisplayOrder(), mapper.createObjectNode().put("@id", contextualEntity.getId()));
+                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(
+                        compoundValue.getDisplayOrder(),
+                        mapper.createObjectNode().put("@id", contextualEntity.getId())
+                );
             } else {
                 roCrate.getRootDataEntity().addIdProperty(parentFieldName, contextualEntity.getId());
             }
             roCrate.addContextualEntity(contextualEntity);
         }
     }
-
-    public void generateRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) {
-        for (var fileMetadata : fileMetadatas) {
+    
+    private String addFileEntity(RoCrate roCrate, FileMetadata fileMetadata, boolean toHasPart) {
+        String fileName = fileMetadata.getLabel();
+        String fileId = null;
+        var dataEntities = roCrate.getAllDataEntities();
+        var contextualEntities = roCrate.getAllContextualEntities();
+        if (contextualEntities.stream().noneMatch(contextualEntity -> {
+                var props = contextualEntity.getProperties();
+                return props.has("name") && props.get("name").textValue().equals(fileName) && getTypeAsString(props).equals("File");
+            }) && 
+            dataEntities.stream().noneMatch(dataEntity -> {
+                var props = dataEntity.getProperties();
+                return props.has("name") && props.get("name").textValue().equals(fileName) && getTypeAsString(props).equals("File");
+            })) {
             FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
-            String fileName = fileMetadata.getLabel();
-            var dataEntities = roCrate.getAllDataEntities();
-            if (dataEntities.isEmpty() || dataEntities.stream().noneMatch(dataEntity -> dataEntity.getProperties().get("name").textValue().equals(fileName))) {
-                DataFile dataFile = fileMetadata.getDataFile();
-                fileEntityBuilder.setId("#" + UUID.randomUUID());
-                fileEntityBuilder.addProperty("name", fileName);
-                fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
-                fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
-                if (fileMetadata.getDescription() != null) {
-                    fileEntityBuilder.addProperty("description", fileMetadata.getDescription());
-                }
-                roCrate.addDataEntity(fileEntityBuilder.build(), true);
+            DataFile dataFile = fileMetadata.getDataFile();
+            fileId = "#" + UUID.randomUUID();
+            fileEntityBuilder.setId(fileId);
+            fileEntityBuilder.addProperty("name", fileName);
+            fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
+            fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
+            if (fileMetadata.getDescription() != null) {
+                fileEntityBuilder.addProperty("description", fileMetadata.getDescription());
             }
+            var file = fileEntityBuilder.build();
+            roCrate.addDataEntity(file, toHasPart);
+        }
+        return fileId;
+    }
+    
+    public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        for (var fileMetadata : fileMetadatas) {
+            ArrayList <String> folderNames = fileMetadata.getDirectoryLabel() != null ? new ArrayList<>(Arrays.asList(fileMetadata.getDirectoryLabel().split("/"))) : new ArrayList<>();
+            if (folderNames.isEmpty()) {
+                //add file
+                addFileEntity(roCrate, fileMetadata, true);
+            } else {
+                //process folder path and add files to the new datasets
+                //check the rootDataset first
+                JsonNode rootDataset = findRootDatasetAsJsonNode(roCrate, mapper);
+                String parentDatasetId = createDatasetsFromFoldersAndReturnParentId(roCrate, rootDataset, folderNames, mapper, true);
+                // if newFiledId is null that means the file is already a part of the dataset
+                // childDataset means that the dataset is not top level dataset
+                // top level datasets that are child of the rootDataset, those datasets needs to be handled differently
+                String newFiledId = addFileEntity(roCrate, fileMetadata, false);
+                if (newFiledId != null) {
+                    ContextualEntity newChildDataset = roCrate.getContextualEntityById(parentDatasetId);
+                    ObjectNode parentDataset;
+                    if (newChildDataset != null) {
+                        parentDataset = newChildDataset.getProperties();
+                    } else {
+                        parentDataset = roCrate.getAllDataEntities().stream().filter(dataEntity -> dataEntity.getId().equals(parentDatasetId)).findFirst().get().getProperties();
+                    }
+                    addIdToHasPart(parentDataset, newFiledId, mapper);
+                }
+            }
+        }
+    }
+    
+    private JsonNode findRootDatasetAsJsonNode(RoCrate roCrate, ObjectMapper mapper) throws JsonProcessingException {
+        String rootEntityId = roCrate.getRootDataEntity().getId();
+        var roGraph = mapper.readTree(roCrate.getJsonMetadata()).withArray("@graph");
+        Iterator<JsonNode> it = roGraph.elements();
+        while (it.hasNext()) {
+            var jsonNode = it.next();
+            if (jsonNode.get("@id").textValue().equals(rootEntityId)
+                    && jsonNode.has("@type")
+                    && getTypeAsString(jsonNode).equals("Dataset")) {
+                return jsonNode;
+            }
+        }
+        return null;
+    }
+    
+    //Add new dataset for every folder in the given folderNames list, and returns the id of the folder that contains the file
+    private String createDatasetsFromFoldersAndReturnParentId(RoCrate roCrate, JsonNode parentObj, List<String> folderNames, ObjectMapper mapper, boolean isRootDataset) {
+        String folderName = folderNames.remove(0);
+        String alreadyPresentDatasetId = null;
+        JsonNode alreadyPresentParentDataset = null;
+        if (isRootDataset) {
+            for (String nodeId : roCrate.getRootDataEntity().hasPart) { 
+                var dataEntity = roCrate.getAllDataEntities().stream().filter(de -> de.getProperties().get("@id").textValue().equals(nodeId)).findFirst();
+                if (dataEntity.isPresent()) {
+                    ObjectNode node = dataEntity.get().getProperties();
+                    if (node.has("name") && node.get("name").textValue().equals(folderName)
+                            && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                        alreadyPresentDatasetId = nodeId;
+                        alreadyPresentParentDataset = node;
+                    }
+                } else {
+                    var contextualEntity = roCrate.getContextualEntityById(nodeId);
+                    if (contextualEntity != null) {
+                        ObjectNode node = contextualEntity.getProperties();
+                        if (node.has("name") && node.get("name").textValue().equals(folderName)
+                                && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                            alreadyPresentDatasetId = nodeId;
+                            alreadyPresentParentDataset = node;
+                        }
+                    }
+                    
+                }
+            }
+        } else {
+            alreadyPresentDatasetId = getDatasetIdIfAlreadyPresent(roCrate, parentObj, folderName);
+        }
+        String newDatasetId;
+        if (alreadyPresentDatasetId == null) {
+            //add new dataset
+            newDatasetId = "#" + UUID.randomUUID();
+            ContextualEntity newDataset = new ContextualEntity.ContextualEntityBuilder()
+                    .addType("Dataset")
+                    .setId(newDatasetId)
+                    .addProperty("name", folderName)
+                    .build();
+            roCrate.addContextualEntity(newDataset);
+            
+            //add the id of the new dataset to the hasPart
+            if (isRootDataset) {
+                roCrate.getRootDataEntity().hasPart.add(newDatasetId);
+            } else {
+                ObjectNode roCrateParentObj = roCrate.getContextualEntityById(parentObj.get("@id").textValue()).getProperties();
+                addIdToHasPart(roCrateParentObj, newDatasetId, mapper);
+            }
+        } else {
+            newDatasetId = alreadyPresentDatasetId; 
+        }
+        
+        if (!folderNames.isEmpty()) {
+            JsonNode newDataset = alreadyPresentParentDataset == null ? roCrate.getContextualEntityById(newDatasetId).getProperties() : alreadyPresentParentDataset;
+            return createDatasetsFromFoldersAndReturnParentId(roCrate, newDataset, folderNames, mapper, false);    
+        } else {
+            return newDatasetId;
+        }
+    }
+    
+    private String getDatasetIdIfAlreadyPresent(RoCrate roCrate, JsonNode parentObj, String folderName) {
+        String datasetId = null;
+        if (parentObj.has("hasPart")) {
+            JsonNode hasPart = parentObj.get("hasPart");
+            if (hasPart.isObject()) {
+                String nodeId = hasPart.get("@id").textValue();
+                ContextualEntity contextualEntity = roCrate.getContextualEntityById(nodeId);
+                if (contextualEntity != null) {
+                    ObjectNode node = roCrate.getContextualEntityById(nodeId).getProperties();
+                    if (node.has("name") && node.get("name").textValue().equals(folderName)
+                            && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                        datasetId = nodeId;
+                    }
+                }
+            } else {
+                for (var idNode : hasPart) {
+                    String nodeId = idNode.get("@id").textValue();
+                    ContextualEntity contextualEntity = roCrate.getContextualEntityById(nodeId);
+                    if (contextualEntity != null) {
+                        ObjectNode node = contextualEntity.getProperties();
+                        if(node.has("name") && node.get("name").textValue().equals(folderName)
+                                && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                            datasetId = nodeId;
+                            break;
+                        };
+                    }
+                }
+            }
+        }
+        return datasetId;
+    }
+    
+    private void addIdToHasPart(JsonNode parentObj, String id, ObjectMapper mapper) {
+        var newHasPart = mapper.createObjectNode();
+        newHasPart.put("@id", id);
+        if (parentObj.has("hasPart")) {
+            JsonNode hasPart = parentObj.get("hasPart");
+            if (hasPart.isArray()) {
+                ((ArrayNode) hasPart).add(newHasPart);
+            } else {
+                ArrayNode newHasPartArray = mapper.createArrayNode();
+                newHasPartArray.add(parentObj.get("hasPart"));
+                newHasPartArray.add(newHasPart);
+                ((ObjectNode)parentObj).set("hasPart", newHasPartArray);
+            }
+        } else {
+            ((ObjectNode)parentObj).set("hasPart", newHasPart);
         }
     }
 
     public String getRoCratePath(Dataset dataset) {
-        return String.join(File.separator, getRoCrateFolder(dataset), BundleUtil.getStringFromBundle("arp.rocrate.metadata.name"));
+        return String.join(File.separator, getRoCrateFolder(dataset), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    public String getRoCrateHtmlPreviewPath(Dataset dataset) {
+        return String.join(File.separator, getRoCrateFolder(dataset), arpConfig.get("arp.rocrate.html.preview.name"));
     }
 
     public String getRoCrateFolder(Dataset dataset) {
@@ -388,41 +683,85 @@ public class RoCrateManager {
             filesRootDirectory = "/tmp/files";
         }
 
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+    }
+
+    public String getRoCratePath(Dataset dataset, String versionNumber) {
+        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    public String getRoCrateHtmlPreviewPath(Dataset dataset, String versionNumber) {
+        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), arpConfig.get("arp.rocrate.html.preview.name"));
+    }
+    public String getRoCrateFolder(Dataset dataset, String versionNumber) {
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata_v" + versionNumber);
+    }
+    
+    public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
+        String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
+        String roCrateFolderPath = getRoCrateFolder(dataset);
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+    }
+    public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException
+    {
+        String roCrateFolderPath = getRoCrateFolder(dataset);
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
     public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
-        ObjectMapper objectMapper = new ObjectMapper();
+        logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
         var roCratePath = Paths.get(getRoCratePath(dataset));
         RoCrate roCrate;
+        String roCrateFolderPath = getRoCrateFolder(dataset);
 
         if (!Files.exists(roCratePath)) {
-            roCrate = new RoCrate();
+            roCrate = new RoCrate.RoCrateBuilder()
+                    .setPreview(new AutomaticPreview())
+                    .build();
             createOrUpdate(roCrate, dataset, true, null);
-            if (!Files.exists(Paths.get(getRoCrateFolder(dataset)))) {
-                Files.createDirectories(Path.of(getRoCrateFolder(dataset)));
+            Path roCrateFolder = Path.of(roCrateFolderPath);
+            if (!Files.exists(roCrateFolder)) {
+                Files.createDirectories(roCrateFolder);
             }
         } else {
             RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-            roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+            var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
+            roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, dataset, false, datasetFieldTypeMap);
         }
-        generateRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
-        Files.writeString(roCratePath, objectMapper.readTree(roCrate.getJsonMetadata()).toPrettyString());
+        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+
+        // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
+        // from the beginning
+        var released = dataset.getReleasedVersion();
+        if (released != null) {
+            var releasedVersion = released.getFriendlyVersionNumber();
+            var releasedPath = getRoCratePath(dataset, releasedVersion);
+            if (!Files.exists(Paths.get(releasedPath))) {
+                logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
+                saveRoCrateVersion(dataset, releasedVersion);
+            }
+        }
     }
 
-    public String importRoCrate(Dataset dataset) {
+    public String importRoCrate(RoCrate roCrate) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode importFormatMetadataBlocks = mapper.createObjectNode();
-
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
         Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream().collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
 
-        rootDataEntity.getProperties().fields().forEachRemaining(field -> {
+        var fieldsIterator = rootDataEntity.getProperties().fields();
+        while (fieldsIterator.hasNext()) {
+            var field = fieldsIterator.next();
             String fieldName = field.getKey();
             if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
@@ -431,7 +770,7 @@ public class RoCrateManager {
                 // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
                 // wich must be an error.`
                 if (fieldName.equals("name") && datasetFieldType == null) {
-                    return;
+                    break;
                 }
                 MetadataBlock metadataBlock = datasetFieldType.getMetadataBlock();
                 // Check if the import format already contains the field's parent metadata block
@@ -451,7 +790,7 @@ public class RoCrateManager {
                     }
                 }
             }
-        });
+        }
 
         ObjectNode importFormatJson = mapper.createObjectNode();
         importFormatJson.set("metadataBlocks", importFormatMetadataBlocks);
@@ -473,16 +812,58 @@ public class RoCrateManager {
         return fieldService.findAllOrderedById().stream().filter(datasetFieldType -> mdbIds.contains(datasetFieldType.getMetadataBlock().getIdString())).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
     }
 
-    public String preProcessRoCrateFromAroma(String roCrateJson) throws JsonProcessingException {
+    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(roCrateJson);
         removeReverseProperties(rootNode);
-        return rootNode.toPrettyString();
-    }
+        
+        try (FileWriter writer = new FileWriter(getRoCratePath(dataset))) {
+            writer.write(rootNode.toPrettyString());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
-    public RoCrate postProcessRoCrateFromAroma(Dataset dataset) throws JsonProcessingException {
+        List<MetadataBlock> mdbs = metadataBlockServiceBean.listMetadataBlocks();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
         RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
+        List<String> rootDataEntityPropNames = new ArrayList<>();
+        Set<MetadataBlock> conformsToMdbs = new HashSet<>();
+        RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
+        var roCrateContext = new ObjectMapper().readTree(roCrate.getJsonMetadata()).get("@context").get(1);
+        
+        rootDataEntityProps.fieldNames().forEachRemaining(fieldName -> {
+            if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
+                rootDataEntityPropNames.add(fieldName);
+                if (!roCrateContext.has(fieldName)) {
+                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldService.findByName(fieldName).getUri());
+                }
+                for (var mdb : mdbs) {
+                    if (mdb.getDatasetFieldTypes().stream().anyMatch(datasetFieldType -> datasetFieldType.getName().equals(fieldName))) {
+                        conformsToMdbs.add(mdb);
+                        break;
+                    }
+                }
+            }
+        });
+        
+        collectConformsToIds(roCrate.getRootDataEntity(), conformsToMdbs, new ObjectMapper());
+        
+        // Delete properties from the @context, because AROMA only deletes them if they were added in aroma
+        // props added in DV won't be removed from the @context if they were deleted in AROMA
+        roCrateContext.fields().forEachRemaining(entry -> {
+            if (!rootDataEntityPropNames.contains(entry.getKey()) && 
+                    roCrate.getAllContextualEntities().stream().noneMatch(ce -> ce.getProperties().has(entry.getKey()))) {
+                roCrate.deleteValuePairFromContext(entry.getKey());
+            }
+        });
+        
+        return roCrate;
+    }
+
+    public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws JsonProcessingException {
+        String roCrateFolderPath = getRoCrateFolder(dataset);
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
         // Updates the id of the entities in the RO-Crate with their new ids from DV
@@ -522,29 +903,25 @@ public class RoCrateManager {
                 }
             } // else it's a string property, there's nothing to update
         });
-        // Delete properties from the @context, because AROMA only sets them to "null" if the entity is deleted
-        var roCrateContext = new ObjectMapper().readTree(roCrate.getJsonMetadata()).get("@context").get(1);
-        roCrateContext.fields().forEachRemaining(entry -> {
-            if (entry.getValue().textValue().equals("null")) {
-                roCrate.deleteValuePairFromContext(entry.getKey());
-            }
-        });
+        
+        roCrate.setRoCratePreview(new AutomaticPreview());
 
-
-        return roCrate;
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
+    // Update the id of the file entity in case it not following the format: #UUID
     private void updateIdForFileEntity(RoCrate roCrate, JsonNode rootDataEntity) {
         String oldId = rootDataEntity.get("@id").textValue();
         boolean idNeedsToBeUpdated = false;
         try {
-            UUID.fromString(oldId);
+            UUID.fromString(oldId.startsWith("#") ? oldId.substring(1) : oldId);
         } catch (IllegalArgumentException ex) {
             idNeedsToBeUpdated = true;
         }
 
         if (idNeedsToBeUpdated) {
-            String newId  = UUID.randomUUID().toString();
+            String newId  = "#" + UUID.randomUUID();
             ((ObjectNode) rootDataEntity).put("@id", newId);
             roCrate.getAllContextualEntities().stream().filter(contextualEntity -> contextualEntity.getId().equals(oldId)).findFirst().get().getProperties().put("@id", newId);
         }
@@ -697,7 +1074,11 @@ public class RoCrateManager {
 
         if (fieldValue instanceof ArrayNode) {
             ArrayNode controlledVocabValues = mapper.createArrayNode();
-            ((ArrayNode) fieldValue).forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+            AtomicInteger i = new AtomicInteger();
+            ((ArrayNode) fieldValue).forEach(controlledVocabValue -> {
+                createControlledVocabularyValueForDatasetFieldType(controlledVocabValue.textValue(), datasetFieldType, i.getAndIncrement());
+                controlledVocabValues.add(controlledVocabValue.textValue());
+            });
             field.set("value", controlledVocabValues);
         } else {
             String controlledVocabValue;
@@ -707,10 +1088,11 @@ public class RoCrateManager {
                 controlledVocabValue = fieldValue.toString();
             }
             if (datasetFieldType.isAllowMultiples()) {
-                field.set("value", TextNode.valueOf(controlledVocabValue));
+                field.set("value", mapper.createArrayNode().add(controlledVocabValue));
             } else {
                 field.put("value", controlledVocabValue);
             }
+            createControlledVocabularyValueForDatasetFieldType(controlledVocabValue, datasetFieldType, 0);
         }
 
         field.put("typeName", datasetFieldType.getName());
@@ -722,6 +1104,26 @@ public class RoCrateManager {
             ((ObjectNode) container).set(datasetFieldType.getName(), field);
         } else if (container instanceof ArrayNode) {
             ((ArrayNode) container).add(field);
+        }
+    }
+    
+    public void createControlledVocabularyValueForDatasetFieldType(String strValue, DatasetFieldType datasetFieldType, int displayOrder) {
+        DatasetFieldTypeArp dftArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        if (dftArp != null && dftArp.getCedarDefinition() != null) {
+            String cedarDef = dftArp.getCedarDefinition();
+            JsonObject templateFieldJson = new Gson().fromJson(cedarDef, JsonObject.class);
+            if (JsonHelper.getJsonObject(templateFieldJson, "_valueConstraints.branches[0]") != null) {
+                List<ControlledVocabularyValue> controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
+                boolean externalValueNotYetExists = controlledVocabValues.stream().noneMatch(cvv -> cvv.getStrValue().equals(strValue));
+                if (externalValueNotYetExists) {
+                    var cvv = new ControlledVocabularyValue();
+                    cvv.setStrValue(strValue);
+                    cvv.setDatasetFieldType(datasetFieldType);
+                    cvv.setDisplayOrder(displayOrder);
+                    cvv.setIdentifier("");
+                    fieldService.save(cvv);
+                }
+            }
         }
     }
 

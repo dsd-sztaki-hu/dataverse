@@ -1,0 +1,326 @@
+#metadatablock	name	dataversealias	displayname	blockuri
+	citation		citation metadata	https://dataverse.org/schema/citation/
+#datasetfield	name	title	description	watermark	fieldtype	displayorder	displayformat	advancedsearchfield	allowcontrolledvocabulary	allowmultiples	facetable	displayoncreate	required	parent	metadatablock_id	termuri
+	title	title	the main title of the dataset		text	0		true	false	false	false	true	true		citation	http://purl.org/dc/terms/title
+	subtitle	subtitle	a secondary title that amplifies or states certain limitations on the main title		text	1		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/subtitle
+	alternativetitle	alternative title	either 1) a title commonly used to refer to the dataset or 2) an abbreviation of the main title		text	2		false	false	false	false	false	false		citation	http://purl.org/dc/terms/alternative
+	alternativeurl	alternative url	another url where one can view or access the data in the dataset, e.g. a project or personal webpage	https://	url	3	<a href="#value" target="_blank">#value</a>	false	false	false	false	false	false		citation	https://schema.org/distribution
+	otherid	other identifier	another unique identifier for the dataset (e.g. producer's or another repository's identifier)		none	4	:	false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/otherid
+	otheridagency	agency	the name of the agency that generated the other identifier		text	5	#value	false	false	false	false	false	false	otherid	citation	https://dataverse.org/schema/citation/otheridagency
+	otheridvalue	identifier	another identifier uniquely identifies the dataset		text	6	#value	false	false	false	false	false	false	otherid	citation	https://dataverse.org/schema/citation/otheridvalue
+	author	author	the entity, e.g. a person or organization, that created the dataset		none	7		false	false	true	false	true	false		citation	http://purl.org/dc/terms/creator
+	authorname	name	the name of the author, such as the person's name or the name of an organization	1) modified family name, given name or 2) modified organization xyz	text	8	#value	false	false	false	false	false	false	author	citation	https://dataverse.org/schema/citation/authorname
+	authoraffiliation	affiliation	the name of the entity affiliated with the author, e.g. an organization's name	organization xyz	text	9	(#value)	true	false	false	true	true	false	author	citation	https://dataverse.org/schema/citation/authoraffiliation
+	authoridentifierscheme	identifier type	the type of identifier that uniquely identifies the author (e.g. orcid, isni)		text	10	- #value:	false	true	false	false	true	false	author	citation	http://purl.org/spar/datacite/agentidentifierscheme
+	authoridentifier	identifier	uniquely identifies the author when paired with an identifier type		text	11	#value	false	false	false	false	true	false	author	citation	http://purl.org/spar/datacite/agentidentifier
+	datasetcontact	point of contact	the entity, e.g. a person or organization, that users of the dataset can contact with questions		none	12		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/datasetcontact
+	datasetcontactname	name	the name of the point of contact, e.g. the person's name or the name of an organization	1) familyname, givenname or 2) organization	text	13	#value	false	false	false	false	true	false	datasetcontact	citation	https://dataverse.org/schema/citation/datasetcontactname
+	datasetcontactaffiliation	affiliation	the name of the entity affiliated with the point of contact, e.g. an organization's name	organization xyz	text	14	(#value)	false	false	false	false	true	false	datasetcontact	citation	https://dataverse.org/schema/citation/datasetcontactaffiliation
+	datasetcontactemail	e-mail	the point of contact's email address	modifiedname@email.xyz	email	15	#email	true	false	false	true	false	false	datasetcontact	citation	https://dataverse.org/schema/citation/datasetcontactemail
+	dsdescription	description	a summary describing the purpose, nature, and scope of the dataset		none	16		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/dsdescription
+	dsdescriptionvalue	text	a summary describing the purpose, nature, and scope of the dataset		textbox	17	#value	true	false	false	false	true	true	dsdescription	citation	https://dataverse.org/schema/citation/dsdescriptionvalue
+	dsdescriptiondate	date	the date when the description was added to the dataset. if the dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions	yyyy-mm-dd	date	18	(#value)	false	false	false	false	true	false	dsdescription	citation	https://dataverse.org/schema/citation/dsdescriptiondate
+	subject	subject	the area of study relevant to the dataset		text	19		true	true	true	true	true	true		citation	http://purl.org/dc/terms/subject
+	keyword	keyword	a key term that describes an important aspect of the dataset and information about any controlled vocabulary used		none	20		false	false	true	false	true	false		citation	https://dataverse.org/schema/citation/keyword
+	keywordvalue	term	a key term that describes important aspects of the dataset		text	21	#value	true	false	false	true	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordvalue
+	keywordvocabulary	controlled vocabulary name	the controlled vocabulary used for the keyword term (e.g. lcsh, mesh)		text	22	(#value)	false	false	false	false	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordvocabulary
+	keywordvocabularyuri	controlled vocabulary url	the url where one can access information about the term's controlled vocabulary	https://	url	23	<a href="#value" target="_blank" rel="noopener">#value</a>	false	false	false	false	true	false	keyword	citation	https://dataverse.org/schema/citation/keywordvocabularyuri
+	topicclassification	topic classification	indicates a broad, important topic or subject that the dataset covers and information about any controlled vocabulary used		none	24		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/topicclassification
+	topicclassvalue	term	a topic or subject term		text	25	#value	true	false	false	true	false	false	topicclassification	citation	https://dataverse.org/schema/citation/topicclassvalue
+	topicclassvocab	controlled vocabulary name	the controlled vocabulary used for the keyword term (e.g. lcsh, mesh)		text	26	(#value)	false	false	false	false	false	false	topicclassification	citation	https://dataverse.org/schema/citation/topicclassvocab
+	topicclassvocaburi	controlled vocabulary url	the url where one can access information about the term's controlled vocabulary	https://	url	27	<a href="#value" target="_blank" rel="noopener">#value</a>	false	false	false	false	false	false	topicclassification	citation	https://dataverse.org/schema/citation/topicclassvocaburi
+	publication	related publication	the article or report that uses the data in the dataset. the full list of related publications will be displayed on the metadata tab		none	28		false	false	true	false	true	false		citation	http://purl.org/dc/terms/isreferencedby
+	publicationcitation	citation	the full bibliographic citation for the related publication		textbox	29	#value	true	false	false	false	true	false	publication	citation	http://purl.org/dc/terms/bibliographiccitation
+	publicationidtype	identifier type	the type of identifier that uniquely identifies a related publication		text	30	#value: 	true	true	false	false	true	false	publication	citation	http://purl.org/spar/datacite/resourceidentifierscheme
+	publicationidnumber	identifier	the identifier for a related publication		text	31	#value	true	false	false	false	true	false	publication	citation	http://purl.org/spar/datacite/resourceidentifier
+	publicationurl	url	the url form of the identifier entered in the identifier field, e.g. the doi url if a doi was entered in the identifier field. used to display what was entered in the id type and id number fields as a link. if what was entered in the identifier field has no url form, the url of the publication webpage is used, e.g. a journal article webpage	https://	url	32	<a href="#value" target="_blank" rel="noopener">#value</a>	false	false	false	false	false	false	publication	citation	https://schema.org/distribution
+	notestext	notes	additional information about the dataset		textbox	33		false	false	false	false	true	false		citation	https://dataverse.org/schema/citation/notestext
+	language	language	a language that the dataset's files is written in		text	34		true	true	true	true	false	false		citation	http://purl.org/dc/terms/language
+	producer	producer	the entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the dataset		none	35		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/producer
+	producername	name	the name of the entity, e.g. the person's name or the name of an organization	1) familyname, givenname or 2) organization	text	36	#value	true	false	false	true	false	true	producer	citation	https://dataverse.org/schema/citation/producername
+	produceraffiliation	affiliation	the name of the entity affiliated with the producer, e.g. an organization's name	organization xyz	text	37	(#value)	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/produceraffiliation
+	producerabbreviation	abbreviated name	the producer's abbreviated name (e.g. iqss, icpsr)		text	38	(#value)	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerabbreviation
+	producerurl	url	the url of the producer's website	https://	url	39	<a href="#value" target="_blank" rel="noopener">#value</a>	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerurl
+	producerlogourl	logo url	the url of the producer's logo	https://	url	40	<img src="#value" alt="#name" class="metadata-logo"/><br/>	false	false	false	false	false	false	producer	citation	https://dataverse.org/schema/citation/producerlogourl
+	productiondate	production date	the date when the data were produced (not distributed, published, or archived)	yyyy-mm-dd	date	41		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/productiondate
+	productionplace	production location	the location where the data and any related materials were produced or collected		text	42		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/productionplace
+	contributor	contributor	the entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the dataset		none	43	:	false	false	true	false	false	false		citation	http://purl.org/dc/terms/contributor
+	contributortype	type	indicates the type of contribution made to the dataset		text	44	#value 	true	true	false	true	false	false	contributor	citation	https://dataverse.org/schema/citation/contributortype
+	contributorname	name	the name of the contributor, e.g. the person's name or the name of an organization	1) familyname, givenname or 2) organization	text	45	#value	true	false	false	true	false	false	contributor	citation	https://dataverse.org/schema/citation/contributorname
+	grantnumber	funding information	information about the dataset's financial support		none	46	:	false	false	true	false	false	false		citation	https://schema.org/sponsor
+	grantnumberagency	agency	the agency that provided financial support for the dataset	organization xyz	text	47	#value	true	false	false	true	false	false	grantnumber	citation	https://dataverse.org/schema/citation/grantnumberagency
+	grantnumbervalue	identifier	the grant identifier or contract identifier of the agency that provided financial support for the dataset		text	48	#value	true	false	false	true	false	false	grantnumber	citation	https://dataverse.org/schema/citation/grantnumbervalue
+	distributor	distributor	the entity, such as a person or organization, designated to generate copies of the dataset, including any editions or revisions		none	49		false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/distributor
+	distributorname	name	the name of the entity, e.g. the person's name or the name of an organization	1) familyname, givenname or 2) organization	text	50	#value	true	false	false	true	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorname
+	distributoraffiliation	affiliation	the name of the entity affiliated with the distributor, e.g. an organization's name	organization xyz	text	51	(#value)	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributoraffiliation
+	distributorabbreviation	abbreviated name	the distributor's abbreviated name (e.g. iqss, icpsr)		text	52	(#value)	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorabbreviation
+	distributorurl	url	the url of the distributor's webpage	https://	url	53	<a href="#value" target="_blank" rel="noopener">#value</a>	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorurl
+	distributorlogourl	logo url	the url of the distributor's logo image, used to show the image on the dataset's page	https://	url	54	<img src="#value" alt="#name" class="metadata-logo"/><br/>	false	false	false	false	false	false	distributor	citation	https://dataverse.org/schema/citation/distributorlogourl
+	distributiondate	distribution date	the date when the dataset was made available for distribution/presentation	yyyy-mm-dd	date	55		true	false	false	true	false	false		citation	https://dataverse.org/schema/citation/distributiondate
+	depositor	depositor	the entity, such as a person or organization, that deposited the dataset in the repository	1) familyname, givenname or 2) organization	text	56		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/depositor
+	dateofdeposit	deposit date	the date when the dataset was deposited into the repository	yyyy-mm-dd	date	57		false	false	false	true	false	false		citation	http://purl.org/dc/terms/datesubmitted
+	timeperiodcovered	time period	the time period that the data refer to. also known as span. this is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable		none	58	;	false	false	true	false	false	false		citation	https://schema.org/temporalcoverage
+	timeperiodcoveredstart	start date	the start date of the time period that the data refer to	yyyy-mm-dd	date	59	#name: #value 	true	false	false	true	false	false	timeperiodcovered	citation	https://dataverse.org/schema/citation/timeperiodcoveredstart
+	timeperiodcoveredend	end date	the end date of the time period that the data refer to	yyyy-mm-dd	date	60	#name: #value 	true	false	false	true	false	false	timeperiodcovered	citation	https://dataverse.org/schema/citation/timeperiodcoveredend
+	dateofcollection	date of collection	the dates when the data were collected or generated		none	61	;	false	false	true	false	false	false		citation	https://dataverse.org/schema/citation/dateofcollection
+	dateofcollectionstart	start date	the date when the data collection started	yyyy-mm-dd	date	62	#name: #value 	false	false	false	false	false	false	dateofcollection	citation	https://dataverse.org/schema/citation/dateofcollectionstart
+	dateofcollectionend	end date	the date when the data collection ended	yyyy-mm-dd	date	63	#name: #value 	false	false	false	false	false	false	dateofcollection	citation	https://dataverse.org/schema/citation/dateofcollectionend
+	kindofdata	data type	the type of data included in the files (e.g. survey data, clinical data, or machine-readable text)		text	64		true	false	false	true	false	false		citation	http://rdf-vocabulary.ddialliance.org/discovery#kindofdata
+	series	series	information about the dataset series to which the dataset belong		none	65	:	false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/series
+	seriesname	name	the name of the dataset series		text	66	#value	true	false	false	true	false	false	series	citation	https://dataverse.org/schema/citation/seriesname
+	seriesinformation	information	can include 1) a history of the series and 2) a summary of features that apply to the series		textbox	67	#value	false	false	false	false	false	false	series	citation	https://dataverse.org/schema/citation/seriesinformation
+	software	software	information about the software used to generate the dataset		none	68	,	false	false	true	false	false	false		citation	https://www.w3.org/tr/prov-o/#wasgeneratedby
+	softwarename	name	the name of software used to generate the dataset		text	69	#value	false	true	false	false	false	false	software	citation	https://dataverse.org/schema/citation/softwarename
+	softwareversion	version	the version of the software used to generate the dataset, e.g. 4.11		text	70	#name: #value	false	false	false	false	false	false	software	citation	https://dataverse.org/schema/citation/softwareversion
+	relatedmaterial	related material	information, such as a persistent id or citation, about the material related to the dataset, such as appendices or sampling information available outside of the dataset		textbox	71		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/relatedmaterial
+	relateddatasets	related dataset	information, such as a persistent id or citation, about a related dataset, such as previous research on the dataset's subject		textbox	72		false	false	false	false	false	false		citation	http://purl.org/dc/terms/relation
+	otherreferences	other reference	information, such as a persistent id or citation, about another type of resource that provides background or supporting material to the dataset		text	73		false	false	false	false	false	false		citation	http://purl.org/dc/terms/references
+	datasources	data source	information, such as a persistent id or citation, about sources of the dataset (e.g. a book, article, serial, or machine-readable data file)		textbox	74		false	false	false	false	false	false		citation	https://www.w3.org/tr/prov-o/#wasderivedfrom
+	originofsources	origin of historical sources	for historical sources, the origin and any rules followed in establishing them as sources		textbox	75		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/originofsources
+	characteristicofsources	characteristic of sources	characteristics not already noted elsewhere		textbox	76		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/characteristicofsources
+	accesstosources	documentation and access to sources	1) methods or procedures for accessing data sources and 2) any special permissions needed for access		textbox	77		false	false	false	false	false	false		citation	https://dataverse.org/schema/citation/accesstosources
+#controlledvocabulary	datasetfield	value	identifier	displayorder
+	authoridentifierscheme	orcid		0
+	authoridentifierscheme	isni		1
+	authoridentifierscheme	lcna		2
+	authoridentifierscheme	viaf		3
+	authoridentifierscheme	gnd		4
+	authoridentifierscheme	dai		5
+	authoridentifierscheme	researcherid		6
+	authoridentifierscheme	scopusid		7
+	subject	agricultural sciences		0
+	subject	arts and humanities		1
+	subject	astronomy and astrophysics		2
+	subject	business and management		3
+	subject	chemistry		4
+	subject	computer and information science		5
+	subject	earth and environmental sciences		6
+	subject	engineering		7
+	subject	law		8
+	subject	mathematical sciences		9
+	subject	medicine, health and life sciences		10
+	subject	physics		11
+	subject	social sciences		12
+	subject	other		13
+	publicationidtype	ark		0
+	publicationidtype	arxiv		1
+	publicationidtype	bibcode		2
+	publicationidtype	cstr		3
+	publicationidtype	doi		4
+	publicationidtype	ean13		5
+	publicationidtype	eissn		6
+	publicationidtype	handle		7
+	publicationidtype	isbn		8
+	publicationidtype	issn		9
+	publicationidtype	istc		10
+	publicationidtype	lissn		11
+	publicationidtype	lsid		12
+	publicationidtype	pmid		13
+	publicationidtype	purl		14
+	publicationidtype	upc		15
+	publicationidtype	url		16
+	publicationidtype	urn		17
+	publicationidtype	dash-nrs		18
+	language	abkhaz		0
+	language	afar		1
+	language	afrikaans		2
+	language	akan		3
+	language	albanian		4
+	language	amharic		5
+	language	arabic		6
+	language	aragonese		7
+	language	armenian		8
+	language	assamese		9
+	language	avaric		10
+	language	avestan		11
+	language	aymara		12
+	language	azerbaijani		13
+	language	bambara		14
+	language	bashkir		15
+	language	basque		16
+	language	belarusian		17
+	language	bengali, bangla		18
+	language	bihari		19
+	language	bislama		20
+	language	bosnian		21
+	language	breton		22
+	language	bulgarian		23
+	language	burmese		24
+	language	catalan,valencian		25
+	language	chamorro		26
+	language	chechen		27
+	language	chichewa, chewa, nyanja		28
+	language	chinese		29
+	language	chuvash		30
+	language	cornish		31
+	language	corsican		32
+	language	cree		33
+	language	croatian		34
+	language	czech		35
+	language	danish		36
+	language	divehi, dhivehi, maldivian		37
+	language	dutch		38
+	language	dzongkha		39
+	language	english		40
+	language	esperanto		41
+	language	estonian		42
+	language	ewe		43
+	language	faroese		44
+	language	fijian		45
+	language	finnish		46
+	language	french		47
+	language	fula, fulah, pulaar, pular		48
+	language	galician		49
+	language	georgian		50
+	language	german		51
+	language	greek (modern)		52
+	language	guaraní		53
+	language	gujarati		54
+	language	haitian, haitian creole		55
+	language	hausa		56
+	language	hebrew (modern)		57
+	language	herero		58
+	language	hindi		59
+	language	hiri motu		60
+	language	hungarian		61
+	language	interlingua		62
+	language	indonesian		63
+	language	interlingue		64
+	language	irish		65
+	language	igbo		66
+	language	inupiaq		67
+	language	ido		68
+	language	icelandic		69
+	language	italian		70
+	language	inuktitut		71
+	language	japanese		72
+	language	javanese		73
+	language	kalaallisut, greenlandic		74
+	language	kannada		75
+	language	kanuri		76
+	language	kashmiri		77
+	language	kazakh		78
+	language	khmer		79
+	language	kikuyu, gikuyu		80
+	language	kinyarwanda		81
+	language	kyrgyz		82
+	language	komi		83
+	language	kongo		84
+	language	korean		85
+	language	kurdish		86
+	language	kwanyama, kuanyama		87
+	language	latin		88
+	language	luxembourgish, letzeburgesch		89
+	language	ganda		90
+	language	limburgish, limburgan, limburger		91
+	language	lingala		92
+	language	lao		93
+	language	lithuanian		94
+	language	luba-katanga		95
+	language	latvian		96
+	language	manx		97
+	language	macedonian		98
+	language	malagasy		99
+	language	malay		100
+	language	malayalam		101
+	language	maltese		102
+	language	māori		103
+	language	marathi (marāṭhī)		104
+	language	marshallese		105
+	language	mixtepec mixtec		106
+	language	mongolian		107
+	language	nauru		108
+	language	navajo, navaho		109
+	language	northern ndebele		110
+	language	nepali		111
+	language	ndonga		112
+	language	norwegian bokmål		113
+	language	norwegian nynorsk		114
+	language	norwegian		115
+	language	nuosu		116
+	language	southern ndebele		117
+	language	occitan		118
+	language	ojibwe, ojibwa		119
+	language	old church slavonic,church slavonic,old bulgarian		120
+	language	oromo		121
+	language	oriya		122
+	language	ossetian, ossetic		123
+	language	panjabi, punjabi		124
+	language	pāli		125
+	language	persian (farsi)		126
+	language	polish		127
+	language	pashto, pushto		128
+	language	portuguese		129
+	language	quechua		130
+	language	romansh		131
+	language	kirundi		132
+	language	romanian		133
+	language	russian		134
+	language	sanskrit (saṁskṛta)		135
+	language	sardinian		136
+	language	sindhi		137
+	language	northern sami		138
+	language	samoan		139
+	language	sango		140
+	language	serbian		141
+	language	scottish gaelic, gaelic		142
+	language	shona		143
+	language	sinhala, sinhalese		144
+	language	slovak		145
+	language	slovene		146
+	language	somali		147
+	language	southern sotho		148
+	language	spanish, castilian		149
+	language	sundanese		150
+	language	swahili		151
+	language	swati		152
+	language	swedish		153
+	language	tamil		154
+	language	telugu		155
+	language	tajik		156
+	language	thai		157
+	language	tigrinya		158
+	language	tibetan standard, tibetan, central		159
+	language	turkmen		160
+	language	tagalog		161
+	language	tswana		162
+	language	tonga (tonga islands)		163
+	language	turkish		164
+	language	tsonga		165
+	language	tatar		166
+	language	twi		167
+	language	tahitian		168
+	language	uyghur, uighur		169
+	language	ukrainian		170
+	language	urdu		171
+	language	uzbek		172
+	language	venda		173
+	language	vietnamese		174
+	language	volapük		175
+	language	walloon		176
+	language	welsh		177
+	language	wolof		178
+	language	western frisian		179
+	language	xhosa		180
+	language	yiddish		181
+	language	yoruba		182
+	language	zhuang, chuang		183
+	language	zulu		184
+	language	not applicable		185
+	contributortype	data collector		0
+	contributortype	data curator		1
+	contributortype	data manager		2
+	contributortype	editor		3
+	contributortype	funder		4
+	contributortype	hosting institution		5
+	contributortype	project leader		6
+	contributortype	project manager		7
+	contributortype	project member		8
+	contributortype	related person		9
+	contributortype	researcher		10
+	contributortype	research group		11
+	contributortype	rights holder		12
+	contributortype	sponsor		13
+	contributortype	supervisor		14
+	contributortype	work package leader		15
+	contributortype	other		16

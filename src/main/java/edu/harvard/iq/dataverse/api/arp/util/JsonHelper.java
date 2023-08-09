@@ -83,7 +83,11 @@ public class JsonHelper {
             }
 
             for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-                String key = entry.getKey();
+                /*
+                 * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
+                 * upon importing from CEDAR the colons are replaced with dots again
+                 * */
+                String key = entry.getKey().replace(':', '.');
                 JsonElement value = entry.getValue();
 
                 if (value.isJsonObject()) {

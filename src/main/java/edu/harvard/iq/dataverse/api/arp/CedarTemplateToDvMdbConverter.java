@@ -20,13 +20,13 @@ public class CedarTemplateToDvMdbConverter {
     private String language;
 
     public CedarTemplateToDvMdbConverter() {
-        this("eng");
+        this("en");
     }
 
     public CedarTemplateToDvMdbConverter(String language)
     {
         if (language == null) {
-            this.language = "eng";
+            this.language = "en";
         }
         else {
             this.language = language;
@@ -104,7 +104,14 @@ public class CedarTemplateToDvMdbConverter {
         dataverseMetadataBlock.setName(metadataBlockId);
         dataverseMetadataBlock.setDisplayName(cedarTemplate.get("schema:name").getAsString());
 //        dataverseMetadataBlock.setBlockURI(cedarTemplate.get("@id").getAsString());
-
+        try {
+            JsonElement dvBlockUri = JsonHelper.getJsonElement(cedarTemplate, "properties.@type.oneOf[0].enum[0]");
+            if (dvBlockUri != null) {
+                dataverseMetadataBlock.setBlockURI(dvBlockUri.getAsString());
+            }
+        } catch (Exception e) {
+            // There was no blockUri provided for the mdb
+        }
         return dataverseMetadataBlock;
     }
 
@@ -119,7 +126,9 @@ public class CedarTemplateToDvMdbConverter {
                 String actPropertyType = propertyType.substring(propertyType.lastIndexOf("/") + 1);
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
-                    processTemplateField(property, displayOrder, false, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
+                    JsonObject valueConstraints = property.getAsJsonObject("_valueConstraints");
+                    boolean allowMultiple = valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean();
+                    processTemplateField(property, displayOrder, allowMultiple, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedCedarTemplateValues, metadataBlockId, propertyTermUri, false, parentName, overridePropNames);
                 }
@@ -134,11 +143,13 @@ public class CedarTemplateToDvMdbConverter {
         return processedCedarTemplateValues;
     }
 
-    // TODO: handle watermark, displayFormat, advancedSearchField, facetable
     public void processTemplateField(JsonObject templateField, int displayOrder, boolean allowMultiple, String metadataBlockName, String propertyTermUri, String parentName, ProcessedCedarTemplateValues processedCedarTemplateValues) {
         DataverseDatasetField dataverseDatasetField = new DataverseDatasetField();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         boolean allowCtrlVocab = Objects.equals(fieldType, "list") || Objects.equals(fieldType, "radio");
+        boolean hasExternalVocabValues = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]") != null;
+        String displayFormat = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.displayFormat")).map(JsonElement::getAsString).orElse(null);
+        String watermark = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.watermark")).map(JsonElement::getAsString).orElse(null);
 
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
@@ -150,13 +161,26 @@ public class CedarTemplateToDvMdbConverter {
         dataverseDatasetField.setDescription(Optional.ofNullable(templateField.get("schema:description")).map(JsonElement::getAsString).orElse(null));
         dataverseDatasetField.setFieldType(getDataverseFieldType(templateField));
         dataverseDatasetField.setDisplayOrder(displayOrder);
-        dataverseDatasetField.setAllowControlledVocabulary(allowCtrlVocab);
+        // We need to set allowControlledVocabulary to true for datasetFieldTypes with external vocabulary values as well,
+        // to prevent the edu.harvard.iq.dataverse.DatasetField.createNewEmptyDatasetField(edu.harvard.iq.dataverse.DatasetFieldType)
+        // adding a default datasetFieldValue to the datasetField
+        dataverseDatasetField.setAllowControlledVocabulary(allowCtrlVocab || hasExternalVocabValues);
         dataverseDatasetField.setAllowmultiples(allowMultiple);
-        dataverseDatasetField.setDisplayoncreate(true);
+        dataverseDatasetField.setDisplayoncreate(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.displayoncreate")).map(JsonElement::getAsBoolean).orElse(false));
+        dataverseDatasetField.setFacetable(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.facetable")).map(JsonElement::getAsBoolean).orElse(false));
+        dataverseDatasetField.setAdvancedSearchField(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.advancedSearchField")).map(JsonElement::getAsBoolean).orElse(false));
         dataverseDatasetField.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         dataverseDatasetField.setParent(parentName);
         dataverseDatasetField.setmetadatablock_id(metadataBlockName);
         dataverseDatasetField.setTermUri(propertyTermUri);
+        
+        if (displayFormat != null) {
+            dataverseDatasetField.setDisplayFormat(displayFormat);
+        }
+
+        if (watermark != null) {
+            dataverseDatasetField.setWatermark(watermark);
+        }
 
         processedCedarTemplateValues.datasetFieldValues.add(dataverseDatasetField);
 
@@ -194,7 +218,7 @@ public class CedarTemplateToDvMdbConverter {
         if (inputType != null) {
             processTemplateField(items, displayOrder, true, metadataBlockId, propertyTermUri, parentName, processedCedarTemplateValues);
         } else {
-            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, null, overridePropNames);
+            processTemplateElement(items, processedCedarTemplateValues, metadataBlockId, propertyTermUri, true, parentName, overridePropNames);
         }
     }
 

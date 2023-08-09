@@ -55,10 +55,11 @@
     <!-- TODO: Housekeeping is utterly needed. -->
     <dependencies>
 
+        <!-- https://mvnrepository.com/artifact/edu.kit.datamanager/ro-crate-java -->
         <dependency>
             <groupId>edu.kit.datamanager</groupId>
             <artifactId>ro-crate-java</artifactId>
-            <version>1.0.5</version>
+            <version>1.1.0-rc.1</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->

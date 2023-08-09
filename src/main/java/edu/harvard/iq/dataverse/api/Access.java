@@ -34,6 +34,7 @@ import edu.harvard.iq.dataverse.UserNotificationServiceBean;
 import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
 
 import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
@@ -185,7 +186,9 @@ public class Access extends AbstractApiBean {
     MakeDataCountLoggingServiceBean mdcLogService;
     @EJB
     RoCrateManager roCrateManager;
-    
+    @EJB
+    ArpConfig arpConfig;
+
     //@EJB
     
     // TODO: 
@@ -1054,7 +1057,7 @@ public class Access extends AbstractApiBean {
                                         zipper = new DataFileZipper(os);
                                         zipper.setFileManifest(fileManifest);
                                         String dsId = dataset.getIdentifier().split("/")[1];
-                                        String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+                                        String roCrateZipName = dsId + "-"+ arpConfig.get("arp.rocrate.zip.name");
                                         response.setHeader("Content-disposition", "attachment; filename=\""+ roCrateZipName +"\"");
                                         response.setHeader("Content-Type", "application/zip; name=\"" + roCrateZipName +"\"");
                                     }
@@ -1141,9 +1144,7 @@ public class Access extends AbstractApiBean {
                 }
                 
                 //Add the ro-crate-metadata.json to the .zip
-                byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dataset)));
-                
-                zipper.addRoCrateToZipStream(roCrateBytes);
+                addRoCrateFilesToZipStream(zipper, dataset);
                 
                 // This will add the generated File Manifest to the zipped output, 
                 // then flush and close the stream:
@@ -1156,6 +1157,19 @@ public class Access extends AbstractApiBean {
 
         return Response.ok(stream).build();
         
+    }
+    
+    private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset) throws IOException {
+        String versionNumber = dataset.getLatestVersionForCopy().getFriendlyVersionNumber();
+        byte[] roCrateBytes = Files.readAllBytes(Paths.get(versionNumber.equals("DRAFT") ? roCrateManager.getRoCratePath(dataset) : roCrateManager.getRoCratePath(dataset, versionNumber)));
+        String metadataFileName = arpConfig.get("arp.rocrate.metadata.name");
+        String metadataMimeType = "application/json";
+        zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);
+
+        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(versionNumber.equals("DRAFT") ? roCrateManager.getRoCrateHtmlPreviewPath(dataset) : roCrateManager.getRoCrateHtmlPreviewPath(dataset, versionNumber)));
+        String previewFileName = arpConfig.get("arp.rocrate.html.preview.name");
+        String previewMimeType = "text/html";
+        zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);
     }
     
     /* 

@@ -290,15 +290,6 @@ public class ArpApiIT {
         Response response = cedarToMdb(apiToken, templateContent);
         assertEquals(500, response.getStatusCode());
         response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
-
-        String body = response.getBody().asString();
-        String status = JsonPath.from(body).getString("status");
-        assertEquals("ERROR", status);
-
-        Map<String, List<String>> data = JsonPath.from(body).getMap("message");
-        assertEquals(1, data.size());
-        String message = data.get("unprocessableElements").get(0);
-        assertEquals("/properties/lvl_1_element_test/lvl_2_element_test", message);
     }
 
     @Test

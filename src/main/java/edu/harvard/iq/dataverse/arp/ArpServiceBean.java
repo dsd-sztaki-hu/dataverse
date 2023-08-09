@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
+import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
@@ -27,6 +28,8 @@ import javax.json.JsonArrayBuilder;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import java.io.IOException;
+import java.io.InputStream;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.ws.rs.core.MediaType;
@@ -34,6 +37,7 @@ import javax.ws.rs.core.Response;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -92,6 +96,8 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
+
+    public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
 
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
@@ -241,7 +247,11 @@ public class ArpServiceBean implements java.io.Serializable {
         String folderJson = client.send(listFolderRequest, ofString()).body();
 
         AtomicReference<String> folderId = new AtomicReference<>("");
-        JsonNode listFolderResources = new ObjectMapper().readTree(folderJson).get("resources");
+        JsonNode rootNode = new ObjectMapper().readTree(folderJson);
+        if (rootNode.get("errorMessage") != null) {
+            throw new Exception("Error received from CEDAR: "+folderJson);
+        }
+        JsonNode listFolderResources = rootNode.get("resources");
         listFolderResources.forEach(resource -> {if (resource.get("resourceType").asText().equals("folder") && resource.get("schema:name").asText().equals(folderName)) {
             folderId.set(resource.get("@id").textValue());
         }
@@ -383,6 +393,90 @@ public class ArpServiceBean implements java.io.Serializable {
                 .build();
     }
 
+    public List<String> getExternalVocabValues(JsonObject cedarFieldTemplate)
+    {
+        String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+        try {
+            return collectExternalVocabStrings(externalVocabUrl);
+        }catch (Exception ex) {
+            logger.log(Level.SEVERE, "Failed collecting external vocabulary values for field: " + cedarFieldTemplate.get("schema:name").getAsString() + " with error: " + ex.getMessage(), ex);
+            return new ArrayList<>();
+        }
+    }
+
+    private String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
+        String externalVocabUrl = null;
+        String terminologyTemplate = arpConfig.get("terminology.url.template");
+        JsonObject externalVocabProps = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints.branches[0]");
+        if (externalVocabProps != null) {
+            String encodedUri = URLEncoder.encode(externalVocabProps.get("uri").getAsString(), StandardCharsets.UTF_8);
+            externalVocabUrl = String.format(terminologyTemplate, externalVocabProps.get("acronym").getAsString(), encodedUri);
+        }
+
+        return externalVocabUrl;
+    }
+
+    private List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
+        List<String > externalVocabStrings = new ArrayList<>();
+        //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
+        // HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = getUnsafeHttpClient();
+        HttpRequest getExternalVocabValues = HttpRequest.newBuilder()
+                .uri(new URI(externalVocabUrl))
+                .build();
+        String externalVocabValues = client.send(getExternalVocabValues, ofString()).body();
+        JsonNode externalVocabValuesCollection = new ObjectMapper().readTree(externalVocabValues).get("collection");
+        externalVocabValuesCollection.forEach(value -> {
+            externalVocabStrings.add(value.get("prefLabel").textValue());
+        });
+        
+        return externalVocabStrings;
+        
+    }
+
+    public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) throws ArpException {
+        DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
+        try {
+            JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+            String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+            int i = 0;
+            var controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
+            if (externalVocabUrl != null) {
+                for (var externalString : collectExternalVocabStrings(externalVocabUrl)) {
+                    //At this point we presume there are no duplicated values in the lists, even if there are duplicated values
+                    //only their index will be the same, but DV can handle this
+                    var controlledVocabValue = controlledVocabValues.stream().filter(cvv -> cvv.getStrValue().equals(externalString)).findFirst();
+                    ControlledVocabularyValue cvv;
+                    if (controlledVocabValue.isPresent()) {
+                        cvv = controlledVocabValue.get();
+                        cvv.setDisplayOrder(i);
+                    } else {
+                        cvv = new ControlledVocabularyValue();
+                        cvv.setStrValue(externalString);
+                        cvv.setDatasetFieldType(datasetFieldType);
+                        cvv.setDisplayOrder(i);
+                        cvv.setIdentifier("");
+                    }
+                    externalVocabValues.add(cvv);
+                    i++;
+                }
+            }
+        } catch (Exception e) {
+            String errorMessage;
+            if (datasetFieldTypeArp != null && datasetFieldTypeArp.getFieldType() != null && datasetFieldTypeArp.getFieldType().getName() != null) {
+                errorMessage = "Failed to collect external vocabulary values for " + datasetFieldTypeArp.getFieldType().getName()  + ". Details: " + e.getMessage();
+            } else {
+                errorMessage = "Failed to collect external vocabulary values. Details: " + e.getMessage();
+            }
+            logger.severe(errorMessage);
+            throw new ArpException(errorMessage);
+        }
+        
+        return externalVocabValues;
+    }
+
+
     public void updateMetadatablockNamesaceUris(Map<String, String> mdbToNamespaceUri) {
         mdbToNamespaceUri.keySet().forEach(name -> {
             var mdb = metadataBlockService.findByName(name);
@@ -398,25 +492,26 @@ public class ArpServiceBean implements java.io.Serializable {
             }
         });
     }
-
-
-    public String convertTemplate(String cedarTemplate, String outputType, Set<String> overridePropNames) throws Exception
-    {
-        return convertTemplate(cedarTemplate, outputType, "eng", overridePropNames);
+    
+    public String convertTemplateToDvMdb(String cedarTemplate, Set<String> overridePropNames) throws Exception {
+        String conversionResult;
+        
+        try {
+            CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
+            conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
+        } catch (Exception exception) {
+            throw new Exception("An error occurred during converting the template", exception);
+        }
+        
+        return conversionResult;
     }
 
-    public String convertTemplate(String cedarTemplate, String outputType, String language, Set<String> overridePropNames) throws Exception {
+    public String convertTemplateToDescriboProfile(String cedarTemplate, String language) throws Exception {
         String conversionResult;
 
         try {
-            if (outputType.equals("dv")) {
-                CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
-                conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
-            } else {
-                CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
-                conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
-            }
-
+            CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
+            conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
         } catch (Exception exception) {
             throw new Exception("An error occurred during converting the template", exception);
         }
@@ -487,12 +582,33 @@ public class ArpServiceBean implements java.io.Serializable {
                             if (dsfArp == null) {
                                 dsfArp = new DatasetFieldTypeArp();
                             }
-                            // Make sure we convert '.' to ':' (CEDAR doesn't support file dnames with dots)
-                            dsfArp.setCedarDefinition(cedarFieldJsonDefs.get(fieldName.replace(".", ":")).toString());
+                            // Make sure we convert ':' to '.' (CEDAR doesn't support field names with dots)
+                            var cedarFieldDef = cedarFieldJsonDefs.get(fieldName.replace(":", ".")).getAsJsonObject();
+                            dsfArp.setCedarDefinition(cedarFieldDef.toString());
+                            // if it is an array, get the actual field def where we store the _arp values
+                            if (cedarFieldDef.has("items")) {
+                                cedarFieldDef = cedarFieldDef.getAsJsonObject("items");
+                            }
+                            // Set values form _arp.dataverse
+                            var _arpData = cedarFieldDef.has("_arp")
+                                    ? cedarFieldDef.get("_arp").getAsJsonObject() : null;
+                            if (_arpData != null) {
+                                var dataverseData = _arpData.getAsJsonObject("dataverse");
+                                if (dataverseData.has("displayNameField")) {
+                                    var displayNameField = dataverseData.get("displayNameField").getAsString().strip();
+                                    if (displayNameField.length() != 0) {
+                                        dsfArp.setDisplayNameField(displayNameField);
+                                    }
+                                }
+                            }
+
+                            // Connect dsfArp with the original dsf
                             dsfArp.setFieldType(dsf);
                             var override = arpMetadataBlockServiceBean.findOverrideByOriginal(dsf);
                             dsfArp.setOverride(override);
-                            arpMetadataBlockServiceBean.save(dsfArp);
+                            JsonElement cedarDef = cedarFieldJsonDefs.get(fieldName).getAsJsonObject().has("items") ? cedarFieldJsonDefs.get(fieldName).getAsJsonObject().get("items") : cedarFieldJsonDefs.get(fieldName);
+                            dsfArp.setHasExternalValues(JsonHelper.getJsonObject(cedarDef, "_valueConstraints.branches[0]") != null);
+                            dsfArp = arpMetadataBlockServiceBean.save(dsfArp);
                             break;
 
                         case CONTROLLEDVOCABULARY:
@@ -634,8 +750,15 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         //endregion
 
-        String mdbId = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier").textValue();
-        return checkCedarTemplate(cedarTemplate, new CedarTemplateErrors(new ArrayList<>(), new ArrayList<>(), new HashMap<>()), propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
+        // Check whether template has an identifier. TODO: we should make sure it is unique
+        var errors = new CedarTemplateErrors();
+        var idNode = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier");
+        if (idNode == null) {
+            errors.errors.add("Template identifier missing");
+            return errors;
+        }
+        String mdbId = idNode.textValue();
+        return checkCedarTemplate(cedarTemplate, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
     }
 
     public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) throws Exception {
@@ -904,19 +1027,20 @@ public class ArpServiceBean implements java.io.Serializable {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
-        String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
 
         try {
-
             CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
-            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty())) {
+            if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty() && cedarTemplateErrors.errors.isEmpty())) {
                 throw new CedarTemplateErrorsException(cedarTemplateErrors);
             }
             if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
                 overridePropNames = cedarTemplateErrors.incompatiblePairs.keySet();
             }
 
-            mdbTsv = convertTemplate(templateJson, "dv", overridePropNames);
+            // At this point we must have schema:identifier
+            String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
+
+            mdbTsv = convertTemplateToDvMdb(templateJson, overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
                 loadDatasetFields(lines, metadataBlockName, templateJson);
@@ -962,7 +1086,7 @@ public class ArpServiceBean implements java.io.Serializable {
             String templateJson = exportTemplateToCedar(cedarTemplate, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {
-            throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed.",  e);
+            throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
     }
 }

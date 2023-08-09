@@ -13,19 +13,21 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ejb.EJB;
+import javax.inject.Inject;
 import javax.json.Json;
-import javax.json.JsonArrayBuilder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -90,6 +92,12 @@ public class ArpApi extends AbstractApiBean {
     @EJB
     ArpConfig arpConfig;
 
+    @EJB
+    PermissionServiceBean permissionService;
+
+    @Inject
+    DataverseSession dataverseSession;
+
     /**
      * Checks whether a CEDAR template is valid for use as a Metadatablock.
      *
@@ -106,6 +114,7 @@ public class ArpApi extends AbstractApiBean {
         try {
             errors = arpService.checkTemplate(templateJson);
         } catch (Exception e) {
+            e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
@@ -149,6 +158,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -158,6 +168,7 @@ public class ArpApi extends AbstractApiBean {
             mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
 
         } catch (CedarTemplateErrorsException cte) {
+            cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
@@ -166,6 +177,7 @@ public class ArpApi extends AbstractApiBean {
                     ).type(MediaType.APPLICATION_JSON_TYPE).header("Access-Control-Allow-Origin", "*").build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed", e);
             return Response.serverError().entity(e.getMessage()).header("Access-Control-Allow-Origin", "*").build();
         }
@@ -188,7 +200,7 @@ public class ArpApi extends AbstractApiBean {
     @Produces("text/tab-separated-values")
     public Response convertMdbToTsv(
             @PathParam("identifier") String mdbIdtf
-        )
+    )
     {
         String mdbTsv;
 
@@ -222,6 +234,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -238,9 +251,10 @@ public class ArpApi extends AbstractApiBean {
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
             res = arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -255,7 +269,7 @@ public class ArpApi extends AbstractApiBean {
      * @param mdbTsv
      * @return
      */
-    @GET
+    @POST
     @Path("/convertTsvToCedarTemplate")
     @Consumes("text/tab-separated-values")
     @Produces("application/json")
@@ -264,8 +278,9 @@ public class ArpApi extends AbstractApiBean {
         String cedarTemplate;
 
         try {
-            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).getAsString();
+            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).toString();
         } catch (JsonProcessingException e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -291,6 +306,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return error(Response.Status.FORBIDDEN, "Superusers only.");
         }
 
@@ -310,7 +326,7 @@ public class ArpApi extends AbstractApiBean {
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
             arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         } catch (Exception e) {
             return Response.serverError().entity(e.getMessage()).build();
@@ -343,8 +359,9 @@ public class ArpApi extends AbstractApiBean {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
-            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -370,8 +387,9 @@ public class ArpApi extends AbstractApiBean {
         
         try {
             String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
-            describoProfile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+            describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
 
@@ -407,11 +425,13 @@ public class ArpApi extends AbstractApiBean {
             for (int i=0; i<ids.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
                 String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
-                String profile = arpService.convertTemplate(templateJson, "describo", language, new HashSet<>());
+                String profile = arpService.convertTemplateToDescriboProfile(templateJson, language);
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
+                boolean profileJsonAdded = false;
 
                 if (mergedProfile == null) {
                     mergedProfile = profileJson;
+                    profileJsonAdded = true;
                     mergedProfileClasses = mergedProfile.getAsJsonObject("classes");
                     mergedProfileInputs = mergedProfileClasses
                             .getAsJsonObject("Dataset")
@@ -432,7 +452,11 @@ public class ArpApi extends AbstractApiBean {
                     String name = metadata.get("name").getAsString();
                     metadata.addProperty("name", name.substring(0, name.length()-" Metadata".length()));
                 }
-                mergedProfileInputs.addAll(inputs);
+
+                // If it is not the initial profile, add the inputs
+                if (!profileJsonAdded) {
+                    mergedProfileInputs.addAll(inputs);
+                }
 
                 // Add all classes from the profile to the merged profile
                 final var finalMergedProfileClasses = mergedProfileClasses;
@@ -461,6 +485,25 @@ public class ArpApi extends AbstractApiBean {
                 datasetLayout.add(layoutObj);
             }
 
+            var hasPartInput = new JsonObject();
+            hasPartInput.addProperty("id", "http://schema.org/hasPart");
+            hasPartInput.addProperty("name", "hasPart");
+            if (language.equals("hu")) {
+                hasPartInput.addProperty("label", "Tartalma");
+                hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+
+            }
+            else {
+                hasPartInput.addProperty("label", "Has Part");
+                hasPartInput.addProperty("help", "Part of a Dataset");
+            }
+            hasPartInput.addProperty("multiple", "true");
+            var typeVals = new JsonArray();
+            typeVals.add("Dataset");
+            typeVals.add("File");
+            hasPartInput.add("type", typeVals);
+
+            mergedProfileInputs.add(hasPartInput);
             return Response.ok(gson.toJson(mergedProfile)).build();
         } catch (Exception e) {
             e.printStackTrace();
@@ -468,6 +511,25 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
+    @GET
+    @Path("/describoProfileForDataset/{persistentId : .+}")
+    @Produces("application/json")
+    public Response getDescriboProfileForDataset(
+            @PathParam("persistentId") String persistentId,
+            @QueryParam("lang") String language
+    ) throws WrappedResponse
+    {
+        var ds = datasetSvc.findByGlobalId(persistentId);
+        if (ds == null) {
+            throw new WrappedResponse(notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset.not.found.persistentId", Collections.singletonList(persistentId))));
+        }
+        Dataverse dv = ds.getDataverseContext();
+        String mdbIds = dv.getMetadataBlocks().stream()
+                .map(MetadataBlock::getId)
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        return convertMdbsToDescriboProfile(mdbIds, language);
+    }
 
     /**
      * Updates MDB from an uploaded TSV file.
@@ -490,6 +552,7 @@ public class ArpApi extends AbstractApiBean {
             metadataBlockName = ((javax.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
             arpService.updateMetadataBlock(dvIdtf, metadataBlockName);
         } catch (Exception e) {
+            e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
@@ -498,29 +561,56 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
-    public Response getRoCrate(@PathParam("persistentId") String persistentId) {
-        JsonObject roCrateJson;
+    public Response getRoCrate(@PathParam("persistentId") String persistentId) throws WrappedResponse
+    {
+        // Get the dataset by pid so that we get is actual ID.
+        Dataset dataset = datasetService.findByGlobalId(persistentId);
 
-        try {
-            findAuthenticatedUserOrDie();
-            Dataset dataset = datasetService.findByGlobalId(persistentId);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String roCratePath = roCrateManager.getRoCratePath(dataset);
-            if (!Files.exists(Paths.get(roCratePath))) {
-                roCrateManager.createOrUpdateRoCrate(dataset);
+        return response( req -> {
+            // When we get here user's auth is already checked. We are either an authenticated user or guest.
+            final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
+            // The latest version is the latest version accessible to the user. Fro guest it must be a published version
+            // for an author it is either the published version or DRAFT.
+            final DatasetVersion latest = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            try {
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                var versionNumber = latest.getFriendlyVersionNumber();
+                String roCratePath = versionNumber.equals("DRAFT")
+                        ? roCrateManager.getRoCratePath(dataset)
+                        : roCrateManager.getRoCratePath(dataset, versionNumber);
+                if (!Files.exists(Paths.get(roCratePath))) {
+                    roCrateManager.createOrUpdateRoCrate(dataset);
+                }
+                BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
+                JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                var resp = Response.ok(roCrateJson.toString());
+                // If returning the released version it is readonly
+                // In any other case the user is already checked to have access to a draft version and can edit
+                // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
+                AuthenticatedUser authenticatedUser = null;
+                try {
+                    authenticatedUser = findAuthenticatedUserOrDie();
+                } catch (WrappedResponse ex) {
+                    // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
+                    // otherwise this is a token authenticated user and we check EditDataset permission
+                }
+                if (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
+                            .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+                }
+
+                return resp.build();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return Response.serverError().entity(e.getMessage()).build();
+            } catch (WrappedResponse ex) {
+                ex.printStackTrace();
+                return error(FORBIDDEN, "Authorized users only.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
-            roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
-        } catch (FileNotFoundException e) {
-            return Response.serverError().entity(e.getMessage()).build();
-        } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
-            return error(FORBIDDEN, "Authorized users only.");
-        } catch (Exception e) {
-            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
-        }
-
-        return Response.ok(roCrateJson.toString()).build();
+        });
     }
 
     @POST
@@ -528,23 +618,21 @@ public class ArpApi extends AbstractApiBean {
     @Consumes("application/json")
     @Produces("application/json")
     public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) throws JsonProcessingException {
-        Map<String, DatasetFieldType> datasetFieldTypeMap;
         Dataset dataset;
+        RoCrate preProcessedRoCrate;
         try {
             findAuthenticatedUserOrDie();
-            // TODO: collect only from mdbs in conformsTo
             dataset = datasetService.findByGlobalId(persistentId);
-            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
-                writer.write(roCrateManager.preProcessRoCrateFromAroma(roCrateJson));
-            }
+            preProcessedRoCrate = roCrateManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
         } catch (IOException e) {
+            e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         } catch (WrappedResponse ex) {
-            System.out.println(ex.getResponse());
+            ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         }
 
-        String importFormat = roCrateManager.importRoCrate(dataset);
+        String importFormat = roCrateManager.importRoCrate(preProcessedRoCrate);
 
         //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
         try ( StringReader rdr = new StringReader(importFormat) ) {
@@ -589,21 +677,19 @@ public class ArpApi extends AbstractApiBean {
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
             }
 
-            ObjectMapper mapper = (new ObjectMapper()).enable(SerializationFeature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED).enable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY).enable(DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS);
-            RoCrate postProcessedRoCrate = roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset());
-            String postProcessedRoCrateString = mapper.readTree(postProcessedRoCrate.getJsonMetadata()).toPrettyString();
-            try (FileWriter writer = new FileWriter(roCrateManager.getRoCratePath(dataset))) {
-                writer.write(postProcessedRoCrateString);
-            }
+            roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
             return ok( json(managedVersion) );
 
         } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
+            ex.printStackTrace();
             logger.log(Level.SEVERE, "Semantic error parsing dataset version Json: " + ex.getMessage(), ex);
             return error( Response.Status.BAD_REQUEST, "Error parsing dataset version: " + ex.getMessage() );
 
         } catch (WrappedResponse ex) {
+            ex.printStackTrace();
             return ex.getResponse();
         } catch (IOException ex) {
+            ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
         }
