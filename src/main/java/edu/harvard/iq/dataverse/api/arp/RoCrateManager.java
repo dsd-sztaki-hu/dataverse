@@ -77,6 +77,9 @@ public class RoCrateManager {
         List<DatasetField> datasetFields = dataset.getLatestVersion().getDatasetFields();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
         
+        // Add the persistentId of the dataset to the RootDataEntity
+        rootDataEntity.addProperty("@pid", dataset.getGlobalId().toString());
+        
         // Remove the entities from the RO-Crate that had been deleted from DV
         if (!isCreation) {
             removeDeletedEntities(roCrate, dataset, datasetFields, datasetFieldTypeMap);
@@ -501,6 +504,7 @@ public class RoCrateManager {
             DataFile dataFile = fileMetadata.getDataFile();
             fileId = "#" + UUID.randomUUID();
             fileEntityBuilder.setId(fileId);
+            fileEntityBuilder.addProperty("@pid", dataFile.getGlobalId().toString());
             fileEntityBuilder.addProperty("name", fileName);
             fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
             fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
