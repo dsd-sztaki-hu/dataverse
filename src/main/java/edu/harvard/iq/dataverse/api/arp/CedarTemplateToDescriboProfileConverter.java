@@ -72,10 +72,8 @@ public class CedarTemplateToDescriboProfileConverter {
         profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
         
         describoProfile.add("enabledClasses", enabledClasses);
-        
-        String resultProfile = gson.toJson(describoProfile);
-        System.out.println(resultProfile);
-        return resultProfile;
+
+        return gson.toJson(describoProfile);
     }
 
     public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
