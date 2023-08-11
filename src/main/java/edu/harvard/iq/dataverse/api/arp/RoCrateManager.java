@@ -284,7 +284,11 @@ public class RoCrateManager {
         });
 
         for (var removedEntityName : removedEntityNames) {
+            logger.info("DEBUG removedEntityName: " + removedEntityName);
+            System.out.println("DEBUG removedEntityName: " + removedEntityName);
             var datasetFieldType = datasetFieldTypeMap.get(removedEntityName);
+            logger.info("DEBUG datasetFieldType: " + removedEntityName);
+            System.out.println("DEBUG datasetFieldType: " + datasetFieldType);
             if (datasetFieldType.isCompound()) {
                 JsonNode rootEntity = rootDataEntity.getProperties().get(removedEntityName);
                 if (rootEntity.isArray()) {
