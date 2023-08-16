@@ -14,7 +14,6 @@ import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
-import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -38,10 +37,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Stateless
 @Named
@@ -76,6 +77,9 @@ public class RoCrateManager {
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
         List<DatasetField> datasetFields = dataset.getLatestVersion().getDatasetFields();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
+        
+        // Add the persistentId of the dataset to the RootDataEntity
+        rootDataEntity.addProperty("@arpPid", dataset.getGlobalId().toString());
         
         // Remove the entities from the RO-Crate that had been deleted from DV
         if (!isCreation) {
@@ -281,7 +285,11 @@ public class RoCrateManager {
         });
 
         for (var removedEntityName : removedEntityNames) {
+            logger.info("DEBUG removedEntityName: " + removedEntityName);
+            System.out.println("DEBUG removedEntityName: " + removedEntityName);
             var datasetFieldType = datasetFieldTypeMap.get(removedEntityName);
+            logger.info("DEBUG datasetFieldType: " + removedEntityName);
+            System.out.println("DEBUG datasetFieldType: " + datasetFieldType);
             if (datasetFieldType.isCompound()) {
                 JsonNode rootEntity = rootDataEntity.getProperties().get(removedEntityName);
                 if (rootEntity.isArray()) {
@@ -486,26 +494,35 @@ public class RoCrateManager {
     
     private String addFileEntity(RoCrate roCrate, FileMetadata fileMetadata, boolean toHasPart) {
         String fileName = fileMetadata.getLabel();
+        String directoryLabel = fileMetadata.getDirectoryLabel();
         String fileId = null;
         var dataEntities = roCrate.getAllDataEntities();
         var contextualEntities = roCrate.getAllContextualEntities();
         if (contextualEntities.stream().noneMatch(contextualEntity -> {
                 var props = contextualEntity.getProperties();
-                return props.has("name") && props.get("name").textValue().equals(fileName) && getTypeAsString(props).equals("File");
+                boolean matchingDirectoryLabel = directoryLabel == null || (props.has("directoryLabel") && props.get("directoryLabel").textValue().equals(directoryLabel));
+                return getTypeAsString(props).equals("File") &&
+                        props.has("name") && props.get("name").textValue().equals(fileName) && matchingDirectoryLabel;
             }) && 
             dataEntities.stream().noneMatch(dataEntity -> {
                 var props = dataEntity.getProperties();
-                return props.has("name") && props.get("name").textValue().equals(fileName) && getTypeAsString(props).equals("File");
+                boolean matchingDirectoryLabel = directoryLabel == null || (props.has("directoryLabel") && props.get("directoryLabel").textValue().equals(directoryLabel));
+                return getTypeAsString(props).equals("File") &&
+                        props.has("name") && props.get("name").textValue().equals(fileName) && matchingDirectoryLabel;
             })) {
             FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
             DataFile dataFile = fileMetadata.getDataFile();
             fileId = "#" + UUID.randomUUID();
             fileEntityBuilder.setId(fileId);
+            fileEntityBuilder.addProperty("@arpPid", dataFile.getGlobalId().toString());
             fileEntityBuilder.addProperty("name", fileName);
             fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
             fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
             if (fileMetadata.getDescription() != null) {
                 fileEntityBuilder.addProperty("description", fileMetadata.getDescription());
+            }
+            if (fileMetadata.getDirectoryLabel() != null) {
+                fileEntityBuilder.addProperty("directoryLabel", dataFile.getDirectoryLabel());
             }
             var file = fileEntityBuilder.build();
             roCrate.addDataEntity(file, toHasPart);
@@ -872,10 +889,10 @@ public class RoCrateManager {
             JsonNode propVal = prop.getValue();
             if (propName.equals("hasPart")) {
                 if (propVal.isObject()) {
-                    updateIdForFileEntity(roCrate, propVal);
+                    updateIdForFileEntity(dataset, roCrate, propVal);
                 } else {
                     for (var arrayVal : propVal) {
-                        updateIdForFileEntity(roCrate, arrayVal);
+                        updateIdForFileEntity(dataset, roCrate, arrayVal);
                     }
                 }
             } else if (!propName.startsWith("@") && !propsToIgnore.contains(propName) && compoundFields.containsKey(propName)) {
@@ -910,21 +927,57 @@ public class RoCrateManager {
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
-    // Update the id of the file entity in case it not following the format: #UUID
-    private void updateIdForFileEntity(RoCrate roCrate, JsonNode rootDataEntity) {
-        String oldId = rootDataEntity.get("@id").textValue();
+    // Update the id of the file entity in case it not following the format: #UUID and
+    // add @arpPid to the file entities again, because this property is getting removed by AROMA
+    // recursively process the child entities for datasets (folders)
+    private void updateIdForFileEntity(Dataset dataset, RoCrate roCrate, JsonNode fileEntity) {
+        String oldId = fileEntity.get("@id").textValue();
         boolean idNeedsToBeUpdated = false;
         try {
             UUID.fromString(oldId.startsWith("#") ? oldId.substring(1) : oldId);
         } catch (IllegalArgumentException ex) {
             idNeedsToBeUpdated = true;
         }
-
+        
+        // We must take the union of the dataEntities and the contextualEntities,
+        // since a single file is considered a dataEntity
+        // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
+        var entities = Stream.concat(roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties), roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties)).collect(Collectors.toList());
+        ObjectNode fileNode = entities.stream().filter(entity -> entity.get("@id").textValue().equals(oldId)).findFirst().get();
+        
         if (idNeedsToBeUpdated) {
             String newId  = "#" + UUID.randomUUID();
-            ((ObjectNode) rootDataEntity).put("@id", newId);
-            roCrate.getAllContextualEntities().stream().filter(contextualEntity -> contextualEntity.getId().equals(oldId)).findFirst().get().getProperties().put("@id", newId);
+            ((ObjectNode) fileEntity).put("@id", newId);
+            fileNode.put("@id", newId);
         }
+
+        AtomicBoolean isFile = new AtomicBoolean(false);
+        fileNode.withArray("@type").elements().forEachRemaining(e -> {
+            if (e.textValue().equals("File")) {
+                isFile.set(true);
+            }
+        });
+        
+        if (isFile.get()) {
+            String fileName = fileNode.get("name").textValue();
+            String directoryLabel = fileNode.has("directoryLabel") ? fileNode.get("directoryLabel").textValue() : null;
+            String arpPid = dataset.getFiles().stream().filter(f -> 
+                    f.getDisplayName().equals(fileName) && (directoryLabel == null || directoryLabel.equals(f.getDirectoryLabel()))
+            ).findFirst().get().getGlobalId().toString();
+            fileNode.put("@arpPid", arpPid);
+        } else {
+            var hasPart = fileNode.get("hasPart");
+            if (!hasPart.isEmpty()) {
+                if (hasPart.isObject()) {
+                    updateIdForFileEntity(dataset, roCrate, hasPart);
+                } else {
+                    for (var arrayVal : hasPart) {
+                        updateIdForFileEntity(dataset, roCrate, arrayVal);
+                    }
+                }
+            }
+        }
+        
     }
 
     private boolean updateIdForProperty(RoCrate roCrate, List<DatasetFieldCompoundValue> compoundValues, String oldId, String propName, int positionOfProp) {
