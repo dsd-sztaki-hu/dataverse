@@ -18,6 +18,7 @@ public class StorageSite implements Serializable {
     public static final String HOSTNAME = "hostname";
     public static final String PRIMARY_STORAGE = "primaryStorage";
     public static final String TRANSFER_PROTOCOLS = "transferProtocols";
+	public static final String DEFAULT_PER_DATAVERSE_LIMIT = "defaultPerDataverseLimit";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -75,6 +76,9 @@ public class StorageSite implements Serializable {
 //        this.dvObjectStorageLocations = dvObjectStorageLocations;
 //    }
 //    
+	@Column(nullable = false)
+	private Long defaultPerDataverseLimit = 1_000_000_000L;
+	
     public Long getId() {
         return id;
     }
@@ -130,6 +134,7 @@ public class StorageSite implements Serializable {
                 .add(HOSTNAME, hostname)
                 .add(NAME, name)
                 .add(PRIMARY_STORAGE, primaryStorage)
-                .add(TRANSFER_PROTOCOLS, transferProtocols);
+                .add(TRANSFER_PROTOCOLS, transferProtocols)
+				.add(DEFAULT_PER_DATAVERSE_LIMIT, defaultPerDataverseLimit);
     }
 }
