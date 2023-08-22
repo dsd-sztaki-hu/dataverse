@@ -279,16 +279,15 @@ public class RoCrateManager {
         // but it will not be displayed in DV
         rootDataEntity.getProperties().fieldNames().forEachRemaining(entityName -> {
             if (!entityName.startsWith("@") && !propsToIgnore.contains(entityName) && !fieldNames.contains(entityName)) {
-                removedEntityNames.add(entityName);
+                // If the datasetFieldTypeMap does not contain the entityName, that means the entity has AROMA specific props only
+                if (datasetFieldTypeMap.containsKey(entityName)) {
+                    removedEntityNames.add(entityName);
+                }
             }
         });
 
         for (var removedEntityName : removedEntityNames) {
-            logger.info("DEBUG removedEntityName: " + removedEntityName);
-            System.out.println("DEBUG removedEntityName: " + removedEntityName);
             var datasetFieldType = datasetFieldTypeMap.get(removedEntityName);
-            logger.info("DEBUG datasetFieldType: " + removedEntityName);
-            System.out.println("DEBUG datasetFieldType: " + datasetFieldType);
             if (datasetFieldType.isCompound()) {
                 JsonNode rootEntity = rootDataEntity.getProperties().get(removedEntityName);
                 if (rootEntity.isArray()) {
