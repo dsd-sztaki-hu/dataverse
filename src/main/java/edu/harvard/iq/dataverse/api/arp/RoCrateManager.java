@@ -1102,7 +1102,12 @@ public class RoCrateManager {
             }
         }
 
-        ((ArrayNode) metadataBlocks.get(datasetField.getMetadataBlock().getName()).withArray("fields")).add(compoundField);
+        // If there are no values originating from AROMA for the compound field, it can't be added to Dataverse, and 
+        // this compound field will be excluded from the imported fields (importFormatJson).
+        // This can occur when a compound field is added within AROMA, but only its name field (which is specific to AROMA) receives values.
+        if (compoundField.has("value")) {
+            ((ArrayNode) metadataBlocks.get(datasetField.getMetadataBlock().getName()).withArray("fields")).add(compoundField);
+        }
     }
 
     private ObjectNode processCompoundFieldValue(JsonNode roCrateValue, Map<String, DatasetFieldType> datasetFieldTypeMap, Map<String, ContextualEntity> contextualEntityHashMap, ObjectMapper mapper) {
