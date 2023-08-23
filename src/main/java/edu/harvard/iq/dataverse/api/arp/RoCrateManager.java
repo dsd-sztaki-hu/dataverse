@@ -338,6 +338,23 @@ public class RoCrateManager {
         
         return typeString;
     }
+    
+    private boolean hasType(JsonNode jsonNode, String typeString) {
+        JsonNode typeProp = jsonNode.get("@type");
+        boolean hasType = false;
+        
+        if (typeProp.isTextual()) {
+            hasType = typeProp.textValue().equals(typeString);
+        } else if (typeProp.isArray()) {
+            for (var type : typeProp) {
+                if (type.textValue().equals(typeString)) {
+                    hasType = true;
+                }
+            }
+        }
+        
+        return hasType;
+    }
 
     private boolean deleteCompoundValue(RoCrate roCrate, String entityId, DatasetFieldType datasetFieldType) {
         AbstractEntity contextualEntity = roCrate.getEntityById(entityId);
@@ -989,15 +1006,8 @@ public class RoCrateManager {
             ((ObjectNode) fileEntity).put("@id", newId);
             fileNode.put("@id", newId);
         }
-
-        AtomicBoolean isFile = new AtomicBoolean(false);
-        fileNode.withArray("@type").elements().forEachRemaining(e -> {
-            if (e.textValue().equals("File")) {
-                isFile.set(true);
-            }
-        });
         
-        if (isFile.get()) {
+        if (hasType(fileNode, "File")) {
             String fileName = fileNode.get("name").textValue();
             String directoryLabel = fileNode.has("directoryLabel") ? fileNode.get("directoryLabel").textValue() : null;
             String arpPid = dataset.getFiles().stream().filter(f -> 
