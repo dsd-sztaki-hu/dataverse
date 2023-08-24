@@ -982,6 +982,12 @@ public class EditDatafilesPage implements java.io.Serializable {
         //
         if (fileReplacePageHelper.runSaveReplacementFile_Phase2()) {
             JsfHelper.addSuccessMessage(getBundleString("file.message.replaceSuccess"));
+            try {
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
             // It worked!!!  Go to page of new file!!
             if (Referrer.FILE == referrer) {
                 return returnToFileLandingPageAfterReplace(fileReplacePageHelper.getFirstNewlyAddedFile());
