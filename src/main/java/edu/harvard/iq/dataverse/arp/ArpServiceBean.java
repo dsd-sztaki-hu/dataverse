@@ -99,6 +99,30 @@ public class ArpServiceBean implements java.io.Serializable {
 
     public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
 
+    private static JsonObject fileClassHu;
+    private static JsonObject fileClassEn;
+
+    static {
+        fileClassHu = loadJsonFromResource("arp/fileClass.hu.json");
+        fileClassEn = loadJsonFromResource("arp/fileClass.en.json");
+    }
+
+    public static JsonObject loadJsonFromResource(String resourcePath) {
+        InputStream inputStream = ArpConfig.class.getClassLoader().getResourceAsStream(resourcePath);
+
+        if (inputStream == null) {
+            throw new RuntimeException("Resource not found: " + resourcePath);
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+            Gson gson = new Gson();
+            return gson.fromJson(reader, JsonObject.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error reading JSON resource: " + resourcePath, e);
+        }
+    }
+
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
 
@@ -1088,6 +1112,13 @@ public class ArpServiceBean implements java.io.Serializable {
         } catch (Exception e) {
             throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
+    }
+
+    public JsonObject getDefaultDescriboProfileFileClass(String language) {
+        if (language.equals("hu")) {
+            return fileClassHu;
+        }
+        return fileClassEn;
     }
 }
 

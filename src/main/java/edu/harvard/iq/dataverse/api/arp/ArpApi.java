@@ -485,6 +485,13 @@ public class ArpApi extends AbstractApiBean {
                 datasetLayout.add(layoutObj);
             }
 
+            // Add File class matching DV's file metadata structure.
+            mergedProfile.getAsJsonObject("classes")
+                    .add("File", arpService.getDefaultDescriboProfileFileClass(language));
+            mergedProfile.getAsJsonArray("enabledClasses")
+                    .add("File");
+
+            // Allow adding File and Dataset as parts of other Datasets
             var hasPartInput = new JsonObject();
             hasPartInput.addProperty("id", "http://schema.org/hasPart");
             hasPartInput.addProperty("name", "hasPart");
