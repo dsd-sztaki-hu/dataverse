@@ -103,7 +103,7 @@ public class RoCrateManager {
             }
         }
         
-        collectConformsToIds(rootDataEntity, conformsToMdbs, mapper);
+        collectConformsToIds(dataset, rootDataEntity);
     }
     
     private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
@@ -245,10 +245,15 @@ public class RoCrateManager {
             }
         }
     }
-    
-    private void collectConformsToIds(RootDataEntity rootDataEntity, Set<MetadataBlock> conformsToMdbs, ObjectMapper mapper) {
+
+    private void collectConformsToIds(Dataset dataset, RootDataEntity rootDataEntity)
+    {
+        collectConformsToIds(rootDataEntity, dataset.getOwner().getMetadataBlocks(), new ObjectMapper());
+    }
+
+    private void collectConformsToIds(RootDataEntity rootDataEntity, Collection<MetadataBlock> conformsToMdbs, ObjectMapper mapper) {
         var conformsToArray = mapper.createArrayNode();
-        var conformsToIds = conformsToMdbs.stream().map(mdb -> {
+        var conformsToIdsFromMdbs = conformsToMdbs.stream().map(mdb -> {
             var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
             if (mdbArp == null) {
                 throw new Error("No ARP metadatablock found for metadatablock '"+mdb.getName()+
@@ -257,8 +262,27 @@ public class RoCrateManager {
             return mdbArp.getRoCrateConformsToId();
         }).collect(Collectors.toList());
 
-        conformsToIds.forEach(id -> {
-            conformsToArray.add(mapper.createObjectNode().put("@id", id));
+        Set<String> existingConformsToIds = new HashSet<>();
+        if (rootDataEntity.getProperties().has("conformsTo")) {
+            JsonNode conformsToNode = rootDataEntity.getProperties().get("conformsTo");
+            // conformsTo maybe an array or an object
+            if (conformsToNode.isArray()) {
+                conformsToNode.elements().forEachRemaining(jsonNode -> {
+                    existingConformsToIds.add(((ObjectNode)jsonNode).get("@id").textValue());
+                    conformsToArray.add(jsonNode);
+                });
+            }
+            else {
+                existingConformsToIds.add(((ObjectNode)conformsToNode).get("@id").textValue());
+                conformsToArray.add(conformsToNode);
+            }
+        }
+
+        // Add those ID-s that are not already in conformsToArray
+        conformsToIdsFromMdbs.forEach(id -> {
+            if (!existingConformsToIds.contains(id)) {
+                conformsToArray.add(mapper.createObjectNode().put("@id", id));
+            }
         });
 
         if (rootDataEntity.getProperties().has("conformsTo")) {
@@ -838,6 +862,10 @@ public class RoCrateManager {
             String fieldName = field.getKey();
             if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                // If not a field belonging to DV, ignore it
+                if (datasetFieldType == null) {
+                    break;
+                }
                 // RO-Crate spec: name: SHOULD identify the dataset to humans well enough to disambiguate it from other RO-Crates
                 // In our case if the MDB has a "name" field, then we use it and store the value we get, otherwise
                 // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
@@ -880,7 +908,17 @@ public class RoCrateManager {
             conformsToIds.add(conformsTo.get("@id").textValue());
         }
 
-        List<String> mdbIds = conformsToIds.stream().map(id -> arpMetadataBlockServiceBean.findByRoCrateConformsToId(id).getMetadataBlock().getIdString()).collect(Collectors.toList());
+        List<String> mdbIds = conformsToIds.stream()
+                .map(id -> {
+                    // If not found, map to null, filter it later
+                    var mdbArp = arpMetadataBlockServiceBean.findByRoCrateConformsToId(id);
+                    if (mdbArp == null) {
+                        return null;
+                    }
+                    return mdbArp.getMetadataBlock().getIdString();
+                })
+                .filter(s -> s != null)
+                .collect(Collectors.toList());
         
         return fieldService.findAllOrderedById().stream().filter(datasetFieldType -> mdbIds.contains(datasetFieldType.getMetadataBlock().getIdString())).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
     }
@@ -909,8 +947,10 @@ public class RoCrateManager {
         rootDataEntityProps.fieldNames().forEachRemaining(fieldName -> {
             if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
                 rootDataEntityPropNames.add(fieldName);
-                if (!roCrateContext.has(fieldName)) {
-                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldService.findByName(fieldName).getUri());
+                var fieldByName = fieldService.findByName(fieldName);
+                // Only handle if field  belongs to DV
+                if (!roCrateContext.has(fieldName) && fieldByName != null) {
+                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldByName.getUri());
                 }
                 for (var mdb : mdbs) {
                     if (mdb.getDatasetFieldTypes().stream().anyMatch(datasetFieldType -> datasetFieldType.getName().equals(fieldName))) {
@@ -921,7 +961,7 @@ public class RoCrateManager {
             }
         });
         
-        collectConformsToIds(roCrate.getRootDataEntity(), conformsToMdbs, new ObjectMapper());
+        collectConformsToIds(dataset, roCrate.getRootDataEntity());
         
         // Delete properties from the @context, because AROMA only deletes them if they were added in aroma
         // props added in DV won't be removed from the @context if they were deleted in AROMA

@@ -492,30 +492,67 @@ public class ArpApi extends AbstractApiBean {
                     .add("File");
 
             // Allow adding File and Dataset as parts of other Datasets
-            var hasPartInput = new JsonObject();
-            hasPartInput.addProperty("id", "http://schema.org/hasPart");
-            hasPartInput.addProperty("name", "hasPart");
-            if (language.equals("hu")) {
-                hasPartInput.addProperty("label", "Tartalma");
-                hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+            mergedProfileInputs.add(arpService.getHasPartInput(language));
 
-            }
-            else {
-                hasPartInput.addProperty("label", "Has Part");
-                hasPartInput.addProperty("help", "Part of a Dataset");
-            }
-            hasPartInput.addProperty("multiple", "true");
-            var typeVals = new JsonArray();
-            typeVals.add("Dataset");
-            typeVals.add("File");
-            hasPartInput.add("type", typeVals);
-
-            mergedProfileInputs.add(hasPartInput);
             return Response.ok(gson.toJson(mergedProfile)).build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
         }
+    }
+
+    @GET
+    @Path("/mdbsBasedConformsToIdsOfDataset/{persistentId : .+}")
+    @Produces("application/json")
+    public Response getMdbsBasedConformsToIdsOfDataset(
+            @PathParam("persistentId") String persistentId,
+            @QueryParam("lang") String language
+    ) throws WrappedResponse, JsonProcessingException
+    {
+        var ds = datasetSvc.findByGlobalId(persistentId);
+        if (ds == null) {
+            throw new WrappedResponse(notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset.not.found.persistentId", Collections.singletonList(persistentId))));
+        }
+        var gson = new Gson();
+        Dataverse dv = ds.getDataverseContext();
+        List<String> conformsToIds = dv.getMetadataBlocks().stream()
+                .map(metadataBlock -> arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(metadataBlock).getRoCrateConformsToId())
+                .collect(Collectors.toList());
+        return Response.ok(gson.toJson(conformsToIds)).build();
+    }
+
+    @GET
+    @Path("/minimalDescriboProfileForDataset/{persistentId : .+}")
+    @Produces("application/json")
+    public Response getMinimalDescriboProfileForDataset(
+            @PathParam("persistentId") String persistentId,
+            @QueryParam("lang") String language
+    ) throws WrappedResponse, JsonProcessingException
+    {
+        var ds = datasetSvc.findByGlobalId(persistentId);
+        if (ds == null) {
+            throw new WrappedResponse(notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset.not.found.persistentId", Collections.singletonList(persistentId))));
+        }
+
+        var gson = new Gson();
+        var profile = gson.fromJson("{\n" +
+                "  \"classes\": {\n" +
+                "    \"Dataset\": {\n" +
+                "      \"inputs\": []\n" +
+                "    }\n" +
+                "  },\n" +
+                "  \"enabledClasses\": [\n" +
+                "    \"Dataset\"\n" +
+                "  ]\n" +
+                "}", JsonObject.class);
+        var inputs = profile.getAsJsonObject("classes").getAsJsonObject("Dataset").getAsJsonArray("inputs");
+        inputs.add(arpService.getHasPartInput(language));
+        profile.getAsJsonObject("classes")
+                .add("File", arpService.getDefaultDescriboProfileFileClass(language));
+        profile.getAsJsonArray("enabledClasses")
+                .add("File");
+
+        return Response.ok(gson.toJson(profile)).build();
     }
 
     @GET

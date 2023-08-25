@@ -1120,6 +1120,28 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         return fileClassEn;
     }
+
+    public JsonObject getHasPartInput(String language) {
+        var hasPartInput = new JsonObject();
+        hasPartInput.addProperty("id", "http://schema.org/hasPart");
+        hasPartInput.addProperty("name", "hasPart");
+        if (language.equals("hu")) {
+            hasPartInput.addProperty("label", "Tartalma");
+            hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+
+        }
+        else {
+            hasPartInput.addProperty("label", "Has Part");
+            hasPartInput.addProperty("help", "Part of a Dataset");
+        }
+        hasPartInput.addProperty("multiple", "true");
+        var typeVals = new JsonArray();
+        typeVals.add("Dataset");
+        typeVals.add("File");
+        hasPartInput.add("type", typeVals);
+        return hasPartInput;
+    }
+
 }
 
 
