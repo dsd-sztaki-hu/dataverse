@@ -864,7 +864,7 @@ public class RoCrateManager {
                 DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
                 // If not a field belonging to DV, ignore it
                 if (datasetFieldType == null) {
-                    break;
+                    continue;
                 }
                 // RO-Crate spec: name: SHOULD identify the dataset to humans well enough to disambiguate it from other RO-Crates
                 // In our case if the MDB has a "name" field, then we use it and store the value we get, otherwise
