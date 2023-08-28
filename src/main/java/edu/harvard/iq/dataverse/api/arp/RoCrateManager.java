@@ -1171,6 +1171,10 @@ public class RoCrateManager {
                 String fieldName = roCrateField.getKey();
                 if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
                     DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+                    // If field doesn't belong to the DV, ignore it
+                    if (datasetFieldType == null) {
+                        return;
+                    }
                     // RO-Crate spec: name: SHOULD identify the dataset to humans well enough to disambiguate it from other RO-Crates
                     // In our case if the MDB has a "name" field, then we use it and store the value we get, otherwise
                     // if there's no "name" field, we ignore it. Still, we should check for datasetFieldType == null,
