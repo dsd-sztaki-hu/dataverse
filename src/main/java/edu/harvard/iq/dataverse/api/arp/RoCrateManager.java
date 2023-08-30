@@ -40,8 +40,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_EXTRAS_JSON_NAME;
 
 @Stateless
 @Named
@@ -52,7 +55,8 @@ public class RoCrateManager {
     private final String compoundIdAndUuidSeparator = "::";
     
     private final List<String> propsToIgnore = List.of("conformsTo", "name", "hasPart");
-
+    private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat", "directoryLabel", "description", "identifier", "@arpPid");
+    private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
     @EJB
     DatasetFieldServiceBean fieldService;
     
@@ -945,20 +949,38 @@ public class RoCrateManager {
         return roCrate;
     }
 
-    public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws JsonProcessingException {
+    public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws IOException {
         String roCrateFolderPath = getRoCrateFolder(dataset);
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
+        List<JsonNode> rootHasPartDatasets = new ArrayList<>();
+        Map<String, ArrayList<String>> extraMetadata = Map.ofEntries(
+                Map.entry("virtualDatasetAdded", new ArrayList<>()),
+                Map.entry("virtualFileAdded", new ArrayList<>()),
+                Map.entry("datasetWithMetadata", new ArrayList<>()),
+                Map.entry("fileWithMetadata", new ArrayList<>())
+        );
+        
+        // We must take the union of the dataEntities and the contextualEntities,
+        // since a single file is considered a dataEntity
+        // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
+        Map<String, ObjectNode> datasetAndFileEntities = Stream.concat(
+                roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties), 
+                roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties))
+                .filter(entity -> hasType(entity, "File") || hasType(entity, "Dataset"))
+                .collect(Collectors.toMap(entity -> entity.get("@id").textValue(), Function.identity()));
+
+
         // Updates the id of the entities in the RO-Crate with their new ids from DV
         rootDataEntityProperties.fields().forEachRemaining(prop -> {
             String propName = prop.getKey();
             JsonNode propVal = prop.getValue();
             if (propName.equals("hasPart")) {
                 if (propVal.isObject()) {
-                    updateIdForFileEntity(dataset, roCrate, propVal);
+                    rootHasPartDatasets.add(propVal);
                 } else {
                     for (var arrayVal : propVal) {
-                        updateIdForFileEntity(dataset, roCrate, arrayVal);
+                        rootHasPartDatasets.add(arrayVal);
                     }
                 }
             } else if (!propName.startsWith("@") && !propsToIgnore.contains(propName) && compoundFields.containsKey(propName)) {
@@ -986,57 +1008,124 @@ public class RoCrateManager {
                 }
             } // else it's a string property, there's nothing to update
         });
+
+        List<DataFile> dvDatasetFiles = dataset.getFiles();
+        rootHasPartDatasets.forEach(ds -> processDatasetAndFileEntities(datasetAndFileEntities, ds, dvDatasetFiles, extraMetadata));
         
         roCrate.setRoCratePreview(new AutomaticPreview());
 
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+        writeOutRoCrateExtras(extraMetadata, roCrateFolderPath);
     }
 
-    // Update the id of the file entity in case it not following the format: #UUID and
+    // Update the id of the dataset and file entities in case they are not following the format: #UUID for datasets and
+    // #datafileId::UUID for files
     // add @arpPid to the file entities again, because this property is getting removed by AROMA
     // recursively process the child entities for datasets (folders)
-    private void updateIdForFileEntity(Dataset dataset, RoCrate roCrate, JsonNode fileEntity) {
-        String oldId = fileEntity.get("@id").textValue();
+    // during processing the entities this function collects the data to generate the rocrate-extras.json too
+    private boolean processDatasetAndFileEntities(Map<String, ObjectNode> datasetAndFileEntities, JsonNode datasetEntity, List<DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata) {
+        String oldId = datasetEntity.get("@id").textValue();
         boolean idNeedsToBeUpdated = false;
         try {
             UUID.fromString(oldId.startsWith("#") ? oldId.substring(1) : oldId);
         } catch (IllegalArgumentException ex) {
             idNeedsToBeUpdated = true;
         }
-        
-        // We must take the union of the dataEntities and the contextualEntities,
-        // since a single file is considered a dataEntity
-        // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
-        var entities = Stream.concat(roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties), roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties)).collect(Collectors.toList());
-        ObjectNode fileNode = entities.stream().filter(entity -> entity.get("@id").textValue().equals(oldId)).findFirst().get();
-        
-        if (idNeedsToBeUpdated) {
-            String newId  = "#" + UUID.randomUUID();
-            ((ObjectNode) fileEntity).put("@id", newId);
-            fileNode.put("@id", newId);
-        }
-        
-        if (hasType(fileNode, "File")) {
-            String fileName = fileNode.get("name").textValue();
-            String directoryLabel = fileNode.has("directoryLabel") ? fileNode.get("directoryLabel").textValue() : null;
-            String arpPid = dataset.getFiles().stream().filter(f -> 
-                    f.getDisplayName().equals(fileName) && (directoryLabel == null || directoryLabel.equals(f.getDirectoryLabel()))
-            ).findFirst().get().getGlobalId().toString();
-            fileNode.put("@arpPid", arpPid);
-        } else {
-            var hasPart = fileNode.get("hasPart");
-            if (!hasPart.isEmpty()) {
-                if (hasPart.isObject()) {
-                    updateIdForFileEntity(dataset, roCrate, hasPart);
-                } else {
-                    for (var arrayVal : hasPart) {
-                        updateIdForFileEntity(dataset, roCrate, arrayVal);
-                    }
-                }
+
+        ObjectNode entityNode = datasetAndFileEntities.get(oldId);
+
+        if (hasType(entityNode, "File")) {
+            // If the dataset contains a non-virtual file, that means the dataset is non-virtual too
+            boolean isVirtualFile = isVirtualFile(entityNode);
+            if (isVirtualFile) {
+                extraMetadata.get("virtualFileAdded").add(entityNode.get("@id").textValue());
+            } else {
+                String fileName = entityNode.get("name").textValue();
+                String directoryLabel = entityNode.has("directoryLabel") ? entityNode.get("directoryLabel").textValue() : null;
+                DataFile dataFile = dvDatasetFiles.stream().filter(f ->
+                        f.getDisplayName().equals(fileName) && (directoryLabel == null || directoryLabel.equals(f.getDirectoryLabel()))
+                ).findFirst().get();
+                String arpPid = dataFile.getGlobalId().toString();
+                entityNode.put("@arpPid", arpPid);
             }
+
+            if (fileHasExtraMetadata(entityNode)) {
+                extraMetadata.get("fileWithMetadata").add(entityNode.get("@id").textValue());
+            }
+            return isVirtualFile;
+        } else {
+            boolean isVirtual;
+            JsonNode hasPart = entityNode.get("hasPart");
+            if (hasPart != null && !hasPart.isEmpty()) {
+                if (hasPart.isObject()) {
+                    isVirtual = processDatasetAndFileEntities(datasetAndFileEntities, hasPart, dvDatasetFiles, extraMetadata);
+                    if (idNeedsToBeUpdated && !isVirtual) {
+                        String newId  = "#" + UUID.randomUUID();
+                        ((ObjectNode) datasetEntity).put("@id", newId);
+                        entityNode.put("@id", newId);
+                    }
+                } else {
+                    ArrayList<Boolean> isVirtualResults = new ArrayList<>();
+                    for (var arrayVal : hasPart) {
+                        isVirtualResults.add(processDatasetAndFileEntities(datasetAndFileEntities, arrayVal, dvDatasetFiles, extraMetadata));
+                    }
+                    isVirtual = !isVirtualResults.contains(false);
+                }
+            } else {
+                // This is a virtual Dataset from AROMA
+                isVirtual = true;
+            }
+            
+            if (isVirtual) {
+                extraMetadata.get("virtualDatasetAdded").add(entityNode.get("@id").textValue());
+            }
+
+            if (datasetHasExtraMetadata(entityNode)) {
+                extraMetadata.get("datasetWithMetadata").add(entityNode.get("@id").textValue());
+            }
+            
+            return isVirtual;
         }
-        
+    }
+
+    private boolean isVirtualFile(ObjectNode file) {
+        // regular expression for the id pattern of the files from dataverse
+        Pattern idPattern = Pattern.compile("#\\d+::[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+        return !idPattern.matcher(file.get("@id").textValue()).matches();
+    }
+
+    private boolean datasetHasExtraMetadata(ObjectNode dataset) {
+        AtomicBoolean hasExtraMetadata = new AtomicBoolean();
+        hasExtraMetadata.set(false);
+        dataset.fieldNames().forEachRemaining(prop -> {
+            if (!dataverseDatasetProps.contains(prop)) {
+                hasExtraMetadata.set(true);
+            }
+        });
+        return hasExtraMetadata.get();
+    }
+
+    private boolean fileHasExtraMetadata(ObjectNode file) {
+        AtomicBoolean hasExtraMetadata = new AtomicBoolean();
+        hasExtraMetadata.set(false);
+        file.fieldNames().forEachRemaining(prop -> {
+            if (!dataverseFileProps.contains(prop)) {
+                hasExtraMetadata.set(true);
+            }
+        });
+        return hasExtraMetadata.get();
+    }
+    
+    private void writeOutRoCrateExtras(Map<String, ArrayList<String>> extraMetadata, String roCrateFolderPath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode resultJsonNode = objectMapper.createObjectNode();
+
+        for (Map.Entry<String, ArrayList<String>> entry : extraMetadata.entrySet()) {
+            resultJsonNode.put(entry.getKey(), entry.getValue().size());
+        }
+
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(roCrateFolderPath + "/" + RO_CRATE_EXTRAS_JSON_NAME), resultJsonNode);
     }
 
     private boolean updateIdForProperty(RoCrate roCrate, List<DatasetFieldCompoundValue> compoundValues, String oldId, String propName, int positionOfProp) {
