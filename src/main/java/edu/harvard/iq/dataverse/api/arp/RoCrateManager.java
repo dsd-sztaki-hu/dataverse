@@ -509,7 +509,7 @@ public class RoCrateManager {
         
         FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
         DataFile dataFile = fileMetadata.getDataFile();
-        fileId = "#" + UUID.randomUUID();
+        fileId = "#" + dataFile.getId() + "::" + UUID.randomUUID();
         fileEntityBuilder.setId(fileId);
         fileEntityBuilder.addProperty("@arpPid", dataFile.getGlobalId().toString());
         fileEntityBuilder.addProperty("name", fileName);
@@ -528,36 +528,6 @@ public class RoCrateManager {
     }
     
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        for (var fileMetadata : fileMetadatas) {
-            ArrayList <String> folderNames = fileMetadata.getDirectoryLabel() != null ? new ArrayList<>(Arrays.asList(fileMetadata.getDirectoryLabel().split("/"))) : new ArrayList<>();
-            if (folderNames.isEmpty()) {
-                //add file
-                addFileEntity(roCrate, fileMetadata, true);
-            } else {
-                //process folder path and add files to the new datasets
-                //check the rootDataset first
-                JsonNode rootDataset = findRootDatasetAsJsonNode(roCrate, mapper);
-                String parentDatasetId = createDatasetsFromFoldersAndReturnParentId(roCrate, rootDataset, folderNames, mapper, true);
-                // if newFiledId is null that means the file is already a part of the dataset
-                // childDataset means that the dataset is not top level dataset
-                // top level datasets that are child of the rootDataset, those datasets needs to be handled differently
-                String newFiledId = addFileEntity(roCrate, fileMetadata, false);
-                if (newFiledId != null) {
-                    AbstractEntity newChildDataset = roCrate.getEntityById(parentDatasetId);
-                    ObjectNode parentDataset;
-                    if (newChildDataset != null) {
-                        parentDataset = newChildDataset.getProperties();
-                    } else {
-                        parentDataset = roCrate.getAllDataEntities().stream().filter(dataEntity -> dataEntity.getId().equals(parentDatasetId)).findFirst().get().getProperties();
-                    }
-                    addIdToHasPart(parentDataset, newFiledId, mapper);
-                }
-            }
-        }
-    }
-    
-    public void processRoCrateFile(RoCrate roCrate, List<FileMetadata> fileMetadatas) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         List<FileMetadata> datasetFiles = fileMetadatas.stream().map(FileMetadata::createCopy).collect(Collectors.toList());
         List<ObjectNode> roCrateFileEntities = Stream.concat(
@@ -832,7 +802,7 @@ public class RoCrateManager {
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, dataset, false, datasetFieldTypeMap);
         }
-        processRoCrateFile(roCrate, dataset.getLatestVersion().getFileMetadatas());
+        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
 
