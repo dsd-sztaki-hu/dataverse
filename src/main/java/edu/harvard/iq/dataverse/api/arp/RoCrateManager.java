@@ -900,6 +900,13 @@ public class RoCrateManager {
     public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJson) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode rootNode = mapper.readTree(roCrateJson);
+
+        JsonNode roCrateEntities = rootNode.withArray("@graph");
+        Set<String> duplicatedIds = collectDuplicatedIds(roCrateEntities);
+        if (!duplicatedIds.isEmpty()) {
+            throw new RuntimeException("The provided RO-CRATE contained the following ids multiple times: " + duplicatedIds);
+        }
+        
         removeReverseProperties(rootNode);
         
         try (FileWriter writer = new FileWriter(getRoCratePath(dataset))) {
@@ -1017,6 +1024,20 @@ public class RoCrateManager {
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
         writeOutRoCrateExtras(extraMetadata, roCrateFolderPath);
+    }
+    
+    private Set<String> collectDuplicatedIds(JsonNode entities) {
+        Set<String> encounteredIds = new HashSet<>();
+        Set<String> duplicateIds = new HashSet<>();
+
+        entities.forEach(entity -> {
+            var entityId = entity.get("@id").textValue();
+            if (!encounteredIds.add(entityId)) {
+                duplicateIds.add(entityId);
+            }
+        });
+
+        return duplicateIds;
     }
 
     // Update the id of the dataset and file entities in case they are not following the format: #UUID for datasets and
