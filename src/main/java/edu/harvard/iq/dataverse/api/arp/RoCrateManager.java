@@ -55,7 +55,7 @@ public class RoCrateManager {
     private final String compoundIdAndUuidSeparator = "::";
     
     private final List<String> propsToIgnore = List.of("conformsTo", "name", "hasPart");
-    private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat", "directoryLabel", "description", "identifier", "@arpPid");
+    private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat", "directoryLabel", "description", "identifier", "@arpPid", "hash");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
     @EJB
     DatasetFieldServiceBean fieldService;
@@ -516,6 +516,7 @@ public class RoCrateManager {
         fileId = "#" + dataFile.getId() + "::" + UUID.randomUUID();
         fileEntityBuilder.setId(fileId);
         fileEntityBuilder.addProperty("@arpPid", dataFile.getGlobalId().toString());
+        fileEntityBuilder.addProperty("hash", dataFile.getChecksumValue());
         fileEntityBuilder.addProperty("name", fileName);
         fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
         fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
@@ -541,11 +542,10 @@ public class RoCrateManager {
         
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            String fileEntityName = fe.has("name") ? fe.get("name").textValue() : null;
-            String fileEntityDirectoryLabel = fe.has("directoryLabel") ? fe.get("directoryLabel").textValue() : null;
-            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileEntityName, fileMetadata.getLabel()) && Objects.equals(fileEntityDirectoryLabel, fileMetadata.getDirectoryLabel())).findFirst();
+            String fileHash = fe.get("hash").textValue();
+            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue())).findFirst();
             if (datasetFile.isPresent()) {
-                datasetFiles.removeIf(fileMetadata -> Objects.equals(fileEntityName, fileMetadata.getLabel()) && Objects.equals(fileEntityDirectoryLabel, fileMetadata.getDirectoryLabel()));
+                datasetFiles.removeIf(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()));
             } else {
                 roCrate.deleteEntityById(fe.get("@id").textValue());
             }
@@ -1062,10 +1062,9 @@ public class RoCrateManager {
             if (isVirtualFile) {
                 extraMetadata.get("virtualFileAdded").add(entityNode.get("@id").textValue());
             } else {
-                String fileName = entityNode.get("name").textValue();
-                String directoryLabel = entityNode.has("directoryLabel") ? entityNode.get("directoryLabel").textValue() : null;
+                String fileHash = entityNode.get("hash").textValue();
                 DataFile dataFile = dvDatasetFiles.stream().filter(f ->
-                        f.getDisplayName().equals(fileName) && (directoryLabel == null || directoryLabel.equals(f.getDirectoryLabel()))
+                        f.getChecksumValue().equals(fileHash)
                 ).findFirst().get();
                 String arpPid = dataFile.getGlobalId().toString();
                 entityNode.put("@arpPid", arpPid);
