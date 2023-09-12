@@ -1243,6 +1243,12 @@ public class EditDatafilesPage implements java.io.Serializable {
             // the individual File Landing page, we want to redirect back to 
             // the landing page. BUT ONLY if the file still exists - i.e., if 
             // the user hasn't just deleted it!
+            try {
+                roCrateManager.updateRoCrateFileMetadatas(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
             versionString = "DRAFT";
             return returnToFileLandingPage();
         }

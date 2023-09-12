@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
@@ -23,6 +24,7 @@ import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.ejb.EJB;
@@ -45,6 +47,7 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
@@ -694,11 +697,6 @@ public class ArpApi extends AbstractApiBean {
             incomingVersion.setDataset(ds);
             incomingVersion.setCreateTime(null);
             incomingVersion.setLastUpdateTime(null);
-
-            if (!incomingVersion.getFileMetadatas().isEmpty()){
-                return error( Response.Status.BAD_REQUEST, "You may not add files via this api.");
-            }
-
             boolean updateDraft = ds.getLatestVersion().isDraft();
 
             DatasetVersion managedVersion;
@@ -711,6 +709,7 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
+                roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
                 Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
                 managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
@@ -718,6 +717,7 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
+                roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
             }
 

@@ -510,7 +510,6 @@ public class RoCrateManager {
     private String addFileEntity(RoCrate roCrate, FileMetadata fileMetadata, boolean toHasPart) {
         String fileName = fileMetadata.getLabel();
         String fileId;
-        
         FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
         DataFile dataFile = fileMetadata.getDataFile();
         fileId = "#" + dataFile.getId() + "::" + UUID.randomUUID();
@@ -526,10 +525,22 @@ public class RoCrateManager {
         if (fileMetadata.getDirectoryLabel() != null) {
             fileEntityBuilder.addProperty("directoryLabel", dataFile.getDirectoryLabel());
         }
+        if (!fileMetadata.getCategoriesByName().isEmpty()) {
+            fileEntityBuilder.addProperty("tags", new ObjectMapper().valueToTree(fileMetadata.getCategoriesByName()));
+        }
         var file = fileEntityBuilder.build();
         roCrate.addDataEntity(file, toHasPart);
         
         return fileId;
+    }
+    
+    public void updateRoCrateFileMetadatas(Dataset dataset) throws JsonProcessingException {
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        var ro = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, getRoCrateFolder(dataset));
     }
     
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) throws JsonProcessingException {
@@ -545,6 +556,17 @@ public class RoCrateManager {
             String fileHash = fe.get("hash").textValue();
             Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue())).findFirst();
             if (datasetFile.isPresent()) {
+                var fmd = datasetFile.get();
+                fe.put("name", fmd.getLabel());
+                // TODO: recursively update the directory labels for "move" operation
+                if (fmd.getDescription() != null) {
+                    fe.put("description", fmd.getDescription());
+                }
+                if (fmd.getDirectoryLabel() != null) {
+                    fe.put("directoryLabel", fmd.getDirectoryLabel());
+                }
+
+                fe.set("tags", mapper.valueToTree(fmd.getCategoriesByName()));
                 datasetFiles.removeIf(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()));
             } else {
                 roCrate.deleteEntityById(fe.get("@id").textValue());
@@ -870,6 +892,39 @@ public class RoCrateManager {
         ObjectNode importFormatJson = mapper.createObjectNode();
         importFormatJson.set("metadataBlocks", importFormatMetadataBlocks);
         return importFormatJson.toPrettyString();
+    }
+    
+
+    public void updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
+        List<String> fileMetadataHashes = dataset.getFiles().stream().map(DataFile::getChecksumValue).collect(Collectors.toList());
+        List<ObjectNode> roCrateFileEntities = Stream.concat(
+                roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("File")),
+                roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("File"))
+        ).collect(Collectors.toList());
+
+        // Update the metadata for the files in the dataset
+        roCrateFileEntities.forEach(fileEntity -> {
+            String fileEntityHash = fileEntity.get("hash").textValue();
+            var fmd = dataset.getFiles().stream().filter(dataFile -> dataFile.getChecksumValue().equals(fileEntityHash)).findFirst().get().getFileMetadata();
+            fmd.setLabel(fileEntity.get("name").textValue());
+            // TODO: recursively update the directory labels for "move" operation
+            String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
+            fmd.setDirectoryLabel(dirLabel);
+            String description = fileEntity.has("description") ? fileEntity.get("description").textValue() : "";
+            fmd.setDescription(description);
+
+            List<String> tags = new ArrayList<>();
+            JsonNode roCrateTags = fileEntity.get("tags");
+            if (roCrateTags != null) {
+                if (roCrateTags.isArray()) {
+                    roCrateTags.forEach(tag -> tags.add(tag.textValue()));
+                } else {
+                    tags.add(roCrateTags.textValue());
+                }
+                fmd.setCategoriesByName(tags);
+            }
+            fileMetadataHashes.removeIf(fmdHash -> fmdHash.equals(fileEntityHash));
+        });
     }
     
     private Map<String, DatasetFieldType> getDatasetFieldTypeMapByConformsTo(RoCrate roCrate) {
