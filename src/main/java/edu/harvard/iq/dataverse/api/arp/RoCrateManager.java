@@ -550,6 +550,11 @@ public class RoCrateManager {
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("File")), 
                 roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("File"))
         ).collect(Collectors.toList());
+
+        List<ObjectNode> roCrateDatasetEntities = Stream.concat(
+                roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("Dataset")),
+                roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("Dataset"))
+        ).collect(Collectors.toList());
         
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
@@ -588,7 +593,7 @@ public class RoCrateManager {
                 // top level datasets that are child of the rootDataset, those datasets needs to be handled differently
                 String newFiledId = addFileEntity(roCrate, df, false);
                 AbstractEntity newChildDataset = roCrate.getEntityById(parentDatasetId);
-                ObjectNode parentDataset = Objects.requireNonNullElseGet(newChildDataset, () -> roCrate.getAllDataEntities().stream().filter(dataEntity -> dataEntity.getId().equals(parentDatasetId)).findFirst().get()).getProperties();
+                ObjectNode parentDataset = Objects.requireNonNullElseGet(newChildDataset.getProperties(), () -> roCrateDatasetEntities.stream().filter(dataEntity -> dataEntity.get("@id").textValue().equals(parentDatasetId)).findFirst().get());
                 addIdToHasPart(parentDataset, newFiledId, mapper);
             }
         }
@@ -655,10 +660,14 @@ public class RoCrateManager {
         String alreadyPresentDatasetId = null;
         JsonNode alreadyPresentParentDataset = null;
         if (isRootDataset) {
-            for (String nodeId : roCrate.getRootDataEntity().hasPart) { 
-                var dataEntity = roCrate.getAllDataEntities().stream().filter(de -> de.getProperties().get("@id").textValue().equals(nodeId)).findFirst();
+            for (String nodeId : roCrate.getRootDataEntity().hasPart) {
+                List<ObjectNode> roCrateDatasetEntities = Stream.concat(
+                        roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("Dataset")),
+                        roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("Dataset"))
+                ).collect(Collectors.toList());
+                var dataEntity = roCrateDatasetEntities.stream().filter(de -> de.get("@id").textValue().equals(nodeId)).findFirst();
                 if (dataEntity.isPresent()) {
-                    ObjectNode node = dataEntity.get().getProperties();
+                    ObjectNode node = dataEntity.get();
                     if (node.has("name") && node.get("name").textValue().equals(folderName)
                             && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
                         alreadyPresentDatasetId = nodeId;
