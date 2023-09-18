@@ -17,8 +17,15 @@
         <ui:composition>
             <script>
                 setTimeout(() => {
-                  const persistentId = "#{persistentId}"
-                  document.getElementById('iframeId').src = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}";
+                  const persistentId = "#{persistentId}";
+                  const currentUserApiKey = "#{DatasetPage.currentUserApiKey}"; // Somehow it ccannot be passed from file.xhmtl or dataset.xhtml
+                  const language = "#{language}";
+                  const showFile = "#{showFile}";
+                  let uri = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;apiKey="+currentUserApiKey+"&amp;lang="+language;
+                  if (showFile) {
+                    uri += "&amp;showFile="+showFile;
+                  }
+                  document.getElementById('iframeId').src = uri;
                 }, 10)
             </script>
             <div id="frame-div" class="embed-responsive embed-responsive-16by9">

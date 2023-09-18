@@ -595,6 +595,15 @@
                                   <ui:param name="anonymized" value="#{FilePage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}">
+                                <ui:include src="aroma.xhtml">
+                                    <ui:param name="persistentId" value="#{FilePage.datasetPersistentId}"/>
+                                    <ui:param name="userApiKey" value="#{FilePage.currentUserApiKey}"/>
+                                    <ui:param name="aromaAddress" value="#{FilePage.aromaAddress}"/>
+                                    <ui:param name="showFile" value="#{FilePage.fileId}"/>
+                                    <ui:param name="language" value="#{FilePage.language}"/>
+                                </ui:include>
+                            </p:tab>
                         </p:tabView>
                     </div>
                     <!-- POPUPS -->
