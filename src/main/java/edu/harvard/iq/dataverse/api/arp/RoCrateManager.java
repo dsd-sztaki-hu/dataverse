@@ -734,6 +734,15 @@ public class RoCrateManager {
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
     }
 
+    public String getRoCrateParentFolder(Dataset dataset) {
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
+    }
+
     public String getRoCratePath(Dataset dataset, String versionNumber) {
         return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
@@ -1033,7 +1042,7 @@ public class RoCrateManager {
 
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
-        writeOutRoCrateExtras(extraMetadata, roCrateFolderPath);
+        writeOutRoCrateExtras(extraMetadata, getRoCrateParentFolder(dataset));
     }
     
     private Set<String> collectDuplicatedIds(JsonNode entities) {
