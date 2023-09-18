@@ -563,12 +563,14 @@ public class RoCrateManager {
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
                 fe.put("name", fmd.getLabel());
-                // TODO: recursively update the directory labels for "move" operation
                 if (fmd.getDescription() != null) {
                     fe.put("description", fmd.getDescription());
                 }
-                if (fmd.getDirectoryLabel() != null) {
+                var fmdDirLabel = fmd.getDirectoryLabel();
+                var feDirLabel = fe.has("directoryLabel") ? fe.get("directoryLabel").textValue() : null;
+                if (!Objects.equals(fmdDirLabel, feDirLabel)) {
                     fe.put("directoryLabel", fmd.getDirectoryLabel());
+                    processModifiedPath(roCrate, feDirLabel, fmdDirLabel, fe.get("@id").textValue());
                 }
 
                 fe.set("tags", mapper.valueToTree(fmd.getCategoriesByName()));
@@ -587,7 +589,7 @@ public class RoCrateManager {
             } else {
                 //process folder path and add files to the new datasets
                 //check the rootDataset first
-                String parentDatasetId = createDatasetsFromFoldersAndReturnParentId(roCrate, roCrate.getRootDataEntity().getProperties(), folderNames, mapper, true);
+                String parentDatasetId = createDatasetsFromFoldersAndReturnParentId(roCrate, roCrate.getRootDataEntity().getProperties(), folderNames, mapper);
                 // childDataset means that the dataset is not top level dataset
                 // top level datasets that are child of the rootDataset, those datasets needs to be handled differently
                 String newFiledId = addFileEntity(roCrate, df, false);
@@ -600,6 +602,113 @@ public class RoCrateManager {
         // Delete the empty Datasets from the RO-CRATE, this has to be done after adding the new files
         // this way we can keep the original Dataset (folder) ID-s in the RO-CRATE
         deleteEmptyDatasets(roCrate);
+    }
+    
+    private String findFirstModifiedDatasetId(RoCrate roCrate, ObjectNode parentObj, List<String> originalDirNames, List<String> modifiedDirNames) {
+        boolean dsIsPresent = false;
+        String dsId = null;
+        if (!modifiedDirNames.isEmpty()) {
+            String folderName = modifiedDirNames.get(0);
+            dsId = getDatasetIdIfAlreadyPresent(roCrate, parentObj, folderName);
+            if (dsId != null) {
+                dsIsPresent = true;
+            }
+        }
+        
+        if (dsIsPresent) {
+            originalDirNames.remove(0);
+            modifiedDirNames.remove(0);
+            return findFirstModifiedDatasetId(roCrate, roCrate.getEntityById(dsId).getProperties(), originalDirNames, modifiedDirNames);
+        } else {
+            return parentObj.get("@id").textValue();
+        }
+    }
+    
+    private void processModifiedPath(RoCrate roCrate, String originalPath, String modifiedPath, String fileId) {
+        ObjectMapper mapper = new ObjectMapper();
+        
+        List<String> originalDirNames = originalPath != null ? Arrays.stream(originalPath.split("/")).collect(Collectors.toList()) : new ArrayList<>();
+        List<String> modifiedDirNames = modifiedPath != null ? Arrays.stream(modifiedPath.split("/")).collect(Collectors.toList()) : new ArrayList<>();
+
+        // find the first modified part of the path and modify the dirNames lists to keep the unprocessed ones only
+        String modifiedDsId = findFirstModifiedDatasetId(roCrate, roCrate.getRootDataEntity().getProperties(), originalDirNames, modifiedDirNames);
+        ObjectNode modifiedDs = modifiedDsId.equals("./") ? roCrate.getRootDataEntity().getProperties() : roCrate.getEntityById(modifiedDsId).getProperties();
+        String newParentId = modifiedDsId;
+
+        if (!modifiedDirNames.isEmpty()) {
+            newParentId = createDatasetsFromFoldersAndReturnParentId(roCrate, modifiedDs, modifiedDirNames, mapper);
+        }
+        
+        if (newParentId.equals("./")) {
+            roCrate.getRootDataEntity().hasPart.add(fileId);
+        } else {
+            addIdToHasPart(roCrate.getEntityById(newParentId).getProperties(), fileId, mapper);
+        }
+        
+        if (!originalDirNames.isEmpty()) {
+            // collect the id-s of the datasets from the original path in reversed order for easier processing
+            ArrayList<String> originalDatasetIds = collectDatasetIds(roCrate, modifiedDs, originalDirNames, new ArrayList<>());
+
+            // remove the file from its original parent dataset
+            var fileParentDsId = originalDatasetIds.get(0);
+            removeEntityFromHasPart(roCrate, fileParentDsId, fileId);
+
+            // go through the original path, and remove the datasets that became empty during the path modification
+            for (var originalId : originalDatasetIds) {
+                var dataset = roCrate.getEntityById(originalId).getProperties();
+                if (hasPartIsEmpty(dataset)) {
+                    roCrate.deleteEntityById(originalId);
+                }
+            }
+        } else {
+            removeEntityFromHasPart(roCrate, modifiedDsId, fileId);
+//            if (originalPath == null) {
+//                roCrate.getRootDataEntity().hasPart.add(newParentId);
+//            }
+        }
+    }
+    
+    private void removeEntityFromHasPart(RoCrate roCrate, String parentId, String idToRemove) {
+        if (parentId.equals("./")) {
+            roCrate.getRootDataEntity().hasPart.removeIf(id -> id.equals(idToRemove));
+        } else {
+            AbstractEntity parentEntity = roCrate.getEntityById(parentId);
+            var hasPart = parentEntity.getProperty("hasPart");
+            if (hasPart != null) {
+                if (hasPart.isObject()) {
+                    var presentId = hasPart.get("@id").textValue();
+                    if (!Objects.equals(presentId, idToRemove)) {
+                        throw new RuntimeException("The Dataset with id: " + parentId + " should contain a child in its hasPart with id: " + idToRemove);
+                    } else {
+                        (parentEntity.getProperties()).remove("hasPart");
+                    }
+                } else {
+                    for (Iterator<JsonNode> it = hasPart.elements(); it.hasNext();) {
+                        JsonNode entity = it.next();
+                        if (Objects.equals(entity.get("@id").textValue(), idToRemove)) {
+                            it.remove();
+                        }
+                    }
+                }
+            }   
+        }
+    }
+    
+    private ArrayList<String> collectDatasetIds(RoCrate roCrate, JsonNode parentObj, List<String> folderNames, ArrayList<String> datasetIds) {
+        String dsName = folderNames.remove(0);
+        var dsId = getDatasetIdIfAlreadyPresent(roCrate, parentObj, dsName);
+        if (dsId == null) {
+            throw new RuntimeException("Dataset with name: " + dsName + " should be a part of the Dataset with id: " + parentObj.get("@id").textValue());
+        }
+        
+        // collect the id-s in reversed order for easier processing
+        datasetIds.add(0, dsId);
+        
+        if (!folderNames.isEmpty()) {
+            collectDatasetIds(roCrate, roCrate.getEntityById(dsId).getProperties(), folderNames, datasetIds);
+        }
+        
+        return datasetIds;
     }
     
     public void deleteEmptyDatasets(RoCrate roCrate) {
@@ -639,7 +748,7 @@ public class RoCrateManager {
     }
     
     //Add new dataset for every folder in the given folderNames list, and returns the id of the folder that contains the file
-    private String createDatasetsFromFoldersAndReturnParentId(RoCrate roCrate, JsonNode parentObj, List<String> folderNames, ObjectMapper mapper, boolean isRootDataset) {
+    private String createDatasetsFromFoldersAndReturnParentId(RoCrate roCrate, JsonNode parentObj, List<String> folderNames, ObjectMapper mapper) {
         String folderName = folderNames.remove(0);
         String newDatasetId = getDatasetIdIfAlreadyPresent(roCrate, parentObj, folderName);
         
@@ -654,12 +763,16 @@ public class RoCrateManager {
             roCrate.addContextualEntity(newDataset);
             
             //add the id of the new dataset to the hasPart
-            addIdToHasPart(parentObj, newDatasetId, mapper);
+            if (parentObj.get("@id").textValue().equals("./")) {
+                roCrate.getRootDataEntity().hasPart.add(newDatasetId);
+            } else {
+                addIdToHasPart(parentObj, newDatasetId, mapper);
+            }
         }
         
         if (!folderNames.isEmpty()) {
             JsonNode newDataset = roCrate.getEntityById(newDatasetId).getProperties();
-            return createDatasetsFromFoldersAndReturnParentId(roCrate, newDataset, folderNames, mapper, false);    
+            return createDatasetsFromFoldersAndReturnParentId(roCrate, newDataset, folderNames, mapper);    
         } else {
             return newDatasetId;
         }
@@ -667,31 +780,47 @@ public class RoCrateManager {
     
     private String getDatasetIdIfAlreadyPresent(RoCrate roCrate, JsonNode parentObj, String folderName) {
         String datasetId = null;
-        if (parentObj.has("hasPart")) {
-            JsonNode hasPart = parentObj.get("hasPart");
-            if (hasPart.isObject()) {
-                String nodeId = hasPart.get("@id").textValue();
-                AbstractEntity contextualEntity = roCrate.getEntityById(nodeId);
-                if (contextualEntity != null) {
-                    ObjectNode node = roCrate.getEntityById(nodeId).getProperties();
-                    if (node.has("name") && node.get("name").textValue().equals(folderName)
-                            && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
-                        datasetId = nodeId;
+        if (parentObj.get("@id").textValue().equals("./")) {
+            List<ObjectNode> roCrateDatasetEntities = Stream.concat(
+                    roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("Dataset")),
+                    roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("Dataset"))
+            ).collect(Collectors.toList());
+            for (var id : roCrate.getRootDataEntity().hasPart) {
+                var optDataset = roCrateDatasetEntities.stream().filter(ds -> ds.get("@id").textValue().equals(id)).findFirst();
+                if (optDataset.isPresent()) {
+                    ObjectNode dsEntity = optDataset.get();
+                    if (dsEntity.has("name") && dsEntity.get("name").textValue().equals(folderName)) {
+                        datasetId = id;
                     }
-                }
-            } else {
-                for (var idNode : hasPart) {
-                    if (!idNode.isEmpty()) {
-                        String nodeId = idNode.get("@id").textValue();
-                        AbstractEntity contextualEntity = roCrate.getEntityById(nodeId);
-                        if (contextualEntity != null) {
-                            ObjectNode node = contextualEntity.getProperties();
-                            if(node.has("name") && node.get("name").textValue().equals(folderName)
-                                    && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
-                                datasetId = nodeId;
-                                break;
-                            };
-                        }   
+                }   
+            }
+        } else {
+            if (parentObj.has("hasPart")) {
+                JsonNode hasPart = parentObj.get("hasPart");
+                if (hasPart.isObject()) {
+                    String nodeId = hasPart.get("@id").textValue();
+                    AbstractEntity contextualEntity = roCrate.getEntityById(nodeId);
+                    if (contextualEntity != null) {
+                        ObjectNode node = roCrate.getEntityById(nodeId).getProperties();
+                        if (node.has("name") && node.get("name").textValue().equals(folderName)
+                                && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                            datasetId = nodeId;
+                        }
+                    }
+                } else {
+                    for (var idNode : hasPart) {
+                        if (!idNode.isEmpty()) {
+                            String nodeId = idNode.get("@id").textValue();
+                            AbstractEntity contextualEntity = roCrate.getEntityById(nodeId);
+                            if (contextualEntity != null) {
+                                ObjectNode node = contextualEntity.getProperties();
+                                if(node.has("name") && node.get("name").textValue().equals(folderName)
+                                        && node.has("@type") && getTypeAsString(node).equals("Dataset")) {
+                                    datasetId = nodeId;
+                                    break;
+                                };
+                            }
+                        }
                     }
                 }
             }
