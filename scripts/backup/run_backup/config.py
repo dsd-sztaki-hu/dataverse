@@ -1,6 +1,6 @@
-import ConfigParser
+import configparser
 import sys
-Config = ConfigParser.ConfigParser()
+Config = configparser.ConfigParser()
 Config.read("config.ini")
 
 def ConfigSectionMap(section):
