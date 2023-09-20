@@ -153,13 +153,13 @@ public class RoCrateManager {
                         ContextualEntity contextualEntityToDelete = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(rootEntityId)).findFirst().get();
                         List<String> compoundValueProps = datasetField.getDatasetFieldType().getChildDatasetFieldTypes().stream().map(DatasetFieldType::getName).collect(Collectors.toList());
                         // Delete the properties from the contextual entity that was removed from DV,
-                        // if the contextual entity does not contain any other props than @id and @type, just delete it
+                        // if the contextual entity does not contain any other props than @id, @type and name, just delete it
                         // else, the contextual entity still contains properties and those props are from AROMA, we can not delete the contextual entity
                         for (var prop : compoundValueProps) {
                             contextualEntityToDelete.getProperties().remove(prop);
                         }
                         var actProperties = contextualEntityToDelete.getProperties();
-                        if (actProperties.size() == 2 && actProperties.has("@id") && actProperties.has("@type")) {
+                        if (actProperties.size() == 3 && actProperties.has("@id") && actProperties.has("@type") && actProperties.has("name")) {
                             it.remove();
                             roCrate.deleteEntityById(contextualEntityToDelete.getId());
                         }
