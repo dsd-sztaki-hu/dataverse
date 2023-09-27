@@ -10,6 +10,7 @@ DVNDB=${DVNDB:-dvndb}
 export $DVNDB
 
 _runsql() {
+	echo running "$1"
 	su - postgres -c "psql $DVNDB -c \"$1\""
 }
 
@@ -35,7 +36,7 @@ elif [ "$1" = "datasets" ]
 then
 	if [ -z "$3" ]
 	then
-		_runsql "SELECT ds1.id, dvo1.identifier, sum(filesize) FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id 
+		_runsql "SELECT ds1.id, dvo1.identifier, sum(filesize) as sum_filesize FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id 
 		         WHERE ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '$2://%') GROUP BY ds1.id,dvo1.identifier"
 	elif echo "$3" | grep '^[0-9]\+$'
 	then
