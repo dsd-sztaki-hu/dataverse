@@ -53,8 +53,7 @@ import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getStringList;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static javax.ws.rs.core.Response.Status.*;
 
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
@@ -644,7 +643,8 @@ public class ArpApi extends AbstractApiBean {
                     // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
                     // otherwise this is a token authenticated user and we check EditDataset permission
                 }
-                if (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                
+                if (authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
                 }
@@ -673,11 +673,16 @@ public class ArpApi extends AbstractApiBean {
         try {
             findAuthenticatedUserOrDie();
             dataset = datasetService.findByGlobalId(persistentId);
+            if (dataset.isLocked()) {
+                throw new RuntimeException(
+                        BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
+            }
             preProcessedRoCrate = roCrateManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             e.printStackTrace();
-            return Response.serverError().entity(e.getMessage()).build();
-        } catch (WrappedResponse ex) {
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        } 
+        catch (WrappedResponse ex) {
             ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
         }
