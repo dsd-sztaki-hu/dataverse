@@ -613,6 +613,9 @@ public class ArpApi extends AbstractApiBean {
         // Get the dataset by pid so that we get is actual ID.
         Dataset dataset = datasetService.findByGlobalId(persistentId);
 
+        // make sure arpConfig is initialized, so that ArpConfig.instance can be used from anywhere
+        arpConfig.get("arp.rocrate.previewgenerator.address");
+
         return response( req -> {
             // When we get here user's auth is already checked. We are either an authenticated user or guest.
             final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
