@@ -45,6 +45,10 @@ public class CedarTemplateToDescriboProfileConverter {
         if (language.equals("hu")) {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
             profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
+            profValues.classLocalizations.put("Text", new ClassLocalization("Szöveg", "Szöveg"));
+            profValues.classLocalizations.put("Select", new ClassLocalization("Kiválasztás", "Kiválasztás"));
+            profValues.classLocalizations.put("TextArea", new ClassLocalization("Hosszú szöveg", "Hosszú szöveg"));
+            profValues.classLocalizations.put("Date", new ClassLocalization("Dátum", "Dátum"));
         }
         else  {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Dataset", "A collection of files with metadata"));
@@ -52,7 +56,7 @@ public class CedarTemplateToDescriboProfileConverter {
         }
 
         JsonObject classes = describoProfile.getAsJsonObject("classes");
-        
+
         for (var input : profValues.inputs) {
             String className = input.getKey();
             if (!classes.has(className)) {
@@ -63,11 +67,17 @@ public class CedarTemplateToDescriboProfileConverter {
 
             var classLoc = profValues.classLocalizations.get(className);
             if (classLoc != null) {
+                // This is our custom localisation at class level
                 classJson.addProperty("label", classLoc.label);
                 classJson.addProperty("help", classLoc.help);
             }
         }
-        
+
+        // This is the Describo supported way of localisation
+        JsonObject localisation = new JsonObject();
+        describoProfile.add("localisation", localisation);
+        profValues.classLocalizations.entrySet().forEach(e -> localisation.addProperty(e.getKey(), e.getValue().label));
+
         JsonArray enabledClasses = new JsonArray();
         profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
         
