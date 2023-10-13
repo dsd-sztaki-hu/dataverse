@@ -21,11 +21,13 @@ import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.solr.client.solrj.SolrServerException;
 
 import javax.ejb.EJB;
 import javax.inject.Inject;
@@ -96,6 +98,9 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     PermissionServiceBean permissionService;
+
+    @EJB
+    IndexServiceBean indexService;
 
     @Inject
     DataverseSession dataverseSession;
@@ -724,6 +729,7 @@ public class ArpApi extends AbstractApiBean {
                 }
                 roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
+                indexService.indexDataset(ds, true);
             }
 
             roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
@@ -737,7 +743,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
             return ex.getResponse();
-        } catch (IOException ex) {
+        } catch (IOException | SolrServerException ex) {
             ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
