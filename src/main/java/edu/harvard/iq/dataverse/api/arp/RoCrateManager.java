@@ -559,7 +559,8 @@ public class RoCrateManager {
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
             String fileHash = fe.get("hash").textValue();
-            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue())).findFirst();
+            String fileName = fe.get("name").textValue();
+            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()) && Objects.equals(fileName, fileMetadata.getDataFile().getDisplayName())).findFirst();
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
                 fe.put("name", fmd.getLabel());
@@ -574,7 +575,7 @@ public class RoCrateManager {
                 }
 
                 fe.set("tags", mapper.valueToTree(fmd.getCategoriesByName()));
-                datasetFiles.removeIf(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()));
+                datasetFiles.removeIf(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()) && Objects.equals(fileName, fileMetadata.getDataFile().getDisplayName()));
             } else {
                 roCrate.deleteEntityById(fe.get("@id").textValue());
             }
