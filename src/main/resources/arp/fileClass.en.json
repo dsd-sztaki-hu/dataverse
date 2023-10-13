@@ -35,6 +35,30 @@
         ],
         "required": false,
         "multiple": false
+      },
+      {
+        "id": "https://dataverse.org/schema/file/hash",
+        "name": "hash",
+        "label": "Hash",
+        "help": "Hash of the file",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
+      },
+      {
+        "id": "https://dataverse.org/schema/file/arpPid",
+        "name": "@arpPid",
+        "label": "ARP PID",
+        "help": "ARP specific persistent identifier of the file",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
       }
     ]
 }
