@@ -136,6 +136,11 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setHelp(help);
         describoInput.setType(getDescriboType(fieldType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
+        describoInput.setMinValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minValue")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMaxValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxValue")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMinLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minLength")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMaxLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxLength")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setRegex(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.regex")).map(JsonElement::getAsString).orElse(null));
         describoInput.setMultiple(allowMultiple);
 
         List<String> literalValues;
@@ -274,18 +279,13 @@ public class CedarTemplateToDescriboProfileConverter {
         private List<String> values;
         private boolean required;
         private boolean multiple;
+        private Integer minValue;
+        private Integer maxValue;
+        private Integer minLength;
+        private Integer maxLength;
+        private String regex;
 
         public DescriboInput() {
-        }
-
-        public DescriboInput(String id, String name, String label, String help, List<String> type, boolean required, boolean multiple) {
-            this.id = id;
-            this.name = name;
-            this.label = label;
-            this.help = help;
-            this.type = type;
-            this.required = required;
-            this.multiple = multiple;
         }
 
         public String getId() {
@@ -350,6 +350,56 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setValues(List<String> values) {
             this.values = values;
+        }
+
+        public Integer getMinValue()
+        {
+            return minValue;
+        }
+
+        public void setMinValue(Integer minValue)
+        {
+            this.minValue = minValue;
+        }
+
+        public Integer getMaxValue()
+        {
+            return maxValue;
+        }
+
+        public void setMaxValue(Integer maxValue)
+        {
+            this.maxValue = maxValue;
+        }
+
+        public Integer getMinLength()
+        {
+            return minLength;
+        }
+
+        public void setMinLength(Integer minLength)
+        {
+            this.minLength = minLength;
+        }
+
+        public Integer getMaxLength()
+        {
+            return maxLength;
+        }
+
+        public void setMaxLength(Integer maxLength)
+        {
+            this.maxLength = maxLength;
+        }
+
+        public String getRegex()
+        {
+            return regex;
+        }
+
+        public void setRegex(String regex)
+        {
+            this.regex = regex;
         }
     }
 
