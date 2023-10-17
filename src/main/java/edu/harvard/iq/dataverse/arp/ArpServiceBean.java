@@ -1143,6 +1143,40 @@ public class ArpServiceBean implements java.io.Serializable {
         return hasPartInput;
     }
 
+    public JsonObject getLicenseInput(String language) {
+        var licenceInput = new JsonObject();
+        licenceInput.addProperty("id", "https://schema.org/license");
+        licenceInput.addProperty("name", "license");
+        if (language.equals("hu")) {
+            licenceInput.addProperty("label", "Licensz");
+            licenceInput.addProperty("help", "Licenszdokumentum, amely erre a tartalomra vonatkozik, általában URL-lel jelezve");
+
+        }
+        else {
+            licenceInput.addProperty("label", "License");
+            licenceInput.addProperty("help", "A license document that applies to this content, typically indicated by URL");
+        }
+        licenceInput.addProperty("readonly", "true");
+        return licenceInput;
+    }
+
+    public JsonObject getDatePublishedInput(String language) {
+        var datePublished = new JsonObject();
+        datePublished.addProperty("id", "https://schema.org/datePublished");
+        datePublished.addProperty("name", "datePublished");
+        if (language.equals("hu")) {
+            datePublished.addProperty("label", "Publikálás dátuma");
+            datePublished.addProperty("help", "A publikálás dátuma");
+
+        }
+        else {
+            datePublished.addProperty("label", "Date published");
+            datePublished.addProperty("help", "Date of publication.");
+        }
+        datePublished.addProperty("readonly", "true");
+        return datePublished;
+    }
+
 }
 
 

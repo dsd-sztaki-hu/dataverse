@@ -2,17 +2,11 @@ package edu.harvard.iq.dataverse.api.arp;
 
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
-import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
-import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
-import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
@@ -25,8 +19,6 @@ import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
-import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 
 import javax.ejb.EJB;
@@ -37,23 +29,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
-
-import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getStringList;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -554,6 +536,8 @@ public class ArpApi extends AbstractApiBean {
                 "}", JsonObject.class);
         var inputs = profile.getAsJsonObject("classes").getAsJsonObject("Dataset").getAsJsonArray("inputs");
         inputs.add(arpService.getHasPartInput(language));
+        inputs.add(arpService.getLicenseInput(language));
+        inputs.add(arpService.getDatePublishedInput(language));
         profile.getAsJsonObject("classes")
                 .add("File", arpService.getDefaultDescriboProfileFileClass(language));
         profile.getAsJsonArray("enabledClasses")
@@ -637,6 +621,12 @@ public class ArpApi extends AbstractApiBean {
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                // Check whether something is missing or wrong with this ro crate, in which case we regenerate
+                if (needToRegenerate(roCrateJson)) {
+                    roCrateManager.createOrUpdateRoCrate(dataset);
+                    bufferedReader = new BufferedReader(new FileReader(roCratePath));
+                    roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                }
                 var resp = Response.ok(roCrateJson.toString());
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
@@ -666,6 +656,23 @@ public class ArpApi extends AbstractApiBean {
                 return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
         });
+    }
+
+    private boolean needToRegenerate(JsonObject roCrateJson) {
+        // Check if license is already generated. If not, regenerate
+        var iterator = roCrateJson.getAsJsonArray("@graph").iterator();
+        while (iterator.hasNext()) {
+            var elem = iterator.next();
+            if (elem.getAsJsonObject().get("@id").getAsString().equals("./")) {
+                if (!elem.getAsJsonObject().has("license")) {
+                    return true;
+                }
+                if (!elem.getAsJsonObject().has("datePublished")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @POST

@@ -14,6 +14,7 @@ import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
+import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -35,6 +36,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,7 +86,16 @@ public class RoCrateManager {
         
         // Add the persistentId of the dataset to the RootDataEntity
         rootDataEntity.addProperty("@arpPid", dataset.getGlobalId().toString());
-        
+
+        // Make sure license and datePublished is set
+        var props = rootDataEntity.getProperties();
+        props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(dataset.getLatestVersion())));
+        ZonedDateTime now = ZonedDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        String formattedDate = now.format(formatter);
+        props.put("datePublished", formattedDate);
+        rootDataEntity.setProperties(props);
+
         // Remove the entities from the RO-Crate that had been deleted from DV
         if (!isCreation) {
             removeDeletedEntities(roCrate, dataset, datasetFields, datasetFieldTypeMap);
