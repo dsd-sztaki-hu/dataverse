@@ -1157,6 +1157,7 @@ public class ArpServiceBean implements java.io.Serializable {
             licenceInput.addProperty("help", "A license document that applies to this content, typically indicated by URL");
         }
         licenceInput.addProperty("readonly", "true");
+        licenceInput.addProperty("type", "URL");
         return licenceInput;
     }
 
@@ -1174,6 +1175,7 @@ public class ArpServiceBean implements java.io.Serializable {
             datePublished.addProperty("help", "Date of publication.");
         }
         datePublished.addProperty("readonly", "true");
+        datePublished.addProperty("type", "Date");
         return datePublished;
     }
 
