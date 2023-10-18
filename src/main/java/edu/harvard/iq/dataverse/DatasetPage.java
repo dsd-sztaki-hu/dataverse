@@ -3801,7 +3801,7 @@ public class DatasetPage implements java.io.Serializable {
         }
 
         try {
-            roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
         } catch (Exception e) {
             e.printStackTrace();
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());

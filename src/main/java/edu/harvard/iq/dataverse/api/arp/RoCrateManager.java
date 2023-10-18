@@ -77,19 +77,19 @@ public class RoCrateManager {
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
-    public void createOrUpdate(RoCrate roCrate, Dataset dataset, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
+    public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
-        List<DatasetField> datasetFields = dataset.getLatestVersion().getDatasetFields();
+        List<DatasetField> datasetFields = version.getDatasetFields();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
         
         // Add the persistentId of the dataset to the RootDataEntity
-        rootDataEntity.addProperty("@arpPid", dataset.getGlobalId().toString());
+        rootDataEntity.addProperty("@arpPid", version.getDataset().getGlobalId().toString());
 
         // Make sure license and datePublished is set
         var props = rootDataEntity.getProperties();
-        props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(dataset.getLatestVersion())));
+        props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(version)));
         ZonedDateTime now = ZonedDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         String formattedDate = now.format(formatter);
@@ -98,7 +98,7 @@ public class RoCrateManager {
 
         // Remove the entities from the RO-Crate that had been deleted from DV
         if (!isCreation) {
-            removeDeletedEntities(roCrate, dataset, datasetFields, datasetFieldTypeMap);
+            removeDeletedEntities(roCrate, version, datasetFields, datasetFieldTypeMap);
         }
 
         // Update the RO-Crate with the values from DV
@@ -118,8 +118,9 @@ public class RoCrateManager {
                 processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
             }
         }
-        
-        collectConformsToIds(dataset, rootDataEntity);
+
+        // MDB-s can only be get via the Dataset and its Dataverse, so we need to pass version.getDataset()
+        collectConformsToIds(version.getDataset(), rootDataEntity);
     }
     
     private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
@@ -308,7 +309,7 @@ public class RoCrateManager {
         }
     }
     
-    private void removeDeletedEntities(RoCrate roCrate, Dataset dataset, List<DatasetField> datasetFields, Map<String, DatasetFieldType> datasetFieldTypeMap) {
+    private void removeDeletedEntities(RoCrate roCrate, DatasetVersion version, List<DatasetField> datasetFields, Map<String, DatasetFieldType> datasetFieldTypeMap) {
         List<String> fieldNames = datasetFields.stream().map(dsf -> dsf.getDatasetFieldType().getName()).collect(Collectors.toList());
         List<String> removedEntityNames = new ArrayList<>();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
@@ -876,6 +877,21 @@ public class RoCrateManager {
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
     }
 
+    public String getRoCrateFolder(DatasetVersion version) {
+        var dataset = version.getDataset();
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        var baseName = String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+        if (!version.isDraft()) {
+            baseName += "_v" + version.getFriendlyVersionNumber();
+        }
+        return baseName;
+    }
+
+
     public String getRoCrateParentFolder(Dataset dataset) {
         String filesRootDirectory = System.getProperty("dataverse.files.directory");
         if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
@@ -888,6 +904,12 @@ public class RoCrateManager {
     public String getRoCratePath(Dataset dataset, String versionNumber) {
         return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
+
+    public String getRoCratePath(DatasetVersion version) {
+        return String.join(File.separator, getRoCrateFolder(version.getDataset(), version.getFriendlyVersionNumber()), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+
 
     public String getRoCrateHtmlPreviewPath(Dataset dataset, String versionNumber) {
         return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), arpConfig.get("arp.rocrate.html.preview.name"));
@@ -912,17 +934,18 @@ public class RoCrateManager {
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
-    public void createOrUpdateRoCrate(Dataset dataset) throws Exception {
+    public void createOrUpdateRoCrate(DatasetVersion version) throws Exception {
+        var dataset = version.getDataset();
         logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
-        var roCratePath = Paths.get(getRoCratePath(dataset));
+        var roCratePath = Paths.get(getRoCratePath(version));
         RoCrate roCrate;
-        String roCrateFolderPath = getRoCrateFolder(dataset);
+        String roCrateFolderPath = getRoCrateFolder(version);
 
         if (!Files.exists(roCratePath)) {
             roCrate = new RoCrate.RoCrateBuilder()
                     .setPreview(new AutomaticPreview())
                     .build();
-            createOrUpdate(roCrate, dataset, true, null);
+            createOrUpdate(roCrate, version, true, null);
             Path roCrateFolder = Path.of(roCrateFolderPath);
             if (!Files.exists(roCrateFolder)) {
                 Files.createDirectories(roCrateFolder);
@@ -932,7 +955,7 @@ public class RoCrateManager {
             var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
             roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
-            createOrUpdate(roCrate, dataset, false, datasetFieldTypeMap);
+            createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
         }
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());

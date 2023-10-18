@@ -617,13 +617,13 @@ public class ArpApi extends AbstractApiBean {
                         ? roCrateManager.getRoCratePath(dataset)
                         : roCrateManager.getRoCratePath(dataset, versionNumber);
                 if (!Files.exists(Paths.get(roCratePath))) {
-                    roCrateManager.createOrUpdateRoCrate(dataset);
+                    roCrateManager.createOrUpdateRoCrate(latest);
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
                 if (needToRegenerate(roCrateJson)) {
-                    roCrateManager.createOrUpdateRoCrate(dataset);
+                    roCrateManager.createOrUpdateRoCrate(latest);
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 }
