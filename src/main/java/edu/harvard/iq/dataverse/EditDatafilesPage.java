@@ -983,7 +983,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (fileReplacePageHelper.runSaveReplacementFile_Phase2()) {
             JsfHelper.addSuccessMessage(getBundleString("file.message.replaceSuccess"));
             try {
-                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
@@ -1231,7 +1231,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
             try {
-                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
