@@ -349,7 +349,12 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                 cedarTemplate.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName + ".title", datasetField.getmetadatablock_id(), hunLocale));
             }
             catch (MissingResourceException ex) {
-                // ignore
+                logger.fine("MissingResourceException for key: datasetfieldtype."+propName+".title, datasetField.getmetadatablock_id(): "+datasetField.getmetadatablock_id()+", hunLocale: hunLocale");
+				try {
+					Thread.sleep(10000L);
+				} catch (InterruptedException ex1) {
+					Logger.getLogger(TsvToCedarTemplate.class.getName()).log(Level.SEVERE, null, ex1);
+				}
             }
         }
         if (datasetField.isAllowmultiples()) {
