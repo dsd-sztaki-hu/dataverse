@@ -956,17 +956,17 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
 
-    public static ArrayList<String> collectHunTranslations(String cedarTemplate, String parentPath, ArrayList<String> hunTranslations) {
+    public static Map<String, String> collectHunTranslations(String cedarTemplate, String parentPath, Map<String, String> hunTranslations) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         if (parentPath.equals("/properties")) {
-            hunTranslations.add("metadatablock.name = " + getJsonElement(cedarTemplateJson, "schema:name").getAsString());
+            hunTranslations.put("metadatablock.name", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             if (cedarTemplateJson.has("hunName")) {
-                hunTranslations.add("metadatablock.displayName = " + getJsonElement(cedarTemplateJson, "hunName").getAsString());
+                hunTranslations.put("metadatablock.displayName", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             }
             if (cedarTemplateJson.has("hunDescription")) {
-                hunTranslations.add("metadatablock.description = " + getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
+                hunTranslations.put("metadatablock.description", getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
             }
         }
 
@@ -982,31 +982,28 @@ public class ArpServiceBean implements java.io.Serializable {
                 actProp = actProp.getAsJsonObject("items");
             }
 
-            String dftName = getJsonElement(actProp, "schema:name").getAsString();
+            String dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
 
             //Label
             if (actProp.has("hunLabel")) {
                 String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunLabel));
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunLabel);
             }
             else{
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s",
-                        dftName,
-                        getJsonElement(actProp, "skos:prefLabel").getAsString())+" (magyarul)");
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName),
+                        getJsonElement(actProp, "skos:prefLabel").getAsString()+" (magyarul)");
             }
 
             // Help text / tip
             if (actProp.has("hunDescription")) {
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
-                        dftName,
-                        actProp.get("hunDescription").getAsString()));
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
+                        actProp.get("hunDescription").getAsString());
             }
             else {
                 // Note: english help text should be in schema:description, but it is not, it is in
                 // propertyDescriptions
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
-                        dftName,
-                        propertyDescriptions.get(dftName).getAsString())+" (magyarul)");
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
+                        propertyDescriptions.get(prop).getAsString()+" (magyarul)");
             }
 
             // TODO: revise how elemnets work!
@@ -1024,14 +1021,14 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
-                dftName = getJsonElement(actProp, "schema:name").getAsString();
+                dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
                 if (actProp.has("hunTitle") && !actProp.has("hunLabel")) {
                     String hunTitle = getJsonElement(actProp, "hunTitle").getAsString();
-                    hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunTitle));
+                    hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunTitle);
                 }
                 if (actProp.has("hunDescription")) {
                     String hunDescription = getJsonElement(actProp, "hunDescription").getAsString();
-                    hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s", dftName, hunDescription));
+                    hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName), hunDescription);
                 }
                 collectHunTranslations(actProp.toString(), newPath, hunTranslations);
             }
@@ -1081,9 +1078,27 @@ public class ArpServiceBean implements java.io.Serializable {
             String langDirPath = System.getProperty("dataverse.lang.directory");
             if (langDirPath != null) {
                 String fileName = metadataBlockName + "_hu.properties";
-                List<String> hunTranslations = collectHunTranslations(templateJson, "/properties", new ArrayList<>());
+                ResourceBundle resourceBundle = BundleUtil.getResourceBundle(metadataBlockName, Locale.forLanguageTag("hu"));
+
+                // Load with current translations
+                Map<String, String> hunTranslations = new TreeMap<>();
+                Enumeration<String> keys = resourceBundle.getKeys();
+                while (keys.hasMoreElements()) {
+                    String key = keys.nextElement();
+                    hunTranslations.put(key, resourceBundle.getString(key));
+                }
+
+                // Update with translations from templateJson
+                collectHunTranslations(templateJson, "/properties", hunTranslations);
+
+                // Convert back to properties file format
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<String, String> entry : hunTranslations.entrySet()) {
+                    sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+                }
+
                 FileWriter writer = new FileWriter(langDirPath + "/" + fileName);
-                writer.write(String.join("\n", hunTranslations));
+                writer.write(sb.toString());
                 writer.close();
             }
             // Force reloading language bundles/
@@ -1111,6 +1126,7 @@ public class ArpServiceBean implements java.io.Serializable {
             String templateJson = exportTemplateToCedar(cedarTemplate, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
     }
