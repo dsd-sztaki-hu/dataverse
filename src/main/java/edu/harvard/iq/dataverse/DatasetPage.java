@@ -6164,12 +6164,11 @@ public class DatasetPage implements java.io.Serializable {
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
         String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
-        String versionNumber = dataset.getLatestVersionForCopy().getFriendlyVersionNumber();
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(zipFolder(Path.of(versionNumber.equals("DRAFT") ? roCrateManager.getRoCrateFolder(dataset) : roCrateManager.getRoCrateFolder(dataset, versionNumber))));
+        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset.getLatestVersionForCopy()))));
         outputStream.flush();
         outputStream.close();
 
