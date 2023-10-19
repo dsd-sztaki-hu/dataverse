@@ -571,7 +571,9 @@ public class RoCrateManager {
         
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            //todo: fix it for virtual files too
+            if (isVirtualFile(fe)) {
+                return;
+            }
             String dataFileId = fe.get("@id").textValue().split("::")[0].substring(1);
             Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
             if (datasetFile.isPresent()) {
@@ -1001,6 +1003,9 @@ public class RoCrateManager {
 
         // Update the metadata for the files in the dataset
         roCrateFileEntities.forEach(fileEntity -> {
+            if (isVirtualFile(fileEntity)) {
+                return;
+            }
             String fileEntityHash = fileEntity.get("hash").textValue();
             var fmd = dataset.getFiles().stream().filter(dataFile -> dataFile.getChecksumValue().equals(fileEntityHash)).findFirst().get().getFileMetadata();
             fmd.setLabel(fileEntity.get("name").textValue());
