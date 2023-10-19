@@ -616,9 +616,7 @@ public class ArpApi extends AbstractApiBean {
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 var versionNumber = latest.getFriendlyVersionNumber();
-                String roCratePath = versionNumber.equals("DRAFT")
-                        ? roCrateManager.getRoCratePath(dataset)
-                        : roCrateManager.getRoCratePath(dataset, versionNumber);
+                String roCratePath = roCrateManager.getRoCratePath(latest);
                 if (!Files.exists(Paths.get(roCratePath))) {
                     roCrateManager.createOrUpdateRoCrate(latest);
                 }

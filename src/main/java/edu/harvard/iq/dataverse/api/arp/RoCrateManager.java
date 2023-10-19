@@ -549,11 +549,11 @@ public class RoCrateManager {
     
     public void updateRoCrateFileMetadatas(Dataset dataset) throws JsonProcessingException {
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        var ro = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        var ro = roCrateFolderReader.readCrate(getRoCrateFolder(dataset.getLatestVersion()));
         RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, getRoCrateFolder(dataset));
+        roCrateFolderWriter.save(roCrate, getRoCrateFolder(dataset.getLatestVersion()));
     }
     
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas) throws JsonProcessingException {
@@ -571,9 +571,11 @@ public class RoCrateManager {
         
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            String fileHash = fe.get("hash").textValue();
-            String fileName = fe.get("name").textValue();
-            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()) && Objects.equals(fileName, fileMetadata.getDataFile().getDisplayName())).findFirst();
+            if (isVirtualFile(fe)) {
+                return;
+            }
+            String dataFileId = fe.get("@id").textValue().split("::")[0].substring(1);
+            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
                 fe.put("name", fmd.getLabel());
@@ -588,7 +590,7 @@ public class RoCrateManager {
                 }
 
                 fe.set("tags", mapper.valueToTree(fmd.getCategoriesByName()));
-                datasetFiles.removeIf(fileMetadata -> Objects.equals(fileHash, fileMetadata.getDataFile().getChecksumValue()) && Objects.equals(fileName, fileMetadata.getDataFile().getDisplayName()));
+                datasetFiles.removeIf(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString()));
             } else {
                 roCrate.deleteEntityById(fe.get("@id").textValue());
             }
@@ -860,21 +862,8 @@ public class RoCrateManager {
         }
     }
 
-    public String getRoCratePath(Dataset dataset) {
-        return String.join(File.separator, getRoCrateFolder(dataset), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
-    }
-
-    public String getRoCrateHtmlPreviewPath(Dataset dataset) {
-        return String.join(File.separator, getRoCrateFolder(dataset), arpConfig.get("arp.rocrate.html.preview.name"));
-    }
-
-    public String getRoCrateFolder(Dataset dataset) {
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
-            filesRootDirectory = "/tmp/files";
-        }
-
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+    public String getRoCrateHtmlPreviewPath(DatasetVersion version) {
+        return String.join(File.separator, getRoCrateFolder(version), arpConfig.get("arp.rocrate.html.preview.name"));
     }
 
     public String getRoCrateFolder(DatasetVersion version) {
@@ -890,8 +879,7 @@ public class RoCrateManager {
         }
         return baseName;
     }
-
-
+    
     public String getRoCrateParentFolder(Dataset dataset) {
         String filesRootDirectory = System.getProperty("dataverse.files.directory");
         if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
@@ -901,36 +889,18 @@ public class RoCrateManager {
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
     }
 
-    public String getRoCratePath(Dataset dataset, String versionNumber) {
-        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
-    }
-
     public String getRoCratePath(DatasetVersion version) {
-        return String.join(File.separator, getRoCrateFolder(version.getDataset(), version.getFriendlyVersionNumber()), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
-    }
-
-
-
-    public String getRoCrateHtmlPreviewPath(Dataset dataset, String versionNumber) {
-        return String.join(File.separator, getRoCrateFolder(dataset, versionNumber), arpConfig.get("arp.rocrate.html.preview.name"));
-    }
-    public String getRoCrateFolder(Dataset dataset, String versionNumber) {
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
-            filesRootDirectory = "/tmp/files";
-        }
-
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata_v" + versionNumber);
+        return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
     
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
-        String roCrateFolderPath = getRoCrateFolder(dataset);
+        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
     public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException
     {
-        String roCrateFolderPath = getRoCrateFolder(dataset);
+        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
@@ -966,7 +936,7 @@ public class RoCrateManager {
         var released = dataset.getReleasedVersion();
         if (released != null) {
             var releasedVersion = released.getFriendlyVersionNumber();
-            var releasedPath = getRoCratePath(dataset, releasedVersion);
+            var releasedPath = getRoCratePath(released);
             if (!Files.exists(Paths.get(releasedPath))) {
                 logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
                 saveRoCrateVersion(dataset, releasedVersion);
@@ -1033,10 +1003,12 @@ public class RoCrateManager {
 
         // Update the metadata for the files in the dataset
         roCrateFileEntities.forEach(fileEntity -> {
+            if (isVirtualFile(fileEntity)) {
+                return;
+            }
             String fileEntityHash = fileEntity.get("hash").textValue();
             var fmd = dataset.getFiles().stream().filter(dataFile -> dataFile.getChecksumValue().equals(fileEntityHash)).findFirst().get().getFileMetadata();
             fmd.setLabel(fileEntity.get("name").textValue());
-            // TODO: recursively update the directory labels for "move" operation
             String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
             fmd.setDirectoryLabel(dirLabel);
             String description = fileEntity.has("description") ? fileEntity.get("description").textValue() : "";
@@ -1093,7 +1065,7 @@ public class RoCrateManager {
         
         removeReverseProperties(rootNode);
         
-        try (FileWriter writer = new FileWriter(getRoCratePath(dataset))) {
+        try (FileWriter writer = new FileWriter(getRoCratePath(dataset.getLatestVersion()))) {
             writer.write(rootNode.toPrettyString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -1102,7 +1074,7 @@ public class RoCrateManager {
 
         List<MetadataBlock> mdbs = metadataBlockServiceBean.listMetadataBlocks();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset));
+        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset.getLatestVersion()));
         ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
         List<String> rootDataEntityPropNames = new ArrayList<>();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
@@ -1141,7 +1113,7 @@ public class RoCrateManager {
     }
 
     public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws IOException {
-        String roCrateFolderPath = getRoCrateFolder(dataset);
+        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
         List<JsonNode> rootHasPartDatasets = new ArrayList<>();
