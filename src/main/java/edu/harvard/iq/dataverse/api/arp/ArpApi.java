@@ -437,6 +437,9 @@ public class ArpApi extends AbstractApiBean {
                         .getAsJsonArray("inputs");
                 JsonObject metadata = profileJson.getAsJsonObject("metadata");
                 // Get rid of the "Metadata" suffix.
+                // TODO: More generic solution would be:
+                // String nameWithoutMetadataSuffix = metadata.get("name").getAsString().replaceAll("(?i) (metadata|metaadatok|metaadatai)$", "");
+                // metadata.addProperty("name", nameWithoutMetadataSuffix);
                 if (metadata.get("name").getAsString().endsWith(" Metadata")) {
                     String name = metadata.get("name").getAsString();
                     metadata.addProperty("name", name.substring(0, name.length()-" Metadata".length()));
