@@ -961,8 +961,8 @@ public class ArpServiceBean implements java.io.Serializable {
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         if (parentPath.equals("/properties")) {
-            hunTranslations.put("metadatablock.name", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             if (cedarTemplateJson.has("hunName")) {
+                hunTranslations.put("metadatablock.name", getJsonElement(cedarTemplateJson, "hunName").getAsString());
                 hunTranslations.put("metadatablock.displayName", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             }
             if (cedarTemplateJson.has("hunDescription")) {
