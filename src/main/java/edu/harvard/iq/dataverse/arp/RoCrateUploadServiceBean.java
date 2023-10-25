@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
+import edu.kit.datamanager.ro_crate.RoCrate;
 
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
@@ -37,6 +39,11 @@ public class RoCrateUploadServiceBean implements Serializable {
     private String roCrateName;
     private String roCrateType;
     private InputStream roCrateInputStream;
+    // The parsed roCrateJsonString
+    private ObjectNode roCrateParsed;
+    // The @graph node
+    private ArrayNode roCrateGraph;
+
 
     public void handleRoCrateUpload() {
         String roCrateJsonString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateJson");
@@ -61,10 +68,8 @@ public class RoCrateUploadServiceBean implements Serializable {
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
         if (!roCrateJsonString.isBlank()) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
                 Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
-                JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> {
+                JsonNode datasetNode = StreamSupport.stream(roCrateGraph.spliterator(), false).filter(node -> {
                     var typeNode = node.get("@type");
                     if (typeNode instanceof ArrayNode) {
                         for (int i = 0; i < typeNode.size(); i++) {
@@ -91,10 +96,10 @@ public class RoCrateUploadServiceBean implements Serializable {
                             JsonNode roCrateValue = datasetNode.get(propName);
                             if (roCrateValue.isArray()) {
                                 for (JsonNode value : roCrateValue) {
-                                    processCompoundField(value, datasetField, graphNode);
+                                    processCompoundField(value, datasetField, roCrateGraph);
                                 }
                             } else {
-                                processCompoundField(roCrateValue, datasetField, graphNode);
+                                processCompoundField(roCrateValue, datasetField, roCrateGraph);
                             }
                         } else {
                             if (datasetFieldType.isAllowControlledVocabulary()) {
@@ -110,7 +115,7 @@ public class RoCrateUploadServiceBean implements Serializable {
             }
         }
 
-        setRoCrateJsonString(null);
+        //setRoCrateJsonString(null);
         return datasetVersionUI;
     }
 
@@ -208,6 +213,18 @@ public class RoCrateUploadServiceBean implements Serializable {
 
     public void setRoCrateJsonString(String roCrateJsonString) {
         this.roCrateJsonString = roCrateJsonString;
+        if (roCrateJsonString == null) {
+            roCrateParsed = null;
+            roCrateGraph = null;
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            roCrateParsed = (ObjectNode) mapper.readTree(roCrateJsonString);
+            roCrateGraph = (ArrayNode) roCrateParsed.get("@graph");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -242,4 +259,40 @@ public class RoCrateUploadServiceBean implements Serializable {
     public void setRoCrateInputStream(InputStream roCrateInputStream) {
         this.roCrateInputStream = roCrateInputStream;
     }
+
+    /**
+     * Given the RoCrate generated for a DV dataset by RoCrateManager, add any file or sub-dataset related data to the
+     * generatedCrate that is found in the previously uploaded roCrateJsonString.
+     *
+     * @param generatedCrate
+     * @return
+     */
+    public RoCrate addUploadedFileMetadata(RoCrate generatedCrate) {
+        if (roCrateParsed == null) {
+            return generatedCrate;
+        }
+
+        // 1. Take File nodes from roCrateGraph and find their counterpart in generatedCrate.getAllDataEntities() (
+        //   using dirPath + filename + hash). If counterpart is not found, then the file has been removed during upload
+        //   in which case we are done with that file.
+        // 2. Set missing metadata from roCrateGraph file node to  generatedCrate data entity
+        // 3. If metadata is not a simple file, but a contextual entity, then generate the necessary contextual entity
+        //    in generatedCrate -- do this recursively (contextual entity may refer to other contextual entity)
+        // 4. For a roCrateGraph file node find its parent dataset and also its counterpart in
+        //    generatedCrate.getAllDataEntities(). If the counterpart dataset is not found, then the user has
+        //    edited te dirPath during upload and we have nothing to do with that dataset.
+        // 5. Set missing metadata on the dataset in generatedCrate and process any connected context entity just like
+        //     with files.
+
+        return generatedCrate;
+    }
+
+    public void reset() {
+        setRoCrateJsonString(null);
+        setRoCrateAsBase64(null);
+        setRoCrateName(null);
+        setRoCrateType(null);
+        setRoCrateInputStream(null);
+    }
+
 }

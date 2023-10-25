@@ -10,10 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import edu.harvard.iq.dataverse.arp.ArpConfig;
-import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
-import edu.harvard.iq.dataverse.arp.ArpServiceBean;
-import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
+import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
@@ -29,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
 import java.io.FileWriter;
@@ -74,6 +72,9 @@ public class RoCrateManager {
 
     @EJB
     ArpConfig arpConfig;
+
+    @Inject
+    RoCrateUploadServiceBean roCrateUploadServiceBean;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -928,8 +929,15 @@ public class RoCrateManager {
             createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
         }
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas());
+        // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
+        // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
+        roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+
+        // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
+        // addUploadedFileMetadata would do nothing.
+        roCrateUploadServiceBean.reset();
 
         // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
         // from the beginning
@@ -942,6 +950,7 @@ public class RoCrateManager {
                 saveRoCrateVersion(dataset, releasedVersion);
             }
         }
+
     }
 
     public String importRoCrate(RoCrate roCrate) {
