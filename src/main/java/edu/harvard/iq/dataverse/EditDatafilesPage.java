@@ -73,6 +73,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.event.FacesEvent;
 import javax.servlet.ServletOutputStream;
@@ -2114,6 +2115,13 @@ public class EditDatafilesPage implements java.io.Serializable {
                             return;
                         }
                     }
+
+                    // Remove files we don't want to pass to DV
+                    dFileList = dFileList.stream().filter(dataFile -> {
+                        return !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-preview.html")
+                                && !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-metadata.json");
+                                //&& !dataFile.getFileMetadata().getLabel().toLowerCase().equals("manifest.txt");
+                    }).collect(Collectors.toList());
 
                     // -----------------------------------------------------------
                     // These raw datafiles are then post-processed, in order to drop any files
