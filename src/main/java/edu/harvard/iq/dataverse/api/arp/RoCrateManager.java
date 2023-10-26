@@ -623,7 +623,7 @@ public class RoCrateManager {
     private String findFirstModifiedDatasetId(RoCrate roCrate, ObjectNode parentObj, List<String> originalDirNames, List<String> modifiedDirNames) {
         boolean dsIsPresent = false;
         String dsId = null;
-        if (!modifiedDirNames.isEmpty()) {
+        if (!modifiedDirNames.isEmpty() && !originalDirNames.isEmpty()) {
             String folderName = modifiedDirNames.get(0);
             dsId = getDatasetIdIfAlreadyPresent(roCrate, parentObj, folderName);
             if (dsId != null) {
