@@ -1159,12 +1159,12 @@ public class RoCrateManager {
         
         // Delete properties from the @context, because AROMA only deletes them if they were added in aroma
         // props added in DV won't be removed from the @context if they were deleted in AROMA
-        roCrateContext.fields().forEachRemaining(entry -> {
-            if (!rootDataEntityPropNames.contains(entry.getKey()) && 
-                    roCrate.getAllContextualEntities().stream().noneMatch(ce -> ce.getProperties().has(entry.getKey()))) {
-                roCrate.deleteValuePairFromContext(entry.getKey());
-            }
-        });
+//        roCrateContext.fields().forEachRemaining(entry -> {
+//            if (!rootDataEntityPropNames.contains(entry.getKey()) &&
+//                    roCrate.getAllContextualEntities().stream().noneMatch(ce -> ce.getProperties().has(entry.getKey()))) {
+//                roCrate.deleteValuePairFromContext(entry.getKey());
+//            }
+//        });
         
         deleteUrlEntities(roCrate);
         
