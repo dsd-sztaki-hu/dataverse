@@ -171,5 +171,10 @@
   "enabledClasses": [
     "creatorName_test",
     "Dataset"
-  ]
+  ],
+  "localisation": {
+    "creatorName_test": "Creator Name_test",
+    "Dataset": "Dataset",
+    "File": "File"
+  }
 }

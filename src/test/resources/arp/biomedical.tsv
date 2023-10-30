@@ -112,43 +112,43 @@
 	studyAssayTechnologyType	real time PCR		10
 	studyAssayTechnologyType	no technology required		11
 	studyAssayTechnologyType	Other		12
-	studyAssayPlatform	Agilent		36
-	studyAssayPlatform	210-MS GC Ion Trap (Varian)		0
-	studyAssayPlatform	220-MS GC Ion Trap (Varian)		1
-	studyAssayPlatform	225-MS GC Ion Trap (Varian)		2
-	studyAssayPlatform	240-MS GC Ion Trap (Varian)		3
-	studyAssayPlatform	300-MS quadrupole GC/MS (Varian)		4
-	studyAssayPlatform	320-MS LC/MS (Varian)		5
-	studyAssayPlatform	325-MS LC/MS (Varian)		6
-	studyAssayPlatform	320-MS GC/MS (Varian)		7
-	studyAssayPlatform	500-MS LC/MS (Varian)		8
-	studyAssayPlatform	800D (Jeol)		9
-	studyAssayPlatform	910-MS TQ-FT (Varian)		10
-	studyAssayPlatform	920-MS TQ-FT (Varian)		11
-	studyAssayPlatform	3100 Mass Detector (Waters)		12
-	studyAssayPlatform	6110 Quadrupole LC/MS (Agilent)		13
-	studyAssayPlatform	6120 Quadrupole LC/MS (Agilent)		14
-	studyAssayPlatform	6130 Quadrupole LC/MS (Agilent)		15
-	studyAssayPlatform	6140 Quadrupole LC/MS (Agilent)		16
-	studyAssayPlatform	6310 Ion Trap LC/MS (Agilent)		17
-	studyAssayPlatform	6320 Ion Trap LC/MS (Agilent)		18
-	studyAssayPlatform	6330 Ion Trap LC/MS (Agilent)		19
-	studyAssayPlatform	6340 Ion Trap LC/MS (Agilent)		20
-	studyAssayPlatform	6410 Triple Quadrupole LC/MS (Agilent)		21
-	studyAssayPlatform	6430 Triple Quadrupole LC/MS (Agilent)		22
-	studyAssayPlatform	6460 Triple Quadrupole LC/MS (Agilent)		23
-	studyAssayPlatform	6490 Triple Quadrupole LC/MS (Agilent)		24
-	studyAssayPlatform	6530 Q-TOF LC/MS (Agilent)		25
-	studyAssayPlatform	6540 Q-TOF LC/MS (Agilent)		26
-	studyAssayPlatform	6210 TOF LC/MS (Agilent)		27
-	studyAssayPlatform	6220 TOF LC/MS (Agilent)		28
-	studyAssayPlatform	6230 TOF LC/MS (Agilent)		29
-	studyAssayPlatform	7000B Triple Quadrupole GC/MS (Agilent)		30
-	studyAssayPlatform	AccuTO DART (Jeol)		31
-	studyAssayPlatform	AccuTOF GC (Jeol)		32
-	studyAssayPlatform	AccuTOF LC (Jeol)		33
-	studyAssayPlatform	ACQUITY SQD (Waters)		34
-	studyAssayPlatform	ACQUITY TQD (Waters)		35
+	studyAssayPlatform	210-MS GC Ion Trap (Varian)		1
+	studyAssayPlatform	220-MS GC Ion Trap (Varian)		2
+	studyAssayPlatform	225-MS GC Ion Trap (Varian)		3
+	studyAssayPlatform	240-MS GC Ion Trap (Varian)		4
+	studyAssayPlatform	300-MS quadrupole GC/MS (Varian)		5
+	studyAssayPlatform	320-MS LC/MS (Varian)		6
+	studyAssayPlatform	325-MS LC/MS (Varian)		7
+	studyAssayPlatform	320-MS GC/MS (Varian)		8
+	studyAssayPlatform	500-MS LC/MS (Varian)		9
+	studyAssayPlatform	800D (Jeol)		10
+	studyAssayPlatform	910-MS TQ-FT (Varian)		11
+	studyAssayPlatform	920-MS TQ-FT (Varian)		12
+	studyAssayPlatform	3100 Mass Detector (Waters)		13
+	studyAssayPlatform	6110 Quadrupole LC/MS (Agilent)		14
+	studyAssayPlatform	6120 Quadrupole LC/MS (Agilent)		15
+	studyAssayPlatform	6130 Quadrupole LC/MS (Agilent)		16
+	studyAssayPlatform	6140 Quadrupole LC/MS (Agilent)		17
+	studyAssayPlatform	6310 Ion Trap LC/MS (Agilent)		18
+	studyAssayPlatform	6320 Ion Trap LC/MS (Agilent)		19
+	studyAssayPlatform	6330 Ion Trap LC/MS (Agilent)		20
+	studyAssayPlatform	6340 Ion Trap LC/MS (Agilent)		21
+	studyAssayPlatform	6410 Triple Quadrupole LC/MS (Agilent)		22
+	studyAssayPlatform	6430 Triple Quadrupole LC/MS (Agilent)		23
+	studyAssayPlatform	6460 Triple Quadrupole LC/MS (Agilent)		24
+	studyAssayPlatform	6490 Triple Quadrupole LC/MS (Agilent)		25
+	studyAssayPlatform	6530 Q-TOF LC/MS (Agilent)		26
+	studyAssayPlatform	6540 Q-TOF LC/MS (Agilent)		27
+	studyAssayPlatform	6210 TOF LC/MS (Agilent)		28
+	studyAssayPlatform	6220 TOF LC/MS (Agilent)		29
+	studyAssayPlatform	6230 TOF LC/MS (Agilent)		30
+	studyAssayPlatform	7000B Triple Quadrupole GC/MS (Agilent)		31
+	studyAssayPlatform	AccuTO DART (Jeol)		32
+	studyAssayPlatform	AccuTOF GC (Jeol)		33
+	studyAssayPlatform	AccuTOF LC (Jeol)		34
+	studyAssayPlatform	ACQUITY SQD (Waters)		35
+	studyAssayPlatform	ACQUITY TQD (Waters)		36
+	studyAssayPlatform	Agilent		0
 	studyAssayPlatform	Agilent 5975E GC/MSD (Agilent)		37
 	studyAssayPlatform	Agilent 5975T LTM GC/MSD (Agilent)		38
 	studyAssayPlatform	5975C Series GC/MSD (Agilent)		39

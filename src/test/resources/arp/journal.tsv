@@ -7,35 +7,35 @@
 	journalPubDate	Publication Date	The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).	YYYY or YYYY-MM or YYYY-MM-DD	DATE	3		true	false	false	true	false	false	journalVolumeIssue	journal	https://dataverse.org/schema/journal/journalPubDate
 	journalArticleType	Type of Article	Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS). 		TEXT	4		true	true	false	true	false	false		journal	https://dataverse.org/schema/journal/journalArticleType
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder
-	journalArticleType	reprint		26
-	journalArticleType	research article		27
-	journalArticleType	retraction		28
-	journalArticleType	review article		29
-	journalArticleType	translation		30
-	journalArticleType	other		31
-	journalArticleType	rapid communication		0
-	journalArticleType	reply		1
-	journalArticleType	abstract		2
-	journalArticleType	addendum		3
-	journalArticleType	announcement		4
-	journalArticleType	article-commentary		5
-	journalArticleType	book review		6
-	journalArticleType	books received		7
-	journalArticleType	brief report		8
-	journalArticleType	calendar		9
-	journalArticleType	case report		10
-	journalArticleType	collection		11
-	journalArticleType	correction		12
-	journalArticleType	data paper		13
-	journalArticleType	discussion		14
-	journalArticleType	dissertation		15
-	journalArticleType	editorial		16
-	journalArticleType	in brief		17
-	journalArticleType	introduction		18
-	journalArticleType	letter		19
-	journalArticleType	meeting report		20
-	journalArticleType	news		21
-	journalArticleType	obituary		22
-	journalArticleType	oration		23
-	journalArticleType	partial retraction		24
-	journalArticleType	product review		25
+	journalArticleType	reprint		0
+	journalArticleType	research article		1
+	journalArticleType	retraction		2
+	journalArticleType	review article		3
+	journalArticleType	translation		4
+	journalArticleType	other		5
+	journalArticleType	rapid communication		6
+	journalArticleType	reply		7
+	journalArticleType	abstract		8
+	journalArticleType	addendum		9
+	journalArticleType	announcement		10
+	journalArticleType	article-commentary		11
+	journalArticleType	book review		12
+	journalArticleType	books received		13
+	journalArticleType	brief report		14
+	journalArticleType	calendar		15
+	journalArticleType	case report		16
+	journalArticleType	collection		17
+	journalArticleType	correction		18
+	journalArticleType	data paper		19
+	journalArticleType	discussion		20
+	journalArticleType	dissertation		21
+	journalArticleType	editorial		22
+	journalArticleType	in brief		23
+	journalArticleType	introduction		24
+	journalArticleType	letter		25
+	journalArticleType	meeting report		26
+	journalArticleType	news		27
+	journalArticleType	obituary		28
+	journalArticleType	oration		29
+	journalArticleType	partial retraction		30
+	journalArticleType	product review		31
