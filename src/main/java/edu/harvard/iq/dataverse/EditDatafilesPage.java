@@ -2142,6 +2142,7 @@ public class EditDatafilesPage implements java.io.Serializable {
 
                     roCrateUploadService.setRoCrateInputStream(null);
                     uploadFinished();
+                    roCrateUploadService.createImportMapping(dFileList);
                 } catch (Exception e) {
                     logger.severe("Could not process the uploaded files from the RO-Crate" + e.getMessage());
                     e.printStackTrace();
