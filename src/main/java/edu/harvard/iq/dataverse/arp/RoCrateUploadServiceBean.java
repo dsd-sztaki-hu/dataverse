@@ -63,25 +63,27 @@ public class RoCrateUploadServiceBean implements Serializable {
             JsfHelper.addErrorMessage("Can not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
         }
     }
+    
+    private boolean hasType(JsonNode jsonNode, String type) {
+        JsonNode typeNode = jsonNode.get("@type");
+        if (typeNode instanceof ArrayNode) {
+            for (int i = 0; i < typeNode.size(); i++) {
+                var t = typeNode.get(i);
+                if (t.textValue().equals(type)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return typeNode.textValue().equals(type);
+    }
 
     public DatasetVersionUI resetVersionUIRoCrate(DatasetVersionUI datasetVersionUI, DatasetVersion workingVersion, Dataset dataset) throws JsonProcessingException {
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
         if (!roCrateJsonString.isBlank()) {
             try {
                 Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
-                JsonNode datasetNode = StreamSupport.stream(roCrateGraph.spliterator(), false).filter(node -> {
-                    var typeNode = node.get("@type");
-                    if (typeNode instanceof ArrayNode) {
-                        for (int i = 0; i < typeNode.size(); i++) {
-                            var t = typeNode.get(i);
-                            if (t.textValue().equals("Dataset")) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                    return typeNode.textValue().equals("Dataset");
-                }).findFirst().get();
+                JsonNode datasetNode = StreamSupport.stream(roCrateGraph.spliterator(), false).filter(node -> hasType(node, "Dataset")).findFirst().get();
     
                 // process the Dataset node, from here we can get the primitive values
                 // and the type of the compound values
@@ -293,7 +295,7 @@ public class RoCrateUploadServiceBean implements Serializable {
         // Collect the RO-CRATE fileEntities for easier processing
         ArrayList<JsonNode> roCrateFiles = new ArrayList<>();
         roCrateGraph.forEach(jsonNode -> {
-            if (jsonNode.has("@type") && jsonNode.get("@type").textValue().equals("File")) {
+            if (jsonNode.has("@type") && hasType(jsonNode, "File")) {
                 roCrateFiles.add(jsonNode);
             }
         });
