@@ -3801,6 +3801,10 @@ public class DatasetPage implements java.io.Serializable {
         }
 
         try {
+            // This happens only upon importing a new RO-CRATE from a .zip
+            if (editMode.equals(EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
+                roCrateManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
+            }
             roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
         } catch (Exception e) {
             e.printStackTrace();
