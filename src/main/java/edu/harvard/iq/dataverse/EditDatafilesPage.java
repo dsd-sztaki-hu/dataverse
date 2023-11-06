@@ -73,6 +73,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.event.FacesEvent;
 import javax.servlet.ServletOutputStream;
@@ -2115,6 +2116,13 @@ public class EditDatafilesPage implements java.io.Serializable {
                         }
                     }
 
+                    // Remove files we don't want to pass to DV
+                    dFileList = dFileList.stream().filter(dataFile -> {
+                        return !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-preview.html")
+                                && !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-metadata.json");
+                                //&& !dataFile.getFileMetadata().getLabel().toLowerCase().equals("manifest.txt");
+                    }).collect(Collectors.toList());
+
                     // -----------------------------------------------------------
                     // These raw datafiles are then post-processed, in order to drop any files
                     // already in the dataset/already uploaded, and to correct duplicate file names, etc.
@@ -2134,6 +2142,7 @@ public class EditDatafilesPage implements java.io.Serializable {
 
                     roCrateUploadService.setRoCrateInputStream(null);
                     uploadFinished();
+                    roCrateUploadService.createImportMapping(dFileList);
                 } catch (Exception e) {
                     logger.severe("Could not process the uploaded files from the RO-Crate" + e.getMessage());
                     e.printStackTrace();
