@@ -535,7 +535,7 @@ public class ArpServiceBean implements java.io.Serializable {
         String conversionResult;
 
         try {
-            CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language);
+            CedarTemplateToDescriboProfileConverter cedarTemplateToDescriboProfileConverter = new CedarTemplateToDescriboProfileConverter(language, this);
             conversionResult = cedarTemplateToDescriboProfileConverter.processCedarTemplate(cedarTemplate);
         } catch (Exception exception) {
             throw new Exception("An error occurred during converting the template", exception);

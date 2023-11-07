@@ -20,13 +20,14 @@ public class CedarTemplateToDescriboProfileConverter {
     private ArpServiceBean arpService;
 
 
-    public CedarTemplateToDescriboProfileConverter(String language) {
+    public CedarTemplateToDescriboProfileConverter(String language, ArpServiceBean arpService) {
         if (language == null) {
             this.language = "en";
         }
         else {
             this.language = language;
         }
+        this.arpService = arpService;
     }
 
     // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file
