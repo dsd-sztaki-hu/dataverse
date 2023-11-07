@@ -234,7 +234,7 @@ public class CedarTemplateToDescriboProfileConverter {
             "link", List.of("URL"),
             "list", List.of("Select"),
             "radio", List.of("Select"),
-            "attribute-value", List.of("Text"),
+            "phone-number", List.of("Text"),
             "email", List.of("Text")
     );
 
