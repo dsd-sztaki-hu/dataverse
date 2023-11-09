@@ -1,3 +1,25 @@
+# RRunning in docker
+
+Full reset:
+
+```
+rm -rf ./docker-dev-volumes
+docker images | grep 'gdcc/' | awk '{print $3}' | xargs docker rmi -f
+```
+
+Build once:
+
+```
+mvn -Pct -f modules/container-base install
+```
+
+Build and run:
+
+```
+mvn -Pct clean package
+mvn -Pct docker:run
+```
+
 
 # branch: datasetfieldtype-refact
 

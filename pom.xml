@@ -808,7 +808,13 @@
                 <base.image.tag>unstable</base.image.tag>
                 <conf.image>gdcc/configbaker:${conf.image.tag}</conf.image>
                 <conf.image.tag>${app.image.tag}</conf.image.tag>
-    
+
+                <!-- ARP specific -->
+                <arp.solr_updater.image>gdcc/arp-solr-updater:${arp.solr_updater.image.tag}</arp.solr_updater.image>
+                <arp.solr_updater.image.tag>${app.image.tag}</arp.solr_updater.image.tag>
+                <arp.rocrate_preview_generator.image>gdcc/arp-rocrate-preview-generator:${arp.rocrate_preview_generator.image.tag}</arp.rocrate_preview_generator.image>
+                <arp.rocrate_preview_generator.image.tag>${app.image.tag}</arp.rocrate_preview_generator.image.tag>
+
                 <docker.platforms></docker.platforms>
             
                 <!-- Variables as used in docker-compose.yml -->
@@ -901,6 +907,39 @@
                                         <skip>true</skip>
                                     </run>
                                 </image>
+
+                                <!--
+                                            ___    ____  ____
+                                           /   |  / __ \/ __ \
+                                          / /| | / /_/ / /_/ /
+                                         / ___ |/ _, _/ ____/
+                                        /_/  |_/_/ |_/_/
+                                -->
+                                <image>
+                                    <alias>dev_arp_solr_updater</alias>
+                                    <name>${arp.solr_updater.image}</name>
+                                    <build>
+                                        <buildx>
+                                            <platforms>
+                                                <platform>${docker.platforms}</platform>
+                                            </platforms>
+                                        </buildx>
+                                        <dockerFile>${project.basedir}/modules/arp-solr-updater/Dockerfile</dockerFile>
+                                    </build>
+                                </image>
+                                <image>
+                                    <alias>dev_arp_rocrate_preview_generator</alias>
+                                    <name>${arp.rocrate_preview_generator.image}</name>
+                                    <build>
+                                        <buildx>
+                                            <platforms>
+                                                <platform>${docker.platforms}</platform>
+                                            </platforms>
+                                        </buildx>
+                                        <dockerFile>${project.basedir}/modules/arp-rocrate-preview-generator/Dockerfile</dockerFile>
+                                    </build>
+                                </image>
+
                             </images>
                             <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
                         </configuration>
@@ -922,6 +961,56 @@
                                     <goal>integration-test</goal>
                                     <goal>verify</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!--
+                                ___    ____  ____
+                               /   |  / __ \/ __ \
+                              / /| | / /_/ / /_/ /
+                             / ___ |/ _, _/ ____/
+                            /_/  |_/_/ |_/_/
+                    -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>git-clone-arp-modules</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>bash</executable>
+                                    <arguments>
+                                        <argument>-c</argument>
+                                        <argument>
+                                            <![CDATA[
+                                                if [ ! -d "modules/arp-solr-updater" ]; then
+                                                    echo "Cloning solr-updater to modules/arp-solr-updater"
+                                                    git clone git@git.sztaki.hu:dsd/dataverse-solr-updater.git modules/arp-solr-updater
+                                                else
+                                                    echo "Updating modules/arp-solr-updater"
+                                                    cd modules/arp-solr-updater
+                                                    git pull
+                                                fi
+
+                                                if [ ! -d "modules/arp-rocrate-preview-generator" ]; then
+                                                    echo "Cloning dataverse-rocrate-preview to modules/arp-rocrate-preview-generator"
+                                                    git clone git@git.sztaki.hu:dsd/dataverse-rocrate-preview.git modules/arp-rocrate-preview-generator
+                                                else
+                                                    echo "Updating modules/arp-rocrate-preview-generator"
+                                                    cd modules/arp-rocrate-preview-generator
+                                                    git pull
+                                                fi
+
+                                            ]]>
+                                        </argument>
+                                    </arguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>

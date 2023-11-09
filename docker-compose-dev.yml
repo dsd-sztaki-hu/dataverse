@@ -127,6 +127,31 @@ services:
     volumes:
       - './conf/keycloak/oidc-realm.json:/opt/keycloak/data/import/oidc-realm.json'
 
+  # IMPORTANT: names must match alias/name in pom.xml!!
+  dev_arp_solr_updater:
+    image: gdcc/arp-solr-updater:unstable
+    container_name: "dev_arp_solr_updater"
+    hostname: arp_solr_updater
+    environment:
+      - DATAVERSE_URL=http://dataverse:8080
+      - SOLR_URL=http://solr:8983
+      - SOLR_SCHEMA_XML_PATH=/var/solr/data/collection1/conf/schema.xml
+    networks:
+      - dataverse
+    ports:
+      - '8984:3000'
+    volumes:
+      - ./docker-dev-volumes/solr/data:/var/solr
+
+  dev_arp_rocrate_preview_generator:
+    image: gdcc/arp-rocrate-preview-generator:unstable
+    container_name: "dev_arp_rocrate_preview_generator"
+    hostname: arp_rocrate_preview_generator
+    networks:
+      - dataverse
+    ports:
+      - '8985:8082'
+
 networks:
   dataverse:
     driver: bridge
