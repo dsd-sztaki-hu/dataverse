@@ -436,7 +436,7 @@ public class IndexServiceBean {
         }
     }
 
-    private void indexDataset(Dataset dataset, boolean doNormalSolrDocCleanUp) throws  SolrServerException, IOException {
+    public void indexDataset(Dataset dataset, boolean doNormalSolrDocCleanUp) throws  SolrServerException, IOException {
         doIndexDataset(dataset, doNormalSolrDocCleanUp);
         updateLastIndexedTime(dataset.getId());
     }

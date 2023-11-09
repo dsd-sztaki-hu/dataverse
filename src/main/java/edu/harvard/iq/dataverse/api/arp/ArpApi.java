@@ -25,6 +25,8 @@ import javax.ejb.EJB;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.ws.rs.*;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -36,6 +38,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static edu.harvard.iq.dataverse.api.ApiConstants.STATUS_ERROR;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import static javax.ws.rs.core.Response.Status.*;
 
@@ -136,13 +139,14 @@ public class ArpApi extends AbstractApiBean {
     @Consumes("application/json")
     @Produces("text/tab-separated-values")
     public Response cedarToMdb(
+            @Context ContainerRequestContext crc,
             @PathParam("dvIdtf") String dvIdtf,
             @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
             String templateJson
     ) throws JsonProcessingException
     {
         try {
-            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
@@ -215,10 +219,13 @@ public class ArpApi extends AbstractApiBean {
     @Path("/exportMdbToCedar/{mdbIdtf}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response exportMdbToCedar(@PathParam("mdbIdtf") String mdbIdtf, ExportToCedarParams cedarParams)
+    public Response exportMdbToCedar(
+            @Context ContainerRequestContext crc,
+            @PathParam("mdbIdtf") String mdbIdtf,
+            ExportToCedarParams cedarParams)
     {
         try {
-            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
@@ -287,10 +294,13 @@ public class ArpApi extends AbstractApiBean {
     @Path("/exportTsvToCedar/")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response exportTsvToCedar(ExportTsvToCedarData cedarDataAndTsv)
+    public Response exportTsvToCedar(
+            @Context ContainerRequestContext crc,
+            ExportTsvToCedarData cedarDataAndTsv
+    )
     {
         try {
-            AuthenticatedUser user = findAuthenticatedUserOrDie();
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
                 return error(Response.Status.FORBIDDEN, "Superusers only.");
             }
@@ -599,7 +609,9 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
-    public Response getRoCrate(@PathParam("persistentId") String persistentId) throws WrappedResponse
+    public Response getRoCrate(
+            @Context ContainerRequestContext crc,
+            @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
         Dataset dataset = datasetService.findByGlobalId(persistentId);
@@ -634,7 +646,7 @@ public class ArpApi extends AbstractApiBean {
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
                 AuthenticatedUser authenticatedUser = null;
                 try {
-                    authenticatedUser = findAuthenticatedUserOrDie();
+                    authenticatedUser = getRequestAuthenticatedUserOrDie(crc);
                 } catch (WrappedResponse ex) {
                     // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
                     // otherwise this is a token authenticated user and we check EditDataset permission
@@ -656,7 +668,7 @@ public class ArpApi extends AbstractApiBean {
                 e.printStackTrace();
                 return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
-        });
+        }, getRequestUser(crc));
     }
 
     private boolean needToRegenerate(JsonObject roCrateJson) {
@@ -680,11 +692,16 @@ public class ArpApi extends AbstractApiBean {
     @Path("/rocrate/{persistentId : .+}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response updateRoCrate(@PathParam("persistentId") String persistentId, String roCrateJson) throws JsonProcessingException {
+    public Response updateRoCrate(
+            @Context ContainerRequestContext crc,
+            @PathParam("persistentId") String persistentId,
+            String roCrateJson
+    ) throws JsonProcessingException {
         Dataset dataset;
         RoCrate preProcessedRoCrate;
+        AuthenticatedUser user;
         try {
-            findAuthenticatedUserOrDie();
+            user = getRequestAuthenticatedUserOrDie(crc);
             dataset = datasetService.findByGlobalId(persistentId);
             if (dataset.isLocked()) {
                 throw new RuntimeException(
@@ -704,7 +721,7 @@ public class ArpApi extends AbstractApiBean {
 
         //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
         try ( StringReader rdr = new StringReader(importFormat) ) {
-            DataverseRequest req = createDataverseRequest(findUserOrDie());
+            DataverseRequest req = createDataverseRequest(user);
             Dataset ds = datasetService.findByGlobalId(persistentId);
             javax.json.JsonObject json = Json.createReader(rdr).readObject();
             DatasetVersion incomingVersion = jsonParser().parseDatasetVersion(json);

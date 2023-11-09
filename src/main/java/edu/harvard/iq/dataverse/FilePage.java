@@ -1281,7 +1281,7 @@ public class FilePage implements java.io.Serializable {
     }
 
     public String getDatasetPersistentId() {
-        return dataset != null ? new GlobalId(dataset).asString() : null;
+        return dataset != null ? dataset.getGlobalId().asString() : null;
     }
 
 }
