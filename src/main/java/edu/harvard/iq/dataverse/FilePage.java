@@ -1220,4 +1220,7 @@ public class FilePage implements java.io.Serializable {
         return dataset != null ? new GlobalId(dataset).asString() : null;
     }
 
+    public Dataset getDataset() {
+        return dataset;
+    }
 }

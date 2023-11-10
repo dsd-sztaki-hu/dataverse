@@ -17,26 +17,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.NamedStoredProcedureQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.ParameterMode;
-import javax.persistence.StoredProcedureParameter;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
+
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
 
 /**
  *
@@ -913,6 +900,21 @@ public class Dataset extends DvObjectContainer {
      */
     public DatasetThumbnail getDatasetThumbnail(DatasetVersion datasetVersion, int size) {
         return DatasetUtil.getThumbnail(this, datasetVersion, size);
+    }
+
+    @Transient
+    private boolean hasJsonCrate;
+    
+    public boolean getHasJsonCrate() {
+        hasJsonCrate = containsRoCrateJson();
+        return hasJsonCrate;
+    }
+    
+    private boolean containsRoCrateJson() {
+        return files.stream().anyMatch(dataFile -> 
+                dataFile.getDisplayName().equals(RO_CRATE_METADATA_JSON_NAME) &&
+                (dataFile.getDirectoryLabel() == null || dataFile.getDirectoryLabel().isBlank())
+        );
     }
 
 }
