@@ -98,6 +98,31 @@ public class ArpServiceBean implements java.io.Serializable {
     private EntityManager em;
 
     public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
+    public static String RO_CRATE_EXTRAS_JSON_NAME = "ro-crate-extras.json";
+
+    private static JsonObject fileClassHu;
+    private static JsonObject fileClassEn;
+
+    static {
+        fileClassHu = loadJsonFromResource("arp/fileClass.hu.json");
+        fileClassEn = loadJsonFromResource("arp/fileClass.en.json");
+    }
+
+    public static JsonObject loadJsonFromResource(String resourcePath) {
+        InputStream inputStream = ArpConfig.class.getClassLoader().getResourceAsStream(resourcePath);
+
+        if (inputStream == null) {
+            throw new RuntimeException("Resource not found: " + resourcePath);
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+            Gson gson = new Gson();
+            return gson.fromJson(reader, JsonObject.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error reading JSON resource: " + resourcePath, e);
+        }
+    }
 
     public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
@@ -931,17 +956,17 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
 
-    public static ArrayList<String> collectHunTranslations(String cedarTemplate, String parentPath, ArrayList<String> hunTranslations) {
+    public static Map<String, String> collectHunTranslations(String cedarTemplate, String parentPath, Map<String, String> hunTranslations) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         if (parentPath.equals("/properties")) {
-            hunTranslations.add("metadatablock.name = " + getJsonElement(cedarTemplateJson, "schema:name").getAsString());
+            hunTranslations.put("metadatablock.name", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             if (cedarTemplateJson.has("hunName")) {
-                hunTranslations.add("metadatablock.displayName = " + getJsonElement(cedarTemplateJson, "hunName").getAsString());
+                hunTranslations.put("metadatablock.displayName", getJsonElement(cedarTemplateJson, "hunName").getAsString());
             }
             if (cedarTemplateJson.has("hunDescription")) {
-                hunTranslations.add("metadatablock.description = " + getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
+                hunTranslations.put("metadatablock.description", getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
             }
         }
 
@@ -957,31 +982,28 @@ public class ArpServiceBean implements java.io.Serializable {
                 actProp = actProp.getAsJsonObject("items");
             }
 
-            String dftName = getJsonElement(actProp, "schema:name").getAsString();
+            String dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
 
             //Label
             if (actProp.has("hunLabel")) {
                 String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunLabel));
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunLabel);
             }
             else{
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s",
-                        dftName,
-                        getJsonElement(actProp, "skos:prefLabel").getAsString())+" (magyarul)");
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName),
+                        getJsonElement(actProp, "skos:prefLabel").getAsString()+" (magyarul)");
             }
 
             // Help text / tip
             if (actProp.has("hunDescription")) {
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
-                        dftName,
-                        actProp.get("hunDescription").getAsString()));
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
+                        actProp.get("hunDescription").getAsString());
             }
             else {
                 // Note: english help text should be in schema:description, but it is not, it is in
                 // propertyDescriptions
-                hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s",
-                        dftName,
-                        propertyDescriptions.get(dftName).getAsString())+" (magyarul)");
+                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
+                        propertyDescriptions.get(prop).getAsString()+" (magyarul)");
             }
 
             // TODO: revise how elemnets work!
@@ -999,14 +1021,14 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
-                dftName = getJsonElement(actProp, "schema:name").getAsString();
+                dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
                 if (actProp.has("hunTitle") && !actProp.has("hunLabel")) {
                     String hunTitle = getJsonElement(actProp, "hunTitle").getAsString();
-                    hunTranslations.add(String.format("datasetfieldtype.%1$s.title = %2$s", dftName, hunTitle));
+                    hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunTitle);
                 }
                 if (actProp.has("hunDescription")) {
                     String hunDescription = getJsonElement(actProp, "hunDescription").getAsString();
-                    hunTranslations.add(String.format("datasetfieldtype.%1$s.description = %2$s", dftName, hunDescription));
+                    hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName), hunDescription);
                 }
                 collectHunTranslations(actProp.toString(), newPath, hunTranslations);
             }
@@ -1056,9 +1078,27 @@ public class ArpServiceBean implements java.io.Serializable {
             String langDirPath = System.getProperty("dataverse.lang.directory");
             if (langDirPath != null) {
                 String fileName = metadataBlockName + "_hu.properties";
-                List<String> hunTranslations = collectHunTranslations(templateJson, "/properties", new ArrayList<>());
+                ResourceBundle resourceBundle = BundleUtil.getResourceBundle(metadataBlockName, Locale.forLanguageTag("hu"));
+
+                // Load with current translations
+                Map<String, String> hunTranslations = new TreeMap<>();
+                Enumeration<String> keys = resourceBundle.getKeys();
+                while (keys.hasMoreElements()) {
+                    String key = keys.nextElement();
+                    hunTranslations.put(key, resourceBundle.getString(key));
+                }
+
+                // Update with translations from templateJson
+                collectHunTranslations(templateJson, "/properties", hunTranslations);
+
+                // Convert back to properties file format
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<String, String> entry : hunTranslations.entrySet()) {
+                    sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+                }
+
                 FileWriter writer = new FileWriter(langDirPath + "/" + fileName);
-                writer.write(String.join("\n", hunTranslations));
+                writer.write(sb.toString());
                 writer.close();
             }
             // Force reloading language bundles/
@@ -1086,9 +1126,75 @@ public class ArpServiceBean implements java.io.Serializable {
             String templateJson = exportTemplateToCedar(cedarTemplate, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
     }
+
+    public JsonObject getDefaultDescriboProfileFileClass(String language) {
+        if (language.equals("hu")) {
+            return fileClassHu;
+        }
+        return fileClassEn;
+    }
+
+    public JsonObject getHasPartInput(String language) {
+        var hasPartInput = new JsonObject();
+        hasPartInput.addProperty("id", "http://schema.org/hasPart");
+        hasPartInput.addProperty("name", "hasPart");
+        if (language.equals("hu")) {
+            hasPartInput.addProperty("label", "Tartalma");
+            hasPartInput.addProperty("help", "Adatcsomag fájljai és al-adatcsomagjai");
+
+        }
+        else {
+            hasPartInput.addProperty("label", "Has Part");
+            hasPartInput.addProperty("help", "Part of a Dataset");
+        }
+        hasPartInput.addProperty("multiple", "true");
+        var typeVals = new JsonArray();
+        typeVals.add("Dataset");
+        typeVals.add("File");
+        hasPartInput.add("type", typeVals);
+        return hasPartInput;
+    }
+
+    public JsonObject getLicenseInput(String language) {
+        var licenceInput = new JsonObject();
+        licenceInput.addProperty("id", "https://schema.org/license");
+        licenceInput.addProperty("name", "license");
+        if (language.equals("hu")) {
+            licenceInput.addProperty("label", "Licensz");
+            licenceInput.addProperty("help", "Licenszdokumentum, amely erre a tartalomra vonatkozik, általában URL-lel jelezve");
+
+        }
+        else {
+            licenceInput.addProperty("label", "License");
+            licenceInput.addProperty("help", "A license document that applies to this content, typically indicated by URL");
+        }
+        licenceInput.addProperty("readonly", "true");
+        licenceInput.addProperty("type", "URL");
+        return licenceInput;
+    }
+
+    public JsonObject getDatePublishedInput(String language) {
+        var datePublished = new JsonObject();
+        datePublished.addProperty("id", "https://schema.org/datePublished");
+        datePublished.addProperty("name", "datePublished");
+        if (language.equals("hu")) {
+            datePublished.addProperty("label", "Publikálás dátuma");
+            datePublished.addProperty("help", "A publikálás dátuma");
+
+        }
+        else {
+            datePublished.addProperty("label", "Date published");
+            datePublished.addProperty("help", "Date of publication.");
+        }
+        datePublished.addProperty("readonly", "true");
+        datePublished.addProperty("type", "Date");
+        return datePublished;
+    }
+
 }
 
 

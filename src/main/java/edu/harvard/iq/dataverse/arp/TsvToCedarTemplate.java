@@ -338,7 +338,8 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         cedarTemplate.addProperty("schema:name", propName);
         cedarTemplate.addProperty("schema:description", datasetField.getDescription());
         try {
-            cedarTemplate.addProperty("hunDescription", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName + ".description", datasetField.getmetadatablock_id(), hunLocale));
+            // We need dot notation to access prop translation
+            cedarTemplate.addProperty("hunDescription", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".description", datasetField.getmetadatablock_id(), hunLocale));
         }
         catch(MissingResourceException ex) {
             // ignore
@@ -346,7 +347,8 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         if (datasetField.getTitle() != null) {
             cedarTemplate.addProperty("skos:prefLabel", datasetField.getTitle());
             try {
-                cedarTemplate.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName + ".title", datasetField.getmetadatablock_id(), hunLocale));
+                // We need dot notation to access prop translation
+                cedarTemplate.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".title", datasetField.getmetadatablock_id(), hunLocale));
             }
             catch (MissingResourceException ex) {
                 // ignore

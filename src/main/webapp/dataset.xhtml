@@ -960,11 +960,13 @@
                                 </ui:include>
                             </p:tab>
 
-                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}">
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
+                                   rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
                                 <ui:include src="aroma.xhtml">
                                     <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
                                     <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>
                                     <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
+                                    <ui:param name="language" value="#{DatasetPage.language}"/>
                                 </ui:include>
                             </p:tab>
                         </p:tabView>

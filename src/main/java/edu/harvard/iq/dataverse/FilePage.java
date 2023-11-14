@@ -6,6 +6,7 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.DatasetVersionServiceBean.RetrieveDatasetVersionResponse;
+import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.dataaccess.SwiftAccessIO;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -148,9 +149,16 @@ public class FilePage implements java.io.Serializable {
     private static final Logger logger = Logger.getLogger(FilePage.class.getCanonicalName());
 
     private boolean fileDeleteInProgress = false;
+
+    @EJB
+    ArpConfig arpConfig;
+
+    private String aromaAddress = "";
+
     public String init() {
-     
-        
+
+        setAromaAddress(arpConfig.get("arp.aroma.address"));
+
         if (fileId != null || persistentId != null) {
 
             // ---------------------------------------
@@ -1183,6 +1191,33 @@ public class FilePage implements java.io.Serializable {
     //Determines whether this File uses a public store and therefore doesn't support embargoed or restricted files
     public boolean isHasPublicStore() {
         return settingsWrapper.isTrueForKey(SettingsServiceBean.Key.PublicInstall, StorageIO.isPublicStore(DataAccess.getStorageDriverFromIdentifier(file.getStorageIdentifier())));
+    }
+
+    public String getAromaAddress()
+    {
+        return aromaAddress;
+    }
+
+    public void setAromaAddress(String aromaAddress)
+    {
+        this.aromaAddress = aromaAddress;
+    }
+
+    public String getCurrentUserApiKey() {
+        User user = session.getUser();
+        if (user instanceof AuthenticatedUser) {
+            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
+            return token.getTokenString();
+        }
+        return null;
+    }
+
+    public String getLanguage() {
+        return session.getLocaleCode().equals("en") ? "en" : "hu";
+    }
+
+    public String getDatasetPersistentId() {
+        return new GlobalId(dataset).asString();
     }
 
 }

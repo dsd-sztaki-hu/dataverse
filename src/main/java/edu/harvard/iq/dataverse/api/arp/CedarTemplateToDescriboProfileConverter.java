@@ -45,6 +45,10 @@ public class CedarTemplateToDescriboProfileConverter {
         if (language.equals("hu")) {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
             profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
+            profValues.classLocalizations.put("Text", new ClassLocalization("Szöveg", "Szöveg"));
+            profValues.classLocalizations.put("Select", new ClassLocalization("Kiválasztás", "Kiválasztás"));
+            profValues.classLocalizations.put("TextArea", new ClassLocalization("Hosszú szöveg", "Hosszú szöveg"));
+            profValues.classLocalizations.put("Date", new ClassLocalization("Dátum", "Dátum"));
         }
         else  {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Dataset", "A collection of files with metadata"));
@@ -52,7 +56,7 @@ public class CedarTemplateToDescriboProfileConverter {
         }
 
         JsonObject classes = describoProfile.getAsJsonObject("classes");
-        
+
         for (var input : profValues.inputs) {
             String className = input.getKey();
             if (!classes.has(className)) {
@@ -63,11 +67,17 @@ public class CedarTemplateToDescriboProfileConverter {
 
             var classLoc = profValues.classLocalizations.get(className);
             if (classLoc != null) {
+                // This is our custom localisation at class level
                 classJson.addProperty("label", classLoc.label);
                 classJson.addProperty("help", classLoc.help);
             }
         }
-        
+
+        // This is the Describo supported way of localisation
+        JsonObject localisation = new JsonObject();
+        describoProfile.add("localisation", localisation);
+        profValues.classLocalizations.entrySet().forEach(e -> localisation.addProperty(e.getKey(), e.getValue().label));
+
         JsonArray enabledClasses = new JsonArray();
         profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
         
@@ -126,6 +136,11 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setHelp(help);
         describoInput.setType(getDescriboType(fieldType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
+        describoInput.setMinValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minValue")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMaxValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxValue")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMinLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minLength")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setMaxLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxLength")).map(JsonElement::getAsInt).orElse(null));
+        describoInput.setRegex(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.regex")).map(JsonElement::getAsString).orElse(null));
         describoInput.setMultiple(allowMultiple);
 
         List<String> literalValues;
@@ -264,18 +279,13 @@ public class CedarTemplateToDescriboProfileConverter {
         private List<String> values;
         private boolean required;
         private boolean multiple;
+        private Integer minValue;
+        private Integer maxValue;
+        private Integer minLength;
+        private Integer maxLength;
+        private String regex;
 
         public DescriboInput() {
-        }
-
-        public DescriboInput(String id, String name, String label, String help, List<String> type, boolean required, boolean multiple) {
-            this.id = id;
-            this.name = name;
-            this.label = label;
-            this.help = help;
-            this.type = type;
-            this.required = required;
-            this.multiple = multiple;
         }
 
         public String getId() {
@@ -340,6 +350,56 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setValues(List<String> values) {
             this.values = values;
+        }
+
+        public Integer getMinValue()
+        {
+            return minValue;
+        }
+
+        public void setMinValue(Integer minValue)
+        {
+            this.minValue = minValue;
+        }
+
+        public Integer getMaxValue()
+        {
+            return maxValue;
+        }
+
+        public void setMaxValue(Integer maxValue)
+        {
+            this.maxValue = maxValue;
+        }
+
+        public Integer getMinLength()
+        {
+            return minLength;
+        }
+
+        public void setMinLength(Integer minLength)
+        {
+            this.minLength = minLength;
+        }
+
+        public Integer getMaxLength()
+        {
+            return maxLength;
+        }
+
+        public void setMaxLength(Integer maxLength)
+        {
+            this.maxLength = maxLength;
+        }
+
+        public String getRegex()
+        {
+            return regex;
+        }
+
+        public void setRegex(String regex)
+        {
+            this.regex = regex;
         }
     }
 

@@ -982,6 +982,12 @@ public class EditDatafilesPage implements java.io.Serializable {
         //
         if (fileReplacePageHelper.runSaveReplacementFile_Phase2()) {
             JsfHelper.addSuccessMessage(getBundleString("file.message.replaceSuccess"));
+            try {
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
             // It worked!!!  Go to page of new file!!
             if (Referrer.FILE == referrer) {
                 return returnToFileLandingPageAfterReplace(fileReplacePageHelper.getFirstNewlyAddedFile());
@@ -1225,7 +1231,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
             try {
-                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
@@ -1237,6 +1243,12 @@ public class EditDatafilesPage implements java.io.Serializable {
             // the individual File Landing page, we want to redirect back to 
             // the landing page. BUT ONLY if the file still exists - i.e., if 
             // the user hasn't just deleted it!
+            try {
+                roCrateManager.updateRoCrateFileMetadatas(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
             versionString = "DRAFT";
             return returnToFileLandingPage();
         }
