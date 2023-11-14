@@ -595,7 +595,7 @@
                                   <ui:param name="anonymized" value="#{FilePage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
-                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}" disabled="#{FilePage.dataset.hasJsonCrate}">
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}" disabled="#{FilePage.dataset.hasJsonCrate(FilePage.version)}">
                                 <ui:include src="aroma.xhtml">
                                     <ui:param name="persistentId" value="#{FilePage.datasetPersistentId}"/>
                                     <ui:param name="userApiKey" value="#{FilePage.currentUserApiKey}"/>
