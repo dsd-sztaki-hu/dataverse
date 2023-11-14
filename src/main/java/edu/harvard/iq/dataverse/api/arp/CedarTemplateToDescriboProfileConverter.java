@@ -262,11 +262,25 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public String getLocalizedLabel(JsonObject obj) {
         String label = "";
+        String engLabel = obj.get("schema:name").getAsString();
+        // Absolute fallback: the field name
+        var prefLabel = obj.get("skos:prefLabel");
+        // If we have an english name in skos:prefLabel, use that
+        if (prefLabel != null && !prefLabel.getAsString().isEmpty()) {
+            engLabel = prefLabel.getAsString();
+        }
+        // If we have an hunLabel, use that for hunLabel, otherwise fall back to engLabel
         if (language.equals("hu")) {
-            label = Optional.ofNullable(obj.get("hunLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+            var hunLabel = obj.get("hunLabel");
+            if (hunLabel == null || hunLabel.getAsString().isEmpty()) {
+                label = engLabel +" (magyarul)";
+            }
+            else {
+                label = hunLabel.getAsString();
+            }
         }
         else {
-            label = Optional.ofNullable(obj.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+            label = engLabel;
         }
         return label;
     }
