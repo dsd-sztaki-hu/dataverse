@@ -2746,6 +2746,9 @@ public class DatasetPage implements java.io.Serializable {
     private String releaseDataset(boolean minor) {
         if (session.getUser() instanceof AuthenticatedUser) {
             try {
+                // Make sure we work with the latest state of the Dataset - it may have changed eg. via RO-Crate
+                // editing
+                dataset = datasetService.find(dataset.getId());
                 final PublishDatasetResult result = commandEngine.submit(
                     new PublishDatasetCommand(dataset, dvRequestService.getDataverseRequest(), minor)
                 );
