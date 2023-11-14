@@ -721,6 +721,7 @@ public class ArpApi extends AbstractApiBean {
             boolean updateDraft = ds.getLatestVersion().isDraft();
 
             DatasetVersion managedVersion;
+            Dataset managedDataset;
             if (updateDraft) {
                 final DatasetVersion editVersion = ds.getOrCreateEditVersion();
                 editVersion.setDatasetFields(incomingVersion.getDatasetFields());
@@ -730,8 +731,17 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
-                roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
-                Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
+                if (!filesToBeDeleted.isEmpty()) {
+                    for (FileMetadata markedForDelete : filesToBeDeleted) {
+                        if (markedForDelete.getId() != null) {
+                            dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                        }
+                    }
+                    managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted));
+                } else {
+                    managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                }
                 managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
                 incomingVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
@@ -740,8 +750,16 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
-                roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
+                if (!filesToBeDeleted.isEmpty()) {
+                    for (FileMetadata markedForDelete : filesToBeDeleted) {
+                        if (markedForDelete.getId() != null) {
+                            managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                        }
+                    }
+                    managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
+                }
                 indexService.indexDataset(ds, true);
             }
 
