@@ -10,13 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import javax.persistence.*;
 
 import edu.harvard.iq.dataverse.settings.JvmSettings;
@@ -902,18 +896,22 @@ public class Dataset extends DvObjectContainer {
         return DatasetUtil.getThumbnail(this, datasetVersion, size);
     }
 
-    @Transient
-    private boolean hasJsonCrate;
-    
-    public boolean getHasJsonCrate() {
-        hasJsonCrate = containsRoCrateJson();
-        return hasJsonCrate;
+    public boolean hasJsonCrate(String versionString) {
+       return containsRoCrateJson(versionString);
     }
     
-    private boolean containsRoCrateJson() {
-        return files.stream().anyMatch(dataFile -> 
-                dataFile.getDisplayName().equals(RO_CRATE_METADATA_JSON_NAME) &&
-                (dataFile.getDirectoryLabel() == null || dataFile.getDirectoryLabel().isBlank())
+    private boolean containsRoCrateJson(String versionString) {
+        DatasetVersion actVersion;
+        if (versionString == null || versionString.isBlank()) {
+            actVersion = getLatestVersionForCopy();
+        } else {
+            Optional<DatasetVersion> dsVersion = getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(versionString)).findFirst();
+            actVersion = dsVersion.orElseGet(this::getLatestVersion);
+        }
+        return actVersion.getFileMetadatas().stream().anyMatch(fileMetadata ->
+                fileMetadata != null &&
+                Objects.equals(fileMetadata.getDataFile().getDisplayName(), RO_CRATE_METADATA_JSON_NAME) &&
+                (fileMetadata.getDataFile().getDirectoryLabel() == null || fileMetadata.getDataFile().getDirectoryLabel().isBlank())
         );
     }
 
