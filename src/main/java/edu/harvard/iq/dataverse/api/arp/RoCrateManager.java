@@ -1087,7 +1087,7 @@ public class RoCrateManager {
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
         }
-        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), roCrateUploadServiceBean.getImportMapping());
+        processRoCrateFiles(roCrate, version.getFileMetadatas(), roCrateUploadServiceBean.getImportMapping());
         // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
         // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
         // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
