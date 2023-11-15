@@ -1037,6 +1037,24 @@ public class RoCrateManager {
     public String getRoCratePath(DatasetVersion version) {
         return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
+
+    // This function always returns the path of a "draft" RO-CRATE
+    // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
+    public String getRoCratePathForPreProcess(DatasetVersion version) {
+        return String.join(File.separator, getRoCrateFolderForPreProcess(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    // This function always returns the folder path of a "draft" RO-CRATE
+    // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
+    public String getRoCrateFolderForPreProcess(DatasetVersion version) {
+        var dataset = version.getDataset();
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+    }
     
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
@@ -1241,7 +1259,7 @@ public class RoCrateManager {
         
         removeReverseProperties(rootNode);
         
-        try (FileWriter writer = new FileWriter(getRoCratePath(dataset.getLatestVersion()))) {
+        try (FileWriter writer = new FileWriter(getRoCratePathForPreProcess(dataset.getLatestVersion()))) {
             writer.write(rootNode.toPrettyString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -1250,7 +1268,7 @@ public class RoCrateManager {
 
         List<MetadataBlock> mdbs = metadataBlockServiceBean.listMetadataBlocks();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset.getLatestVersion()));
+        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolderForPreProcess(dataset.getLatestVersion()));
         ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
         List<String> rootDataEntityPropNames = new ArrayList<>();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
