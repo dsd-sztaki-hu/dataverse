@@ -2192,7 +2192,7 @@ public class DatasetPage implements java.io.Serializable {
                 JsfHelper.addWarningMessage(message);
             }            
         }
-        if (dataset.hasJsonCrate(version)) {
+        if (dataset.hasJsonCrate(workingVersion.getFriendlyVersionNumber())) {
             JH.addMessage(FacesMessage.SEVERITY_WARN, 
                     BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
                     BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
