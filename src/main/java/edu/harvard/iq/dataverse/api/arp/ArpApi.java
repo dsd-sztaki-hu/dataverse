@@ -597,9 +597,9 @@ public class ArpApi extends AbstractApiBean {
     }
 
     @GET
-    @Path("/rocrate/{persistentId : .+}")
+    @Path("/rocrate/{version}/{persistentId : .+}")
     @Produces("application/json")
-    public Response getRoCrate(@PathParam("persistentId") String persistentId) throws WrappedResponse
+    public Response getRoCrate(@PathParam("persistentId") String persistentId, @PathParam("version") String version) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
         Dataset dataset = datasetService.findByGlobalId(persistentId);
@@ -608,23 +608,49 @@ public class ArpApi extends AbstractApiBean {
         arpConfig.get("arp.rocrate.previewgenerator.address");
 
         return response( req -> {
+            AuthenticatedUser authenticatedUser = null;
+            try {
+                authenticatedUser = findAuthenticatedUserOrDie();
+            } catch (WrappedResponse ex) {
+                // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
+                // otherwise this is a token authenticated user and we check EditDataset permission
+            }
+            
             // When we get here user's auth is already checked. We are either an authenticated user or guest.
             final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
-            // The latest version is the latest version accessible to the user. Fro guest it must be a published version
-            // for an author it is either the published version or DRAFT.
-            final DatasetVersion latest = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
+            // For a guest it must be a published version for an author it is either the opened version or DRAFT.
+            DatasetVersion opened = null;
+            if (!version.equals("undefined")) {
+                if (version.equals("DRAFT") && (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset))) {
+                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+                } else {
+                    var openedVersion = retrieved.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
+                    if (openedVersion.isPresent()) {
+                        opened = openedVersion.get();
+                    }   
+                }
+            } else {
+                // If the opened version is "undefined" that means the last published version was opened
+                opened = retrieved.getReleasedVersion();
+            }
+            // If a wrong version was requested by the user always provide the latest accessible
+            if (opened == null) {
+                opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            }
+            
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                var versionNumber = latest.getFriendlyVersionNumber();
-                String roCratePath = roCrateManager.getRoCratePath(latest);
+                var versionNumber = opened.getFriendlyVersionNumber();
+                String roCratePath = roCrateManager.getRoCratePath(opened);
                 if (!Files.exists(Paths.get(roCratePath))) {
-                    roCrateManager.createOrUpdateRoCrate(latest);
+                    roCrateManager.createOrUpdateRoCrate(opened);
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
                 if (needToRegenerate(roCrateJson)) {
-                    roCrateManager.createOrUpdateRoCrate(latest);
+                    roCrateManager.createOrUpdateRoCrate(opened);
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 }
@@ -632,15 +658,8 @@ public class ArpApi extends AbstractApiBean {
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                AuthenticatedUser authenticatedUser = null;
-                try {
-                    authenticatedUser = findAuthenticatedUserOrDie();
-                } catch (WrappedResponse ex) {
-                    // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
-                    // otherwise this is a token authenticated user and we check EditDataset permission
-                }
-                
-                if (authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                if (authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
+                        || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
                 }

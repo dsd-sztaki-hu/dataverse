@@ -895,7 +895,7 @@
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}"
+                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"
                                             rendered="#{!widgetWrapper.widgetView}"
                                             disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}"
                                             target="_blank">
@@ -967,6 +967,7 @@
                                     <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>
                                     <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
                                     <ui:param name="language" value="#{DatasetPage.language}"/>
+                                    <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
                                 </ui:include>
                             </p:tab>
                         </p:tabView>
