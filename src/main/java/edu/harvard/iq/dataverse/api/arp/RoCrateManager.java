@@ -129,13 +129,29 @@ public class RoCrateManager {
     private void deleteUrlEntities(RoCrate roCrate) {
         var urlEntityIds = roCrate.getAllContextualEntities().stream().filter(contextualEntity -> getTypeAsString(contextualEntity.getProperties()).equals("URL")).map(AbstractEntity::getId);
         var idsInUse = new ArrayList<String>();
-        for (var prop : roCrate.getRootDataEntity().getProperties()) {
-            if (prop.isObject() && prop.has("@id")) {
-                idsInUse.add(prop.get("@id").textValue());
-            } else if (prop.isArray()) {
-                for (var arrayProp : prop) {
-                    if (arrayProp.isObject() && arrayProp.has("@id")) {
-                        idsInUse.add(arrayProp.get("@id").textValue());
+        // We must take the union of the dataEntities and the contextualEntities,
+        // since a single file is considered a dataEntity
+        // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
+        ArrayList<ObjectNode> datasetAndFileEntities = Stream.concat(
+                        roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties),
+                        roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties))
+                .filter(entity -> hasType(entity, "File") || hasType(entity, "Dataset"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        
+        // add the getRootDataEntity to the list as well
+        // originally just the rootDataEntity props were checked for URL ids, but the file and dataset entities are
+        // processed differently, so we can keep the URL entities that belong to files and datasets
+        datasetAndFileEntities.add(roCrate.getRootDataEntity().getProperties());
+        
+        for (var entity : datasetAndFileEntities) {
+            for (var prop : entity) {
+                if (prop.isObject() && prop.has("@id")) {
+                    idsInUse.add(prop.get("@id").textValue());
+                } else if (prop.isArray()) {
+                    for (var arrayProp : prop) {
+                        if (arrayProp.isObject() && arrayProp.has("@id")) {
+                            idsInUse.add(arrayProp.get("@id").textValue());
+                        }
                     }
                 }
             }
