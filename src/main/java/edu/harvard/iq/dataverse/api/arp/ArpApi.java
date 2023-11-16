@@ -597,9 +597,9 @@ public class ArpApi extends AbstractApiBean {
     }
 
     @GET
-    @Path("/rocrate/{version}/{persistentId : .+}")
+    @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
-    public Response getRoCrate(@PathParam("persistentId") String persistentId, @PathParam("version") String version) throws WrappedResponse
+    public Response getRoCrate(@QueryParam("version") String version, @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
         Dataset dataset = datasetService.findByGlobalId(persistentId);
@@ -621,7 +621,7 @@ public class ArpApi extends AbstractApiBean {
             // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
             // For a guest it must be a published version for an author it is either the opened version or DRAFT.
             DatasetVersion opened = null;
-            if (!version.equals("undefined")) {
+            if (version != null) {
                 if (version.equals("DRAFT") && (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset))) {
                     opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
                 } else {
