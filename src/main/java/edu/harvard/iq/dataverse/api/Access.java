@@ -75,14 +75,10 @@ import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.*;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
 import java.util.logging.Level;
 import javax.inject.Inject;
 import javax.json.Json;
@@ -959,12 +955,12 @@ public class Access extends AbstractApiBean {
     @Path("datafiles/rocrate/{datasetIdft : .+}")
     @POST
     @Produces({"application/zip"})
-    public Response roCrateZip(String fileIds, @PathParam("datasetIdft") String datasetIdft, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) throws WebApplicationException {
-        return downloadRoCrateZip(fileIds, datasetIdft, uriInfo, headers, response);
+    public Response roCrateZip(String fileIds, @QueryParam("version") String version, @PathParam("datasetIdft") String datasetIdft, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) throws WebApplicationException {
+        return downloadRoCrateZip(fileIds, version, datasetIdft, uriInfo, headers, response);
     }
     
     // To prevent merge conflicts copied the body of the downloadDatafiles below and modified by adding the ro-crate-metadata.json to the zip as well
-    private Response downloadRoCrateZip(String rawFileIds, String datasetIdtf, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response) throws WebApplicationException {
+    private Response downloadRoCrateZip(String rawFileIds, String version, String datasetIdtf, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response) throws WebApplicationException {
         final long zipDownloadSizeLimit = systemConfig.getZipDownloadLimit();
 
         logger.fine("setting zip download size limit to " + zipDownloadSizeLimit + " bytes.");
@@ -1057,7 +1053,9 @@ public class Access extends AbstractApiBean {
                                         zipper = new DataFileZipper(os);
                                         zipper.setFileManifest(fileManifest);
                                         String dsId = dataset.getIdentifier().split("/")[1];
-                                        String roCrateZipName = dsId + "-"+ arpConfig.get("arp.rocrate.zip.name");
+                                        String versionString = version == null ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : version;
+                                        versionString = versionString.equals("DRAFT") ? versionString : "v" + versionString;
+                                        String roCrateZipName = dsId + "_" + versionString + "_" + arpConfig.get("arp.rocrate.zip.name");
                                         response.setHeader("Content-disposition", "attachment; filename=\""+ roCrateZipName +"\"");
                                         response.setHeader("Content-Type", "application/zip; name=\"" + roCrateZipName +"\"");
                                     }
@@ -1143,8 +1141,8 @@ public class Access extends AbstractApiBean {
                     throw new ForbiddenException();
                 }
                 
-                //Add the ro-crate-metadata.json to the .zip
-                addRoCrateFilesToZipStream(zipper, dataset);
+                //Add the ro-crate-metadata.json and the preview to the .zip
+                addRoCrateFilesToZipStream(zipper, dataset, version);
                 
                 // This will add the generated File Manifest to the zipped output, 
                 // then flush and close the stream:
@@ -1159,13 +1157,14 @@ public class Access extends AbstractApiBean {
         
     }
     
-    private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset) throws IOException {
-        byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dataset.getLatestVersionForCopy())));
+    private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset, String version) throws IOException {
+        DatasetVersion dsVersion = dataset.getVersions().stream().filter(dsv -> Objects.equals(dsv.getFriendlyVersionNumber(), version)).findFirst().orElse(dataset.getLatestVersionForCopy());
+        byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dsVersion)));
         String metadataFileName = arpConfig.get("arp.rocrate.metadata.name");
         String metadataMimeType = "application/json";
         zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);
 
-        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dataset.getLatestVersionForCopy())));
+        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dsVersion)));
         String previewFileName = arpConfig.get("arp.rocrate.html.preview.name");
         String previewMimeType = "text/html";
         zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);

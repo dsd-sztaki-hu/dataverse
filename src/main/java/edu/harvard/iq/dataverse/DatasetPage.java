@@ -3176,7 +3176,7 @@ public class DatasetPage implements java.io.Serializable {
             if(!getValidateFilesOutcome().equals("Mixed")){
                 var dataset = guestbookResponse.getDataset();
                 var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
-                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId);
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
             }
         }
     }
@@ -6176,12 +6176,13 @@ public class DatasetPage implements java.io.Serializable {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
-        String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+        String versionString = workingVersion.getFriendlyVersionNumber().equals("DRAFT") ? workingVersion.getFriendlyVersionNumber() : "v" + workingVersion.getFriendlyVersionNumber();
+        String roCrateZipName = dsId + "_" + versionString + "_" + arpConfig.get("arp.rocrate.zip.name");
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset.getLatestVersionForCopy()))));
+        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(workingVersion))));
         outputStream.flush();
         outputStream.close();
 

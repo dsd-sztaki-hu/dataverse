@@ -252,8 +252,8 @@ public class FileDownloadServiceBean implements java.io.Serializable {
 
     }
     
-    public void downloadRoCrate(String multiFileString, String datasetIdtf) {
-        String fileDownloadUrl = "/api/access/datafiles/rocrate/" + datasetIdtf;
+    public void downloadRoCrate(String multiFileString, String datasetIdtf, String version) {
+        String fileDownloadUrl = "/api/access/datafiles/rocrate/" + datasetIdtf + "?version=" + version;
         PrimeFaces.current().executeScript("downloadFiles('" + fileDownloadUrl + "','"+ multiFileString + "');");
     }
     
