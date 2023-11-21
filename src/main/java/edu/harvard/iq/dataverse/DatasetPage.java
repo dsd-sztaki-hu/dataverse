@@ -6213,6 +6213,12 @@ public class DatasetPage implements java.io.Serializable {
         if (user instanceof AuthenticatedUser) {
             var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
             return token.getTokenString();
+        } else if (user instanceof PrivateUrlUser) {
+            PrivateUrlUser privateUrlUser = (PrivateUrlUser) user;
+            PrivateUrl privUrl = privateUrlService.getPrivateUrlFromDatasetId(privateUrlUser.getDatasetId());
+            ApiToken apiToken = new ApiToken();
+            apiToken.setTokenString(privUrl.getToken());
+            return apiToken.getTokenString();
         }
         return null;
     }

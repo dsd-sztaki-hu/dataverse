@@ -10,6 +10,7 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
+import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
@@ -608,40 +609,48 @@ public class ArpApi extends AbstractApiBean {
         arpConfig.get("arp.rocrate.previewgenerator.address");
 
         return response( req -> {
+            boolean privateUrlUser = false;
             AuthenticatedUser authenticatedUser = null;
             try {
                 authenticatedUser = findAuthenticatedUserOrDie();
             } catch (WrappedResponse ex) {
-                // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
-                // otherwise this is a token authenticated user and we check EditDataset permission
+                // If authenticatedUser == null then it is a guest, and can only be readonly anyway,
+                // but we must check if it's a PrivateUrlUser
+                if (req.getUser() instanceof PrivateUrlUser) {
+                    privateUrlUser = true;
+                }
             }
             
-            // When we get here user's auth is already checked. We are either an authenticated user or guest.
-            final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
             // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
             // For a guest it must be a published version for an author it is either the opened version or DRAFT.
             DatasetVersion opened = null;
-            if (version != null) {
-                if (version.equals("DRAFT") && (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset))) {
-                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            if (version != null && (authenticatedUser != null || privateUrlUser)) {
+                if (version.equals("DRAFT") && authenticatedUser != null && !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
                 } else {
-                    var openedVersion = retrieved.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
+                    var openedVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
                     if (openedVersion.isPresent()) {
                         opened = openedVersion.get();
                     }   
                 }
-            } else {
-                // If the opened version is "undefined" that means the last published version was opened
-                opened = retrieved.getReleasedVersion();
             }
-            // If a wrong version was requested by the user always provide the latest accessible
+
+            // If the opened is not found at this point that can be because the version == null or a wrong version was requested
+            // that means the last published version is accessible for a guest and the latest version for a privateUrlUser
             if (opened == null) {
-                opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+                if (privateUrlUser) {
+                    opened = dataset.getLatestVersion();
+                } else {
+                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
+                }
+                // At this point if the opened is still null, there must have been something fishy going on with the url
+                if (opened == null) {
+                    throw new WrappedResponse(error(FORBIDDEN, "Insufficient permission."));
+                }
             }
             
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                var versionNumber = opened.getFriendlyVersionNumber();
                 String roCratePath = roCrateManager.getRoCratePath(opened);
                 if (!Files.exists(Paths.get(roCratePath))) {
                     roCrateManager.createOrUpdateRoCrate(opened);
@@ -658,7 +667,7 @@ public class ArpApi extends AbstractApiBean {
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                if (authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
+                if (privateUrlUser || authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
                         || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
