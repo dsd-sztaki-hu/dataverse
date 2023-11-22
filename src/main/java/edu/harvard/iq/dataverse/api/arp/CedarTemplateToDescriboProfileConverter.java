@@ -47,6 +47,7 @@ public class CedarTemplateToDescriboProfileConverter {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
             profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
             profValues.classLocalizations.put("Text", new ClassLocalization("Szöveg", "Szöveg"));
+            profValues.classLocalizations.put("Number", new ClassLocalization("Szám", "Szám"));
             profValues.classLocalizations.put("Select", new ClassLocalization("Kiválasztás", "Kiválasztás"));
             profValues.classLocalizations.put("TextArea", new ClassLocalization("Hosszú szöveg", "Hosszú szöveg"));
             profValues.classLocalizations.put("Date", new ClassLocalization("Dátum", "Dátum"));
