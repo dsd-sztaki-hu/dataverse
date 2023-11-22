@@ -6171,6 +6171,14 @@ public class DatasetPage implements java.io.Serializable {
             return null;
         }
     }
+    
+    public String getDownloadRoCrateHeader() {
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big");
+    }
+
+    public String getDownloadRoCrateMessage() {
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+    }
 
     public void downloadRoCrate() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
