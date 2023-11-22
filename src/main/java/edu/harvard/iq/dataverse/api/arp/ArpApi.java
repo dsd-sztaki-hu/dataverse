@@ -667,7 +667,8 @@ public class ArpApi extends AbstractApiBean {
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                if (privateUrlUser || authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
+                if (privateUrlUser || authenticatedUser == null || (dataset.isLocked() && !dataset.isLockedFor(DatasetLock.Reason.InReview)) 
+                        || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
                         || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
