@@ -124,7 +124,16 @@ public class CedarTemplateToDescriboProfileConverter {
     public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
-        JsonObject externalVocab = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]");
+
+        if (JsonHelper.hasJsonElement(templateField, "_valueConstraints.branches")
+                && JsonHelper.getJsonArray(templateField, "_valueConstraints.branches").isEmpty()) {
+            logger.warning("Invalid OntoPortal based values defined in field. Expecting terms in _valueConstraints.branches[0]:  "+templateField.toString());
+        }
+
+        String path = "_valueConstraints.branches[0]";
+        JsonObject externalVocab = JsonHelper.hasJsonElement(templateField, path)
+                ? JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]")
+                : null;
         if (externalVocab != null) {
             fieldType = "list";
         }
