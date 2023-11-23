@@ -25,8 +25,7 @@ BEGIN
     SET parentdatasetfield_id = NULL
     WHERE id IN (SELECT id FROM temp_ids);
 
-    -- Update or delete datasetfield records that reference the compound values to be deleted
-    -- Choose one of the following based on your requirements:
+    -- Update datasetfield records that reference the compound values to be deleted
     UPDATE public.datasetfield SET parentdatasetfieldcompoundvalue_id = NULL WHERE parentdatasetfieldcompoundvalue_id IN (SELECT id FROM temp_ids);
 
     -- Iterate over the IDs and print them for debugging
@@ -64,8 +63,8 @@ BEGIN
     -- Finally, delete from the metadatablock table
     DELETE FROM public.metadatablock WHERE id = p_metadatablock_id;
 
--- Drop the temporary table
-DROP TABLE temp_ids;
+    -- Drop the temporary table
+    DROP TABLE temp_ids;
 END;
 $$ LANGUAGE plpgsql;
 
