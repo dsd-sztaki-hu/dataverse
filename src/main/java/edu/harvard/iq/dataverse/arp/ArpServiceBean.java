@@ -44,6 +44,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -1078,6 +1081,14 @@ public class ArpServiceBean implements java.io.Serializable {
             String langDirPath = System.getProperty("dataverse.lang.directory");
             if (langDirPath != null) {
                 String fileName = metadataBlockName + "_hu.properties";
+
+                // Make sure the property file exists
+                Path path = Paths.get(langDirPath+System.getProperty("file.separator")+fileName);
+                if (!Files.exists(path)) {
+                    Files.createFile(path);
+                    ResourceBundle.clearCache();
+                }
+
                 ResourceBundle resourceBundle = BundleUtil.getResourceBundle(metadataBlockName, Locale.forLanguageTag("hu"));
 
                 // Load with current translations
