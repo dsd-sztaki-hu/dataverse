@@ -2207,6 +2207,12 @@ public class DatasetPage implements java.io.Serializable {
                 JsfHelper.addWarningMessage(message);
             }            
         }
+        if (dataset.hasJsonCrate(workingVersion.getFriendlyVersionNumber())) {
+            JH.addMessage(FacesMessage.SEVERITY_WARN, 
+                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
+                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
+            );
+        }
         return null;
     }
 
@@ -2781,6 +2787,9 @@ public class DatasetPage implements java.io.Serializable {
     private String releaseDataset(boolean minor) {
         if (session.getUser() instanceof AuthenticatedUser) {
             try {
+                // Make sure we work with the latest state of the Dataset - it may have changed eg. via RO-Crate
+                // editing
+                dataset = datasetService.find(dataset.getId());
                 final PublishDatasetResult result = commandEngine.submit(
                     new PublishDatasetCommand(dataset, dvRequestService.getDataverseRequest(), minor)
                 );
@@ -3219,7 +3228,7 @@ public class DatasetPage implements java.io.Serializable {
             if(!getValidateFilesOutcome().equals("Mixed")){
                 var dataset = guestbookResponse.getDataset();
                 var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
-                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId);
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
             }
         }
     }
@@ -3854,7 +3863,7 @@ public class DatasetPage implements java.io.Serializable {
 
         try {
             // This happens only upon importing a new RO-CRATE from a .zip
-            if (editMode.equals(EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
+            if (Objects.equals(editMode, EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
                 roCrateManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
             }
             roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
@@ -6217,6 +6226,14 @@ public class DatasetPage implements java.io.Serializable {
             return null;
         }
     }
+    
+    public String getDownloadRoCrateHeader() {
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big");
+    }
+
+    public String getDownloadRoCrateMessage() {
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+    }
 
     /**
      * Add Signposting
@@ -6243,12 +6260,13 @@ public class DatasetPage implements java.io.Serializable {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
-        String roCrateZipName = BundleUtil.getStringFromBundle("arp.rocrate.zip.name", List.of(dsId));
+        String versionString = workingVersion.getFriendlyVersionNumber().equals("DRAFT") ? workingVersion.getFriendlyVersionNumber() : "v" + workingVersion.getFriendlyVersionNumber();
+        String roCrateZipName = dsId + "_" + versionString + "_" + arpConfig.get("arp.rocrate.zip.name");
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(dataset.getLatestVersionForCopy()))));
+        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(workingVersion))));
         outputStream.flush();
         outputStream.close();
 
@@ -6279,6 +6297,12 @@ public class DatasetPage implements java.io.Serializable {
         if (user instanceof AuthenticatedUser) {
             var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
             return token.getTokenString();
+        } else if (user instanceof PrivateUrlUser) {
+            PrivateUrlUser privateUrlUser = (PrivateUrlUser) user;
+            PrivateUrl privUrl = privateUrlService.getPrivateUrlFromDatasetId(privateUrlUser.getDatasetId());
+            ApiToken apiToken = new ApiToken();
+            apiToken.setTokenString(privUrl.getToken());
+            return apiToken.getTokenString();
         }
         return null;
     }

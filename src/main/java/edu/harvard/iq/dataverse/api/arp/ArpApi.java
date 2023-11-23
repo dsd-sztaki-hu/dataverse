@@ -10,6 +10,7 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
+import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
@@ -611,6 +612,7 @@ public class ArpApi extends AbstractApiBean {
     @Produces("application/json")
     public Response getRoCrate(
             @Context ContainerRequestContext crc,
+            @QueryParam("version") String version,
             @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
@@ -620,23 +622,57 @@ public class ArpApi extends AbstractApiBean {
         arpConfig.get("arp.rocrate.previewgenerator.address");
 
         return response( req -> {
-            // When we get here user's auth is already checked. We are either an authenticated user or guest.
-            final Dataset retrieved = execCommand(new GetDatasetCommand(req, findDatasetOrDie(String.valueOf(dataset.getId()))));
-            // The latest version is the latest version accessible to the user. Fro guest it must be a published version
-            // for an author it is either the published version or DRAFT.
-            final DatasetVersion latest = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, retrieved));
+            boolean privateUrlUser = false;
+            AuthenticatedUser authenticatedUser = null;
+            try {
+                authenticatedUser = getRequestAuthenticatedUserOrDie(crc);
+            } catch (WrappedResponse ex) {
+                // If authenticatedUser == null then it is a guest, and can only be readonly anyway,
+                // but we must check if it's a PrivateUrlUser
+                if (req.getUser() instanceof PrivateUrlUser) {
+                    privateUrlUser = true;
+                }
+            }
+
+            // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
+            // For a guest it must be a published version for an author it is either the opened version or DRAFT.
+            DatasetVersion opened = null;
+            if (version != null && (authenticatedUser != null || privateUrlUser)) {
+                if (version.equals("DRAFT") && authenticatedUser != null && !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
+                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
+                } else {
+                    var openedVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
+                    if (openedVersion.isPresent()) {
+                        opened = openedVersion.get();
+                    }
+                }
+            }
+
+            // If the opened is not found at this point that can be because the version == null or a wrong version was requested
+            // that means the last published version is accessible for a guest and the latest version for a privateUrlUser
+            if (opened == null) {
+                if (privateUrlUser) {
+                    opened = dataset.getLatestVersion();
+                } else {
+                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
+                }
+                // At this point if the opened is still null, there must have been something fishy going on with the url
+                if (opened == null) {
+                    throw new WrappedResponse(error(FORBIDDEN, "Insufficient permission."));
+                }
+            }
+
             try {
                 Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                var versionNumber = latest.getFriendlyVersionNumber();
-                String roCratePath = roCrateManager.getRoCratePath(latest);
+                String roCratePath = roCrateManager.getRoCratePath(opened);
                 if (!Files.exists(Paths.get(roCratePath))) {
-                    roCrateManager.createOrUpdateRoCrate(latest);
+                    roCrateManager.createOrUpdateRoCrate(opened);
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
                 if (needToRegenerate(roCrateJson)) {
-                    roCrateManager.createOrUpdateRoCrate(latest);
+                    roCrateManager.createOrUpdateRoCrate(opened);
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 }
@@ -644,14 +680,6 @@ public class ArpApi extends AbstractApiBean {
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                AuthenticatedUser authenticatedUser = null;
-                try {
-                    authenticatedUser = getRequestAuthenticatedUserOrDie(crc);
-                } catch (WrappedResponse ex) {
-                    // ignore. If authenticatedUser == null then it is a guest, and can only be readonly anyway,
-                    // otherwise this is a token authenticated user and we check EditDataset permission
-                }
-                
                 if (authenticatedUser == null || dataset.isLocked() || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
@@ -738,6 +766,7 @@ public class ArpApi extends AbstractApiBean {
             boolean updateDraft = ds.getLatestVersion().isDraft();
 
             DatasetVersion managedVersion;
+            Dataset managedDataset;
             if (updateDraft) {
                 final DatasetVersion editVersion = ds.getOrCreateEditVersion();
                 editVersion.setDatasetFields(incomingVersion.getDatasetFields());
@@ -747,8 +776,17 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
-                roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
-                Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
+                if (!filesToBeDeleted.isEmpty()) {
+                    for (FileMetadata markedForDelete : filesToBeDeleted) {
+                        if (markedForDelete.getId() != null) {
+                            dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                        }
+                    }
+                    managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted));
+                } else {
+                    managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                }
                 managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
                 incomingVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
@@ -757,8 +795,16 @@ public class ArpApi extends AbstractApiBean {
                 if (!hasValidTerms) {
                     return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
                 }
-                roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
+                if (!filesToBeDeleted.isEmpty()) {
+                    for (FileMetadata markedForDelete : filesToBeDeleted) {
+                        if (markedForDelete.getId() != null) {
+                            managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                        }
+                    }
+                    managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
+                }
                 indexService.indexDataset(ds, true);
             }
 

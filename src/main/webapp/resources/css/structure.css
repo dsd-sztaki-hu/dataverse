@@ -374,6 +374,7 @@ form.btn-form {display:inline-block;}
 .button-block button, .button-block a.btn, .button-block input.btn, .button-block div.btn-group, .button-block .button-container,
 .button-block span.btn.ui-state-disabled, .button-block span.btn.disabled {margin-right:1em;}
 
+.btn-disabled {color: #999; pointer-events: none; margin-right: 1em;}
 .btn.btn-default.btn-access {background-color: #fff;background-image:none;}
 .btn.btn-default.btn-access:focus, .btn.btn-default.btn-access:hover,.btn.btn-default.btn-access:active {background-color: #e6e6e6;background-image:none;}
 .col-manage-action .button-block button, .col-manage-action .button-block a.btn, .col-manage-action .button-block input.btn, 

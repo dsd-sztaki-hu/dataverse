@@ -621,6 +621,21 @@
             </button>
         </div>
     </p:dialog>
+
+    <p:dialog id="roCrateMetaJsonUploadedPopup" styleClass="largePopUp" header="#{bundle['arp.rocrate.uploaded.popup.header']}" widgetVar="roCrateMetaJsonUploadedPopup" modal="true">
+        <p class="text-warning"><span class="glyphicon glyphicon-warning-sign"/> #{EditDatafilesPage.warningMessageForRoCrateMetaJsonUploadedPopUp}</p>
+        <p class="help-block no-margin-top">
+            <h:outputFormat value="#{EditDatafilesPage.helpMessageForRoCrateMetaJsonUploadedPopUp}" escape="false" />
+        </p>
+        <div class="button-block">
+            <p:commandButton  styleClass="btn btn-default" value="#{bundle['arp.rocrate.uploaded.delete']}" onclick="PF('roCrateMetaJsonUploadedPopup').hide()" oncomplete="uploadWidgetDropMsg();"
+                              action="#{EditDatafilesPage.deleteRoCrateMetaJsonFiles()}"
+                              update=":#{p:resolveClientId('datasetForm:filesTable', view)},:messagePanel,:#{p:resolveClientId('datasetForm:fileUpload', view)},uploadMessage,@([id$=filesButtons])"/>
+            <button class="btn btn-default" onclick="PF('roCrateMetaJsonUploadedPopup').hide();" type="button">
+                #{bundle.continue}
+            </button>
+        </div>
+    </p:dialog>
     
     <p:dialog id="fileAdvancedOptions" styleClass="dialog-submenu smallPopUp" header="#{bundle['file.advancedIngestOptions']}" widgetVar="fileAdvancedOptions" modal="true">
         <p:focus context="fileAdvancedOptions"/>

@@ -129,13 +129,29 @@ public class RoCrateManager {
     private void deleteUrlEntities(RoCrate roCrate) {
         var urlEntityIds = roCrate.getAllContextualEntities().stream().filter(contextualEntity -> getTypeAsString(contextualEntity.getProperties()).equals("URL")).map(AbstractEntity::getId);
         var idsInUse = new ArrayList<String>();
-        for (var prop : roCrate.getRootDataEntity().getProperties()) {
-            if (prop.isObject() && prop.has("@id")) {
-                idsInUse.add(prop.get("@id").textValue());
-            } else if (prop.isArray()) {
-                for (var arrayProp : prop) {
-                    if (arrayProp.isObject() && arrayProp.has("@id")) {
-                        idsInUse.add(arrayProp.get("@id").textValue());
+        // We must take the union of the dataEntities and the contextualEntities,
+        // since a single file is considered a dataEntity
+        // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
+        ArrayList<ObjectNode> datasetAndFileEntities = Stream.concat(
+                        roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties),
+                        roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties))
+                .filter(entity -> hasType(entity, "File") || hasType(entity, "Dataset"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        
+        // add the getRootDataEntity to the list as well
+        // originally just the rootDataEntity props were checked for URL ids, but the file and dataset entities are
+        // processed differently, so we can keep the URL entities that belong to files and datasets
+        datasetAndFileEntities.add(roCrate.getRootDataEntity().getProperties());
+        
+        for (var entity : datasetAndFileEntities) {
+            for (var prop : entity) {
+                if (prop.isObject() && prop.has("@id")) {
+                    idsInUse.add(prop.get("@id").textValue());
+                } else if (prop.isArray()) {
+                    for (var arrayProp : prop) {
+                        if (arrayProp.isObject() && arrayProp.has("@id")) {
+                            idsInUse.add(arrayProp.get("@id").textValue());
+                        }
                     }
                 }
             }
@@ -1037,6 +1053,24 @@ public class RoCrateManager {
     public String getRoCratePath(DatasetVersion version) {
         return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
+
+    // This function always returns the path of a "draft" RO-CRATE
+    // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
+    public String getRoCratePathForPreProcess(DatasetVersion version) {
+        return String.join(File.separator, getRoCrateFolderForPreProcess(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    // This function always returns the folder path of a "draft" RO-CRATE
+    // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
+    public String getRoCrateFolderForPreProcess(DatasetVersion version) {
+        var dataset = version.getDataset();
+        String filesRootDirectory = System.getProperty("dataverse.files.directory");
+        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
+            filesRootDirectory = "/tmp/files";
+        }
+
+        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+    }
     
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
@@ -1087,7 +1121,7 @@ public class RoCrateManager {
             Map<String, DatasetFieldType> datasetFieldTypeMap = getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
         }
-        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), roCrateUploadServiceBean.getImportMapping());
+        processRoCrateFiles(roCrate, version.getFileMetadatas(), roCrateUploadServiceBean.getImportMapping());
         // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
         // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
         // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
@@ -1162,8 +1196,9 @@ public class RoCrateManager {
     }
     
 
-    public void updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
-        List<String> fileMetadataHashes = dataset.getFiles().stream().map(DataFile::getChecksumValue).collect(Collectors.toList());
+    public List<FileMetadata> updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
+        List<FileMetadata> filesToBeDeleted = new ArrayList<>();
+        List<String> fileMetadataHashes = dataset.getLatestVersion().getFileMetadatas().stream().map(fmd -> fmd.getDataFile().getChecksumValue()).collect(Collectors.toList());
         List<ObjectNode> roCrateFileEntities = Stream.concat(
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("File")),
                 roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("File"))
@@ -1194,6 +1229,13 @@ public class RoCrateManager {
             }
             fileMetadataHashes.removeIf(fmdHash -> fmdHash.equals(fileEntityHash));
         });
+        
+        // collect the fmd for files that were deleted in AROMA
+        fileMetadataHashes.forEach(hash -> {
+            filesToBeDeleted.add(dataset.getFiles().stream().filter(dataFile -> dataFile.getChecksumValue().equals(hash)).findFirst().get().getFileMetadata());
+        });
+        
+        return filesToBeDeleted;
     }
     
     private Map<String, DatasetFieldType> getDatasetFieldTypeMapByConformsTo(RoCrate roCrate) {
@@ -1233,7 +1275,7 @@ public class RoCrateManager {
         
         removeReverseProperties(rootNode);
         
-        try (FileWriter writer = new FileWriter(getRoCratePath(dataset.getLatestVersion()))) {
+        try (FileWriter writer = new FileWriter(getRoCratePathForPreProcess(dataset.getLatestVersion()))) {
             writer.write(rootNode.toPrettyString());
         } catch (IOException e) {
             e.printStackTrace();
@@ -1242,7 +1284,7 @@ public class RoCrateManager {
 
         List<MetadataBlock> mdbs = metadataBlockServiceBean.listMetadataBlocks();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(dataset.getLatestVersion()));
+        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolderForPreProcess(dataset.getLatestVersion()));
         ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
         List<String> rootDataEntityPropNames = new ArrayList<>();
         Set<MetadataBlock> conformsToMdbs = new HashSet<>();
@@ -1346,12 +1388,26 @@ public class RoCrateManager {
         rootDataEntityProperties.fields().forEachRemaining(prop -> {
             String propName = prop.getKey();
             JsonNode propVal = prop.getValue();
+            // Sometimes the RO-CRATE generated by AROMA still holds the deleted entity ids in the rootDatasetEntity's hasPart
+            // must double-check whether the entity is still present or not and remove it from the rootDatasetEntity's hasPart if needed
+            // to prevent any errors.
+            // This can be reproduced if the last file is removed from the dataset in AROMA, in this case the rootDatasetEntity's hasPart
+            // will still contain the id, but there will be no file entity for it, later if the dataset is edited a new entity
+            // with @type "Thing" will be generated by AROMA that breaks things.
             if (propName.equals("hasPart")) {
                 if (propVal.isObject()) {
-                    rootHasPartDatasets.add(propVal);
+                    if (datasetAndFileEntities.containsKey(propVal.get("@id").textValue())) {
+                        rootHasPartDatasets.add(propVal);
+                    } else {
+                        roCrate.deleteEntityById(propVal.get("@id").textValue());
+                    }
                 } else {
                     for (var arrayVal : propVal) {
-                        rootHasPartDatasets.add(arrayVal);
+                        if (datasetAndFileEntities.containsKey(arrayVal.get("@id").textValue())) {
+                            rootHasPartDatasets.add(arrayVal);
+                        } else {
+                            roCrate.deleteEntityById(arrayVal.get("@id").textValue());
+                        }
                     }
                 }
             } else if (!propName.startsWith("@") && !propsToIgnore.contains(propName) && compoundFields.containsKey(propName)) {
@@ -1380,7 +1436,8 @@ public class RoCrateManager {
             } // else it's a string property, there's nothing to update
         });
 
-        List<DataFile> dvDatasetFiles = dataset.getFiles();
+        // Must collect the datafiles this way to only process the ones that belong to the actual dataset version
+        List<DataFile> dvDatasetFiles = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getDataFile).collect(Collectors.toList());
         rootHasPartDatasets.forEach(ds -> processDatasetAndFileEntities(datasetAndFileEntities, ds, dvDatasetFiles, extraMetadata));
         
         roCrate.setRoCratePreview(new AutomaticPreview());

@@ -47,6 +47,7 @@ public class CedarTemplateToDescriboProfileConverter {
             profValues.classLocalizations.put("Dataset", new ClassLocalization("Adatcsomag", "Fájlok és metaadataik adatcsomagja"));
             profValues.classLocalizations.put("File", new ClassLocalization("Fájl", "Adatfájl"));
             profValues.classLocalizations.put("Text", new ClassLocalization("Szöveg", "Szöveg"));
+            profValues.classLocalizations.put("Number", new ClassLocalization("Szám", "Szám"));
             profValues.classLocalizations.put("Select", new ClassLocalization("Kiválasztás", "Kiválasztás"));
             profValues.classLocalizations.put("TextArea", new ClassLocalization("Hosszú szöveg", "Hosszú szöveg"));
             profValues.classLocalizations.put("Date", new ClassLocalization("Dátum", "Dátum"));
@@ -124,7 +125,16 @@ public class CedarTemplateToDescriboProfileConverter {
     public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
-        JsonObject externalVocab = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]");
+
+        if (JsonHelper.hasJsonElement(templateField, "_valueConstraints.branches")
+                && JsonHelper.getJsonArray(templateField, "_valueConstraints.branches").isEmpty()) {
+            logger.warning("Invalid OntoPortal based values defined in field. Expecting terms in _valueConstraints.branches[0]:  "+templateField.toString());
+        }
+
+        String path = "_valueConstraints.branches[0]";
+        JsonObject externalVocab = JsonHelper.hasJsonElement(templateField, path)
+                ? JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]")
+                : null;
         if (externalVocab != null) {
             fieldType = "list";
         }
@@ -262,11 +272,25 @@ public class CedarTemplateToDescriboProfileConverter {
 
     public String getLocalizedLabel(JsonObject obj) {
         String label = "";
+        String engLabel = obj.get("schema:name").getAsString();
+        // Absolute fallback: the field name
+        var prefLabel = obj.get("skos:prefLabel");
+        // If we have an english name in skos:prefLabel, use that
+        if (prefLabel != null && !prefLabel.getAsString().isEmpty()) {
+            engLabel = prefLabel.getAsString();
+        }
+        // If we have an hunLabel, use that for hunLabel, otherwise fall back to engLabel
         if (language.equals("hu")) {
-            label = Optional.ofNullable(obj.get("hunLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+            var hunLabel = obj.get("hunLabel");
+            if (hunLabel == null || hunLabel.getAsString().isEmpty()) {
+                label = engLabel +" (magyarul)";
+            }
+            else {
+                label = hunLabel.getAsString();
+            }
         }
         else {
-            label = Optional.ofNullable(obj.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(obj.get("schema:name").getAsString());
+            label = engLabel;
         }
         return label;
     }

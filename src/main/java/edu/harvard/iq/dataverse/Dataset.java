@@ -10,33 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.NamedStoredProcedureQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.ParameterMode;
-import javax.persistence.StoredProcedureParameter;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import java.util.*;
+import javax.persistence.*;
 
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
+
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
 
 /**
  *
@@ -45,7 +26,7 @@ import edu.harvard.iq.dataverse.util.SystemConfig;
 @NamedQueries({
     // Dataset.findById should only be used if you're going to iterate over files (otherwise, lazy loading in DatasetService.find() is better).
     // If you are going to iterate over files, preferably call the DatasetService.findDeep() method i.s.o. using this query directly.
-    @NamedQuery(name = "Dataset.findById", 
+    @NamedQuery(name = "Dataset.findById",
                 query = "SELECT o FROM Dataset o LEFT JOIN FETCH o.files WHERE o.id=:id"),
     @NamedQuery(name = "Dataset.findIdStale",
                query = "SELECT d.id FROM Dataset d WHERE d.indexTime is NULL OR d.indexTime < d.modificationTime"),
@@ -922,6 +903,25 @@ public class Dataset extends DvObjectContainer {
      */
     public DatasetThumbnail getDatasetThumbnail(DatasetVersion datasetVersion, int size) {
         return DatasetUtil.getThumbnail(this, datasetVersion, size);
+    }
+
+    public boolean hasJsonCrate(String versionString) {
+       return containsRoCrateJson(versionString);
+    }
+
+    private boolean containsRoCrateJson(String versionString) {
+        DatasetVersion actVersion;
+        if (versionString == null || versionString.isBlank()) {
+            actVersion = getLatestVersionForCopy();
+        } else {
+            Optional<DatasetVersion> dsVersion = getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(versionString)).findFirst();
+            actVersion = dsVersion.orElseGet(this::getLatestVersion);
+        }
+        return actVersion.getFileMetadatas().stream().anyMatch(fileMetadata ->
+                fileMetadata != null &&
+                Objects.equals(fileMetadata.getDataFile().getDisplayName(), RO_CRATE_METADATA_JSON_NAME) &&
+                (fileMetadata.getDataFile().getDirectoryLabel() == null || fileMetadata.getDataFile().getDirectoryLabel().isBlank())
+        );
     }
 
     @Override
