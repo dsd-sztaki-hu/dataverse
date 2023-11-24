@@ -283,4 +283,14 @@
         <url-pattern>/dvn/api/data-deposit/v1.1/swordv2/edit/*</url-pattern>
     </servlet-mapping>
     <!-- END Data Deposit API (SWORD v2) -->
+
+    <servlet>
+        <servlet-name>AromaServlet</servlet-name>
+        <servlet-class>edu.harvard.iq.dataverse.arp.AromaServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AromaServlet</servlet-name>
+        <url-pattern>/aroma/*</url-pattern>
+    </servlet-mapping>
+
 </web-app>
