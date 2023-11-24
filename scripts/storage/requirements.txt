@@ -1,0 +1,5 @@
+# requirements for admin.py
+icecream
+var_dump
+boto3
+psycopg2

@@ -9,15 +9,14 @@ from config import (ConfigSectionMap)
 from database import (query_database, get_last_timestamp, record_datafile_status, get_datafile_status, create_database_connection)
 from storage import (open_dataverse_file)
 import shutil
-import yaml, boto, boto.s3.connection
-#from boto.s3.connection import S3Connection
+import yaml
 import boto3
 from var_dump import var_dump
-
+from icecream import ic
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara5")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
-
+DEBUG_ENABLED=True
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
@@ -48,9 +47,9 @@ def getList(args):
 			q+=" AND ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '"+args['storage']+"://%')"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
-		q="SELECT id, directorylabel, label, filesize, owner_id FROM datafile NATURAL JOIN dvobject NATURAL JOIN filemetadata WHERE true"
+		q="SELECT dvo.id, directorylabel, label, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
 		if args['ids'] is not None:
-			q+=" AND id in ("+args['ids']+")"
+			q+=" AND dvo.id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
 			q+=" AND owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
@@ -59,8 +58,13 @@ def getList(args):
 			# q+= TODO
 		if args['storage'] is not None:
 			q+=" AND storageidentifier LIKE '"+args['storage']+"://%' ORDER BY owner_id"
-	print(q)
 	records=get_records_for_query(q)
+	if args['recursive']:
+		args.update({'command':'getList'})
+		recurseOut=[]
+		for r in records:
+			recurseOut+=recurse(args,r[0])
+		records+=recurseOut
 	return records
 
 def ls(args):
@@ -73,10 +77,10 @@ def changeStorageInDatabase(destStorageName,id):
 	print("updating database: "+query+" "+str((destStorageName,id)))
 	sql_update(query,(destStorageName,id))
 
-def destinationFileChecks(dst,destStoragePath,filesize):
+def destinationFileChecks(dst,destStoragePath,filesize,id):
 	storageStats=os.statvfs(destStoragePath)
 	if storageStats.f_bfree*storageStats.f_bsize < filesize+1000000000: # we make sure there is at least 1000MB free space after copying the file  
-		print(f"There is not enough disk space to safely copy object {row[0]}. Skipping.")
+		print(f"There is not enough disk space to safely copy object {id}. Skipping.")
 		return False
 	dstDir=re.sub('/[^/]*$','',dst)
 	if not os.path.exists(dstDir):
@@ -95,7 +99,7 @@ def moveFileChecks(row,path,fromStorageName,destStorageName):
 	if not os.path.exists(src):
 		print("Skipping non-existent source file: "+src)
 		return None,None
-	if not destinationFileChecks(dst,destStoragePath,row[3]):
+	if not destinationFileChecks(dst,destStoragePath,row[3],row[0]):
 		return None,None
 	return src,dst
 
@@ -112,7 +116,7 @@ def moveFileFromFileToFile(row,path,fromStorageName,destStorageName):
 def getS3Config(storageName):
 	try:
 		with open(storageName+'.yaml', 'r') as fi:
-			return yaml.load(fi)
+			return yaml.load(fi, Loader=yaml.FullLoader)
 	except Exception as e:
 		print(f"There was a problem parsing {storageName}.yaml")
 		var_dump(e)
@@ -125,13 +129,11 @@ def getS3Connection(storageName):
 		return s3conns[storageName]
 	
 	config=getS3Config(storageName)
-	region = boto.s3.S3RegionInfo(name=storageName, 
-		endpoint=config['endpoint_url'],
-		connection_cls=S3Connection,)
-	conn = S3Connection(
+	conn = boto3.resource(
+		storageName,
+		endpoint_url=config['endpoint_url'],
 		aws_access_key_id = config['access_key_id'],
 		aws_secret_access_key = config['secret_access_key'],)
-
 #	conn = boto.connect_s3(
 #		endpoint = config['endpoint_url'],
 #		#is_secure=False,               # uncomment if you are not using ssl
@@ -142,42 +144,55 @@ def getS3Connection(storageName):
 
 s3buckets={}
 def getS3Bucket(storageName):
+	return getS3BucketAndConnection(storageName)[0]
+
+def getS3BucketAndConnection(storageName):
 	global s3buckets
 	if storageName in s3buckets:
 		return s3buckets[storageName]
 	
+	conn=getS3Connection(storageName)
 	config=getS3Config(storageName)
-	for bucket in conn.get_all_buckets():
+	for bucket in conn.buckets.all():
 		print("{name}\t{created}".format(
 			name = bucket.name,
 			created = bucket.creation_date,
 		))
 		if bucket.name==config['bucket']:
 			myBucket=bucket
-	s3buckets[storageName]=bucket
-	return bucket
+	s3buckets[storageName]=myBucket
+	return myBucket, conn
+
+
 
 def moveFileFromS3ToFile(row,path,fromStorageName,destStorageName):
 	storageDict=getStorageDict()
 	id=str(row[0])
 	dst=storageDict[destStorageName]['path']+"/"+path[1]
-	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3]):
+	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3],id):
 		return
-	print(f"copying from {fromStorageName}://{path[1]} to {dst}")
-	bucket=getS3Connection(fromStorageName)
-	key = bucket.get_key(path[1])
-	key.get_contents_to_filename(dst)
-	print(f"removing original file {fromStorageName}://{path[1]}")
-	bucket.delete_key(path[1])
+	conn=getS3Connection(fromStorageName)
+	bucket=getS3Bucket(fromStorageName)
+	key=path[1]
+	print(f"copying from {fromStorageName}://{key} to {dst}")
+#	print(conn.meta.client.list_objects(Bucket=bucket.name))
+#	exit(0)
+	conn.meta.client.download_file(Filename=dst,Bucket=bucket.name,Key=key)
+	print(f"removing original file {fromStorageName}://{key}")
+	conn.meta.client.delete_object(Bucket=bucket.name,Key=key)
 
 def moveFile(row,path,fromStorageName,destStorageName):
-	storageDict=getStorageDict()
-	if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
-		moveFileFromFileToFile(row,path,fromStorageName,destStorageName)
-	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
-		moveFileFromS3ToFile(row,path,fromStorageName,destStorageName)
-	else:
-		print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
+#	debug(f"movefile({row},{path},{fromStorageName},{destStorageName})")
+#	try:
+		storageDict=getStorageDict()
+		if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
+			moveFileFromFileToFile(row,path,fromStorageName,destStorageName)
+		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
+			moveFileFromS3ToFile(row,path,fromStorageName,destStorageName)
+		else:
+			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
+#	except Exception as e:
+#		print(f"moving file {row[1]} (id: {row[0]}) caused an exception: {e}")
 
 def mv(args):
 	if args['to_storage'] is None:
@@ -196,19 +211,25 @@ def mv(args):
 	else:
 		for row in objectsToMove:
 			changeStorageInDatabase(args['to_storage'],row[0])
-			if args['recursive']:
-				newargs={
-					'type':'dataverse',
-					'ownerid':row[0],
-					'to_storage':args['to_storage'],
-					'ids': None,
-					'storage':args['storage'],
-					'recursive': True}
-				mv(newargs)
-				newargs.update({'type':'dataset'})
-				mv(newargs)
-				newargs.update({'type':'datafile'})
-				mv(newargs)
+			recurse(args,row[0])
+
+def recurse(args, id):
+	out=[]
+	if args['recursive']:
+		newargs={
+			'type': 'dataverse',
+			'ownerid': id,
+			'to_storage': args['to_storage'],
+			'ids': None,
+			'storage': args['storage'],
+			'recursive': True}
+		out+=COMMANDS[args['command']](newargs)
+		newargs.update({'type':'dataset'})
+		out+=COMMANDS[args['command']](newargs)
+		newargs.update({'type':'datafile'})
+		out+=COMMANDS[args['command']](newargs)
+	return out
+
 
 ### this is for checking that the files in the database are all there on disk where they should be
 def fsck(args):
@@ -219,17 +240,31 @@ def fsck(args):
 		filepaths=get_filepaths()
 	#print filepaths
 	#print "Will check "+str(len(filepaths))+" files."
+	storages=getStorageDict()
 	checked, errors = 0, 0
 	for f in filepaths:
 		try:
-			if not S_ISREG(os.stat(filepaths[f]).st_mode):
-				print(filepaths[f] + " is not a normal file")
-				errors+=1
-		except:
-			print("cannot stat", filepaths[f], "  id:", f)
+			ic(f, filepaths[f])
+			if storages[filepaths[f][2]]['type']=='file':
+				fp=storages[filepaths[f][2]]['path']+filepaths[f][1]
+				if not S_ISREG(os.stat(fp).st_mode):
+					print(filepaths[f] + " is not a normal file!")
+					errors+=1
+			elif storages[filepaths[f][2]]['type']=='s3':
+				bucket,conn=getS3BucketAndConnection(filepaths[f][2])
+				oa=conn.meta.client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
+				if oa['ObjectSize']!=getList({"id": f, "type": "datafile"})[3]:
+					print(f"size mismatch for {filepaths[f]}  id: {f}!")
+					errors+=1
+		except Exception as e:
+			print(f"cannot stat {filepaths[f]}  id: {f}")
+			debug(e)
 			errors+=1
 		checked+=1
 	print("Checked", checked, "objects, errors:", errors)
+
+#def checkFileInFilesystem():
+#	
 
 #def getStorages():
 #	out=os.popen("./list_storages.sh").read()
@@ -266,7 +301,12 @@ def calculateStorageDict():
 		storageDict[storage['name']]=storage
 	return storageDict
 
+def debug(*debug):
+	if DEBUG_ENABLED:
+		ic(debug)
+
 def get_records_for_query(query):
+	debug(query)
 	dataverse_db_connection = create_database_connection()
 	cursor = dataverse_db_connection.cursor()
 	cursor.execute(query)
@@ -281,10 +321,10 @@ def sql_update(query, params):
 	dataverse_db_connection.commit() 
 	dataverse_db_connection.close()
 
-def get_filepaths(idlist=None,separatePaths=False):
+def get_filepaths(idlist=None,separatePaths=True):
 	storages=getStorageDict()
 
-	query="""SELECT f.id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1'), REGEXP_REPLACE(s.storageidentifier,'^[^:]*://','') || '/' || REGEXP_REPLACE(f.storageidentifier,'^[^:]*://','')
+	query="""SELECT f.id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1'), REGEXP_REPLACE(s.storageidentifier,'^[^:]*://','') || '/' || REGEXP_REPLACE(REGEXP_REPLACE(f.storageidentifier,'^[^:]*://',''),'^[^:]*:','')
 	         FROM dvobject f, dvobject s
 	         WHERE f.dtype='DataFile' AND f.owner_id=s.id"""
 	if idlist is not None:
@@ -295,23 +335,28 @@ def get_filepaths(idlist=None,separatePaths=False):
 	result={}
 	for r in records:
 		if separatePaths:
-			result.update({r[0] : (storages[r[1]]['path'],r[2])})
+			result.update({r[0] : (storages[r[1]]['path'],r[2],r[1])})
 		else:
 			result.update({r[0] : storages[r[1]]['path']+r[2]})
 	return result
 
+COMMANDS={
+	"list" : ls,
+	"ls" : ls,
+	"getList" : getList,
+	"move" : mv,
+	"mv" : mv,
+	"check" : fsck,
+	"fsck" : fsck,
+}
+
 def main():
-	commands={
-		"list" : ls,
-		"move" : mv,
-		"fsck" : fsck,
-	}
 	types=["storage","dataverse","dataset","datafile"]
-#	print commands.keys()
+#	print COMMANDS.keys()
 
 	argv = sys.argv[2:]
 	ap = argparse.ArgumentParser()
-	ap.add_argument("command", choices=commands.keys(), help="what to do")
+	ap.add_argument("command", choices=COMMANDS.keys(), help="what to do")
 	ap.add_argument("-n", "--name", required=False, help="name of the object")
 	ap.add_argument("-d", "--ownername", required=False, help="name of the containing/owner object")
 	ap.add_argument("-i", "--ids", required=False, help="id(s) of the object(s), comma separated")
@@ -319,12 +364,12 @@ def main():
 	ap.add_argument("-t", "--type", choices=types, required=False, help="type of objects to list/move")
 	ap.add_argument("-s", "--storage", required=False, help="storage to list/move items from")
 	ap.add_argument("--to-storage", required=False, help="move to the datastore of this name, required for move")
-	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make move recursive")
+	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	args = vars(ap.parse_args())
 #	opts, args = getopt.getopt(argv, 'type:id:name:')
 
 	print(args)
-	commands[args['command']](args)
+	COMMANDS[args['command']](args)
 
 
 if __name__ == "__main__":
