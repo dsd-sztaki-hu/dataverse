@@ -106,7 +106,9 @@ public class CedarTemplateToDescriboProfileConverter {
                 boolean isHidden = Optional.ofNullable(property.getAsJsonObject("_ui").get("hidden")).map(JsonElement::getAsBoolean).orElse(false);
                 if (!isHidden && (actPropertyType.equals("TemplateField") || actPropertyType.equals("StaticTemplateField"))) {
                     JsonObject valueConstraints = property.getAsJsonObject("_valueConstraints");
-                    boolean allowMultiple = valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean();
+                    boolean allowMultiple =
+                            (valueConstraints.has("multipleChoice") && valueConstraints.get("multipleChoice").getAsBoolean())
+                            || (property.has("minItems") || property.has("maxItems"));
                     processTemplateField(property, allowMultiple, inputId, processedDescriboProfileValues, parentName);
                 } else if (actPropertyType.equals("TemplateElement")) {
                     processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName);
