@@ -21,6 +21,7 @@
 package edu.harvard.iq.dataverse.ingest;
 
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.util.BundleUtil;
@@ -60,6 +61,8 @@ public class IngestMessageBean implements MessageListener {
     @EJB IngestServiceBean ingestService;
     @EJB UserNotificationServiceBean userNotificationService;
     @EJB AuthenticationServiceBean authenticationServiceBean;
+    @EJB
+    RoCrateManager roCrateManager;
 
    
     public IngestMessageBean() {
@@ -185,6 +188,7 @@ public class IngestMessageBean implements MessageListener {
             // when we're done, go ahead and remove the lock (not yet)
             try {
                 //datasetService.removeDatasetLock( ingestMessage.getDatasetId() );
+                roCrateManager.updateRoCrateFileMetadataAfterIngest(ingestMessage.getFileIds());
             } catch (Exception ex) {
                 ex.printStackTrace(); // application was unable to remove the datasetLock
             }

@@ -76,6 +76,12 @@ public class RoCrateManager {
     @Inject
     RoCrateUploadServiceBean roCrateUploadServiceBean;
 
+    @EJB 
+    DatasetServiceBean datasetService;
+    
+    @EJB 
+    DataFileServiceBean datafileService;
+
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
@@ -626,6 +632,46 @@ public class RoCrateManager {
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), null);
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrate, getRoCrateFolder(dataset.getLatestVersion()));
+    }
+    
+    public void updateRoCrateFileMetadataAfterIngest(List<Long> fileIds) {
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        HashSet<Long> parentDsIds = new HashSet<>();
+        // Collect the dataset and the belonging file ids, so we no longer need to assume that every ingest message
+        // contains files that belong to the same dataset as it is assumed here: edu/harvard/iq/dataverse/ingest/IngestMessageBean.java
+        fileIds.forEach(fileId -> {
+            var dsId = datafileService.findCheapAndEasy(fileId).getOwner().getId();
+            parentDsIds.add(dsId);
+        });
+        parentDsIds.forEach(dsId -> {
+            var datasetVersion = datasetService.find(dsId).getLatestVersion();
+            var ro = roCrateFolderReader.readCrate(getRoCrateFolder(datasetVersion));
+            RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+            updateFileMetadataAfterIngest(roCrate, datasetVersion);
+            RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+            roCrateFolderWriter.save(roCrate, getRoCrateFolder(datasetVersion));
+        });
+    }
+    
+    private void updateFileMetadataAfterIngest(RoCrate roCrate, DatasetVersion datasetVersion) {
+        List<ObjectNode> roCrateFileEntities = Stream.concat(
+                roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> getTypeAsString(ce).equals("File")),
+                roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> getTypeAsString(de).equals("File"))
+        ).collect(Collectors.toList());
+        List<FileMetadata> datasetFiles = datasetVersion.getFileMetadatas();
+
+        roCrateFileEntities.forEach(fe -> {
+            String dataFileId = fe.get("@id").textValue().split("::")[0].substring(1);
+            Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
+            if (datasetFile.isPresent()) {
+                var fmd = datasetFile.get();
+                fe.put("name", fmd.getLabel());
+                fe.put("hash", fmd.getDataFile().getChecksumValue());
+            } else {
+                throw new RuntimeException("An error occurred during updating the RO-CRATE after the file(s) been ingested.");
+            }
+        });
+        
     }
     
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas, Map<String, String> importMapping) throws JsonProcessingException {

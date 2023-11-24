@@ -301,12 +301,11 @@ public class RoCrateUploadServiceBean implements Serializable {
         });
         
         for (var importedFile : importedFiles) {
-            String hash = importedFile.getChecksumValue();
             String name = importedFile.getDisplayName();
             String directoryLabel = importedFile.getDirectoryLabel();
             String storageIdentifier = importedFile.getStorageIdentifier();
 
-            Optional<JsonNode> correspondingFileEntity = findFileEntity(roCrateFiles, name, hash, directoryLabel);
+            Optional<JsonNode> correspondingFileEntity = findFileEntity(roCrateFiles, name, directoryLabel);
             correspondingFileEntity.ifPresent(fileEntity -> idAndStorageIdentifierMapping.put(fileEntity.get("@id").textValue(), storageIdentifier));
         }
         
@@ -314,14 +313,12 @@ public class RoCrateUploadServiceBean implements Serializable {
     }
 
     // find the corresponding file in the RO-CRATE for the uploaded datasetFile
-    private Optional<JsonNode> findFileEntity(ArrayList<JsonNode> roCrateFiles, String name, String hash, String directoryLabel) {
+    private Optional<JsonNode> findFileEntity(ArrayList<JsonNode> roCrateFiles, String name, String directoryLabel) {
         for (JsonNode node : roCrateFiles) {
             String nodeName = node.has("name") ? node.get("name").textValue() : null;
-            String nodeHash = node.has("hash") ? node.get("hash").textValue() : null;
             String nodeDirectoryLabel = node.has("directoryLabel") ? node.get("directoryLabel").textValue() : null;
 
-            if (Objects.equals(hash, nodeHash) &&
-                Objects.equals(name, nodeName) &&
+            if (Objects.equals(name, nodeName) &&
                 (directoryLabel == null || Objects.equals(directoryLabel, nodeDirectoryLabel))) {
                 return Optional.of(node);
             }
