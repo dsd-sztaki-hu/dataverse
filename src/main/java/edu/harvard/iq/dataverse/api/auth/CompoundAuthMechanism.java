@@ -19,9 +19,11 @@ public class CompoundAuthMechanism implements AuthMechanism {
     private final List<AuthMechanism> authMechanisms = new ArrayList<>();
 
     @Inject
-    public CompoundAuthMechanism(ApiKeyAuthMechanism apiKeyAuthMechanism, WorkflowKeyAuthMechanism workflowKeyAuthMechanism, SignedUrlAuthMechanism signedUrlAuthMechanism, SessionCookieAuthMechanism sessionCookieAuthMechanism, BearerTokenAuthMechanism bearerTokenAuthMechanism) {
+    public CompoundAuthMechanism(ApiKeyAuthMechanism apiKeyAuthMechanism, WorkflowKeyAuthMechanism workflowKeyAuthMechanism, SignedUrlAuthMechanism signedUrlAuthMechanism, SessionCookieAuthMechanism sessionCookieAuthMechanism, BearerTokenAuthMechanism bearerTokenAuthMechanism, ArpCedarApiKeyAuthMechanism arpCedarApiKeyAuthMechanism) {
         // Auth mechanisms should be ordered by priority here
-        add(apiKeyAuthMechanism, workflowKeyAuthMechanism, signedUrlAuthMechanism, sessionCookieAuthMechanism,bearerTokenAuthMechanism);
+        // arpCedarApiKeyAuthMechanism must come first, as it used the same header/query param as apiKeyAuthMechanism
+        // but for matching CEDAR keys
+        add(arpCedarApiKeyAuthMechanism, apiKeyAuthMechanism, workflowKeyAuthMechanism, signedUrlAuthMechanism, sessionCookieAuthMechanism,bearerTokenAuthMechanism);
     }
 
     public CompoundAuthMechanism(AuthMechanism... authMechanisms) {

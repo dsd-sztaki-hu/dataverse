@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
+import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
@@ -139,6 +140,7 @@ public class ArpApi extends AbstractApiBean {
     @Path("/cedarToMdb/{dvIdtf}") // TODO: should be importMdbFromCedar, used iin CEDAR template editor
     @Consumes("application/json")
     @Produces("text/tab-separated-values")
+    @AuthRequired
     public Response cedarToMdb(
             @Context ContainerRequestContext crc,
             @PathParam("dvIdtf") String dvIdtf,
@@ -220,6 +222,7 @@ public class ArpApi extends AbstractApiBean {
     @Path("/exportMdbToCedar/{mdbIdtf}")
     @Consumes("application/json")
     @Produces("application/json")
+    @AuthRequired
     public Response exportMdbToCedar(
             @Context ContainerRequestContext crc,
             @PathParam("mdbIdtf") String mdbIdtf,
@@ -295,6 +298,7 @@ public class ArpApi extends AbstractApiBean {
     @Path("/exportTsvToCedar/")
     @Consumes("application/json")
     @Produces("application/json")
+    @AuthRequired
     public Response exportTsvToCedar(
             @Context ContainerRequestContext crc,
             ExportTsvToCedarData cedarDataAndTsv
@@ -610,6 +614,7 @@ public class ArpApi extends AbstractApiBean {
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
+    @AuthRequired
     public Response getRoCrate(
             @Context ContainerRequestContext crc,
             @QueryParam("version") String version,
@@ -720,6 +725,7 @@ public class ArpApi extends AbstractApiBean {
     @Path("/rocrate/{persistentId : .+}")
     @Consumes("application/json")
     @Produces("application/json")
+    @AuthRequired
     public Response updateRoCrate(
             @Context ContainerRequestContext crc,
             @PathParam("persistentId") String persistentId,

@@ -337,10 +337,6 @@ public abstract class AbstractApiBean {
      */
     protected AuthenticatedUser getRequestAuthenticatedUserOrDie(ContainerRequestContext crc) throws WrappedResponse {
         User requestUser = (User) crc.getProperty(ApiConstants.CONTAINER_REQUEST_CONTEXT_USER);
-        // Try as CEDAR token
-        if (requestUser == null) {
-            requestUser = cedarAuthSvc.lookupUser(getRequestApiKey());
-        }
         if (requestUser.isAuthenticated()) {
             return (AuthenticatedUser) requestUser;
         } else {
