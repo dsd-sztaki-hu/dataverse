@@ -771,13 +771,13 @@
                         <p:commandButton id="saveTop" styleClass="btn btn-default" value="#{bundle.saveChanges}" rendered="#{DatasetPage.editMode == 'METADATA'}"
                                          onclick="PF('blockDatasetForm').show();"
                                          update=":datasetForm,:messagePanel"
-                                         oncomplete="$(document).scrollTop(0);"
+                                         oncomplete="$(document).scrollTop(0); notifyDatasetChanged();"
                                          action="#{DatasetPage.save}"
                                          />
                         <p:commandButton id="saveTopTOA" styleClass="btn btn-default" value="#{bundle.saveChanges}" rendered="#{DatasetPage.editMode == 'LICENSE'}"
                                          onclick="testTOADatasetPage();"
                                          update=":datasetForm,:messagePanel"
-                                         oncomplete="$(document).scrollTop(0);"
+                                         oncomplete="$(document).scrollTop(0); notifyDatasetChanged()"
                         />
                         <p:commandButton id="cancelTop" styleClass="btn btn-link" value="#{bundle.cancel}" action="#{DatasetPage.cancel}" process="@this" update="@form">
                             <f:setPropertyActionListener target="#{DatasetPage.selectedTabIndex}" value="#{DatasetPage.editMode == 'METADATA' ? 1 : DatasetPage.selectedTabIndex}"/>
@@ -1954,6 +1954,8 @@
                 <!-- ARP -->
                 <script src="#{resource['arp/cross-window-messenger.js']}"></script>
                 <script>
+                  //<![CDATA[
+
                   // Note: we call addTabChangeHandlers both at onready time and every time a tab is clicked,
                   // because the click removes the handlers and need to be put back
                   function addTabChangeHandlers() {
@@ -2009,13 +2011,17 @@
                     // window.location.reload();
                   }
 
-                  messenger.subscribeToMessageType("DATASET_CHANGED_IN_AROMA", "#{DatasetPage.persistentId}", (content) => {
+                  messenger.subscribeToMessageType("DATASET_CHANGED", "#{DatasetPage.persistentId}", (content) => {
                     if (!focusHandlerAdded) {
-                      console.log('DATASET_CHANGED_IN_AROMA received, setting up reload on focus');
+                      console.log('DATASET_CHANGED received, setting up reload on focus');
                       focusHandlerAdded = true;
                       window.addEventListener("focus", focusHandler)
                     }
                   })
+
+                  function notifyDatasetChanged() {
+                    messenger.publishMessage("DATASET_CHANGED", "#{DatasetPage.persistentId}");
+                  }
 
                   $(document).ready(function() {
                     addTabChangeHandlers();
@@ -2026,6 +2032,8 @@
                     // so roll with it
                     selectTabByName('content', tabName);
                   });
+
+                  //]]>
                 </script>
             </ui:define>
         </ui:composition>
