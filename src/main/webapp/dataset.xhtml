@@ -855,8 +855,9 @@
                         </ui:fragment>
                         <p:tabView id="tabView" widgetVar="content" activeIndex="#{DatasetPage.selectedTabIndex}"
                                    rendered="#{empty DatasetPage.editMode or (DatasetPage.editMode == 'METADATA' or DatasetPage.editMode == 'LICENSE')}">
-                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this" />
-                            <p:tab id="dataFilesTab" title="#{bundle.files}" 
+                            <!-- oncomplete we reset the tab change handler -->
+                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this" oncomplete="addTabChangeHandlers()"/>
+                            <p:tab id="dataFilesTab" title="#{bundle.files}" onclick="alert('yay')" class="dataFilesTab"
                                    rendered="#{(!DatasetPage.workingVersion.deaccessioned 
                                                or (DatasetPage.workingVersion.deaccessioned and DatasetPage.canUpdateDataset())) 
                                                and (empty DatasetPage.editMode)}">
@@ -958,7 +959,6 @@
                                     <ui:param name="anonymized" value="#{DatasetPage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
-
                             <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
                                    rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}"
                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
@@ -1949,6 +1949,83 @@
                     }
                                         
                     //]]>
+                </script>
+
+                <!-- ARP -->
+                <script src="#{resource['arp/cross-window-messenger.js']}"></script>
+                <script>
+                  // Note: we call addTabChangeHandlers both at onready time and every time a tab is clicked,
+                  // because the click removes the handlers and need to be put back
+                  function addTabChangeHandlers() {
+                    $('#datasetForm\\:tabView .ui-tabs-nav li a').click(function(e) {
+                      // Prevent the default action of the anchor tag
+                      //e.preventDefault();
+
+                      // Get the href attribute and extract the last part after the colon
+                      var hrefAttr = $(this).attr('href');
+                      var lastPart = hrefAttr.substring(hrefAttr.lastIndexOf(':') + 1);
+
+                      // Change the URL hash
+                      window.location.hash = lastPart;
+                    });
+                  }
+
+                  function selectTabByName(tabViewWidgetVar, tabName) {
+                    var tabView = PF(tabViewWidgetVar);
+                    // console.log("tabView", tabViewWidgetVar, tabName, tabView);
+                    // console.log("tabView findDataIndexOfTab", findDataIndexOfTab(tabName));
+
+                    // Every li has a data-index, which is the index of the tab. We find this by searching for the
+                    // "a href" with the name of the tab.
+                    tabView.select(findDataIndexOfTab(tabName));
+                  }
+
+                  function findDataIndexOfTab(tabName) {
+                    var dataIndex = $("a[href$='" + tabName + "']").closest('li').attr('data-index');
+                    return dataIndex;
+                  }
+
+                  console.log('++++++ Creating CrossWindowMessenger')
+                  const messenger = new CrossWindowMessenger(10000);
+                  let focusHandlerAdded = false;
+
+                  function focusHandler() {
+                    console.log('Page focused, reloading page');
+                    window.removeEventListener("focus", focusHandler);
+
+                    // Reload automatically and select the Metadata tab
+                    window.location.hash = "#metadataMapTab"
+                    window.location.reload();
+
+                    // Same with a confirm
+                    // let userResponse = confirm("Dataset was updated in another tab. Do you want to reload?");
+                    //
+                    // if (userResponse) {
+                    //   window.location.reload();
+                    // }
+
+                    // Same with alert
+                    // alert('Dataset was updated in another tab. Dataverse needs to be reloaded.')
+                    // window.location.reload();
+                  }
+
+                  messenger.subscribeToMessageType("DATASET_CHANGED_IN_AROMA", "#{DatasetPage.persistentId}", (content) => {
+                    if (!focusHandlerAdded) {
+                      console.log('DATASET_CHANGED_IN_AROMA received, setting up reload on focus');
+                      focusHandlerAdded = true;
+                      window.addEventListener("focus", focusHandler)
+                    }
+                  })
+
+                  $(document).ready(function() {
+                    addTabChangeHandlers();
+                    // Find tabname in URL
+                    var tabName = window.location.hash.substring(1);
+
+                    // Set selected tab based on #tabName. Note: tabView's widget name is just "content",
+                    // so roll with it
+                    selectTabByName('content', tabName);
+                  });
                 </script>
             </ui:define>
         </ui:composition>
