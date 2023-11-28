@@ -120,7 +120,7 @@ def getS3Config(storageName):
 	except Exception as e:
 		print(f"There was a problem parsing {storageName}.yaml")
 		var_dump(e)
-		os.exit(1)
+		exit(1)
 
 s3conns={}
 def getS3Connection(storageName):
@@ -129,8 +129,9 @@ def getS3Connection(storageName):
 		return s3conns[storageName]
 	
 	config=getS3Config(storageName)
+	debug(config)
 	conn = boto3.resource(
-		storageName,
+		's3',
 		endpoint_url=config['endpoint_url'],
 		aws_access_key_id = config['access_key_id'],
 		aws_secret_access_key = config['secret_access_key'],)
@@ -150,7 +151,6 @@ def getS3BucketAndConnection(storageName):
 	global s3buckets
 	if storageName in s3buckets:
 		return s3buckets[storageName]
-	
 	conn=getS3Connection(storageName)
 	config=getS3Config(storageName)
 	for bucket in conn.buckets.all():
@@ -213,16 +213,22 @@ def mv(args):
 			changeStorageInDatabase(args['to_storage'],row[0])
 			recurse(args,row[0])
 
+def get_new_args(args, id=None, ownerid=None, ownername=None, type='dataverse'):
+	return {
+		'id': id,
+		'type': type,
+		'to_storage': args['to_storage'],
+		'ownerid': ownerid,
+		'ownername': ownername,
+		'ids': None,
+		'storage': args['storage'],
+		'recursive': args['recursive'],
+	}
+
 def recurse(args, id):
 	out=[]
 	if args['recursive']:
-		newargs={
-			'type': 'dataverse',
-			'ownerid': id,
-			'to_storage': args['to_storage'],
-			'ids': None,
-			'storage': args['storage'],
-			'recursive': True}
+		newargs=get_new_args(args,ownerid=id)
 		out+=COMMANDS[args['command']](newargs)
 		newargs.update({'type':'dataset'})
 		out+=COMMANDS[args['command']](newargs)
@@ -238,13 +244,14 @@ def fsck(args):
 		filepaths=get_filepaths([str(x[0]) for x in filesToCheck])
 	else:
 		filepaths=get_filepaths()
+	debug(filesToCheck)
 	#print filepaths
 	#print "Will check "+str(len(filepaths))+" files."
 	storages=getStorageDict()
-	checked, errors = 0, 0
+	checked, errors, skipped = 0, 0, 0
 	for f in filepaths:
 		try:
-			ic(f, filepaths[f])
+			debug('fscking: ',id=f, metadata=filepaths[f])
 			if storages[filepaths[f][2]]['type']=='file':
 				fp=storages[filepaths[f][2]]['path']+filepaths[f][1]
 				if not S_ISREG(os.stat(fp).st_mode):
@@ -252,16 +259,22 @@ def fsck(args):
 					errors+=1
 			elif storages[filepaths[f][2]]['type']=='s3':
 				bucket,conn=getS3BucketAndConnection(filepaths[f][2])
-				oa=conn.meta.client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
-				if oa['ObjectSize']!=getList({"id": f, "type": "datafile"})[3]:
+				#oa=conn.meta.client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
+				oa=conn.meta.client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f][1])['Contents'][0]
+				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0][3]:
 					print(f"size mismatch for {filepaths[f]}  id: {f}!")
 					errors+=1
+				else:
+					debug(f"OK {filepaths[f][1]}")
+			else:
+				print(f"fsck not implemented yet for {storages[filepaths[f][2]]['type']}!")
+				skipped+=1
 		except Exception as e:
 			print(f"cannot stat {filepaths[f]}  id: {f}")
 			debug(e)
 			errors+=1
 		checked+=1
-	print("Checked", checked, "objects, errors:", errors)
+	print(f"Total objects: {checked};  Skipped: {skipped};  Errors: {errors};  OK: {checked-skipped-errors}")
 
 #def checkFileInFilesystem():
 #	
@@ -284,10 +297,11 @@ def getStorageDict():
 
 def calculateStorageDict():
 	storageTypeOutput=subprocess.run(ASADMIN+" list-jvm-options | grep 'files\..*\.type='", shell=True, check=True, capture_output=True, text=True).stdout.splitlines()
+	debug(storageTypeOutput)
 	storageDict={}
 	for x in storageTypeOutput:
 		sp=x.split('=')
-		storage=re.match(r'-Ddataverse\.files\.(?P<name>\w+)\.type=(?P<type>\w+)', x).groupdict()
+		storage=re.match(r'-Ddataverse\.files\.(?P<name>[0-9a-zA-Z_-]+)\.type=(?P<type>\w+)', x).groupdict()
 		storageDirectoryOutput=subprocess.run(ASADMIN+" list-jvm-options | egrep \"files\.("+storage['name']+")\.directory=\"", shell=True, capture_output=True, text=True).stdout.splitlines()
 		if len(storageDirectoryOutput)==1:
 			o=storageDirectoryOutput[0]
@@ -301,9 +315,14 @@ def calculateStorageDict():
 		storageDict[storage['name']]=storage
 	return storageDict
 
-def debug(*debug):
+def debug(*debug,**kdebug):
 	if DEBUG_ENABLED:
-		ic(debug)
+		if kdebug and debug:
+			ic(debug,kdebug)
+		elif debug:
+			ic(debug)
+		elif kdebug:
+			ic(kdebug)
 
 def get_records_for_query(query):
 	debug(query)
