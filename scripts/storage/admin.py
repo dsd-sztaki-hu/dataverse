@@ -73,9 +73,23 @@ def ls(args):
 		print(r)
 
 def changeStorageInDatabase(destStorageName,id):
-	query="UPDATE dvobject SET storageidentifier=REGEXP_REPLACE(storageidentifier,'^[^:]*://',%s||'://') WHERE id=%s"
-	print("updating database: "+query+" "+str((destStorageName,id)))
-	sql_update(query,(destStorageName,id))
+	query="UPDATE dvobject SET storageidentifier=REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(storageidentifier,'^[^:]*://',%s||'://'),'://[0-9a-zA-Z_-]*:','://'),'://','://'"
+	try:
+		ic("aaaaaaaaaaaaa")
+		bucketName=(getS3Bucket(destStorageName,silent=True).name)+":"
+		query+="||%s"
+		paramTuple=(destStorageName,bucketName,id)
+	except: # Exception as e:
+		ic("bbbbbbbbbb")
+		paramTuple=(destStorageName,id)
+		#raise e
+	query+=") WHERE id=%s"
+#	query=f"storageidentifier=REPLACE(storageidentifier,'${fromStorageName}://','{destStorageName}://')"
+	ic(query,paramTuple)
+	print("updating database: "+(query%paramTuple))
+#	exit(0)
+	sql_update(query,paramTuple)
+
 
 def destinationFileChecks(dst,destStoragePath,filesize,id):
 	storageStats=os.statvfs(destStoragePath)
@@ -85,7 +99,7 @@ def destinationFileChecks(dst,destStoragePath,filesize,id):
 	dstDir=re.sub('/[^/]*$','',dst)
 	if not os.path.exists(dstDir):
 		print("creating "+dstDir)
-		os.mkdir(dstDir)
+		os.makedirs(dstDir)
 	return True
 
 def moveFileChecks(row,path,fromStorageName,destStorageName):
@@ -103,32 +117,34 @@ def moveFileChecks(row,path,fromStorageName,destStorageName):
 		return None,None
 	return src,dst
 
-def moveFileFromFileToFile(row,path,fromStorageName,destStorageName):
+def move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move):
 	src,dst = moveFileChecks(row,path,fromStorageName,destStorageName)
 	if src is None or dst is None:
 		return
-	print("copying from", src, "to", dst)
+	print(f"copying from {src} to {dst}")
 	shutil.copyfile(src, dst)
-	changeStorageInDatabase(destStorageName,row[0])
-	print("removing original file "+src)
-	os.remove(src)
+	if move:
+		changeStorageInDatabase(destStorageName,row[0])
+		print(f"removing original file {src}")
+		os.remove(src)
 
-def getS3Config(storageName):
+def getS3Config(storageName,silent=False):
 	try:
 		with open(storageName+'.yaml', 'r') as fi:
 			return yaml.load(fi, Loader=yaml.FullLoader)
 	except Exception as e:
-		print(f"There was a problem parsing {storageName}.yaml")
-		var_dump(e)
-		exit(1)
+		if not silent:
+			print(f"ERROR: There was a problem parsing {storageName}.yaml")
+			var_dump(e)
+			exit(1)
 
 s3conns={}
-def getS3Connection(storageName):
+def getS3Connection(storageName,silent=False):
 	global s3conns
 	if storageName in s3conns:
 		return s3conns[storageName]
 	
-	config=getS3Config(storageName)
+	config=getS3Config(storageName,silent)
 	debug(config)
 	conn = boto3.resource(
 		's3',
@@ -144,15 +160,16 @@ def getS3Connection(storageName):
 	return conn
 
 s3buckets={}
-def getS3Bucket(storageName):
-	return getS3BucketAndConnection(storageName)[0]
+def getS3Bucket(storageName,silent=False):
+	return getS3BucketAndConnection(storageName,silent)[0]
 
-def getS3BucketAndConnection(storageName):
-	global s3buckets
+def getS3BucketAndConnection(storageName,silent=False):
+	global s3buckets, s3conns
+	ic(storageName,silent,s3buckets,s3conns)
 	if storageName in s3buckets:
-		return s3buckets[storageName]
-	conn=getS3Connection(storageName)
-	config=getS3Config(storageName)
+		return s3buckets[storageName],s3conns[storageName]
+	conn=getS3Connection(storageName,silent)
+	config=getS3Config(storageName,silent)
 	for bucket in conn.buckets.all():
 		print("{name}\t{created}".format(
 			name = bucket.name,
@@ -163,53 +180,81 @@ def getS3BucketAndConnection(storageName):
 	s3buckets[storageName]=myBucket
 	return myBucket, conn
 
+def getS3BucketAndClient(storageName):
+	myBucket, conn = getS3BucketAndConnection(storageName)
+	return myBucket, conn.meta.client
 
-
-def moveFileFromS3ToFile(row,path,fromStorageName,destStorageName):
+def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
 	id=str(row[0])
 	dst=storageDict[destStorageName]['path']+"/"+path[1]
 	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3],id):
 		return
-	conn=getS3Connection(fromStorageName)
-	bucket=getS3Bucket(fromStorageName)
+	bucket,client=getS3BucketAndClient(fromStorageName)
 	key=path[1]
 	print(f"copying from {fromStorageName}://{key} to {dst}")
-#	print(conn.meta.client.list_objects(Bucket=bucket.name))
-#	exit(0)
-	conn.meta.client.download_file(Filename=dst,Bucket=bucket.name,Key=key)
-	print(f"removing original file {fromStorageName}://{key}")
-	conn.meta.client.delete_object(Bucket=bucket.name,Key=key)
+#	ic(bucket,bucket.name)
+#	debug(client.list_objects(Bucket=bucket.name))
+	client.download_file(Filename=dst,Bucket=bucket.name,Key=key)
+	if move:
+		changeStorageInDatabase(destStorageName,id)
+		print(f"removing original file {fromStorageName}://{key}")
+		client.delete_object(Bucket=bucket.name,Key=key)
 
-def moveFile(row,path,fromStorageName,destStorageName):
+def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move):
+	storageDict=getStorageDict()
+	id=str(row[0])
+#	ic(storageDict[destStorageName]['path'],path[1])
+	src=storageDict[fromStorageName]['path']+"/"+path[1]
+	bucket,client=getS3BucketAndClient(destStorageName)
+	key=path[1]
+	print(f"copying from {src} to {destStorageName}://{key}")
+#	ic(bucket,bucket.name)
+#	debug(client.list_objects(Bucket=bucket.name))
+	client.upload_file(Filename=src,Bucket=bucket.name,Key=key)
+	if move:
+		changeStorageInDatabase(destStorageName,id)
+		print(f"removing original file {src}")
+		os.remove(src)
+
+def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 #	debug(f"movefile({row},{path},{fromStorageName},{destStorageName})")
 #	try:
 		storageDict=getStorageDict()
 		if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
-			moveFileFromFileToFile(row,path,fromStorageName,destStorageName)
+			move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move)
 		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
-			moveFileFromS3ToFile(row,path,fromStorageName,destStorageName)
+			move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
+		elif storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='s3':
+			move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
 		else:
 			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
 #	except Exception as e:
 #		print(f"moving file {row[1]} (id: {row[0]}) caused an exception: {e}")
 
+def cp(args):
+	mv_or_cp(args)
+
 def mv(args):
+	mv_or_cp(args)
+
+def mv_or_cp(args):
 	if args['to_storage'] is None:
-		print("--to-storage is missing")
+		print("ERROR: --to-storage is missing")
 		exit(1)
 	storages=getStorageDict()
 	if args['to_storage'] not in storages:
-		print(args['to_storage']+" is not a valid storage. Valid storages:")
+		print("ERROR: "+args['to_storage']+" is not a valid storage. Valid storages:")
 		pprint.PrettyPrinter(indent=4,width=10).pprint(storages)
 		exit(1)
 	objectsToMove=getList(args)
 	if args['type']=='datafile':
 		filePaths=get_filepaths(idlist=[str(x[0]) for x in objectsToMove],separatePaths=True)
 		for row in objectsToMove:
-			moveFile(row,filePaths[row[0]],args['storage'],args['to_storage'])
-	else:
+			move_or_copy_file(row,filePaths[row[0]],args['storage'],args['to_storage'],args['command'].__name__=='mv')
+	elif args['command']=='mv' or args['command']=='move':
 		for row in objectsToMove:
+			debug(row)
 			changeStorageInDatabase(args['to_storage'],row[0])
 			recurse(args,row[0])
 
@@ -218,22 +263,20 @@ def get_new_args(args, id=None, ownerid=None, ownername=None, type='dataverse'):
 		'id': id,
 		'type': type,
 		'to_storage': args['to_storage'],
+		'storage': args['storage'],
+		'recursive': args['recursive'],
+		'command': args['command'],
 		'ownerid': ownerid,
 		'ownername': ownername,
 		'ids': None,
-		'storage': args['storage'],
-		'recursive': args['recursive'],
 	}
 
 def recurse(args, id):
 	out=[]
 	if args['recursive']:
-		newargs=get_new_args(args,ownerid=id)
-		out+=COMMANDS[args['command']](newargs)
-		newargs.update({'type':'dataset'})
-		out+=COMMANDS[args['command']](newargs)
-		newargs.update({'type':'datafile'})
-		out+=COMMANDS[args['command']](newargs)
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='dataverse'))
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='dataset'))
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='datafile'))
 	return out
 
 
@@ -258,9 +301,9 @@ def fsck(args):
 					print(filepaths[f] + " is not a normal file!")
 					errors+=1
 			elif storages[filepaths[f][2]]['type']=='s3':
-				bucket,conn=getS3BucketAndConnection(filepaths[f][2])
-				#oa=conn.meta.client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
-				oa=conn.meta.client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f][1])['Contents'][0]
+				bucket,conn=getS3BucketAndClient(filepaths[f][2])
+				#oa=client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
+				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f][1])['Contents'][0]
 				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0][3]:
 					print(f"size mismatch for {filepaths[f]}  id: {f}!")
 					errors+=1
@@ -311,7 +354,8 @@ def calculateStorageDict():
 		elif len(storageDirectoryOutput)==0:
 			storage["path"]=None
 		else:
-			sys.exit(1)
+			print(f"ERROR: len(storageDirectoryOutput)=={len(storageDirectoryOutput)}, it should be 0 or 1!!!")
+			exit(1)
 		storageDict[storage['name']]=storage
 	return storageDict
 
@@ -365,6 +409,8 @@ COMMANDS={
 	"getList" : getList,
 	"move" : mv,
 	"mv" : mv,
+	"copy" : cp,
+	"cp" : cp,
 	"check" : fsck,
 	"fsck" : fsck,
 }
@@ -388,7 +434,9 @@ def main():
 #	opts, args = getopt.getopt(argv, 'type:id:name:')
 
 	print(args)
-	COMMANDS[args['command']](args)
+	args['command']=COMMANDS[args['command']]
+	#ic(COMMANDS[args['command']].__name__)
+	args['command'](args)
 
 
 if __name__ == "__main__":
