@@ -1118,6 +1118,12 @@ public class RoCrateManager {
         return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
     }
     
+    public void deleteDraftVersion(DatasetVersion datasetVersion) throws IOException {
+        String draftPath = getRoCrateFolder(datasetVersion);
+        String latestPublishedPath = getRoCrateFolder(datasetVersion.getDataset().getLatestVersionForCopy());
+        FileUtils.copyDirectory(new File(latestPublishedPath), new File(draftPath));
+    }
+    
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
         String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());

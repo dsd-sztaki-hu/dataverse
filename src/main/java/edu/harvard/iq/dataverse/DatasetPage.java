@@ -2991,9 +2991,13 @@ public class DatasetPage implements java.io.Serializable {
             commandEngine.submit(cmd);
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("datasetVersion.message.deleteSuccess"));
             deleteCommandSuccess = true;
+            roCrateManager.deleteDraftVersion(dataset.getLatestVersion());
         } catch (CommandException ex) {
             JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("dataset.message.deleteFailure"));
             logger.severe(ex.getMessage());
+        } catch (IOException e) {
+            JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("arp.rocrate.draft.deletion.error"));
+            logger.severe(e.getMessage());
         }
 
         if (deleteCommandSuccess && !deleteStorageLocations.isEmpty()) {
