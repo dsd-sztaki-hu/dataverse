@@ -12,6 +12,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
+import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
@@ -1674,31 +1675,34 @@ public class RoCrateManager {
                     if (fieldName.equals("name")) {
                         break;
                     }
-                    if (datasetFieldType.isAllowControlledVocabulary()) {
-                        if (fieldValue.isArray()) {
-                            List<String> controlledVocabValues = new ArrayList<>();
-                            fieldValue.forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
-                            processControlledVocabFields(controlledVocabValues, compoundValueToUpdate.getParentDatasetField(), datasetFieldType);
+                    // Find the childDatasetField to update
+                    Optional<DatasetField> childDatasetFieldOpt = compoundValueToUpdate.getChildDatasetFields().stream().filter(childField ->
+                                    Objects.equals(childField.getDatasetFieldType().getName(), fieldName))
+                                    .findFirst();
+                    if (childDatasetFieldOpt.isPresent()) {
+                        DatasetField childDatasetField = childDatasetFieldOpt.get();
+                        if (childDatasetField.getDatasetFieldType().isAllowControlledVocabulary()) {
+                            if (fieldValue.isArray()) {
+                                List<String> controlledVocabValues = new ArrayList<>();
+                                fieldValue.forEach(controlledVocabValue -> controlledVocabValues.add(controlledVocabValue.textValue()));
+                                processControlledVocabFields(controlledVocabValues, childDatasetField, childDatasetField.getDatasetFieldType());
+                            } else {
+                                processControlledVocabFields(fieldValue.textValue(), childDatasetField, childDatasetField.getDatasetFieldType());
+                            }
                         } else {
-                            processControlledVocabFields(fieldValue.textValue(), compoundValueToUpdate.getParentDatasetField(), datasetFieldType);
+                            // URL entities nees to be handled differently
+                            if (fieldValue.isObject() && fieldValue.has("@id")) {
+                                var linkedObj = contextualEntityHashMap.get(fieldValue.get("@id").textValue()).getProperties();
+                                if (hasType(linkedObj, "URL")) {
+                                    childDatasetField.setSingleValue(linkedObj.get("name").textValue());
+                                }
+                            } else {
+                                childDatasetField.setSingleValue(fieldValue.textValue());
+                            }
                         }
                     } else {
-                        // Find the childDatasetField to update
-                        compoundValueToUpdate.getChildDatasetFields().stream().filter(childField -> 
-                                Objects.equals(childField.getDatasetFieldType().getName(), fieldName))
-                                .findFirst()
-                                .ifPresent(datasetField -> {
-                                    // URL entities nees to be handled differently
-                                    if (fieldValue.isObject() && fieldValue.has("@id")) {
-                                        var linkedObj = contextualEntityHashMap.get(fieldValue.get("@id").textValue()).getProperties();
-                                        if (hasType(linkedObj, "URL")) {
-                                            datasetField.setSingleValue(linkedObj.get("name").textValue());
-                                        }
-                                    } else {
-                                        datasetField.setSingleValue(fieldValue.textValue());
-                                    }
-                                    }
-                                );
+                        JsfHelper.addErrorMessage("An error occurred during processing compound field: \"" + datasetFieldType.getName() + "\".");
+                        throw new RuntimeException("An error occurred during processing compound field: \"" + datasetFieldType.getName() + "\".");
                     }
                 }
             };
