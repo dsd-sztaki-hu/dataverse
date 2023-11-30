@@ -11,6 +11,7 @@ from storage import (open_dataverse_file)
 import shutil
 import yaml
 import boto3
+import tempfile
 from var_dump import var_dump
 from icecream import ic
 
@@ -217,6 +218,23 @@ def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,m
 		print(f"removing original file {src}")
 		os.remove(src)
 
+def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move):
+	storageDict=getStorageDict()
+	id=str(row[0])
+	bucket1,client1=getS3BucketAndClient(fromStorageName)
+	bucket2,client2=getS3BucketAndClient(destStorageName)
+	key=path[1]
+	print(f"copying from {fromStorageName}://{key} to {destStorageName}://{key}")
+	with tempfile.TemporaryFile() as fp:
+		client1.download_fileobj(Fileobj=fp,Bucket=bucket1.name,Key=key)
+		fp.seek(0)
+		client2.upload_fileobj(Fileobj=fp,Bucket=bucket2.name,Key=key)
+	if move:
+		changeStorageInDatabase(destStorageName,id)
+		print(f"removing original file {src}")
+		client.delete_object(Bucket=bucket1.name,Key=key)
+
+
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 #	debug(f"movefile({row},{path},{fromStorageName},{destStorageName})")
 #	try:
@@ -227,6 +245,8 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 			move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
 		elif storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='s3':
 			move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
+		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
+			move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
 		else:
 			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
 #	except Exception as e:
