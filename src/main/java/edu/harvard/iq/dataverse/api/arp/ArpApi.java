@@ -18,6 +18,7 @@ import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVe
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -729,38 +730,29 @@ public class ArpApi extends AbstractApiBean {
             return error(FORBIDDEN, "Authorized users only.");
         }
 
-        String importFormat = roCrateManager.importRoCrate(preProcessedRoCrate);
+        boolean updateDraft = dataset.getLatestVersion().isDraft();
+        DatasetVersion newVersion;
+        if (updateDraft) {
+            newVersion = dataset.getOrCreateEditVersion();
+        } else {
+            newVersion = new DatasetVersion();
+            newVersion.setDataset(dataset);
+            newVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
+        }
+        newVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
+        newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
+        boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(newVersion.getTermsOfUseAndAccess(), null);
+        if (!hasValidTerms) {
+            return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
+        }
+        roCrateManager.importRoCrate(preProcessedRoCrate, newVersion);
 
-        //region Copied from edu.harvard.iq.dataverse.api.Datasets.updateDraftVersion
-        try ( StringReader rdr = new StringReader(importFormat) ) {
+        try {
             DataverseRequest req = createDataverseRequest(findUserOrDie());
-            Dataset ds = datasetService.findByGlobalId(persistentId);
-            javax.json.JsonObject json = Json.createReader(rdr).readObject();
-            DatasetVersion incomingVersion = jsonParser().parseDatasetVersion(json);
-
-            // clear possibly stale fields from the incoming dataset version.
-            // creation and modification dates are updated by the commands.
-            incomingVersion.setId(null);
-            incomingVersion.setVersionNumber(null);
-            incomingVersion.setMinorVersionNumber(null);
-            incomingVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
-            incomingVersion.setDataset(ds);
-            incomingVersion.setCreateTime(null);
-            incomingVersion.setLastUpdateTime(null);
-            boolean updateDraft = ds.getLatestVersion().isDraft();
-
             DatasetVersion managedVersion;
             Dataset managedDataset;
             if (updateDraft) {
-                final DatasetVersion editVersion = ds.getOrCreateEditVersion();
-                editVersion.setDatasetFields(incomingVersion.getDatasetFields());
-                editVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
-                editVersion.getTermsOfUseAndAccess().setDatasetVersion(editVersion);
-                boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(editVersion.getTermsOfUseAndAccess(), null);
-                if (!hasValidTerms) {
-                    return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
-                }
-                var filesToBeDeleted = roCrateManager.updateFileMetadatas(editVersion.getDataset(), preProcessedRoCrate);
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(newVersion.getDataset(), preProcessedRoCrate);
                 if (!filesToBeDeleted.isEmpty()) {
                     for (FileMetadata markedForDelete : filesToBeDeleted) {
                         if (markedForDelete.getId() != null) {
@@ -769,18 +761,12 @@ public class ArpApi extends AbstractApiBean {
                     }
                     managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted));
                 } else {
-                    managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
+                    managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req));
                 }
                 managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
-                incomingVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
-                incomingVersion.getTermsOfUseAndAccess().setDatasetVersion(incomingVersion);
-                boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(incomingVersion.getTermsOfUseAndAccess(), null);
-                if (!hasValidTerms) {
-                    return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
-                }
-                var filesToBeDeleted = roCrateManager.updateFileMetadatas(ds, preProcessedRoCrate);
-                managedVersion = execCommand(new CreateDatasetVersionCommand(req, ds, incomingVersion));
+                var filesToBeDeleted = roCrateManager.updateFileMetadatas(dataset, preProcessedRoCrate);
+                managedVersion = execCommand(new CreateDatasetVersionCommand(req, dataset, newVersion));
                 if (!filesToBeDeleted.isEmpty()) {
                     for (FileMetadata markedForDelete : filesToBeDeleted) {
                         if (markedForDelete.getId() != null) {
@@ -789,16 +775,16 @@ public class ArpApi extends AbstractApiBean {
                     }
                     managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
                 }
-                indexService.indexDataset(ds, true);
+                indexService.indexDataset(dataset, true);
             }
 
             roCrateManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
-            return ok( json(managedVersion) );
+            String roCratePath = roCrateManager.getRoCratePath(managedVersion);
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
+            JsonObject updatedRoCrate = gson.fromJson(bufferedReader, JsonObject.class);
 
-        } catch (edu.harvard.iq.dataverse.util.json.JsonParseException ex) {
-            ex.printStackTrace();
-            logger.log(Level.SEVERE, "Semantic error parsing dataset version Json: " + ex.getMessage(), ex);
-            return error( Response.Status.BAD_REQUEST, "Error parsing dataset version: " + ex.getMessage() );
+            return ok( JsonUtil.getJsonObject(updatedRoCrate.toString()) );
 
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
@@ -808,7 +794,6 @@ public class ArpApi extends AbstractApiBean {
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
         }
-        //endregion
     }
 
 }
