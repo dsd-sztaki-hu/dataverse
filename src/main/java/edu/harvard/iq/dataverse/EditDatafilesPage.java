@@ -2194,6 +2194,8 @@ public class EditDatafilesPage implements java.io.Serializable {
                 }
                 
             }
+        } else {
+            roCrateUploadService.reset();
         }
     }
 
