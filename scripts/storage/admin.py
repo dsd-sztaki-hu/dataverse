@@ -2,6 +2,7 @@
 
 import configparser
 import psycopg2
+import psycopg2.extras
 import sys, os, io, re
 import pprint, argparse, subprocess
 from stat import *
@@ -14,6 +15,9 @@ import boto3
 import tempfile
 from var_dump import var_dump
 from icecream import ic
+from rich.console import Console
+from rich.table import Table
+
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara5")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
@@ -24,7 +28,7 @@ def getList(args):
 	if args['type']=='storage':
 		return getStorageDict()
 	if args['type']=='dataverse':
-		q="""SELECT id, alias, description, storagedriver FROM dataverse NATURAL JOIN dvobject WHERE true"""
+		q="""SELECT id, alias, description, storagedriver, 'dataverse' as type FROM dataverse NATURAL JOIN dvobject WHERE true"""
 		if args['ids'] is not None:
 			q+=" AND id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
@@ -34,7 +38,7 @@ def getList(args):
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
-		q="""SELECT ds1.id, dvo1.identifier, sum(filesize), dvo1.storageidentifier FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
+		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize) FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
 		     WHERE true"""
 		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier"
 		if args['ownerid'] is not None:
@@ -47,7 +51,7 @@ def getList(args):
 			q+=" AND ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '"+args['storage']+"://%')"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
-		q="SELECT dvo.id, directorylabel, label, filesize, owner_id, dvo.storageidentifier FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
+		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
 		if args['ids'] is not None:
 			q+=" AND dvo.id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
@@ -64,14 +68,28 @@ def getList(args):
 		args.update({'command':'getList'})
 		recurseOut=[]
 		for r in records:
-			recurseOut+=recurse(args,r[0])
+			recurseOut+=recurse(args,r['id'])
 		records+=recurseOut
 	return records
 
 def ls(args):
 	records=getList(args)
+
+	table = Table(show_header=True, header_style="bold magenta")
+#	for k in records[0].keys():
+#		table.add_column(k,**({'justify': "right"} if k=='id' else {'justify': "left"}))
+	table.add_column('id',justify="right")
+	table.add_column('alias/dir')
+	table.add_column('description/filename')
+	table.add_column('storage')
+	table.add_column('type')
+	table.add_column('size',justify="right")
+	table.add_column('ownerid',justify="right")
 	for r in records:
-		print(r)
+		table.add_row(*[str(v) for v in r.values()])
+	console = Console()
+	console.print(table)
+
 	return records
 
 def changeStorageInDatabase(destStorageName,id,type='datafile'):
@@ -110,8 +128,8 @@ def destinationFileChecks(dst,destStoragePath,filesize,id):
 
 def moveFileChecks(row,path,fromStorageName,destStorageName):
 	storageDict=getStorageDict()
-	src=path[0]+path[1]
-	dst=storageDict[destStorageName]['path']+path[1]
+	src=path[0]+"/"+path[1]
+	dst=storageDict[destStorageName]['path']+"/"+path[1]
 	id=str(row[0])
 	if src==dst:
 		print(f"Skipping object {id}, as already in storage "+destStorageName)
@@ -119,7 +137,7 @@ def moveFileChecks(row,path,fromStorageName,destStorageName):
 	if not os.path.exists(src):
 		print("Skipping non-existent source file: "+src)
 		return None,None
-	if not destinationFileChecks(dst,destStoragePath,row[3],row[0]):
+	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3],row[0]):
 		return None,None
 	return src,dst
 
@@ -260,12 +278,12 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 #		print(f"moving file {row[1]} (id: {row[0]}) caused an exception: {e}")
 
 def cp(args):
-	mv_or_cp(args)
+	mv_or_cp(args,move=False)
 
 def mv(args):
-	mv_or_cp(args)
+	mv_or_cp(args,move=True)
 
-def mv_or_cp(args):
+def mv_or_cp(args,move):
 	if args['to_storage'] is None:
 		print("ERROR: --to-storage is missing")
 		exit(1)
@@ -275,16 +293,14 @@ def mv_or_cp(args):
 		pprint.PrettyPrinter(indent=4,width=10).pprint(storages)
 		exit(1)
 	objectsToMove=getList(args)
-	if args['type']=='datafile':
-		filePaths=get_filepaths(idlist=[str(x[0]) for x in objectsToMove],separatePaths=True)
-		for row in objectsToMove:
-			move_or_copy_file(row,filePaths[row[0]],args['storage'],args['to_storage'],args['command'].__name__=='mv')
-	elif args['command'].__name__=='mv':
-		ic(objectsToMove)
-		for row in objectsToMove:
-			debug(row)
-			changeStorageInDatabase(args['to_storage'],row[0],args['type'])
-			recurse(args,row[0])
+	ic(objectsToMove,args['type'])
+	filePaths=get_filepaths(idlist=[str(x['id']) for x in objectsToMove],separatePaths=True)
+	for row in objectsToMove:
+		ic(row)
+		if row['type']=='datafile':
+			move_or_copy_file(row,filePaths[row['id']],args['storage'],args['to_storage'],move)
+		elif move:
+			changeStorageInDatabase(args['to_storage'],row['id'],row['type'])
 
 def get_new_args(args, id=None, ownerid=None, ownername=None, type='dataverse'):
 	return {
@@ -312,7 +328,7 @@ def recurse(args, id):
 def fsck(args):
 	if args['storage'] is not None or args['ownerid'] is not None or args['ids'] is not None:
 		filesToCheck=getList(args)
-		filepaths=get_filepaths([str(x[0]) for x in filesToCheck])
+		filepaths=get_filepaths([str(x['id']) for x in filesToCheck])
 	else:
 		filepaths=get_filepaths()
 	debug(filesToCheck)
@@ -324,7 +340,7 @@ def fsck(args):
 		try:
 			debug('fscking: ',id=f, metadata=filepaths[f])
 			if storages[filepaths[f][2]]['type']=='file':
-				fp=storages[filepaths[f][2]]['path']+filepaths[f][1]
+				fp=storages[filepaths[f][2]]['path']+"/"+filepaths[f][1]
 				if not S_ISREG(os.stat(fp).st_mode):
 					print(filepaths[f] + " is not a normal file!")
 					errors+=1
@@ -332,7 +348,9 @@ def fsck(args):
 				bucket,conn=getS3BucketAndClient(filepaths[f][2])
 				#oa=client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
 				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f][1])['Contents'][0]
-				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0][3]:
+				ic(getList(get_new_args(args,id=f,type="datafile"))[0])
+				exit(2)
+				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0]['filesize']:
 					print(f"size mismatch for {filepaths[f]}  id: {f}!")
 					errors+=1
 				else:
@@ -399,8 +417,9 @@ def debug(*debug,**kdebug):
 def get_records_for_query(query):
 	debug(query)
 	dataverse_db_connection = create_database_connection()
-	cursor = dataverse_db_connection.cursor()
+	cursor = dataverse_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 	cursor.execute(query)
+#	columns = list(cursor.description)
 	records = cursor.fetchall()
 	dataverse_db_connection.close()
 	return records
@@ -415,7 +434,7 @@ def sql_update(query, params):
 def get_filepaths(idlist=None,separatePaths=True):
 	storages=getStorageDict()
 
-	query="""SELECT f.id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1'), REGEXP_REPLACE(s.storageidentifier,'^[^:]*://','') || '/' || REGEXP_REPLACE(REGEXP_REPLACE(f.storageidentifier,'^[^:]*://',''),'^[^:]*:','')
+	query="""SELECT f.id as id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1') as fpath, REGEXP_REPLACE(s.storageidentifier,'^[^:]*://','') || '/' || REGEXP_REPLACE(REGEXP_REPLACE(f.storageidentifier,'^[^:]*://',''),'^[^:]*:','') as fullpath
 	         FROM dvobject f, dvobject s
 	         WHERE f.dtype='DataFile' AND f.owner_id=s.id"""
 	if idlist is not None:
@@ -426,9 +445,9 @@ def get_filepaths(idlist=None,separatePaths=True):
 	result={}
 	for r in records:
 		if separatePaths:
-			result.update({r[0] : (storages[r[1]]['path'],r[2],r[1])})
+			result.update({r['id'] : (storages[r['fpath']]['path'],r['fullpath'],r['fpath'])})
 		else:
-			result.update({r[0] : storages[r[1]]['path']+r[2]})
+			result.update({r['id'] : storages[r['fpath']]['path']+r['fullpath']})
 	return result
 
 COMMANDS={
