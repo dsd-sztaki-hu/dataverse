@@ -30,10 +30,9 @@ def getList(args):
 		if args['ownerid'] is not None:
 			q+=" AND owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
-			q+=" AND ds1.id IN (SELECT DISTINCT id FROM dvobject WHERE owner_id IN (SELECT id FROM dataverse WHERE alias='"+args['ownername']+"'"+"))"
+			q+=" AND id IN (SELECT DISTINCT id FROM dvobject WHERE owner_id IN (SELECT id FROM dataverse WHERE alias='"+args['ownername']+"'"+"))"
 		if args['storage'] is not None:
-			q+=""" AND id IN
-			       (SELECT DISTINCT owner_id FROM dataset NATURAL JOIN dvobject WHERE storageidentifier LIKE '"""+args['storage']+"""://%')"""
+			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
 		q="""SELECT ds1.id, dvo1.identifier, sum(filesize) FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
 		     WHERE true"""
@@ -59,6 +58,7 @@ def getList(args):
 			# q+= TODO
 		if args['storage'] is not None:
 			q+=" AND storageidentifier LIKE '"+args['storage']+"://%' ORDER BY owner_id"
+	
 	records=get_records_for_query(q)
 	if args['recursive']:
 		args.update({'command':'getList'})
@@ -72,23 +72,28 @@ def ls(args):
 	records=getList(args)
 	for r in records:
 		print(r)
+	return records
 
-def changeStorageInDatabase(destStorageName,id):
-	query="UPDATE dvobject SET storageidentifier=REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(storageidentifier,'^[^:]*://',%s||'://'),'://[0-9a-zA-Z_-]*:','://'),'://','://'"
-	try:
-		ic("aaaaaaaaaaaaa")
-		bucketName=(getS3Bucket(destStorageName,silent=True).name)+":"
-		query+="||%s"
-		paramTuple=(destStorageName,bucketName,id)
-	except: # Exception as e:
-		ic("bbbbbbbbbb")
+def changeStorageInDatabase(destStorageName,id,type='datafile'):
+	storages=getStorageDict()
+	if type=='dataverse':
+		query="UPDATE dataverse SET storagedriver=%s "
 		paramTuple=(destStorageName,id)
-		#raise e
-	query+=") WHERE id=%s"
-#	query=f"storageidentifier=REPLACE(storageidentifier,'${fromStorageName}://','{destStorageName}://')"
-	ic(query,paramTuple)
+	else:
+		query="UPDATE dvobject SET storageidentifier=REGEXP_REPLACE(REGEXP_REPLACE(REGEXP_REPLACE(storageidentifier,'^[^:]*://',%s||'://'),'://[0-9a-zA-Z_-]*:','://'),'://','://'"
+		try:
+			bucketName=(getS3Bucket(destStorageName,silent=True).name)+":"
+			query+="||%s"
+			paramTuple=(destStorageName,bucketName,id)
+		except: # Exception as e:
+			paramTuple=(destStorageName,id)
+			#raise e
+		query+=") "
+	query+="WHERE id=%s"
+	#	query=f"storageidentifier=REPLACE(storageidentifier,'${fromStorageName}://','{destStorageName}://')"
+#	ic(query,paramTuple)
 	print("updating database: "+(query%paramTuple))
-#	exit(0)
+	#	exit(0)
 	sql_update(query,paramTuple)
 
 
@@ -272,10 +277,11 @@ def mv_or_cp(args):
 		filePaths=get_filepaths(idlist=[str(x[0]) for x in objectsToMove],separatePaths=True)
 		for row in objectsToMove:
 			move_or_copy_file(row,filePaths[row[0]],args['storage'],args['to_storage'],args['command'].__name__=='mv')
-	elif args['command']=='mv' or args['command']=='move':
+	elif args['command'].__name__=='mv':
+		ic(objectsToMove)
 		for row in objectsToMove:
 			debug(row)
-			changeStorageInDatabase(args['to_storage'],row[0])
+			changeStorageInDatabase(args['to_storage'],row[0],args['type'])
 			recurse(args,row[0])
 
 def get_new_args(args, id=None, ownerid=None, ownername=None, type='dataverse'):
@@ -439,7 +445,6 @@ def main():
 	types=["storage","dataverse","dataset","datafile"]
 #	print COMMANDS.keys()
 
-	argv = sys.argv[2:]
 	ap = argparse.ArgumentParser()
 	ap.add_argument("command", choices=COMMANDS.keys(), help="what to do")
 	ap.add_argument("-n", "--name", required=False, help="name of the object")
@@ -451,9 +456,8 @@ def main():
 	ap.add_argument("--to-storage", required=False, help="move to the datastore of this name, required for move")
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	args = vars(ap.parse_args())
-#	opts, args = getopt.getopt(argv, 'type:id:name:')
 
-	print(args)
+	ic(args)
 	args['command']=COMMANDS[args['command']]
 	#ic(COMMANDS[args['command']].__name__)
 	args['command'](args)
