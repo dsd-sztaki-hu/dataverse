@@ -24,7 +24,7 @@ def getList(args):
 	if args['type']=='storage':
 		return getStorageDict()
 	if args['type']=='dataverse':
-		q="""SELECT id, alias, description FROM dataverse NATURAL JOIN dvobject WHERE true"""
+		q="""SELECT id, alias, description, storagedriver FROM dataverse NATURAL JOIN dvobject WHERE true"""
 		if args['ids'] is not None:
 			q+=" AND id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
@@ -34,9 +34,9 @@ def getList(args):
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
-		q="""SELECT ds1.id, dvo1.identifier, sum(filesize) FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
+		q="""SELECT ds1.id, dvo1.identifier, sum(filesize), dvo1.storageidentifier FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
 		     WHERE true"""
-		end=" GROUP BY ds1.id,dvo1.identifier"
+		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier"
 		if args['ownerid'] is not None:
 			q+=" AND dvo1.owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
@@ -47,7 +47,7 @@ def getList(args):
 			q+=" AND ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '"+args['storage']+"://%')"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
-		q="SELECT dvo.id, directorylabel, label, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
+		q="SELECT dvo.id, directorylabel, label, filesize, owner_id, dvo.storageidentifier FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
 		if args['ids'] is not None:
 			q+=" AND dvo.id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
@@ -252,6 +252,8 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 			move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
 		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
 			move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
+		elif storageDict[fromStorageName]["type"]=='swift' and storageDict[destStorageName]["type"]=='swift':
+			print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
 		else:
 			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
 #	except Exception as e:
