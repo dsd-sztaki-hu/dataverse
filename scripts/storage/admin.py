@@ -277,7 +277,7 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 			move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
 		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
 			move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
-		elif storageDict[fromStorageName]["type"]=='swift' and storageDict[destStorageName]["type"]=='swift':
+		elif storageDict[fromStorageName]["type"]=='swift' or storageDict[destStorageName]["type"]=='swift':
 			print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
 		else:
 			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
