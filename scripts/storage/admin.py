@@ -137,14 +137,14 @@ def moveFileChecks(row,path,fromStorageName,destStorageName):
 	storageDict=getStorageDict()
 	src=path[0]+"/"+path[1]
 	dst=storageDict[destStorageName]['path']+"/"+path[1]
-	id=str(row[0])
+	id=str(row['id'])
 	if src==dst:
 		print(f"Skipping object {id}, as already in storage "+destStorageName)
 		return None,None
 	if not os.path.exists(src):
 		print("Skipping non-existent source file: "+src)
 		return None,None
-	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3],row[0]):
+	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row['filesize'],row['id']):
 		return None,None
 	return src,dst
 
@@ -217,9 +217,9 @@ def getS3BucketAndClient(storageName):
 
 def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
-	id=str(row[0])
+	id=str(row['id'])
 	dst=storageDict[destStorageName]['path']+"/"+path[1]
-	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row[3],id):
+	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row['filesize'],id):
 		return
 	bucket,client=getS3BucketAndClient(fromStorageName)
 	key=path[1]
