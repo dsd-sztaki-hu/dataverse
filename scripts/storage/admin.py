@@ -155,7 +155,7 @@ def move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName
 	print(f"copying from {src} to {dst}")
 	shutil.copyfile(src, dst)
 	if move:
-		changeStorageInDatabase(destStorageName,row[0])
+		changeStorageInDatabase(destStorageName,row['id'])
 		print(f"removing original file {src}")
 		os.remove(src)
 
@@ -234,7 +234,7 @@ def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,m
 
 def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
-	id=str(row[0])
+	id=str(row['id'])
 #	ic(storageDict[destStorageName]['path'],path[1])
 	src=storageDict[fromStorageName]['path']+"/"+path[1]
 	bucket,client=getS3BucketAndClient(destStorageName)
@@ -250,7 +250,7 @@ def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,m
 
 def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
-	id=str(row[0])
+	id=str(row['id'])
 	bucket1,client1=getS3BucketAndClient(fromStorageName)
 	bucket2,client2=getS3BucketAndClient(destStorageName)
 	key=path[1]
@@ -282,7 +282,7 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 		else:
 			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
 #	except Exception as e:
-#		print(f"moving file {row[1]} (id: {row[0]}) caused an exception: {e}")
+#		print(f"moving file {row['1']} (id: {row['id']}) caused an exception: {e}")
 
 def cp(args):
 	mv_or_cp(args,move=False)
