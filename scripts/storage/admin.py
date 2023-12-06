@@ -76,17 +76,24 @@ def ls(args):
 	records=getList(args)
 
 	table = Table(show_header=True, header_style="bold magenta")
-#	for k in records[0].keys():
-#		table.add_column(k,**({'justify': "right"} if k=='id' else {'justify': "left"}))
-	table.add_column('id',justify="right")
-	table.add_column('alias/dir')
-	table.add_column('description/filename')
-	table.add_column('storage')
-	table.add_column('type')
-	table.add_column('size',justify="right")
-	table.add_column('ownerid',justify="right")
-	for r in records:
-		table.add_row(*[str(v) for v in r.values()])
+	if args['type']=='storage':
+		ic(list(records))
+		for k in records[list(records)[0]].keys():
+			table.add_column(k,**({'justify': "right"} if k=='freeMegabytes' or k=='freePercent' else {'justify': "left"}))
+		for r in records.values():
+			table.add_row(*[str(v) for v in r.values()])
+	else:
+		table = Table(show_header=True, header_style="bold magenta")
+		table.add_column('id',justify="right")
+		table.add_column('alias/dir')
+		table.add_column('description/filename')
+		table.add_column('storage')
+		table.add_column('type')
+		table.add_column('size',justify="right")
+		table.add_column('ownerid',justify="right")
+		for r in records:
+			table.add_row(*[str(v) for v in r.values()])
+
 	console = Console()
 	console.print(table)
 
@@ -398,7 +405,9 @@ def calculateStorageDict():
 			storage["freeMegabytes"]=subprocess.run("df -m "+storage["path"]+" --output=avail| tail -n1", shell=True, capture_output=True, text=True).stdout.splitlines()[0]
 			storage["freePercent"]=subprocess.run("df "+storage["path"]+" --output=pcent|tail -n1", shell=True, capture_output=True, text=True).stdout.splitlines()[0]
 		elif len(storageDirectoryOutput)==0:
-			storage["path"]=None
+			storage["path"]=''
+			storage["freeMegabytes"]=''
+			storage["freePercent"]=''
 		else:
 			print(f"ERROR: len(storageDirectoryOutput)=={len(storageDirectoryOutput)}, it should be 0 or 1!!!")
 			exit(1)
