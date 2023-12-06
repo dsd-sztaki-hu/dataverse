@@ -25,6 +25,13 @@ DEBUG_ENABLED=True
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
+	if args['type']==None and args['ids'] is not None:
+		types=get_records_for_query("SELECT lower(dtype) as type FROM dvobject WHERE id IN ("+args['ids']+")")
+		if len(types)<1:
+			print(f"There is no dvobject with id {args['ids']}; aborting!")
+			exit(1)
+		args['type']=types[0]['type']
+
 	if args['type']=='storage':
 		return getStorageDict()
 	if args['type']=='dataverse':
