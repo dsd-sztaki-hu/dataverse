@@ -135,8 +135,8 @@ def destinationFileChecks(dst,destStoragePath,filesize,id):
 
 def moveFileChecks(row,path,fromStorageName,destStorageName):
 	storageDict=getStorageDict()
-	src=path[0]+"/"+path[1]
-	dst=storageDict[destStorageName]['path']+"/"+path[1]
+	src=path['storagepath']+"/"+path['fullpath']
+	dst=storageDict[destStorageName]['path']+"/"+path['fullpath']
 	id=str(row['id'])
 	if src==dst:
 		print(f"Skipping object {id}, as already in storage "+destStorageName)
@@ -218,11 +218,11 @@ def getS3BucketAndClient(storageName):
 def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
 	id=str(row['id'])
-	dst=storageDict[destStorageName]['path']+"/"+path[1]
+	dst=storageDict[destStorageName]['path']+"/"+path['fullpath']
 	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row['filesize'],id):
 		return
 	bucket,client=getS3BucketAndClient(fromStorageName)
-	key=path[1]
+	key=path['fullpath']
 	print(f"copying from {fromStorageName}://{key} to {dst}")
 #	ic(bucket,bucket.name)
 #	debug(client.list_objects(Bucket=bucket.name))
@@ -236,9 +236,9 @@ def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,m
 	storageDict=getStorageDict()
 	id=str(row['id'])
 #	ic(storageDict[destStorageName]['path'],path[1])
-	src=storageDict[fromStorageName]['path']+"/"+path[1]
+	src=storageDict[fromStorageName]['path']+"/"+path['fullpath']
 	bucket,client=getS3BucketAndClient(destStorageName)
-	key=path[1]
+	key=path['fullpath']
 	print(f"copying from {src} to {destStorageName}://{key}")
 #	ic(bucket,bucket.name)
 #	debug(client.list_objects(Bucket=bucket.name))
@@ -253,7 +253,7 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 	id=str(row['id'])
 	bucket1,client1=getS3BucketAndClient(fromStorageName)
 	bucket2,client2=getS3BucketAndClient(destStorageName)
-	key=path[1]
+	key=path['fullpath']
 	print(f"copying from {fromStorageName}://{key} to {destStorageName}://{key}")
 	with tempfile.TemporaryFile() as fp:
 		client1.download_fileobj(Fileobj=fp,Bucket=bucket1.name,Key=key)
@@ -305,6 +305,7 @@ def mv_or_cp(args,move):
 	for row in objectsToMove:
 		ic(row)
 		if row['type']=='datafile':
+			ic(filePaths[row['id']])
 			move_or_copy_file(row,filePaths[row['id']],args['storage'],args['to_storage'],move)
 		elif move:
 			changeStorageInDatabase(args['to_storage'],row['id'],row['type'])
@@ -346,24 +347,24 @@ def fsck(args):
 	for f in filepaths:
 		try:
 			debug('fscking: ',id=f, metadata=filepaths[f])
-			if storages[filepaths[f][2]]['type']=='file':
-				fp=storages[filepaths[f][2]]['path']+"/"+filepaths[f][1]
+			if storages[filepaths[f]['storage']]['type']=='file':
+				fp=storages[filepaths[f]['storage']]['path']+"/"+filepaths[f]['fullpath']
 				if not S_ISREG(os.stat(fp).st_mode):
 					print(filepaths[f] + " is not a normal file!")
 					errors+=1
-			elif storages[filepaths[f][2]]['type']=='s3':
-				bucket,conn=getS3BucketAndClient(filepaths[f][2])
+			elif storages[filepaths[f]['storage']]['type']=='s3':
+				bucket,conn=getS3BucketAndClient(filepaths[f]['storage'])
 				#oa=client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
-				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f][1])['Contents'][0]
+				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f]['fullpath'])['Contents'][0]
 				ic(getList(get_new_args(args,id=f,type="datafile"))[0])
 				exit(2)
 				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0]['filesize']:
 					print(f"size mismatch for {filepaths[f]}  id: {f}!")
 					errors+=1
 				else:
-					debug(f"OK {filepaths[f][1]}")
+					debug(f"OK {filepaths[f]['fullpath']}")
 			else:
-				print(f"fsck not implemented yet for {storages[filepaths[f][2]]['type']}!")
+				print(f"fsck not implemented yet for {storages[filepaths[f]['storage']]['type']}!")
 				skipped+=1
 		except Exception as e:
 			print(f"cannot stat {filepaths[f]}  id: {f}")
@@ -443,7 +444,7 @@ def sql_update(query, params):
 def get_filepaths(idlist=None,separatePaths=True):
 	storages=getStorageDict()
 
-	query="""SELECT f.id as id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1') as fpath, REGEXP_REPLACE(s.storageidentifier,'^[^:]*://','') || '/' || REGEXP_REPLACE(REGEXP_REPLACE(f.storageidentifier,'^[^:]*://',''),'^[^:]*:','') as fullpath
+	query="""SELECT f.id as id, REGEXP_REPLACE(f.storageidentifier,'^([^:]*)://.*','\\1') as storage, REGEXP_REPLACE(REGEXP_REPLACE(s.storageidentifier,'^[^:]*://',''),'^[^:]*:','') || '/' || REGEXP_REPLACE(REGEXP_REPLACE(f.storageidentifier,'^[^:]*://',''),'^[^:]*:','') as fullpath
 	         FROM dvobject f, dvobject s
 	         WHERE f.dtype='DataFile' AND f.owner_id=s.id"""
 	if idlist is not None:
@@ -454,7 +455,9 @@ def get_filepaths(idlist=None,separatePaths=True):
 	result={}
 	for r in records:
 		if separatePaths:
-			result.update({r['id'] : (storages[r['fpath']]['path'],r['fullpath'],r['fpath'])})
+			ic(storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
+			result.update({r['id'] : {'storagepath': storages[r['storage']]['path'], 'fullpath': r['fullpath'], 'storage': r['storage']}})
+#			exit(3)
 		else:
 			result.update({r['id'] : storages[r['fpath']]['path']+r['fullpath']})
 	return result
