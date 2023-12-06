@@ -38,9 +38,9 @@ def getList(args):
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
-		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize) FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
+		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
 		     WHERE true"""
-		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier"
+		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier,dvo1.owner_id"
 		if args['ownerid'] is not None:
 			q+=" AND dvo1.owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
@@ -48,7 +48,7 @@ def getList(args):
 		if args['ids'] is not None:
 			q+=" AND ds1.id in ("+args['ids']+")"
 		if args['storage'] is not None:
-			q+=" AND ds1.id IN (SELECT DISTINCT owner_id FROM dvobject WHERE storageidentifier LIKE '"+args['storage']+"://%')"
+			q+=" AND dvo1.storageidentifier LIKE '"+args['storage']+"://%'"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
 		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
