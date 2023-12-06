@@ -25,12 +25,7 @@ DEBUG_ENABLED=True
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
-	if args['type']==None and args['ids'] is not None:
-		types=get_records_for_query("SELECT lower(dtype) as type FROM dvobject WHERE id IN ("+args['ids']+")")
-		if len(types)<1:
-			print(f"There is no dvobject with id {args['ids']}; aborting!")
-			exit(1)
-		args['type']=types[0]['type']
+	autodetect_type(args)
 
 	if args['type']=='storage':
 		return getStorageDict()
@@ -307,6 +302,7 @@ def mv_or_cp(args,move):
 		pprint.PrettyPrinter(indent=4,width=10).pprint(storages)
 		exit(1)
 	objectsToMove=getList(args)
+	autodetect_storage(args)
 	ic(objectsToMove,args['type'])
 	filePaths=get_filepaths(idlist=[str(x['id']) for x in objectsToMove],separatePaths=True)
 	for row in objectsToMove:
@@ -469,6 +465,25 @@ def get_filepaths(idlist=None,separatePaths=True):
 			result.update({r['id'] : storages[r['fpath']]['path']+r['fullpath']})
 	return result
 
+def autodetect_type(args):
+	if args['type']==None and args['ids'] is not None:
+		types=get_records_for_query("SELECT lower(dtype) as type FROM dvobject WHERE id IN ("+args['ids']+")")
+		if len(types)<1:
+			print(f"There is no dvobject with id {args['ids']}; aborting!")
+			exit(1)
+		args['type']=types[0]['type']
+
+def autodetect_storage(args):
+	if args['storage']==None and args['ids'] is not None:
+		if args['type']=='dataverse':
+			args['storage']=get_records_for_query("SELECT storagedriver as storage FROM dataverse WHERE id IN ("+args['ids']+")")[0]['storage']
+		else:
+			args['storage']=get_records_for_query("SELECT REGEXP_REPLACE(storageidentifier,':.*','') as storage FROM dvobject WHERE id IN ("+args['ids']+")")[0]['storage']
+
+def autodetect_params(args):
+	autodetect_type(args)
+	autodetect_storage(args)
+
 COMMANDS={
 	"list" : ls,
 	"ls" : ls,
@@ -498,6 +513,7 @@ def main():
 	args = vars(ap.parse_args())
 
 	ic(args)
+#	autodetect_params(args)
 	args['command']=COMMANDS[args['command']]
 	#ic(COMMANDS[args['command']].__name__)
 	args['command'](args)
