@@ -51,7 +51,7 @@ def getList(args):
 			q+=" AND dvo1.storageidentifier LIKE '"+args['storage']+"://%'"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
-		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN filemetadata fm ON dvo.id=fm.datafile_id WHERE true"
+		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN (SELECT datafile_id,label,directorylabel,MAX(datasetversion_id) FROM filemetadata GROUP BY datafile_id,label,directorylabel) fm ON dvo.id=fm.datafile_id WHERE true"
 		if args['ids'] is not None:
 			q+=" AND dvo.id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
