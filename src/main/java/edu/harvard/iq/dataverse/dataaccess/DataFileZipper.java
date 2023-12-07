@@ -19,11 +19,16 @@
 */
 package edu.harvard.iq.dataverse.dataaccess;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 
 
 import edu.harvard.iq.dataverse.DataFile;
+import edu.harvard.iq.dataverse.Dataset;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.util.BundleUtil;
+
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -203,6 +208,41 @@ public class DataFileZipper {
             return byteSize;
         }
         return 0L;
+    }
+    
+    public void addRoCrateToZipStream(byte[] roCrateBytes, String fileName, String mimeType) throws IOException {
+        if (zipOutputStream == null) {
+            openZipStream();
+        }
+
+        boolean createManifest = fileManifest != null;
+
+        long byteSize = 0;
+
+        InputStream instream = new ByteArrayInputStream(roCrateBytes);
+        
+        ZipEntry e = new ZipEntry(fileName);
+        logger.fine("created new zip entry for " + fileName);
+
+        zipOutputStream.putNextEntry(e);
+
+        byte[] data = new byte[8192];
+
+        int i = 0;
+        while ((i = instream.read(data)) > 0) {
+            zipOutputStream.write(data, 0, i);
+            logger.fine("wrote " + i + " bytes;");
+
+            byteSize += i;
+            zipOutputStream.flush();
+        }
+        instream.close();
+        zipOutputStream.closeEntry();
+        logger.fine("closed zip entry for " + fileName);
+
+        if (createManifest) {
+            addToManifest(fileName + " (" + mimeType + ") " + byteSize + " bytes.\r\n");
+        }
     }
     
     public void finalizeZipStream() throws IOException {

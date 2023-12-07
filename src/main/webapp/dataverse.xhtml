@@ -97,8 +97,7 @@
                                                      style="display:none"
                                                      process="@this :dataverseForm:selectHostDataverse"
                                                      update=":dataverseForm,:breadCrumbPanel"
-                                                     action="#{DataversePage.updateOwnerDataverse()}"
-                                                     oncomplete="bind_bsui_components();">
+                                                     action="#{DataversePage.updateOwnerDataverse()}">
                                     </p:commandButton>
                                 </div>
                             </div>
@@ -221,15 +220,13 @@
                                                         <!-- Add / Remove buttons -->
                                                         <div class="col-xs-3 form-col-container field-add-delete">
                                                             <p:commandLink styleClass="btn btn-default btn-sm bootstrap-button-tooltip" title="#{bundle.add}"
-                                                                             actionListener="#{DataversePage.dataverse.addDataverseContact(valCount.index + 1)}"
-                                                                             oncomplete="javascript:bind_bsui_components();">
+                                                                             actionListener="#{DataversePage.dataverse.addDataverseContact(valCount.index + 1)}">
                                                                 <f:param name="SKIP_VALIDATION" value="true"/>
                                                                 <h:outputText styleClass="glyphicon glyphicon-plus no-text"/>
                                                             </p:commandLink>
                                                             <p:commandLink styleClass="btn btn-default btn-sm bootstrap-button-tooltip" title="#{bundle.delete}"
                                                                              rendered="#{DataversePage.dataverse.dataverseContacts.size() > 1}"
-                                                                             actionListener="#{DataversePage.dataverse.removeDataverseContact(valCount.index)}"
-                                                                             oncomplete="javascript:bind_bsui_components();">
+                                                                             actionListener="#{DataversePage.dataverse.removeDataverseContact(valCount.index)}">
                                                                 <f:param name="SKIP_VALIDATION" value="true"/>
                                                                 <h:outputText styleClass="glyphicon glyphicon-minus no-text"/>
                                                             </p:commandLink>
@@ -323,16 +320,14 @@
                                                                    update="@widgetVar(optionBlock)"
                                                                    process="@this"
                                                                    rendered="#{!mdb.showDatasetFieldTypes and (mdb.selected or mdb.required) and !DataversePage.openMetadataBlock and !DataversePage.inheritMetadataBlockFromParent}"
-                                                                   actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id)}"
-                                                                   oncomplete="javascript:bind_bsui_components();">
+                                                                   actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id)}">
                                                          <h:outputText value="#{bundle['dataverse.field.set.tip']}" />
                                                      </p:commandLink>
                                                      <p:commandLink id="viewDSFT" style="margin-left:1em;"
                                                                     update="@widgetVar(optionBlock)"
                                                                     process="@this"
                                                                     rendered="#{!mdb.showDatasetFieldTypes and (!mdb.selected or DataversePage.inheritMetadataBlockFromParent)   and !DataversePage.openMetadataBlock}"
-                                                                    actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id, false)}"
-                                                                    oncomplete="javascript:bind_bsui_components();">
+                                                                    actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id, false)}">
                                                          <h:outputText value="#{bundle['dataverse.field.set.view']}" />
                                                      </p:commandLink>
                                                 </label>
@@ -374,7 +369,6 @@
                                                 <p:commandLink id="hideDSFT" styleClass="btn btn-default" 
                                                                process="@this @widgetVar(optionBlock)"
                                                                update="@widgetVar(optionBlock)" actionListener="#{DataversePage.hideDatasetFieldTypes(mdb.id)}" 
-                                                               oncomplete="javascript:bind_bsui_components();"
                                                                rendered="#{mdb.showDatasetFieldTypes}">
                                                     <h:outputText value="#{bundle.done}" />
                                                 </p:commandLink>
@@ -532,7 +526,7 @@
                                                     </li>
                                                     <li class="divider" role="presentation"></li>
                                                     <li>
-                                                        <p:commandLink id="editInfo" actionListener="#{DataversePage.edit('INFO')}" update=":dataverseForm,:searchResults,:messagePanel" oncomplete="javascript:bind_bsui_components();">
+                                                        <p:commandLink id="editInfo" actionListener="#{DataversePage.edit('INFO')}" update=":dataverseForm,:searchResults,:messagePanel">
                                                             <h:outputText value="#{bundle['dataverse.option.generalInfo']}" />
                                                         </p:commandLink>
                                                     </li>
@@ -598,7 +592,7 @@
                             <o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
                             <div class="row margin-bottom" jsf:rendered="#{!empty DataversePage.dataverse.description and !widgetWrapper.widgetView}">
                                 <div id="dataverseDesc" class="col-xs-12">
-                                    <h:outputText value="#{MarkupChecker:sanitizeBasicHTML(DataversePage.dataverse.description)}" escape="false"/>
+                                   <h:outputText value="#{MarkupChecker:sanitizeBasicHTML(DataversePage.dataverse.description)}" escape="false"/>
                                 </div>
                             </div>
                             <!-- Featured Dataverses Carousel -->
@@ -828,12 +822,14 @@
                     </div>
                     </h:form>
                 </p:dialog>
+                <c:set var="descriptionText" value="#{bundle.description}" />
                 <script>
                     //<![CDATA[
                     var scrollPos=0;
                     $(document).ready(function () {
                         initCarousel();
                         popoverHTML('#{bundle.htmlAllowedTitle}','#{bundle.htmlAllowedTags}');
+                        summarizeDesc();
                     });
                     function initCarousel() {
                         var owl1 = $("#featuredDataversesList");
@@ -858,6 +854,18 @@
                             $("#featuredDataversesBlock .customNavigation a.btn").hide();
                         }
                         $('#featuredDataversesList .item').matchHeight();
+                    }
+                    function summarizeDesc() {
+                        // truncate summary description, contentTruncate function in dv_rebind_bootstrap_ui.js
+                        // add id to pass as selector param
+                        var descId = 'dataverseDesc';
+                        // add metadata dynamic label text, tooltip text from bundle as param
+                        var truncMoreBtn = '#{of:format1(bundle.truncateMoreBtn, descriptionText)}';
+                        var truncMoreTip = '#{of:format1(bundle.truncateMoreTip, descriptionText)}';
+                        var truncLessBtn = '#{of:format1(bundle.truncateLessBtn, descriptionText)}';
+                        var truncLessTip = '#{of:format1(bundle.truncateLessTip, descriptionText)}';
+                        // pass bundle text variables as params to function
+                        contentTruncate(descId, truncMoreBtn, truncMoreTip, truncLessBtn, truncLessTip);
                     }
                     function callOnError(){
                         window.scrollTo(0, 0);

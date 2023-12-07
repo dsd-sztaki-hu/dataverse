@@ -226,6 +226,7 @@
                                                 </div>
                                                 <div class="btn-group" jsf:rendered="#{dataverseSession.user.authenticated
                                                                          and permissionsWrapper.canIssueUpdateDatasetCommand(FilePage.fileMetadata.datasetVersion.dataset)
+                                                                         and FilePage.hasValidTermsOfAccess
                                                                          and !FilePage.deletedFile}">
                                                     <button type="button" id="editFile" class="btn btn-default btn-access btn-edit dropdown-toggle #{FilePage.lockedFromEdits ? 'disabled' : ''}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
                                                             disabled="#{FilePage.lockedFromEdits ? 'disabled' : ''}">
@@ -327,7 +328,7 @@
                     <!-- END Top Button/Citation Blocks -->
                     <div id="contentTabs">
                         <p:tabView id="tabView" widgetVar="content" activeIndex="#{FilePage.selectedTabIndex}">
-                            <p:ajax event="tabChange" listener="#{FilePage.tabChanged}" oncomplete="bind_bsui_components();" update="@this" />
+                            <p:ajax event="tabChange" listener="#{FilePage.tabChanged}" update="@this" />
                             <p:tab id="accessTab" class="padding-none" title="#{bundle['file.dataFilesTab.dataAccess']}"
                                    rendered="#{settingsWrapper.rsyncDownload and FilePage.fileMetadata.dataFile.filePackage and systemConfig.rsyncDownload
                                         and !FilePage.fileMetadata.getDataFile().getOwner().getStorageIdentifier().startsWith('s3://') }">
@@ -474,16 +475,17 @@
                                                         <th scope="row">
                                                             #{bundle['file.metadata.filetags']}
                                                         </th>
-                                                        <td>
-                                                            <div id="file-tags">
-                                                                <ui:repeat value="#{FilePage.fileMetadata.categoriesByName}" var="tag" rendered="#{!(empty FilePage.fileMetadata.categoriesByName)}">
-                                                                    <h:outputText value="#{tag}" styleClass="label label-default"/>
+                                                        <td id="fileCategoriesList"   >
+                                                            <div id="file-tags" > 
+                                                                <ui:repeat value="#{FilePage.fileMetadata.categoriesByName}" var="tag">
+                                                                    <h:outputText value="#{tag}" styleClass="label label-default" />
                                                                 </ui:repeat>
-                                                                <ui:repeat value="#{FilePage.fileMetadata.dataFile.tags}" var="tag">
-                                                                    <h:outputText value="#{tag.typeLabel}" styleClass="label label-info"/>
+                                                                <ui:repeat value="#{FilePage.fileMetadata.dataFile.tagLabels}" var="tag" varStatus="loop" >
+                                                                    <h:outputText value="#{loop.first ? '&lt;br/&gt;': '' }" escape="false"/>
+                                                                    <h:outputText value="#{tag}" styleClass="label label-info"/>
                                                                 </ui:repeat>
                                                             </div>
-                                                        </td>
+                                                        </td>    
                                                     </tr>
                                                     <tr id="filePersistentIdBlock" jsf:rendered="#{FilePage.file.identifier != null}">
                                                         <th scope="row">
@@ -593,6 +595,16 @@
                                   <ui:param name="anonymized" value="#{FilePage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
+                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}" disabled="#{FilePage.dataset.hasJsonCrate(FilePage.version)}">
+                                <ui:include src="aroma.xhtml">
+                                    <ui:param name="persistentId" value="#{FilePage.datasetPersistentId}"/>
+                                    <ui:param name="userApiKey" value="#{FilePage.currentUserApiKey}"/>
+                                    <ui:param name="aromaAddress" value="#{FilePage.aromaAddress}"/>
+                                    <ui:param name="showFile" value="#{FilePage.fileId}"/>
+                                    <ui:param name="language" value="#{FilePage.language}"/>
+                                    <ui:param name="version" value="#{FilePage.version}"/>
+                                </ui:include>
+                            </p:tab>
                         </p:tabView>
                     </div>
                     <!-- POPUPS -->
@@ -682,6 +694,13 @@
                         </div>
                     </p:dialog>
                 </h:form>
+                <script>
+                    //<![CDATA[
+                    function editTerms(){                             
+                        PF('accessPopup').show();
+                    }
+                    //]]>
+                </script>
             </ui:define>
         </ui:composition>
     </h:body>

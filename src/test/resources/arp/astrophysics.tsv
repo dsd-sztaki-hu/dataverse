@@ -1,0 +1,54 @@
+#metadataBlock	name	dataverseAlias	displayName	blockURI
+	astrophysics		Astronomy and Astrophysics Metadata	https://dataverse.org/schema/astrophysics/
+#datasetField	name	title	description	watermark	fieldType	displayOrder	displayFormat	advancedSearchField	allowControlledVocabulary	allowmultiples	facetable	displayoncreate	required	parent	metadatablock_id	termURI
+	astroType	Type	The nature or genre of the content of the files in the dataset.		TEXT	0		true	true	true	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/astroType
+	astroFacility	Facility	The observatory or facility where the data was obtained. 		TEXT	1		true	true	true	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/astroFacility
+	astroInstrument	Instrument	The instrument used to collect the data.		TEXT	2		true	true	true	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/astroInstrument
+	astroObject	Object	Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).		TEXT	3		true	false	false	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/astroObject
+	resolution.Spatial	Spatial Resolution	The spatial (angular) resolution that is typical of the observations, in decimal degrees.		TEXT	4		true	false	false	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/resolution.Spatial
+	resolution.Spectral	Spectral Resolution	The spectral resolution that is typical of the observations, given as the ratio \u03bb/\u0394\u03bb.		TEXT	5		true	false	false	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/resolution.Spectral
+	resolution.Temporal	Time Resolution	The temporal resolution that is typical of the observations, given in seconds.		TEXT	6		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/resolution.Temporal
+	coverage.Spectral.Bandpass	Bandpass	Conventional bandpass name		TEXT	7		true	true	true	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spectral.Bandpass
+	coverage.Spectral.CentralWavelength	Central Wavelength (m)	The central wavelength of the spectral bandpass, in meters.	Enter a floating-point number.	FLOAT	8		true	false	false	true	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spectral.CentralWavelength
+	coverage.Spectral.Wavelength	Wavelength Range	The minimum and maximum wavelength of the spectral bandpass.	Enter a floating-point number.	NONE	9		false	false	true	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spectral.Wavelength
+	coverage.Spectral.MinimumWavelength	Minimum (m)	The minimum wavelength of the spectral bandpass, in meters.	Enter a floating-point number.	FLOAT	10		true	false	false	true	false	false	coverage.Spectral.Wavelength	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spectral.MinimumWavelength
+	coverage.Spectral.MaximumWavelength	Maximum (m)	The maximum wavelength of the spectral bandpass, in meters.	Enter a floating-point number.	FLOAT	11		true	false	false	true	false	false	coverage.Spectral.Wavelength	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spectral.MaximumWavelength
+	coverage.Temporal	Dataset Date Range	 Time period covered by the data.		NONE	12		false	false	true	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Temporal
+	coverage.Temporal.StartTime	Start	Dataset Start Date	YYYY-MM-DD	DATE	13		true	false	false	true	false	false	coverage.Temporal	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Temporal.StartTime
+	coverage.Temporal.StopTime	End	Dataset End Date	YYYY-MM-DD	DATE	14		true	false	false	true	false	false	coverage.Temporal	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Temporal.StopTime
+	coverage.Spatial	Sky Coverage	The sky coverage of the data object.		TEXT	15		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Spatial
+	coverage.Depth	Depth Coverage	The (typical) depth coverage, or sensitivity, of the data object in Jy.	Enter a floating-point number.	FLOAT	16		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Depth
+	coverage.ObjectDensity	Object Density	The (typical) density of objects, catalog entries, telescope pointings, etc., on the sky, in number per square degree.	Enter a floating-point number.	FLOAT	17		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.ObjectDensity
+	coverage.ObjectCount	Object Count	The total number of objects, catalog entries, etc., in the data object.	Enter an integer.	FLOAT	18		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.ObjectCount
+	coverage.SkyFraction	Fraction of Sky	The fraction of the sky represented in the observations, ranging from 0 to 1.	Enter a floating-point number.	FLOAT	19		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.SkyFraction
+	coverage.Polarization	Polarization	The polarization coverage		TEXT	20		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.Polarization
+	redshiftType	RedshiftType	RedshiftType string C "Redshift"; or "Optical" or "Radio" definitions of Doppler velocity used in the data object.		TEXT	21		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/redshiftType
+	resolution.Redshift	Redshift Resolution	The resolution in redshift (unitless) or Doppler velocity (km/s) in the data object.	Enter a floating-point number.	FLOAT	22		false	false	false	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/resolution.Redshift
+	coverage.RedshiftValue	Redshift Value	The value of the redshift (unitless) or Doppler velocity (km/s in the data object.	Enter a floating-point number.	NONE	23		false	false	true	false	false	false		astrophysics	https://dataverse.org/schema/astrophysics/coverage.RedshiftValue
+	coverage.Redshift.MinimumValue	Minimum	The minimum value of the redshift (unitless) or Doppler velocity (km/s in the data object.	Enter a floating-point number.	FLOAT	24		false	false	false	false	false	false	coverage.RedshiftValue	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Redshift.MinimumValue
+	coverage.Redshift.MaximumValue	Maximum	The maximum value of the redshift (unitless) or Doppler velocity (km/s in the data object.	Enter a floating-point number.	FLOAT	25		false	false	false	false	false	false	coverage.RedshiftValue	astrophysics	https://dataverse.org/schema/astrophysics/coverage.Redshift.MaximumValue
+#controlledVocabulary	DatasetField	Value	identifier	displayOrder
+	astroType	Image		0
+	astroType	Mosaic		1
+	astroType	EventList		2
+	astroType	Spectrum		3
+	astroType	Cube		4
+	astroType	Table		5
+	astroType	Catalog		6
+	astroType	LightCurve		7
+	astroType	Simulation		8
+	astroType	Figure		9
+	astroType	Artwork		10
+	astroType	Animation		11
+	astroType	PrettyPicture		12
+	astroType	Documentation		13
+	astroType	Other		14
+	astroType	Library		15
+	astroType	Press Release		16
+	astroType	Facsimile		17
+	astroType	Historical		18
+	astroType	Observation		19
+	astroType	Object		20
+	astroType	Value		21
+	astroType	ValuePair		22
+	astroType	Survey		23

@@ -1,0 +1,64 @@
+{
+  "label": "Fájl",
+  "definition": "override",
+  "subClassOf": [],
+  "inputs": [
+      {
+        "id": "https://schema.org/contentSize",
+        "name": "contentSize",
+        "label": "Méret",
+        "help": "Fájl mérete byteban",
+        "type": [
+          "Text"
+        ],
+        "required": true,
+        "multiple": false
+      },
+      {
+        "id": "https://schema.org/encodingFormat",
+        "name": "encodingFormat",
+        "label": "Típus",
+        "help": "Fájl MIME típusa",
+        "type": [
+          "Text"
+        ],
+        "required": true,
+        "multiple": false
+      },
+      {
+        "id": "https://schema.org/description",
+        "name": "description",
+        "label": "Leírás",
+        "help": "Fájl tartalmának leírása",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false
+      },
+      {
+        "id": "https://dataverse.org/schema/file/hash",
+        "name": "hash",
+        "label": "Hash",
+        "help": "A fájl hash értéke",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
+      },
+      {
+        "id": "https://dataverse.org/schema/file/arpPid",
+        "name": "@arpPid",
+        "label": "ARP PID",
+        "help": "ARP specifikus fájlazonosító",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
+      }
+    ]
+}

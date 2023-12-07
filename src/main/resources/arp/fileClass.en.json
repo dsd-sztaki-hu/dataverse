@@ -1,0 +1,64 @@
+{
+  "label": "File",
+  "definition": "override",
+  "subClassOf": [],
+  "inputs": [
+      {
+        "id": "https://schema.org/contentSize",
+        "name": "contentSize",
+        "label": "Content size",
+        "help": "File size in bytes",
+        "type": [
+          "Text"
+        ],
+        "required": true,
+        "multiple": false
+      },
+      {
+        "id": "https://schema.org/encodingFormat",
+        "name": "encodingFormat",
+        "label": "Encoding type",
+        "help": "MIME type of file",
+        "type": [
+          "Text"
+        ],
+        "required": true,
+        "multiple": false
+      },
+      {
+        "id": "https://schema.org/description",
+        "name": "description",
+        "label": "Description",
+        "help": "Description of the file's content",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false
+      },
+      {
+        "id": "https://dataverse.org/schema/file/hash",
+        "name": "hash",
+        "label": "Hash",
+        "help": "Hash of the file",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
+      },
+      {
+        "id": "https://dataverse.org/schema/file/arpPid",
+        "name": "@arpPid",
+        "label": "ARP PID",
+        "help": "ARP specific persistent identifier of the file",
+        "type": [
+          "Text"
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
+      }
+    ]
+}

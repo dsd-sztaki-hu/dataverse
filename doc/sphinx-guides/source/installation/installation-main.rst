@@ -66,7 +66,7 @@ The script will prompt you for some configuration values. If this is a test/eval
 - Postgres admin password - We'll need it in order to create the database and user for the Dataverse Software installer to use, without having to run the installer as root. If you don't know your Postgres admin password, you may simply set the authorization level for localhost to "trust" in the PostgreSQL ``pg_hba.conf`` file (See the PostgreSQL section in the Prerequisites). If this is a production environment, you may want to change it back to something more secure, such as "password" or "md5", after the installation is complete.
 - Network address of a remote Solr search engine service (if needed) - In most cases, you will be running your Solr server on the same host as the Dataverse Software application (then you will want to leave this set to the default value of ``LOCAL``). But in a serious production environment you may set it up on a dedicated separate server.
 
-If desired, these default values can be configured by creating a ``default.config`` (example :download:`here <../_static/util/default.config>`) file in the installer's working directory with new values (if this file isn't present, the above defaults will be used).
+If desired, these default values can be configured by creating a ``default.config`` (example :download:`here <../../../../scripts/installer/default.config>`) file in the installer's working directory with new values (if this file isn't present, the above defaults will be used).
 
 This allows the installer to be run in non-interactive mode (with ``./install -y -f > install.out 2> install.err``), which can allow for easier interaction with automated provisioning tools.
 
@@ -81,6 +81,8 @@ While Postgres can accomodate usernames and database names containing hyphens, i
 - ``rserve_password_alias``
 
 For more information, please see https://docs.payara.fish/documentation/payara-server/password-aliases/password-alias-asadmin-commands.html
+
+.. _importance-of-siteUrl:
 
 **IMPORTANT:** The installer will also ask for an external site URL for the Dataverse installation. It is *imperative* that this value be supplied accurately, or a long list of functions will be inoperable, including:
 
@@ -99,10 +101,6 @@ The supplied site URL will be saved under the JVM option :ref:`dataverse.siteUrl
 The Dataverse Software uses JHOVE_ to help identify the file format (CSV, PNG, etc.) for files that users have uploaded. The installer places files called ``jhove.conf`` and ``jhoveConfig.xsd`` into the directory ``/usr/local/payara5/glassfish/domains/domain1/config`` by default and makes adjustments to the jhove.conf file based on the directory into which you chose to install Payara.
 
 .. _JHOVE: http://jhove.openpreservation.org
-
-**A note about Payara-5.2021.5:** as of this writing there exists a logging configuration bug in Payara-5.2021.5. Any change to the logging configuration results in the contents of ``/usr/local/payara/glassfish/domains/domain1/config/logging.properties`` getting clobbered. In the absence of a proper logging configuration, Payara logs a number of WELD INFO entries on Payara launch, then proceeds to attempt to update its logging configuration approximately twice a second. This will result in unnecessarily junked-up system logs.
-
-This bug appears to be triggered in new Payara installations during the Dataverse installation routine. As the ``default-logging.properties`` file doesn't match the ``logging.proprties`` file distributed with Payara, we are offering :download:`a copy of it here<../_static/installation/files/usr/local/payara5/glassfish/domains/domain1/config/logging.properties>`. Simply stopping Payara, replacing the file, and starting Payara should correct the issue.
 
 Logging In
 ----------
@@ -137,6 +135,11 @@ Dataset Cannot Be Published
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Check to make sure you used a fully qualified domain name when installing the Dataverse Software. You can change the ``dataverse.fqdn`` JVM option after the fact per the :doc:`config` section.
+
+Got ERR_ADDRESS_UNREACHABLE While Navigating on Interface or API Calls
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you are receiving an ``ERR_ADDRESS_UNREACHABLE`` while navigating the GUI or making an API call, make sure the ``siteUrl`` JVM option is defined. For details on how to set ``siteUrl``, please refer to :ref:`dataverse.siteUrl` from the :doc:`config` section. For context on why setting this option is necessary, refer to :ref:`dataverse.fqdn` from the :doc:`config` section.
 
 Problems Sending Email
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -211,7 +214,7 @@ Fresh Reinstall
 Early on when you're installing the Dataverse Software, you may think, "I just want to blow away what I've installed and start over." That's fine. You don't have to uninstall the various components like Payara, PostgreSQL and Solr, but you should be conscious of how to clear out their data. For Payara, a common helpful process is to:
 
 - Stop Payara; 
-- Remove the ``generated`` and ``osgi-cache`` directories;
+- Remove the ``generated``, ``lib/databases`` and ``osgi-cache`` directories from the ``domain1`` directory;
 - Start Payara
 
 Drop database

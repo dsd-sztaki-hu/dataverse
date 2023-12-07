@@ -10,31 +10,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.NamedStoredProcedureQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.OrderBy;
-import javax.persistence.ParameterMode;
-import javax.persistence.StoredProcedureParameter;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import edu.harvard.iq.dataverse.util.BundleUtil;
+import java.util.*;
+import javax.persistence.*;
+
+import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.util.StringUtil;
+import edu.harvard.iq.dataverse.util.SystemConfig;
+
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
 
 /**
  *
@@ -151,6 +134,19 @@ public class Dataset extends DvObjectContainer {
     public void setCitationDateDatasetFieldType(DatasetFieldType citationDateDatasetFieldType) {
         this.citationDateDatasetFieldType = citationDateDatasetFieldType;
     }    
+
+    
+    @ManyToOne
+    @JoinColumn(name="template_id",nullable = true)
+    private Template template;
+    
+    public Template getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Template template) {
+        this.template = template;
+    }
 
     public Dataset() {
         DatasetVersion datasetVersion = new DatasetVersion();
@@ -294,6 +290,7 @@ public class Dataset extends DvObjectContainer {
     }
 
     private DatasetVersion createNewDatasetVersion(Template template, FileMetadata fmVarMet) {
+        
         DatasetVersion dsv = new DatasetVersion();
         dsv.setVersionState(DatasetVersion.VersionState.DRAFT);
         dsv.setFileMetadatas(new ArrayList<>());
@@ -313,11 +310,11 @@ public class Dataset extends DvObjectContainer {
             if (latestVersion.getDatasetFields() != null && !latestVersion.getDatasetFields().isEmpty()) {
                 dsv.setDatasetFields(dsv.copyDatasetFields(latestVersion.getDatasetFields()));
             }
-            
-            if (latestVersion.getTermsOfUseAndAccess()!= null){
-                dsv.setTermsOfUseAndAccess(latestVersion.getTermsOfUseAndAccess().copyTermsOfUseAndAccess());
-            }
-
+            /*
+            adding file metadatas here and updating terms
+            because the terms need to know about the files
+            in a pre-save validation SEK 12/6/2021
+            */
             for (FileMetadata fm : latestVersion.getFileMetadatas()) {
                 FileMetadata newFm = new FileMetadata();
                 // TODO: 
@@ -348,6 +345,18 @@ public class Dataset extends DvObjectContainer {
                 
                 dsv.getFileMetadatas().add(newFm);
             }
+            
+            if (latestVersion.getTermsOfUseAndAccess()!= null){
+                TermsOfUseAndAccess terms = latestVersion.getTermsOfUseAndAccess().copyTermsOfUseAndAccess();
+                terms.setDatasetVersion(dsv);
+                dsv.setTermsOfUseAndAccess(terms);
+            } else {
+                TermsOfUseAndAccess terms = new TermsOfUseAndAccess();
+                terms.setDatasetVersion(dsv);
+                terms.setLicense(null);
+                terms.setFileAccessRequest(true);
+                dsv.setTermsOfUseAndAccess(terms);
+            }
         }
 
         // I'm adding the version to the list so it will be persisted when
@@ -365,19 +374,21 @@ public class Dataset extends DvObjectContainer {
 
     /**
      * The "edit version" is the most recent *draft* of a dataset, and if the
-     * latest version of a dataset is published, a new draft will be created.
-     * 
+     * latest version of a dataset is published, a new draft will be created. If
+     * you don't want to create a new version, you should be using
+     * getLatestVersion.
+     *
      * @return The edit version {@code this}.
      */
-    public DatasetVersion getEditVersion() {
-        return getEditVersion(null, null);
+    public DatasetVersion getOrCreateEditVersion() {
+        return getOrCreateEditVersion(null, null);
     }
 
-    public DatasetVersion getEditVersion(FileMetadata fm) {
-        return getEditVersion(null, fm);
+    public DatasetVersion getOrCreateEditVersion(FileMetadata fm) {
+        return getOrCreateEditVersion(null, fm);
     }
 
-    public DatasetVersion getEditVersion(Template template, FileMetadata fm) {
+    public DatasetVersion getOrCreateEditVersion(Template template, FileMetadata fm) {
         DatasetVersion latestVersion = this.getLatestVersion();
         if (!latestVersion.isWorkingCopy() || template != null) {
             // if the latest version is released or archived, create a new version for editing
@@ -448,24 +459,6 @@ public class Dataset extends DvObjectContainer {
         dataFileCategories.add(category);
     }
 
-    public Collection<String> getCategoriesByName() {
-        Collection<String> ret = getCategoryNames();
-
-        // "Documentation", "Data" and "Code" are the 3 default categories that we 
-        // present by default:
-        if (!ret.contains(BundleUtil.getStringFromBundle("dataset.category.documentation"))) {
-            ret.add(BundleUtil.getStringFromBundle("dataset.category.documentation"));
-        }
-        if (!ret.contains(BundleUtil.getStringFromBundle("dataset.category.data"))) {
-            ret.add(BundleUtil.getStringFromBundle("dataset.category.data"));
-        }
-        if (!ret.contains(BundleUtil.getStringFromBundle("dataset.category.code"))) {
-            ret.add(BundleUtil.getStringFromBundle("dataset.category.code"));
-        }
-
-        return ret;
-    }
-
     public void setCategoriesByName(List<String> newCategoryNames) {
         if (newCategoryNames != null) {
             Collection<String> oldCategoryNames = getCategoryNames();
@@ -520,11 +513,8 @@ public class Dataset extends DvObjectContainer {
     @Deprecated 
     public Path getFileSystemDirectory() {
         Path studyDir = null;
-
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.equals("")) {
-            filesRootDirectory = "/tmp/files";
-        }
+        
+        String filesRootDirectory = JvmSettings.FILES_DIRECTORY.lookup();
         
         if (this.getAlternativePersistentIndentifiers() != null && !this.getAlternativePersistentIndentifiers().isEmpty()) {
             for (AlternativePersistentIdentifier api : this.getAlternativePersistentIndentifiers()) {
@@ -748,6 +738,11 @@ public class Dataset extends DvObjectContainer {
         this.harvestIdentifier = harvestIdentifier;
     }
 
+    public String getLocalURL() {
+        //Assumes GlobalId != null
+        return  SystemConfig.getDataverseSiteUrlStatic() + "/dataset.xhtml?persistentId=" + this.getGlobalId().asString();
+    }
+    
     public String getRemoteArchiveURL() {
         if (isHarvested()) {
             if (HarvestingClient.HARVEST_STYLE_DATAVERSE.equals(this.getHarvestedFrom().getHarvestStyle())) {
@@ -899,6 +894,25 @@ public class Dataset extends DvObjectContainer {
      */
     public DatasetThumbnail getDatasetThumbnail(DatasetVersion datasetVersion, int size) {
         return DatasetUtil.getThumbnail(this, datasetVersion, size);
+    }
+
+    public boolean hasJsonCrate(String versionString) {
+       return containsRoCrateJson(versionString);
+    }
+    
+    private boolean containsRoCrateJson(String versionString) {
+        DatasetVersion actVersion;
+        if (versionString == null || versionString.isBlank()) {
+            actVersion = getLatestVersionForCopy();
+        } else {
+            Optional<DatasetVersion> dsVersion = getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(versionString)).findFirst();
+            actVersion = dsVersion.orElseGet(this::getLatestVersion);
+        }
+        return actVersion.getFileMetadatas().stream().anyMatch(fileMetadata ->
+                fileMetadata != null &&
+                Objects.equals(fileMetadata.getDataFile().getDisplayName(), RO_CRATE_METADATA_JSON_NAME) &&
+                (fileMetadata.getDataFile().getDirectoryLabel() == null || fileMetadata.getDataFile().getDirectoryLabel().isBlank())
+        );
     }
 
 }

@@ -137,7 +137,38 @@ public class Licenses extends AbstractApiBean {
                     .setInfo("License " + license.getName() + "(" + license.getUri() + ") as id: " + id
                             + "has been made " + (active ? "active" : "inactive"))
                     .setUserIdentifier(authenticatedUser.getIdentifier()));
-            return ok("License ID " + id + "set to " + (active ? "active" : "inactive"));
+            return ok("License ID " + id + " set to " + (active ? "active" : "inactive"));
+        } catch (WrappedResponse e) {
+            if (e.getCause() instanceof IllegalArgumentException) {
+                return badRequest(e.getCause().getMessage());
+            }
+            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PUT
+    @Path("/{id}/:sortOrder/{sortOrder}")
+    public Response setSortOrder(@PathParam("id") long id, @PathParam("sortOrder") long sortOrder) {
+        User authenticatedUser;
+        try {
+            authenticatedUser = findAuthenticatedUserOrDie();
+            if (!authenticatedUser.isSuperuser()) {
+                return error(Status.FORBIDDEN, "must be superuser");
+            }
+        } catch (WrappedResponse e) {
+            return error(Status.UNAUTHORIZED, "api key required");
+        }
+        try {
+            if (licenseSvc.setSortOrder(id, sortOrder) == 0) {
+                return error(Response.Status.NOT_FOUND, "License with ID " + id + " not found");
+            }
+            License license = licenseSvc.getById(id);
+            actionLogSvc
+                    .log(new ActionLogRecord(ActionLogRecord.ActionType.Admin, "sortOrderLicenseChanged")
+                            .setInfo("License " + license.getName() + "(" + license.getUri() + ") as id: " + id
+                                    + "has now sort order " + sortOrder + ".")
+                            .setUserIdentifier(authenticatedUser.getIdentifier()));
+            return ok("License ID " + id + " sort order set to " + sortOrder);
         } catch (WrappedResponse e) {
             if (e.getCause() instanceof IllegalArgumentException) {
                 return badRequest(e.getCause().getMessage());
