@@ -3,7 +3,6 @@ package edu.harvard.iq.dataverse.api.arp.util;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
-import javax.json.Json;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -56,6 +55,22 @@ public class JsonHelper {
         JsonElement jsonElement = getJsonElement(json, path);
 
         return jsonElement == null || jsonElement.isJsonNull() ? null : jsonElement.getAsJsonObject();
+    }
+
+    public static JsonArray getJsonArray(JsonElement json, String path) {
+        JsonElement jsonElement = getJsonElement(json, path);
+
+        return jsonElement == null || jsonElement.isJsonNull() ? null : jsonElement.getAsJsonArray();
+    }
+
+
+    public static boolean hasJsonElement(JsonElement json, String path) {
+        try {
+            return getJsonElement(json, path) != null;
+        }
+        catch (Exception ex) {
+            return false;
+        }
     }
 
     /**

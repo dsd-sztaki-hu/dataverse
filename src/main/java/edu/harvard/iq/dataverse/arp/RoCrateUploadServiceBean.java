@@ -4,18 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
+import edu.kit.datamanager.ro_crate.RoCrate;
 
 import javax.ejb.EJB;
 import javax.enterprise.context.SessionScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Named;
 import java.io.*;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -37,6 +37,13 @@ public class RoCrateUploadServiceBean implements Serializable {
     private String roCrateName;
     private String roCrateType;
     private InputStream roCrateInputStream;
+    // The parsed roCrateJsonString
+    private ObjectNode roCrateParsed;
+    // The @graph node
+    private ArrayNode roCrateGraph;
+
+    // Mapping of the imported RO-CRATE file ids and their actual dataFile representation storageIdentifiers
+    private HashMap<String, String> importMapping = new HashMap<>();
 
     public void handleRoCrateUpload() {
         String roCrateJsonString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateJson");
@@ -56,27 +63,27 @@ public class RoCrateUploadServiceBean implements Serializable {
             JsfHelper.addErrorMessage("Can not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
         }
     }
+    
+    private boolean hasType(JsonNode jsonNode, String type) {
+        JsonNode typeNode = jsonNode.get("@type");
+        if (typeNode instanceof ArrayNode) {
+            for (int i = 0; i < typeNode.size(); i++) {
+                var t = typeNode.get(i);
+                if (t.textValue().equals(type)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return typeNode.textValue().equals(type);
+    }
 
     public DatasetVersionUI resetVersionUIRoCrate(DatasetVersionUI datasetVersionUI, DatasetVersion workingVersion, Dataset dataset) throws JsonProcessingException {
         datasetVersionUI = datasetVersionUI.initDatasetVersionUI(workingVersion, true);
         if (!roCrateJsonString.isBlank()) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                ArrayNode graphNode = (ArrayNode) mapper.readTree(roCrateJsonString).get("@graph");
                 Map<String, DatasetField> dsfTypeMap = dataset.getOrCreateEditVersion().getDatasetFields().stream().collect(Collectors.toMap(dsf -> dsf.getDatasetFieldType().getName(), Function.identity()));
-                JsonNode datasetNode = StreamSupport.stream(graphNode.spliterator(), false).filter(node -> {
-                    var typeNode = node.get("@type");
-                    if (typeNode instanceof ArrayNode) {
-                        for (int i = 0; i < typeNode.size(); i++) {
-                            var t = typeNode.get(i);
-                            if (t.textValue().equals("Dataset")) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                    return typeNode.textValue().equals("Dataset");
-                }).findFirst().get();
+                JsonNode datasetNode = StreamSupport.stream(roCrateGraph.spliterator(), false).filter(node -> hasType(node, "Dataset")).findFirst().get();
     
                 // process the Dataset node, from here we can get the primitive values
                 // and the type of the compound values
@@ -91,10 +98,10 @@ public class RoCrateUploadServiceBean implements Serializable {
                             JsonNode roCrateValue = datasetNode.get(propName);
                             if (roCrateValue.isArray()) {
                                 for (JsonNode value : roCrateValue) {
-                                    processCompoundField(value, datasetField, graphNode);
+                                    processCompoundField(value, datasetField, roCrateGraph);
                                 }
                             } else {
-                                processCompoundField(roCrateValue, datasetField, graphNode);
+                                processCompoundField(roCrateValue, datasetField, roCrateGraph);
                             }
                         } else {
                             if (datasetFieldType.isAllowControlledVocabulary()) {
@@ -110,7 +117,7 @@ public class RoCrateUploadServiceBean implements Serializable {
             }
         }
 
-        setRoCrateJsonString(null);
+        //setRoCrateJsonString(null);
         return datasetVersionUI;
     }
 
@@ -208,6 +215,18 @@ public class RoCrateUploadServiceBean implements Serializable {
 
     public void setRoCrateJsonString(String roCrateJsonString) {
         this.roCrateJsonString = roCrateJsonString;
+        if (roCrateJsonString == null) {
+            roCrateParsed = null;
+            roCrateGraph = null;
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            roCrateParsed = (ObjectNode) mapper.readTree(roCrateJsonString);
+            roCrateGraph = (ArrayNode) roCrateParsed.get("@graph");
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -242,4 +261,90 @@ public class RoCrateUploadServiceBean implements Serializable {
     public void setRoCrateInputStream(InputStream roCrateInputStream) {
         this.roCrateInputStream = roCrateInputStream;
     }
+
+    /**
+     * Given the RoCrate generated for a DV dataset by RoCrateManager, add any file or sub-dataset related data to the
+     * generatedCrate that is found in the previously uploaded roCrateJsonString.
+     *
+     * @param generatedCrate
+     * @return
+     */
+    public RoCrate addUploadedFileMetadata(RoCrate generatedCrate) {
+        if (roCrateParsed == null) {
+            return generatedCrate;
+        }
+
+        // 1. Take File nodes from roCrateGraph and find their counterpart in generatedCrate.getAllDataEntities() (
+        //   using dirPath + filename + hash). If counterpart is not found, then the file has been removed during upload
+        //   in which case we are done with that file.
+        // 2. Set missing metadata from roCrateGraph file node to  generatedCrate data entity
+        // 3. If metadata is not a simple file, but a contextual entity, then generate the necessary contextual entity
+        //    in generatedCrate -- do this recursively (contextual entity may refer to other contextual entity)
+        // 4. For a roCrateGraph file node find its parent dataset and also its counterpart in
+        //    generatedCrate.getAllDataEntities(). If the counterpart dataset is not found, then the user has
+        //    edited te dirPath during upload and we have nothing to do with that dataset.
+        // 5. Set missing metadata on the dataset in generatedCrate and process any connected context entity just like
+        //     with files.
+
+        return generatedCrate;
+    }
+    
+    // Mapping between the fileEntity ids from the RO-CRATE and their uploaded datasetFile representation storageIdentifier
+    public void createImportMapping(List<DataFile> importedFiles) {
+        HashMap<String, String> idAndStorageIdentifierMapping = new HashMap<>();
+        // Collect the RO-CRATE fileEntities for easier processing
+        ArrayList<JsonNode> roCrateFiles = new ArrayList<>();
+        roCrateGraph.forEach(jsonNode -> {
+            if (jsonNode.has("@type") && hasType(jsonNode, "File")) {
+                roCrateFiles.add(jsonNode);
+            }
+        });
+        
+        for (var importedFile : importedFiles) {
+            String hash = importedFile.getChecksumValue();
+            String name = importedFile.getDisplayName();
+            String directoryLabel = importedFile.getDirectoryLabel();
+            String storageIdentifier = importedFile.getStorageIdentifier();
+
+            Optional<JsonNode> correspondingFileEntity = findFileEntity(roCrateFiles, name, hash, directoryLabel);
+            correspondingFileEntity.ifPresent(fileEntity -> idAndStorageIdentifierMapping.put(fileEntity.get("@id").textValue(), storageIdentifier));
+        }
+        
+        setImportMapping(idAndStorageIdentifierMapping);
+    }
+
+    // find the corresponding file in the RO-CRATE for the uploaded datasetFile
+    private Optional<JsonNode> findFileEntity(ArrayList<JsonNode> roCrateFiles, String name, String hash, String directoryLabel) {
+        for (JsonNode node : roCrateFiles) {
+            String nodeName = node.has("name") ? node.get("name").textValue() : null;
+            String nodeHash = node.has("hash") ? node.get("hash").textValue() : null;
+            String nodeDirectoryLabel = node.has("directoryLabel") ? node.get("directoryLabel").textValue() : null;
+
+            if (Objects.equals(hash, nodeHash) &&
+                Objects.equals(name, nodeName) &&
+                (directoryLabel == null || Objects.equals(directoryLabel, nodeDirectoryLabel))) {
+                return Optional.of(node);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    public void reset() {
+        setRoCrateJsonString(null);
+        setRoCrateAsBase64(null);
+        setRoCrateName(null);
+        setRoCrateType(null);
+        setRoCrateInputStream(null);
+        setImportMapping(null);
+    }
+
+    public HashMap<String, String> getImportMapping() {
+        return importMapping;
+    }
+
+    public void setImportMapping(HashMap<String, String> importMapping) {
+        this.importMapping = importMapping;
+    }
+
 }

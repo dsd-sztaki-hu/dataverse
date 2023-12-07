@@ -880,25 +880,29 @@
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateZipDownload()}" update="@form"
                                                    rendered="#{!(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
                                                                and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
-                                    <p:commandLink styleClass="btn btn-default btn-access" title="#{bundle['dataset.email.datasetContactTitle']}"
+                                    <p:commandLink styleClass="btn btn-default btn-access"
                                                    update=":downloadRoCrate" oncomplete="PF('downloadRoCrate').show()"
                                                    rendered="#{DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
                                                                and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
                                                    rendered="#{empty DatasetPage.workingVersion.fileMetadatas and (!widgetWrapper.widgetView
                                                                and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}">
+                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="btn btn-default btn-access" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}"
+                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"
                                             rendered="#{!widgetWrapper.widgetView}"
+                                            disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}"
                                             target="_blank">
                                         #{bundle['arp.dataset.openAroma']}
                                     </h:outputLink>
@@ -961,12 +965,14 @@
                             </p:tab>
 
                             <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
-                                   rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
+                                   rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}"
+                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                 <ui:include src="aroma.xhtml">
                                     <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
                                     <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKey}"/>
                                     <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
                                     <ui:param name="language" value="#{DatasetPage.language}"/>
+                                    <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
                                 </ui:include>
                             </p:tab>
                         </p:tabView>

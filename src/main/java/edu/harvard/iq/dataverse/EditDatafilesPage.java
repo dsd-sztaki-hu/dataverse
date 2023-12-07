@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.DataFile.ChecksumType;
@@ -46,6 +47,7 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.EjbUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 
 import java.io.*;
@@ -73,6 +75,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.httpclient.methods.GetMethod;
 
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.faces.event.FacesEvent;
 import javax.servlet.ServletOutputStream;
@@ -1806,6 +1809,14 @@ public class EditDatafilesPage implements java.io.Serializable {
             PrimeFaces.current().ajax().update("datasetForm:fileAlreadyExistsPopup");
             PrimeFaces.current().executeScript("PF('fileAlreadyExistsPopup').show();");
         }
+        
+        if (newFiles.stream().anyMatch(this::isRoCrateMetaJsonFile)) {
+            setWarningMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.warning", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME)));
+            setHelpMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.help", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, BundleUtil.getStringFromBundle("file.metadataTab.fileMetadata.hierarchy.label"))));
+            PrimeFaces.current().ajax().update("datasetForm:roCrateMetaJsonUploadedPopup");
+            PrimeFaces.current().executeScript("PF('roCrateMetaJsonUploadedPopup').show();");
+        }
+        
         // We clear the following duplicate warning labels, because we want to 
         // only inform the user of the duplicates dropped in the current upload 
         // attempt - for ex., one batch of drag-and-dropped files, or a single 
@@ -1839,6 +1850,41 @@ public class EditDatafilesPage implements java.io.Serializable {
         this.warningMessageForAlreadyExistsPopUp = warningMessageForAlreadyExistsPopUp;
     }
 
+    private String warningMessageForRoCrateMetaJsonUploadedPopUp;
+    
+    public String getWarningMessageForRoCrateMetaJsonUploadedPopUp() {
+        return warningMessageForRoCrateMetaJsonUploadedPopUp;
+    }
+
+    public void setWarningMessageForRoCrateMetaJsonUploadedPopUp(String warningMessageForRoCrateMetaJsonUploadedPopUp) {
+        this.warningMessageForRoCrateMetaJsonUploadedPopUp = warningMessageForRoCrateMetaJsonUploadedPopUp;
+    }
+
+    private String helpMessageForRoCrateMetaJsonUploadedPopUp;
+
+    public String getHelpMessageForRoCrateMetaJsonUploadedPopUp() {
+        return helpMessageForRoCrateMetaJsonUploadedPopUp;
+    }
+
+    public void setHelpMessageForRoCrateMetaJsonUploadedPopUp(String helpMessageForRoCrateMetaJsonUploadedPopUp) {
+        this.helpMessageForRoCrateMetaJsonUploadedPopUp = helpMessageForRoCrateMetaJsonUploadedPopUp;
+    }
+    
+    private boolean isRoCrateMetaJsonFile(DataFile dataFile) {
+        return dataFile.getDisplayName().equals(RO_CRATE_METADATA_JSON_NAME) &&
+                (dataFile.getDirectoryLabel() == null || dataFile.getDirectoryLabel().isBlank());
+    }
+
+    public void deleteRoCrateMetaJsonFiles() {
+        List<FileMetadata> filesForDelete = new ArrayList<>();
+        for (DataFile df : newFiles) {
+            if (isRoCrateMetaJsonFile(df)) {
+                filesForDelete.add(df.getFileMetadata());
+            }
+        }
+        deleteFiles(filesForDelete);
+    }
+    
     private String headerForAlreadyExistsPopUp;
 
     public String getHeaderForAlreadyExistsPopUp() {
@@ -2115,6 +2161,13 @@ public class EditDatafilesPage implements java.io.Serializable {
                         }
                     }
 
+                    // Remove files we don't want to pass to DV
+                    dFileList = dFileList.stream().filter(dataFile -> {
+                        return !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-preview.html")
+                                && !dataFile.getFileMetadata().getLabel().toLowerCase().equals("ro-crate-metadata.json");
+                                //&& !dataFile.getFileMetadata().getLabel().toLowerCase().equals("manifest.txt");
+                    }).collect(Collectors.toList());
+
                     // -----------------------------------------------------------
                     // These raw datafiles are then post-processed, in order to drop any files
                     // already in the dataset/already uploaded, and to correct duplicate file names, etc.
@@ -2134,6 +2187,7 @@ public class EditDatafilesPage implements java.io.Serializable {
 
                     roCrateUploadService.setRoCrateInputStream(null);
                     uploadFinished();
+                    roCrateUploadService.createImportMapping(dFileList);
                 } catch (Exception e) {
                     logger.severe("Could not process the uploaded files from the RO-Crate" + e.getMessage());
                     e.printStackTrace();

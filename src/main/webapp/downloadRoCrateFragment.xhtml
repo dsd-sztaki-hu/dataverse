@@ -5,12 +5,10 @@
     xmlns:p="http://primefaces.org/ui"
     xmlns:jsf="http://xmlns.jcp.org/jsf">
     <!-- Dialog Contact Form -->
-    <p:dialog id="downloadRoCrate" header="#{bundle['arp.dataset.roCrate.too.big']}" widgetVar="downloadRoCrate" modal="true">
+    <p:dialog id="downloadRoCrate" header="#{DatasetPage.getDownloadRoCrateHeader()}" widgetVar="downloadRoCrate" modal="true">
         <p:fragment>
             <h:form id="downloadRoCrateForm">
-                <h:outputFormat value="#{bundle['arp.dataset.roCrate.too.big.simple']}" escape="false">
-                    <f:param value="ro-crate-metadata.json"/>
-                </h:outputFormat>
+                <h:outputFormat value="#{DatasetPage.getDownloadRoCrateMessage()}" escape="false"/>
                 <!-- Download | cancel buttons -->
                 <div class="button-block">
                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
