@@ -112,6 +112,7 @@ import static edu.harvard.iq.dataverse.util.json.JsonPrinter.toJsonArray;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.json.JsonArray;
 import javax.persistence.Query;
@@ -2339,48 +2340,93 @@ public class Admin extends AbstractApiBean {
 	@EJB
 	ArpServiceBean arpService;
 
-	/**
-	 * Should be called only once when ARP is first installed.
-	 * - Sets default namespaces for MDB-s specified in mdbNamespaceUris
-	 * - Syncs MDB-s with CEDAR listed in syncCedar
-	 * @param params
-	 * @return
-	 */
-	// curl -X POST \
-	//  http://localhost:8080/api/admin/arp/initialSetup \
-	//  -H 'Content-Type: application/json' \
-	//  -d '{
-	//        "mdbNamespaceUris": {
-	//          "geospatial": "https://dataverse.org/schema/geospatial/",
-	//          "socialscience": "https://dataverse.org/schema/socialscience/",
-	//          "biomedical": "https://dataverse.org/schema/biomedical/",
-	//          "astrophysics": "https://dataverse.org/schema/astrophysics/",
-	//          "journal": "https://dataverse.org/schema/journal/"
-	//        },
-	//        "syncCedar": {
-	//          "mdbs": [
-	//            "citation", "journal", "geospatial", "socialscience", "astrophysics", "biomedical"
-	//          ],
-	//          "cedarParams": {
-	//            "cedarDomain": "arp.orgx",
-	//            "apiKey": "xxx",
-	//            "folderId": "https:%2F%2Frepo.arp.orgx%2Ffolders%2F9559c51c-33e3-4429-890d-e4fa8a7de859"
-	//          }
-	//        }
-	//      }'
 	@POST
 	@Path("arp/initialSetup")
 	@Consumes("application/json")
-	public Response arpInitialSetup(ArpInitialSetupParams params) {
+	public Response initialSetup(ArpInitialSetupParams params)
+	{
+		return Response.status(Status.NOT_FOUND).entity("/api/admin/arp/initialSetup has been deprecated, use "+
+				"/api/admin/arp/syncMdbsWithCedar instead").build();
+	}
+
+	/**
+	 * Synchronizes MDB-s with CEDAR templates. It uploads the selected MDB-s as CEDAR templates then syncs back
+	 * those templates as MDB-s storing the templates and element JSON schemas along with the MDB and field types.
+	 * This function is idempotent and can be called any number of time to do the resync time.
+	 * @param params
+	 * @return
+	 */
+	//curl -X POST 'http://localhost:8080/api/admin/arp/syncMdbsWithCedar' \
+	//-H 'Content-Type: application/json' \
+	//-d '{
+	//  "mdbParams": [
+	//    {"name": "citation"},
+	//    {"name": "geospatial", "namespaceUri": "https://dataverse.org/schema/geospatial/"},
+	//    {"name": "socialscience", "namespaceUri": "https://dataverse.org/schema/socialscience/"},
+	//    {"name": "biomedical", "namespaceUri": "https://dataverse.org/schema/biomedical/"},
+	//    {"name": "astrophysics", "namespaceUri": "https://dataverse.org/schema/astrophysics/"},
+	//    {
+	//      "name": "journal",
+	//      "namespaceUri": "https://dataverse.org/schema/journal/",
+	//      "cedarUuid": "aaaaaaaa-bbbb-cccc-dddd-65d43571f306"
+	//    }
+	//  ],
+	//  "cedarParams": {
+	//    "cedarDomain": "arp3.orgx",
+	//    "apiKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
+	//    "folderId": "https:%2F%2Frepo.arp3.orgx%2Ffolders%2Fb62e9090-c9f0-4883-9bf9-010f3ae96075"
+	//  }
+	//}'
+	@POST
+	@Path("arp/syncMdbsWithCedar")
+	@Consumes("application/json")
+	public Response arpSyncMdbsWithCedar(ArpInitialSetupParams params) {
 		try {
-			if (params.getMdbNamespaceUris() != null) {
-				arpService.updateMetadatablockNamesaceUris(params.getMdbNamespaceUris());
+			if (params.getMdbParams() == null || params.getMdbParams().isEmpty()) {
+				return Response.serverError().entity("No mdbParams specified").build();
 			}
-			if (params.syncCedar != null && params.syncCedar.mdbs != null) {
-				params.syncCedar.mdbs.forEach(mdbIdtf -> {
-					arpService.syncMetadataBlockWithCedar(mdbIdtf, params.syncCedar.cedarParams);
-				});
+
+			// Make sure that both name and id are set.
+			try {
+				params.getMdbParams().stream().forEach(mdbParam -> {
+
+							if (mdbParam.id != null) {
+								try {
+									var mdb = metadataBlockSvc.findById(mdbParam.id);
+									mdbParam.name = mdb.getName();
+								} catch (IllegalArgumentException ex) {
+									throw new RuntimeException("Invalid MDB id " + mdbParam.id);
+								}
+							}
+							if (mdbParam.name != null) {
+								try {
+									var mdb = metadataBlockSvc.findByName(mdbParam.name);
+									mdbParam.id = mdb.getId();
+								} catch (IllegalArgumentException ex) {
+									throw new RuntimeException("Invalid MDB name " + mdbParam.name);
+								}
+							}
+
+						}
+				);
+			} catch(Exception ex) {
+				Logger.getLogger(Admin.class.getName()).log(Level.SEVERE, null, ex);
+				return Response.status(Status.BAD_REQUEST).entity(ex.getMessage()).build();
 			}
+
+			var namespaceUris = params.getMdbParams().stream()
+					.filter(mdbParam -> mdbParam.namespaceUri != null)
+					.collect(Collectors.toMap(mdbParam -> mdbParam.name, mdbParam -> mdbParam.namespaceUri));
+
+			if (!namespaceUris.isEmpty()) {
+				arpService.updateMetadatablockNamesaceUris(namespaceUris);
+			}
+
+			params.getMdbParams().stream().forEach(mdbParam -> {
+				logger.info("Syncing MDB '"+mdbParam.name+"' ...");
+				arpService.syncMetadataBlockWithCedar(mdbParam, params.cedarParams);
+				logger.info("Syncing MDB '"+mdbParam.name+"' done.");
+			});
 			return Response.ok("Done").build();
 		} catch (Throwable ex) {
 			return Response.serverError().entity(ex.getLocalizedMessage()).build();

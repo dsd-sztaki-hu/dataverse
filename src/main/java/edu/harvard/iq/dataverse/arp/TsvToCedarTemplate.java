@@ -249,7 +249,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         String fieldType = datasetField.getFieldType().toLowerCase();
         JsonObject templateField = cedarTemplateField.deepCopy();
 
-        processCommonFields(templateField, datasetField);
+        processCommonFields(templateField, datasetField, dataverseMetadataBlock);
         
 
         switch (fieldType) {
@@ -304,7 +304,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues, DataverseMetadataBlock dataverseMetadataBlock) {
         JsonObject templateElement = cedarTemplateElement.deepCopy();
-        processCommonFields(templateElement, datasetField);
+        processCommonFields(templateElement, datasetField, dataverseMetadataBlock);
         children.forEach(child -> {
             JsonArray cvvs = new JsonArray();
             controlledVocabularyValues.stream()
@@ -321,7 +321,8 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
     }
 
-    private void processCommonFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {
+    private void processCommonFields(JsonObject templateElement, DataverseDatasetField datasetField, DataverseMetadataBlock dataverseMetadataBlock) {
+
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
          * upon importing from CEDAR the colons are replaced with dots again
@@ -330,43 +331,44 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         if (convertDotToColon) {
                 propName = propName.replace('.', ':');
         }
-        cedarTemplate.remove("@id");
-        cedarTemplate.addProperty("@id", "tmp-placeholder");
-        cedarTemplate.addProperty("title", propName + cedarTemplate.get("title").getAsString());
-        cedarTemplate.addProperty("description", propName + cedarTemplate.get("description").getAsString());
+        // @id is UUID generated from the mdb name + field name. This is used just temporarily, will be replaced with
+        // actual CEDAR URL format ID when uploading to CEDAR.
+        templateElement.addProperty("@id", ArpServiceBean.generateNamedUuid(dataverseMetadataBlock.getName()+"-"+datasetField.getName()));
+        templateElement.addProperty("title", propName + templateElement.get("title").getAsString());
+        templateElement.addProperty("description", propName + templateElement.get("description").getAsString());
 
-        cedarTemplate.addProperty("schema:name", propName);
-        cedarTemplate.addProperty("schema:description", datasetField.getDescription());
+        templateElement.addProperty("schema:name", propName);
+        templateElement.addProperty("schema:description", datasetField.getDescription());
         try {
             // We need dot notation to access prop translation
-            cedarTemplate.addProperty("hunDescription", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".description", datasetField.getmetadatablock_id(), hunLocale));
+            templateElement.addProperty("hunDescription", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".description", datasetField.getmetadatablock_id(), hunLocale));
         }
         catch(MissingResourceException ex) {
             // ignore
         }
         if (datasetField.getTitle() != null) {
-            cedarTemplate.addProperty("skos:prefLabel", datasetField.getTitle());
+            templateElement.addProperty("skos:prefLabel", datasetField.getTitle());
             try {
                 // We need dot notation to access prop translation
-                cedarTemplate.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".title", datasetField.getmetadatablock_id(), hunLocale));
+                templateElement.addProperty("hunLabel", BundleUtil.getStringFromPropertyFile("datasetfieldtype." + propName.replace(":", ".") + ".title", datasetField.getmetadatablock_id(), hunLocale));
             }
             catch (MissingResourceException ex) {
                 // ignore
             }
         }
         if (datasetField.isAllowmultiples()) {
-            cedarTemplate.addProperty("minItems", 1);
-            cedarTemplate.addProperty("maxItems ", 0);
+            templateElement.addProperty("minItems", 1);
+            templateElement.addProperty("maxItems ", 0);
         }
-        if (cedarTemplate.has("_valueConstraints")) {
-            cedarTemplate.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
+        if (templateElement.has("_valueConstraints")) {
+            templateElement.getAsJsonObject("_valueConstraints").addProperty("requiredValue", datasetField.isRequired());
         } else {
             var valueConstraint = new JsonObject();
             valueConstraint.addProperty("requiredValue", datasetField.isRequired());
-            cedarTemplate.add("_valueConstraints", valueConstraint);
+            templateElement.add("_valueConstraints", valueConstraint);
         }
         
-        processArpFields(cedarTemplate, datasetField);
+        processArpFields(templateElement, datasetField);
     }
     
     private void processArpFields(JsonObject cedarTemplate, DataverseDatasetField datasetField) {

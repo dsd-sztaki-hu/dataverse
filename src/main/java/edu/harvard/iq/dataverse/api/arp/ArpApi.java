@@ -13,7 +13,6 @@ import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
@@ -25,7 +24,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 
 import javax.ejb.EJB;
 import javax.inject.Inject;
-import javax.json.Json;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -183,20 +181,20 @@ public class ArpApi extends AbstractApiBean {
      *
      * Requires no authentication.
      *
-     * @param mdbIdtf
+     * @param mdbName
      * @return
      */
     @GET
-    @Path("/convertMdbToTsv/{identifier}")
+    @Path("/convertMdbToTsv/{mdbName}")
     @Produces("text/tab-separated-values")
     public Response convertMdbToTsv(
-            @PathParam("identifier") String mdbIdtf
+            @PathParam("mdbName") String mdbName
     )
     {
         String mdbTsv;
 
         try {
-            mdbTsv = arpService.exportMdbAsTsv(mdbIdtf);
+            mdbTsv = arpService.exportMdbAsTsv(mdbName);
         } catch (JsonProcessingException e) {
             return Response.serverError().entity(e.getMessage()).build();
         }
@@ -209,15 +207,15 @@ public class ArpApi extends AbstractApiBean {
      *
      * Requires superuser authentication
      *
-     * @param mdbIdtf
+     * @param mdbName
      * @param cedarParams
      * @return
      */
     @POST
-    @Path("/exportMdbToCedar/{mdbIdtf}")
+    @Path("/exportMdbToCedar/{mdbName}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response exportMdbToCedar(@PathParam("mdbIdtf") String mdbIdtf, ExportToCedarParams cedarParams)
+    public Response exportMdbToCedar(@PathParam("mdbName") String mdbName, @QueryParam("uuid") String cedarUuid, ExportToCedarParams cedarParams)
     {
         try {
             AuthenticatedUser user = findAuthenticatedUserOrDie();
@@ -239,8 +237,9 @@ public class ArpApi extends AbstractApiBean {
             }
             cedarParams.cedarDomain = cedarDomain;
 
-            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString());
-            res = arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
+            var actualUuid = cedarUuid != null ? cedarUuid : ArpServiceBean.generateNamedUuid(mdbName);
+            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName)).toString());
+            res = arpService.exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
@@ -282,14 +281,14 @@ public class ArpApi extends AbstractApiBean {
      * Exports a MetadataBlock given as TSV to CEDAR.
      *
      * cedarData
-     * @param cedarDataAndTsv
+     * @param data
      * @return
      */
     @POST
     @Path("/exportTsvToCedar/")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response exportTsvToCedar(ExportTsvToCedarData cedarDataAndTsv)
+    public Response exportTsvToCedar(ExportTsvToCedarData data)
     {
         try {
             AuthenticatedUser user = findAuthenticatedUserOrDie();
@@ -303,8 +302,8 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             ObjectMapper mapper = new ObjectMapper();
-            ExportToCedarParams cedarParams = cedarDataAndTsv.cedarParams;
-            String cedarTsv = cedarDataAndTsv.cedarTsv;
+            ExportToCedarParams cedarParams = data.cedarParams;
+            String cedarTsv = data.tsv;
 
             String cedarDomain = cedarParams.cedarDomain;
 
@@ -313,9 +312,16 @@ public class ArpApi extends AbstractApiBean {
             }
             cedarParams.cedarDomain = cedarDomain;
 
-
             JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
-            arpService.exportTemplateToCedar(cedarTemplate, cedarParams);
+
+            // Use the explicitly provided UUID or create one based on the name in the TSV, ie. "schema:identifier"
+            // ine the CEDAR template.
+            var actualUuid = data.cedarUuid;
+            if (actualUuid == null || actualUuid.isBlank()) {
+                actualUuid = ArpServiceBean.generateNamedUuid(cedarTemplate.get("schema:identifier").textValue());
+            }
+
+            arpService.exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
             return error(FORBIDDEN, "Authorized users only.");
@@ -364,20 +370,20 @@ public class ArpApi extends AbstractApiBean {
      *
      * Requires no authentication.
      *
-     * @param mdbIdtf
+     * @param mdbName
      * @return
      */
     @GET
-    @Path("/convertMdbToDescriboProfile/{mdbIdtf}")
+    @Path("/convertMdbToDescriboProfile/{mdbName}")
     @Produces("application/json")
     public Response convertMdbToDescriboProfile(
-            @PathParam("mdbIdtf") String mdbIdtf,
+            @PathParam("mdbName") String mdbName,
             @QueryParam("lang") String language
     ) {
         String describoProfile;
         
         try {
-            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbIdtf)).toString();
+            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName)).toString();
             describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
             e.printStackTrace();
@@ -397,15 +403,15 @@ public class ArpApi extends AbstractApiBean {
      * @return
      */
     @GET
-    @Path("/convertMdbsToDescriboProfile/{identifiers}")
+    @Path("/convertMdbsToDescriboProfile/{mdbNames}")
     @Produces("application/json")
     public Response convertMdbsToDescriboProfile(
-            @PathParam("identifiers") String identifiers,
+            @PathParam("mdbNames") String identifiers,
             @QueryParam("lang") String language
     ) {
         try {
-            // ids separated by commas
-            var ids = identifiers.split(",\\s*");
+            // names separated by commas
+            var names = identifiers.split(",\\s*");
             JsonObject mergedProfile = null;
             JsonArray mergedProfileInputs = null;
             JsonObject mergedProfileClasses = null;
@@ -413,9 +419,9 @@ public class ArpApi extends AbstractApiBean {
             JsonObject layouts = null;
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-            for (int i=0; i<ids.length; i++) {
+            for (int i=0; i<names.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(ids[i]), false).toString();
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(names[i]), false).toString();
                 String profile = arpService.convertTemplateToDescriboProfile(templateJson, language);
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
                 boolean profileJsonAdded = false;

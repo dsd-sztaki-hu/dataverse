@@ -356,32 +356,32 @@ public class ArpApiIT {
 
     @Test
     public void citationToTsv() {
-        checkGeneratedTsv("1", "src/test/resources/arp/citation.tsv");
+        checkGeneratedTsv("citation", "src/test/resources/arp/citation.tsv");
     }
 
     @Test
     public void geospatialToTsv() {
-        checkGeneratedTsv("2", "src/test/resources/arp/geospatial.tsv");
+        checkGeneratedTsv("geospatial", "src/test/resources/arp/geospatial.tsv");
     }
 
     @Test
     public void socialscienceToTsv() {
-        checkGeneratedTsv("3", "src/test/resources/arp/socialscience.tsv");
+        checkGeneratedTsv("socialscience", "src/test/resources/arp/socialscience.tsv");
     }
 
     @Test
     public void astrophysicsToTsv() {
-        checkGeneratedTsv("4", "src/test/resources/arp/astrophysics.tsv");
+        checkGeneratedTsv("astrophysics", "src/test/resources/arp/astrophysics.tsv");
     }
 
     @Test
     public void biomedicalToTsv() {
-        checkGeneratedTsv("5", "src/test/resources/arp/biomedical.tsv");
+        checkGeneratedTsv("biomedical", "src/test/resources/arp/biomedical.tsv");
     }
 
     @Test
     public void journalToTsv() {
-        checkGeneratedTsv("6", "src/test/resources/arp/journal.tsv");
+        checkGeneratedTsv("journal", "src/test/resources/arp/journal.tsv");
     }
 
     static Response checkTemplate(String apiToken, byte[] body) {

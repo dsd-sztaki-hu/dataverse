@@ -10,15 +10,15 @@ import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
-import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
-import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
-import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -32,8 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URI;
@@ -63,7 +61,6 @@ import java.util.stream.Collectors;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getJsonObject;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 
 @Stateless
 @Named
@@ -111,6 +108,10 @@ public class ArpServiceBean implements java.io.Serializable {
         fileClassEn = loadJsonFromResource("arp/fileClass.en.json");
     }
 
+    public static String generateNamedUuid(String name) {
+        return UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString();
+    }
+
     public static JsonObject loadJsonFromResource(String resourcePath) {
         InputStream inputStream = ArpConfig.class.getClassLoader().getResourceAsStream(resourcePath);
 
@@ -127,8 +128,8 @@ public class ArpServiceBean implements java.io.Serializable {
         }
     }
 
-    public String exportMdbAsTsv(String mdbId) throws JsonProcessingException {
-        MetadataBlock mdb = metadataBlockService.findById(Long.valueOf(mdbId));
+    public String exportMdbAsTsv(String mdbName) throws JsonProcessingException {
+        MetadataBlock mdb = metadataBlockService.findByName(mdbName);
 
         CsvSchema mdbSchema = CsvSchema.builder()
                 .addColumn("#metadataBlock")
@@ -311,7 +312,7 @@ public class ArpServiceBean implements java.io.Serializable {
         return new ObjectMapper().readTree(createFolderResponse.body()).get("@id").textValue();
     }
 
-    public String exportTemplateToCedar(JsonNode cedarTemplate, ExportToCedarParams cedarParams) throws Exception {
+    public String exportTemplateToCedar(JsonNode cedarTemplate, String cedarUuid, ExportToCedarParams cedarParams) throws Exception {
         //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
         // HttpClient client = HttpClient.newHttpClient();
         HttpClient client = getUnsafeHttpClient();
@@ -320,38 +321,93 @@ public class ArpServiceBean implements java.io.Serializable {
         String apiKey = cedarParams.apiKey;
         String cedarDomain = cedarParams.cedarDomain;
         String templateFolderId = checkOrCreateFolder(parentFolderId, templateName, apiKey, cedarDomain, client);
-        return uploadTemplate(cedarTemplate, cedarParams, templateFolderId, client);
+        return uploadTemplate(cedarTemplate, cedarUuid, cedarParams, templateFolderId, client);
     }
 
-    private String uploadTemplate(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
+    private String uploadTemplate(JsonNode cedarTemplate, String cedarUuid, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
         String encodedFolderId = URLEncoder.encode(templateFolderId, StandardCharsets.UTF_8);
         String cedarDomain = cedarParams.cedarDomain;
-        String url = "https://resource." + cedarDomain + "/templates?folder_id=" + encodedFolderId;
+        String cedarId = "https://repo." + cedarDomain + "/templates/" + cedarUuid;
+        String cedarIdEncoded = URLEncoder.encode(cedarId);
+        String resUrl = "https://resource." + cedarDomain + "/templates/"+cedarIdEncoded;
 
-        // Update the template with the uploaded elements, to have their real @id
-        List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
-        elements.forEach(element -> {
-            ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
-            ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
-            if (prop.has("items")) {
-                prop.replace("items", element);
-            } else {
-                properties.replace(element.get("schema:name").textValue(), element);
-            }
-        });
-        
-        String apiKey = cedarParams.apiKey;
-        HttpRequest httpRequest = HttpRequest.newBuilder()
-                .uri(new URI(url))
-                .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(cedarTemplate)))
+        HttpRequest getTemplateRequest = HttpRequest.newBuilder()
+                .uri(new URI(resUrl))
+                .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                .GET()
                 .build();
+        HttpResponse<String> templateExistsResponse = client.send(getTemplateRequest, ofString());
 
-        HttpResponse<String> uploadTemplateResponse = client.send(httpRequest, ofString());
-        if (uploadTemplateResponse.statusCode() != 201) {
-            throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue());
+        // Set the id that we also use in the PUT URL
+        ((ObjectNode)cedarTemplate).put("@id", cedarId);
+
+        // If already exists, update it
+        if (templateExistsResponse.statusCode() == 200) {
+            // TODO! Need to handle existing element vs newly created
+            // Update the template with the uploaded elements, to have their real @id
+            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
+            elements.forEach(element -> {
+                ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
+                ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
+                if (prop.has("items")) {
+                    prop.replace("items", element);
+                } else {
+                    properties.replace(element.get("schema:name").textValue(), element);
+                }
+            });
+
+            // PUT https://resource.arp3.orgx/templates/https%3A%2F%2Frepo.arp3.orgx%2Ftemplates%2Fe5c9c38c-e436-472b-affa-ea835a92aba8?folder_id=https:%2F%2Frepo.arp3.orgx%2Ffolders%2F422b2a95-3796-42ed-983b-6b5a269814f0
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(new URI(resUrl))
+                    .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(cedarTemplate)))
+                    .build();
+
+            HttpResponse<String> updateTemplateResponse = client.send(httpRequest, ofString());
+            if (updateTemplateResponse.statusCode() != 200) {
+                throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+updateTemplateResponse.body());
+            }
+
+            // The template update doesn't return the complete template, so we need to get it again
+            HttpResponse<String> getTemplateAgainResponse = client.send(getTemplateRequest, ofString());
+            if (getTemplateAgainResponse.statusCode() != 200) {
+                throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+getTemplateAgainResponse.body());
+            }
+
+            return getTemplateAgainResponse.body();
         }
-        return uploadTemplateResponse.body();
+        // If not found, create it now
+        else if (templateExistsResponse.statusCode() == 404) {
+            // TODO! Need to handle existing element vs newly created
+            // Update the template with the uploaded elements, to have their real @id
+            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
+            elements.forEach(element -> {
+                ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
+                ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
+                if (prop.has("items")) {
+                    prop.replace("items", element);
+                } else {
+                    properties.replace(element.get("schema:name").textValue(), element);
+                }
+            });
+
+            // PUT https://resource.arp3.orgx/templates/https%3A%2F%2Frepo.arp3.orgx%2Ftemplates%2Fe5c9c38c-e436-472b-affa-ea835a92aba8?folder_id=https:%2F%2Frepo.arp3.orgx%2Ffolders%2F422b2a95-3796-42ed-983b-6b5a269814f0
+            String urlWithFolder = "https://resource." + cedarDomain + "/templates/"+cedarIdEncoded+"?folder_id=" + encodedFolderId;
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(new URI(urlWithFolder))
+                    .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                    .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(cedarTemplate)))
+                    .build();
+
+            HttpResponse<String> uploadTemplateResponse = client.send(httpRequest, ofString());
+            if (uploadTemplateResponse.statusCode() != 201 && uploadTemplateResponse.statusCode() != 200) {
+                throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+uploadTemplateResponse.body());
+            }
+            return uploadTemplateResponse.body();
+        }
+
+        // Anything else is an error
+        throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+templateExistsResponse.body());
     }
 
     private List<JsonNode> exportElements(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
@@ -360,25 +416,57 @@ public class ArpServiceBean implements java.io.Serializable {
         String cedarDomain = cedarParams.cedarDomain;
         String elementsFolderId = checkOrCreateFolder(templateFolderId, "elements", apiKey, cedarDomain, client);
         String encodedFolderId = URLEncoder.encode(elementsFolderId, StandardCharsets.UTF_8);
-        String url = "https://resource." + cedarDomain + "/template-elements?folder_id=" + encodedFolderId;
-        List<HttpRequest> templateElementsRequests = new ArrayList<>();
+        List<Pair<HttpRequest, HttpRequest>> templateElementsRequests = new ArrayList<>();
 
         cedarTemplate.get("properties").forEach(prop -> {
             if ((prop.has("@type") && prop.get("@type").textValue().equals("https://schema.metadatacenter.org/core/TemplateElement")) ||
                     (prop.has("items") && (prop.get("items").has("@type") && prop.get("items").get("@type").textValue().equals("https://schema.metadatacenter.org/core/TemplateElement")))) {
                 try {
-                    ((ObjectNode) prop).remove("@id");
+                    var cedarUuid = prop.has("@id")
+                            ? prop.get("@id").textValue()
+                            : null;
                     if (prop.has("items")) {
-                        ((ObjectNode) prop.get("items")).remove("@id");
                         prop = prop.get("items");
+                        cedarUuid = prop.get("@id").textValue();
                     }
-                    HttpRequest httpRequest = HttpRequest.newBuilder()
-                            .uri(new URI(url))
-                            .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
-                            .POST(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(prop)))
-                            .build();
+                    String cedarId = "https://repo." + cedarDomain + "/template-elements/" + cedarUuid;
+                    String cedarIdEncoded = URLEncoder.encode(cedarId);
+                    String resUrl = "https://resource." + cedarDomain + "/template-elements/"+cedarIdEncoded;
 
-                    templateElementsRequests.add(httpRequest);
+                    // Replace the UUID with the actual cedar URL format ID
+                    ((ObjectNode)prop).put("@id",cedarId);
+
+                    HttpRequest getElementRequest = HttpRequest.newBuilder()
+                            .uri(new URI(resUrl))
+                            .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                            .GET()
+                            .build();
+                    HttpResponse<String> elementExistsResponse = client.send(getElementRequest, ofString());
+
+                    // if element exists, just update
+                    if (elementExistsResponse.statusCode() == 200) {
+                        HttpRequest httpRequest = HttpRequest.newBuilder()
+                                .uri(new URI(resUrl))
+                                .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                                .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(prop)))
+                                .build();
+
+                        // The right is the GET request to get the Element after update
+                        templateElementsRequests.add(new ImmutablePair<>(httpRequest, getElementRequest));
+
+                    }
+                    // Create the element
+                    else {
+                        String urlWithFolder = resUrl+"?folder_id=" + encodedFolderId;
+                        HttpRequest httpRequest = HttpRequest.newBuilder()
+                                .uri(new URI(urlWithFolder))
+                                .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                                .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(prop)))
+                                .build();
+                        // the right null marks that no need for a GET after this request
+                        templateElementsRequests.add(new ImmutablePair<>(httpRequest, null));
+                    }
+
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage());
                 }
@@ -386,12 +474,28 @@ public class ArpServiceBean implements java.io.Serializable {
         });
         
         List<HttpResponse<String>> responses = templateElementsRequests.stream()
-                .map(request -> client.sendAsync(request, ofString())
+                .map(requestAndCrateFlag -> client.sendAsync(requestAndCrateFlag.getLeft(), ofString())
                         .thenApply(response -> {
-                            if (response.statusCode() != 201) {
-                                throw new RuntimeException("An error occured during uploading the template elements for template: " + cedarTemplate.get("schema:name").textValue());
+                            if (response.statusCode() != 201 && response.statusCode() != 200) {
+                                throw new RuntimeException("An error occured during uploading the template elements for template '" + cedarTemplate.get("schema:name").textValue()+"': "+response.body());
                             }
-                            return response;
+
+                            // If request was for creating the elem, we are done, the response contains the element JSON
+                            if (requestAndCrateFlag.getRight() == null) {
+                                return response;
+                            }
+                            // GET the contents again and return that for further processing
+                            try {
+                                HttpResponse<String> updatedResult = client.send(requestAndCrateFlag.getRight(), ofString());
+                                if (response.statusCode() != 200) {
+                                    throw new RuntimeException("An error occured during uploading the template elements for template '" + cedarTemplate.get("schema:name").textValue()+"': "+updatedResult.body());
+                                }
+                                return updatedResult;
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                throw new RuntimeException("An error occured during uploading the template elements for template '" + cedarTemplate.get("schema:name").textValue()+"': "+ex.getMessage());
+                            }
+
                         }))
                 .map(CompletableFuture::join)
                 .collect(Collectors.toList());
@@ -1122,7 +1226,7 @@ public class ArpServiceBean implements java.io.Serializable {
         return mdbTsv;
     }
 
-    public void syncMetadataBlockWithCedar(String mdbName, ExportToCedarParams cedarParams) {
+    public void syncMetadataBlockWithCedar(ArpInitialSetupParams.MdbParam mdbParam, ExportToCedarParams cedarParams) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String cedarDomain = cedarParams.cedarDomain;
@@ -1132,13 +1236,14 @@ public class ArpServiceBean implements java.io.Serializable {
             }
             cedarParams.cedarDomain = cedarDomain;
 
-            var mdb = metadataBlockService.findByName(mdbName);
-            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getIdString())).toString());
-            String templateJson = exportTemplateToCedar(cedarTemplate, cedarParams);
+            var mdb = metadataBlockService.findByName(mdbParam.name);
+            var actualUuid = mdbParam.cedarUuid != null ? mdbParam.cedarUuid : generateNamedUuid(mdbParam.name);
+            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getName())).toString());
+            String templateJson = exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Syncing metadatablock '"+mdbName+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
+            throw new RuntimeException("Syncing metadatablock '"+mdbParam.name+"' with CEDAR failed: "+e.getLocalizedMessage(),  e);
         }
     }
 

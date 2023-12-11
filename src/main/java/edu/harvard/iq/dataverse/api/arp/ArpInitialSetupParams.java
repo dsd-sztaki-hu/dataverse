@@ -3,32 +3,49 @@ package edu.harvard.iq.dataverse.api.arp;
 import edu.harvard.iq.dataverse.arp.ExportToCedarParams;
 
 import java.util.List;
-import java.util.Map;
 
 public class ArpInitialSetupParams
 {
-    // Default namespace URI-s for MDB-s. If a namespace URI is already set it will be updated with this one
-    // Key is the MDB name, value is the URI
-    public Map<String, String> mdbNamespaceUris;
+    public static class MdbParam
+    {
+        // Name of the MDB to sync. Either name or id must be provided
+        public String name;
 
-    public SyncCedarData syncCedar;
+        // ID of the MDB to sync. Either name or id must be provided.
+        public Long id;
 
-    public static class SyncCedarData {
-        public ExportToCedarParams cedarParams;
-        public List<String> mdbs;
+        // An optional namespace URI to set for the MDB in Dataverse
+        public String namespaceUri;
+
+        // Explicit CEDAR UUID to use when creating the template. If not provided one is automatically generated based
+        // on the name of the MDB.
+        public String cedarUuid;
     }
+
+    public List<MdbParam> mdbParams;
+    public ExportToCedarParams cedarParams;
 
     public ArpInitialSetupParams()
     {
     }
 
-    public Map<String, String> getMdbNamespaceUris()
+    public List<MdbParam> getMdbParams()
     {
-        return mdbNamespaceUris;
+        return mdbParams;
     }
 
-    public void setMdbNamespaceUris(Map<String, String> mdbNamespaceUris)
+    public void setMdbParams(List<MdbParam> mdbParams)
     {
-        this.mdbNamespaceUris = mdbNamespaceUris;
+        this.mdbParams = mdbParams;
+    }
+
+    public ExportToCedarParams getCedarParams()
+    {
+        return cedarParams;
+    }
+
+    public void setCedarParams(ExportToCedarParams cedarParams)
+    {
+        this.cedarParams = cedarParams;
     }
 }
