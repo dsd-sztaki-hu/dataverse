@@ -21,7 +21,7 @@ from rich.table import Table
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara5")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
-DEBUG_ENABLED=True
+DEBUG_ENABLED=False
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
@@ -79,7 +79,6 @@ def ls(args):
 
 	table = Table(show_header=True, header_style="bold magenta")
 	if args['type']=='storage':
-		ic(list(records))
 		for k in records[list(records)[0]].keys():
 			table.add_column(k,**({'justify': "right"} if k=='freeMegabytes' or k=='freePercent' else {'justify': "left"}))
 		for r in records.values():
@@ -198,13 +197,13 @@ def getS3Bucket(storageName,silent=False):
 
 def getS3BucketAndConnection(storageName,silent=False):
 	global s3buckets, s3conns
-	ic(storageName,silent,s3buckets,s3conns)
+#	ic(storageName,silent,s3buckets,s3conns)
 	if storageName in s3buckets:
 		return s3buckets[storageName],s3conns[storageName]
 	conn=getS3Connection(storageName,silent)
 	config=getS3Config(storageName,silent)
 	for bucket in conn.buckets.all():
-		print("{name}\t{created}".format(
+		debug("{name}\t{created}".format(
 			name = bucket.name,
 			created = bucket.creation_date,
 		))
@@ -303,35 +302,34 @@ def mv_or_cp(args,move):
 		exit(1)
 	objectsToMove=getList(args)
 	autodetect_storage(args)
-	ic(objectsToMove,args['type'])
+	debug('objectsToMove',objectsToMove,args['type'])
 	filePaths=get_filepaths(idlist=[str(x['id']) for x in objectsToMove],separatePaths=True)
 	for row in objectsToMove:
-		ic(row)
+		#ic(row)
 		if row['type']=='datafile':
-			ic(filePaths[row['id']])
+			#ic(filePaths[row['id']])
 			move_or_copy_file(row,filePaths[row['id']],args['storage'],args['to_storage'],move)
 		elif move:
 			changeStorageInDatabase(args['to_storage'],row['id'],row['type'])
 
-def get_new_args(args, id=None, ownerid=None, ownername=None, type='dataverse'):
+def get_new_args(args, ids=None, ownerid=None, ownername=None, recursive=None, type='dataverse'):
 	return {
-		'id': id,
+		'ids': ids,
 		'type': type,
 		'to_storage': args['to_storage'],
 		'storage': args['storage'],
-		'recursive': args['recursive'],
+		'recursive': recursive if recursive!=None else args['recursive'],
 		'command': args['command'],
 		'ownerid': ownerid,
 		'ownername': ownername,
-		'ids': None,
 	}
 
-def recurse(args, id):
+def recurse(args, ownerid):
 	out=[]
 	if args['recursive']:
-		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='dataverse'))
-		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='dataset'))
-		out+=COMMANDS[args['command']](get_new_args(args, ownerid=id, type='datafile'))
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataverse'))
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataset'))
+		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='datafile'))
 	return out
 
 
@@ -349,28 +347,34 @@ def fsck(args):
 	checked, errors, skipped = 0, 0, 0
 	for f in filepaths:
 		try:
-			debug('fscking: ',id=f, metadata=filepaths[f])
+			debug(f"fscking {f} {filepaths[f]}")
 			if storages[filepaths[f]['storage']]['type']=='file':
 				fp=storages[filepaths[f]['storage']]['path']+"/"+filepaths[f]['fullpath']
-				if not S_ISREG(os.stat(fp).st_mode):
+				fstat=os.stat(fp)
+				if not S_ISREG(fstat.st_mode):
 					print(filepaths[f] + " is not a normal file!")
 					errors+=1
+				actualsize=fstat.st_size
 			elif storages[filepaths[f]['storage']]['type']=='s3':
-				bucket,conn=getS3BucketAndClient(filepaths[f]['storage'])
+				bucket,client=getS3BucketAndClient(filepaths[f]['storage'])
 				#oa=client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
 				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f]['fullpath'])['Contents'][0]
-				ic(getList(get_new_args(args,id=f,type="datafile"))[0])
-				exit(2)
-				if oa['Size']!=getList(get_new_args(args,id=f,type="datafile"))[0]['filesize']:
-					print(f"size mismatch for {filepaths[f]}  id: {f}!")
-					errors+=1
-				else:
-					debug(f"OK {filepaths[f]['fullpath']}")
+				#ic(getList(get_new_args(args,id=f,type="datafile"))[0])
+				actualsize=oa['Size']
 			else:
 				print(f"fsck not implemented yet for {storages[filepaths[f]['storage']]['type']}!")
 				skipped+=1
+				continue
+
+			#ic(f,getList(get_new_args(args, ids=str(f), type="datafile", recursive=False)))
+			sizeindb=getList(get_new_args(args, ids=str(f), type="datafile", recursive=False))[0]['filesize']
+			if actualsize!=sizeindb:
+				print(f"size mismatch for {filepaths[f]}  id: {f}: {actualsize}!={sizeindb}")
+				errors+=1
+			else:
+				debug(f"OK {filepaths[f]['fullpath']}")
 		except Exception as e:
-			print(f"cannot stat {filepaths[f]}  id: {f}")
+			print(f"Error examining {filepaths[f]}  id: {f}")
 			debug(e)
 			errors+=1
 		checked+=1
@@ -458,7 +462,7 @@ def get_filepaths(idlist=None,separatePaths=True):
 	result={}
 	for r in records:
 		if separatePaths:
-			ic(storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
+			debug('storages',storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
 			result.update({r['id'] : {'storagepath': storages[r['storage']]['path'], 'fullpath': r['fullpath'], 'storage': r['storage']}})
 #			exit(3)
 		else:
@@ -510,12 +514,14 @@ def main():
 	ap.add_argument("-s", "--storage", required=False, help="storage to list/move items from")
 	ap.add_argument("--to-storage", required=False, help="move to the datastore of this name, required for move")
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
+	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
 
-	ic(args)
+	debug('args',args)
 #	autodetect_params(args)
+	global DEBUG_ENABLED
+	DEBUG_ENABLED=args['debug']
 	args['command']=COMMANDS[args['command']]
-	#ic(COMMANDS[args['command']].__name__)
 	args['command'](args)
 
 
