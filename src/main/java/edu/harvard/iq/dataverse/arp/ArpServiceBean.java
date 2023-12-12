@@ -128,6 +128,25 @@ public class ArpServiceBean implements java.io.Serializable {
         }
     }
 
+    /**
+     * Get the CEDAR template json for the given MDB from the associated MetadatablockArp record, ie. the
+     * CEDAR representation of the MDB as we've last seen it during an export from CEDAR to DV.
+     * @param mdbName
+     * @return
+     */
+    public JsonObject getCedarTemplateForMdb(String mdbName) {
+        var mdb = metadataBlockService.findByName(mdbName);
+        if (mdb == null) {
+            return null;
+        }
+        var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
+        if (mdbArp == null) {
+            return null;
+        }
+        JsonObject cedarTemplate = new Gson().fromJson(mdbArp.getCedarDefinition(), JsonObject.class);
+        return cedarTemplate;
+    }
+
     public String exportMdbAsTsv(String mdbName) throws JsonProcessingException {
         MetadataBlock mdb = metadataBlockService.findByName(mdbName);
 
@@ -229,13 +248,27 @@ public class ArpServiceBean implements java.io.Serializable {
         return metadataBlocks + "\n" + datasetFieldValues + "\n" + controlledVocabularyValues;
     }
 
-    public JsonObject tsvToCedarTemplate(String tsv) throws JsonProcessingException {
-        return tsvToCedarTemplate(tsv, true);
+    public JsonObject tsvToCedarTemplate(String tsv, JsonObject existingTemplate) throws JsonProcessingException {
+        return tsvToCedarTemplate(tsv, true, existingTemplate);
     }
 
-    public JsonObject tsvToCedarTemplate(String tsv, boolean convertDotToColon) throws JsonProcessingException {
-        var converter = new TsvToCedarTemplate(convertDotToColon);
-        return converter.convert(tsv);
+    /**
+     * Convert the given tsv to a CEDAR template optionally using existingTemplate as the base of the
+     * generated final CEDAR template. By providing an existingTemplate we can keep CEDAR specific values
+     * that are not represented in an MDB while also being able to set MDB specific value on the
+     * CEDAR template. For example, if a name is updated in MDB and we want to sync it back to CEDAR
+     * we can take the MDB's CEDAR template representation in MetadatablockArp as the existingTemplate
+     * and apply what we currently have in MDB (ie. including an updated name).
+     *
+     * @param tsv
+     * @param convertDotToColon
+     * @param existingTemplate
+     * @return
+     * @throws JsonProcessingException
+     */
+    public JsonObject tsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate) throws JsonProcessingException {
+        var converter = new TsvToCedarTemplate(tsv, convertDotToColon, existingTemplate);
+        return converter.convert();
     }
 
     private static boolean isURLEncoded(String param) {
@@ -429,7 +462,8 @@ public class ArpServiceBean implements java.io.Serializable {
                         prop = prop.get("items");
                         cedarUuid = prop.get("@id").textValue();
                     }
-                    String cedarId = "https://repo." + cedarDomain + "/template-elements/" + cedarUuid;
+                    // If cedarUuid is already an URL use it as-is, otherwise generate one based in @id being a uuid
+                    String cedarId = cedarUuid.startsWith("http")  ? cedarUuid : "https://repo." + cedarDomain + "/template-elements/" + cedarUuid;
                     String cedarIdEncoded = URLEncoder.encode(cedarId);
                     String resUrl = "https://resource." + cedarDomain + "/template-elements/"+cedarIdEncoded;
 
@@ -445,10 +479,11 @@ public class ArpServiceBean implements java.io.Serializable {
 
                     // if element exists, just update
                     if (elementExistsResponse.statusCode() == 200) {
+                        String json = new ObjectMapper().writeValueAsString(prop);
                         HttpRequest httpRequest = HttpRequest.newBuilder()
                                 .uri(new URI(resUrl))
                                 .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
-                                .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(prop)))
+                                .PUT(HttpRequest.BodyPublishers.ofString(json))
                                 .build();
 
                         // The right is the GET request to get the Element after update
@@ -458,10 +493,11 @@ public class ArpServiceBean implements java.io.Serializable {
                     // Create the element
                     else {
                         String urlWithFolder = resUrl+"?folder_id=" + encodedFolderId;
+                        String json = new ObjectMapper().writeValueAsString(prop);
                         HttpRequest httpRequest = HttpRequest.newBuilder()
                                 .uri(new URI(urlWithFolder))
                                 .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
-                                .PUT(HttpRequest.BodyPublishers.ofString(new ObjectMapper().writeValueAsString(prop)))
+                                .PUT(HttpRequest.BodyPublishers.ofString(json))
                                 .build();
                         // the right null marks that no need for a GET after this request
                         templateElementsRequests.add(new ImmutablePair<>(httpRequest, null));
@@ -1238,7 +1274,9 @@ public class ArpServiceBean implements java.io.Serializable {
 
             var mdb = metadataBlockService.findByName(mdbParam.name);
             var actualUuid = mdbParam.cedarUuid != null ? mdbParam.cedarUuid : generateNamedUuid(mdbParam.name);
-            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getName())).toString());
+
+            JsonObject existingTemplate = getCedarTemplateForMdb(mdbParam.name);
+            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getName()), existingTemplate).toString());
             String templateJson = exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {

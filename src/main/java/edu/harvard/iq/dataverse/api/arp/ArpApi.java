@@ -237,8 +237,9 @@ public class ArpApi extends AbstractApiBean {
             }
             cedarParams.cedarDomain = cedarDomain;
 
+            JsonObject existingTemplate = arpService.getCedarTemplateForMdb(mdbName);
             var actualUuid = cedarUuid != null ? cedarUuid : ArpServiceBean.generateNamedUuid(mdbName);
-            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName)).toString());
+            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName), existingTemplate).toString());
             res = arpService.exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
@@ -268,7 +269,7 @@ public class ArpApi extends AbstractApiBean {
         String cedarTemplate;
 
         try {
-            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv).toString();
+            cedarTemplate = arpService.tsvToCedarTemplate(mdbTsv, null).toString();
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return Response.serverError().entity(e.getMessage()).build();
@@ -312,7 +313,7 @@ public class ArpApi extends AbstractApiBean {
             }
             cedarParams.cedarDomain = cedarDomain;
 
-            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv).toString());
+            JsonNode cedarTemplate = mapper.readTree(arpService.tsvToCedarTemplate(cedarTsv, null).toString());
 
             // Use the explicitly provided UUID or create one based on the name in the TSV, ie. "schema:identifier"
             // ine the CEDAR template.
@@ -383,7 +384,8 @@ public class ArpApi extends AbstractApiBean {
         String describoProfile;
         
         try {
-            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName)).toString();
+            JsonObject existingTemplate = arpService.getCedarTemplateForMdb(mdbName);
+            String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(mdbName), existingTemplate).toString();
             describoProfile = arpService.convertTemplateToDescriboProfile(templateJson, language);
         } catch (Exception e) {
             e.printStackTrace();
@@ -421,7 +423,8 @@ public class ArpApi extends AbstractApiBean {
 
             for (int i=0; i<names.length; i++) {
                 // Convert TSV to CEDAR template without converting '.' to ':' in field names
-                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(names[i]), false).toString();
+                JsonObject existingTemplate = arpService.getCedarTemplateForMdb(names[i]);
+                String templateJson = arpService.tsvToCedarTemplate(arpService.exportMdbAsTsv(names[i]), false, existingTemplate).toString();
                 String profile = arpService.convertTemplateToDescriboProfile(templateJson, language);
                 JsonObject profileJson = gson.fromJson(profile, JsonObject.class);
                 boolean profileJsonAdded = false;

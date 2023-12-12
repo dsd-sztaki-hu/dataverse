@@ -25,14 +25,18 @@ import java.util.stream.Collectors;
 public class TsvToCedarTemplate implements java.io.Serializable {
     private static final Logger logger = Logger.getLogger(TsvToCedarTemplate.class.getCanonicalName());
 
-    private static JsonObject cedarTemplate;
-    private static JsonObject cedarTemplateField;
-    private static JsonObject cedarStaticTemplateField;
-    private static JsonObject cedarTemplateElement;
+    private static JsonObject EMPTY_CEDAR_TEMPLATE;
+    private static JsonObject EMPTY_CEDAR_TEMPLATE_FIELD;
+    private static JsonObject CEDAR_STATIC_TEMPLATE_FIELD;
+    private static JsonObject EMPTY_CEDAR_TEMPLATE_ELEMENT;
+
+    private String tsv;
 
     private boolean convertDotToColon = true;
 
     private Locale hunLocale = new Locale("hu");
+
+    private JsonObject existingTemplate;
 
     static {
         setupCedarTemplateParts();
@@ -53,39 +57,36 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         if (cedarTemplateInputStream == null) {
             logger.log(Level.SEVERE, "ArpServiceBean was unable to process " + cedarTemplatePath);
         } else {
-            cedarTemplate = gson.fromJson(new InputStreamReader(cedarTemplateInputStream), JsonObject.class);
+            EMPTY_CEDAR_TEMPLATE = gson.fromJson(new InputStreamReader(cedarTemplateInputStream), JsonObject.class);
         }
 
         if (cedarTemplateFieldInputStream == null) {
             logger.log(Level.SEVERE, "ArpServiceBean was unable to process " + cedarTemplateFieldPath);
         } else {
-            cedarTemplateField = gson.fromJson(new InputStreamReader(cedarTemplateFieldInputStream), JsonObject.class);
+            EMPTY_CEDAR_TEMPLATE_FIELD = gson.fromJson(new InputStreamReader(cedarTemplateFieldInputStream), JsonObject.class);
         }
 
         if (cedarStaticTemplateFieldInputStream == null) {
             logger.log(Level.SEVERE, "ArpServiceBean was unable to process " + cedarStaticTemplateFieldPath);
         } else {
-            cedarStaticTemplateField = gson.fromJson(new InputStreamReader(cedarStaticTemplateFieldInputStream), JsonObject.class);
+            CEDAR_STATIC_TEMPLATE_FIELD = gson.fromJson(new InputStreamReader(cedarStaticTemplateFieldInputStream), JsonObject.class);
         }
 
         if (cedarTemplateElementInputStream == null) {
             logger.log(Level.SEVERE, "ArpServiceBean was unable to process " + cedarTemplateElementPath);
         } else {
-            cedarTemplateElement = gson.fromJson(new InputStreamReader(cedarTemplateElementInputStream), JsonObject.class);
+            EMPTY_CEDAR_TEMPLATE_ELEMENT = gson.fromJson(new InputStreamReader(cedarTemplateElementInputStream), JsonObject.class);
         }
     }
 
-    public TsvToCedarTemplate(boolean convertDotToColon)
+    public TsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate)
     {
+        this.tsv = tsv;
         this.convertDotToColon = convertDotToColon;
+        this.existingTemplate = existingTemplate;
     }
 
-    public TsvToCedarTemplate()
-    {
-        this(true);
-    }
-
-    public JsonObject convert(String tsv) throws JsonProcessingException {
+    public JsonObject convert() throws JsonProcessingException {
         CsvMapper mapper = new CsvMapper();
         DataverseMetadataBlock metadataBlock = new DataverseMetadataBlock();
         List<DataverseDatasetField> datasetFields = new ArrayList<>();
@@ -138,7 +139,9 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        JsonObject jsonSchema = cedarTemplate.deepCopy();
+
+        // If there's an existing template then we overwrite values in that, otherwise start with an empty template
+        JsonObject jsonSchema = existingTemplate != null ? existingTemplate.deepCopy() : EMPTY_CEDAR_TEMPLATE.deepCopy();
 
         // process the mdb values
         processMetadataBlock(jsonSchema, metadataBlock);
@@ -178,7 +181,11 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         if (convertDotToColon) {
             propName = datasetField.getName().replace('.', ':');
         }
-        JsonHelper.getJsonElement(parentObj,"_ui.order").getAsJsonArray().add(propName);
+
+        var orderArray = JsonHelper.getJsonElement(parentObj,"_ui.order").getAsJsonArray();
+        if (!orderArray.contains(new JsonPrimitive(propName))) {
+            JsonHelper.getJsonElement(parentObj, "_ui.order").getAsJsonArray().add(propName);
+        }
         JsonHelper.getJsonElement(parentObj,"_ui.propertyLabels").getAsJsonObject().addProperty(propName, propName);
         JsonHelper.getJsonElement(parentObj,"_ui.propertyDescriptions").getAsJsonObject().addProperty(propName, datasetField.getDescription());
 
@@ -197,12 +204,17 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         enumArray.add(uri);
         enumObj.add("enum", enumArray);
         JsonHelper.getJsonElement(parentObj,"properties.@context.properties").getAsJsonObject().add(propName, enumObj);
-        parentObj.getAsJsonArray("required").add(propName);
-
+        // Only add if not already contain. This can happen if we start with an existing template that we are updating here.
+        if (!parentObj.getAsJsonArray("required").contains(new JsonPrimitive(propName))) {
+            parentObj.getAsJsonArray("required").add(propName);
+        }
         if (parentIsTemplateField) {
             parentObj.getAsJsonObject("properties").add(propName, valueObj);
         } else {
-            JsonHelper.getJsonElement(parentObj,"properties.@context.required").getAsJsonArray().add(propName);
+            var requiredArray = JsonHelper.getJsonElement(parentObj,"properties.@context.required").getAsJsonArray();
+            if (!requiredArray.contains(new JsonPrimitive(propName))) {
+                requiredArray.add(propName);
+            }
             if (datasetField.isAllowmultiples()) {
                 JsonObject arrayObj = new JsonObject();
                 arrayObj.addProperty("type", "array");
@@ -217,8 +229,12 @@ public class TsvToCedarTemplate implements java.io.Serializable {
     }
 
     private void processMetadataBlock(JsonObject jsonSchema, DataverseMetadataBlock dataverseMetadataBlock) {
-        jsonSchema.addProperty("title", dataverseMetadataBlock.getName() + jsonSchema.get("title").getAsString());
-        jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + jsonSchema.get("description").getAsString());
+        if (!jsonSchema.has("title")) {
+            jsonSchema.addProperty("title", dataverseMetadataBlock.getName() + " template schema");
+        }
+        if (!jsonSchema.has("description")) {
+            jsonSchema.addProperty("description", dataverseMetadataBlock.getName() + " template schema generated by ARP");
+        }
         jsonSchema.addProperty("schema:name", dataverseMetadataBlock.getDisplayName().isBlank() ? dataverseMetadataBlock.getName() : dataverseMetadataBlock.getDisplayName());
         try {
             var name = BundleUtil.getStringFromPropertyFile("metadatablock.displayName", dataverseMetadataBlock.getName(), hunLocale);
@@ -247,7 +263,10 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private void processTemplateField(JsonObject jsonSchema, DataverseDatasetField datasetField, JsonArray cvvs, DataverseMetadataBlock dataverseMetadataBlock) {
         String fieldType = datasetField.getFieldType().toLowerCase();
-        JsonObject templateField = cedarTemplateField.deepCopy();
+        // Find existing field or create an empty one if no existing field exists
+        var templateField = jsonSchema.has("properties") && jsonSchema.get("properties").getAsJsonObject().has(datasetField.getName())
+                ? jsonSchema.get("properties").getAsJsonObject().get(datasetField.getName()).getAsJsonObject().deepCopy()
+                : EMPTY_CEDAR_TEMPLATE_FIELD.deepCopy();
 
         processCommonFields(templateField, datasetField, dataverseMetadataBlock);
         
@@ -284,7 +303,10 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                 typeObj.addProperty("type", "string");
                 typeObj.addProperty("format", "uri");
                 templateField.getAsJsonObject("properties").add("@type", typeObj);
-                templateField.getAsJsonArray("required").add("@type");
+                if (!templateField.getAsJsonArray("required").contains(new JsonPrimitive("@type"))) {
+                    templateField.getAsJsonArray("required").add("@type");
+                }
+                //templateField.getAsJsonArray("required").add("@type");
                 break;
             case "url":
                 templateField.getAsJsonObject("_ui").addProperty("inputType", "link");
@@ -303,7 +325,19 @@ public class TsvToCedarTemplate implements java.io.Serializable {
     }
 
     private void processTemplateElement(JsonObject jsonSchema, DataverseDatasetField datasetField, List<DataverseDatasetField> children, List<DataverseControlledVocabulary> controlledVocabularyValues, DataverseMetadataBlock dataverseMetadataBlock) {
-        JsonObject templateElement = cedarTemplateElement.deepCopy();
+        var templateElement = jsonSchema.has("properties") && jsonSchema.get("properties").getAsJsonObject().has(datasetField.getName())
+                ? jsonSchema.get("properties").getAsJsonObject().get(datasetField.getName()).getAsJsonObject().deepCopy()
+                : EMPTY_CEDAR_TEMPLATE_ELEMENT.deepCopy();
+
+        // In  the template element maybe multiplied, in whihc case it is represented as a json schema
+        // "array", where the "items" are the actual elements of the array. This "items" object will be the actual
+        // element representation
+        if (templateElement.has("items")) {
+            templateElement = templateElement.getAsJsonObject("items");
+        }
+
+        final var finalElement = templateElement;
+
         processCommonFields(templateElement, datasetField, dataverseMetadataBlock);
         children.forEach(child -> {
             JsonArray cvvs = new JsonArray();
@@ -315,7 +349,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                         literal.addProperty("label", label);
                         cvvs.add(literal);
                     });
-            processTemplateField(templateElement, child, cvvs, dataverseMetadataBlock);
+            processTemplateField(finalElement, child, cvvs, dataverseMetadataBlock);
         });
 
         addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
@@ -333,9 +367,15 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         }
         // @id is UUID generated from the mdb name + field name. This is used just temporarily, will be replaced with
         // actual CEDAR URL format ID when uploading to CEDAR.
-        templateElement.addProperty("@id", ArpServiceBean.generateNamedUuid(dataverseMetadataBlock.getName()+"-"+datasetField.getName()));
-        templateElement.addProperty("title", propName + templateElement.get("title").getAsString());
-        templateElement.addProperty("description", propName + templateElement.get("description").getAsString());
+        if (!templateElement.has("@id")) {
+            templateElement.addProperty("@id", ArpServiceBean.generateNamedUuid(dataverseMetadataBlock.getName() + "-" + datasetField.getName()));
+        }
+        if (!templateElement.has("title")) {
+            templateElement.addProperty("title", propName + " element schema");
+        }
+        if (!templateElement.has("description")) {
+            templateElement.addProperty("description", propName + " element schema generated by the ARP");
+        }
 
         templateElement.addProperty("schema:name", propName);
         templateElement.addProperty("schema:description", datasetField.getDescription());
