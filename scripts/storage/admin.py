@@ -262,26 +262,32 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 		client2.upload_fileobj(Fileobj=fp,Bucket=bucket2.name,Key=key)
 	if move:
 		changeStorageInDatabase(destStorageName,id)
-		print(f"removing original file {src}")
+		print(f"removing original file {fromStorageName}://{key}")
 		client.delete_object(Bucket=bucket1.name,Key=key)
 
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
+	if fromStorageName==None:
+		fromStorageName=autodetect_storage_for_id(row['id'])
 #	debug(f"movefile({row},{path},{fromStorageName},{destStorageName})")
 #	try:
-		storageDict=getStorageDict()
-		if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
-			move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move)
-		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
-			move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
-		elif storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='s3':
-			move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
-		elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
-			move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
-		elif storageDict[fromStorageName]["type"]=='swift' or storageDict[destStorageName]["type"]=='swift':
-			print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
-		else:
-			print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
+	if fromStorageName==destStorageName:
+		print(f"refusing to copy/move file '{row}' to and from the same storage. Skipping.")
+		return
+
+	storageDict=getStorageDict()
+	if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
+		move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move)
+	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
+		move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
+	elif storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='s3':
+		move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
+	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
+		move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
+	elif storageDict[fromStorageName]["type"]=='swift' or storageDict[destStorageName]["type"]=='swift':
+		print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
+	else:
+		print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
 #	except Exception as e:
 #		print(f"moving file {row['1']} (id: {row['id']}) caused an exception: {e}")
 
@@ -476,6 +482,9 @@ def autodetect_type(args):
 			print(f"There is no dvobject with id {args['ids']}; aborting!")
 			exit(1)
 		args['type']=types[0]['type']
+
+def autodetect_storage_for_id(id):
+	return get_records_for_query("SELECT REGEXP_REPLACE(storageidentifier,':.*','') as storage FROM dvobject WHERE id IN ("+str(id)+")")[0]['storage']
 
 def autodetect_storage(args):
 	if args['storage']==None and args['ids'] is not None:
