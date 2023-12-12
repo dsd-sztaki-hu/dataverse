@@ -343,10 +343,10 @@ def recurse(args, ownerid):
 def fsck(args):
 	if args['storage'] is not None or args['ownerid'] is not None or args['ids'] is not None:
 		filesToCheck=getList(args)
+		ic(filesToCheck)
 		filepaths=get_filepaths([str(x['id']) for x in filesToCheck])
 	else:
 		filepaths=get_filepaths()
-	ic(filesToCheck)
 	#print filepaths
 	#print "Will check "+str(len(filepaths))+" files."
 	storages=getStorageDict()
