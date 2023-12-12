@@ -491,7 +491,7 @@ def autodetect_params(args):
 COMMANDS={
 	"list" : ls,
 	"ls" : ls,
-	"getList" : getList,
+	#"getList" : getList,
 	"move" : mv,
 	"mv" : mv,
 	"copy" : cp,
