@@ -21,7 +21,7 @@ from rich.table import Table
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara5")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
-DEBUG_ENABLED=False
+_ENABLED=False
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
@@ -177,7 +177,7 @@ def getS3Connection(storageName,silent=False):
 		return s3conns[storageName]
 	
 	config=getS3Config(storageName,silent)
-	debug(config)
+	ic(config)
 	conn = boto3.resource(
 		's3',
 		endpoint_url=config['endpoint_url'],
@@ -203,7 +203,7 @@ def getS3BucketAndConnection(storageName,silent=False):
 	conn=getS3Connection(storageName,silent)
 	config=getS3Config(storageName,silent)
 	for bucket in conn.buckets.all():
-		debug("{name}\t{created}".format(
+		ic("{name}\t{created}".format(
 			name = bucket.name,
 			created = bucket.creation_date,
 		))
@@ -226,7 +226,7 @@ def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,m
 	key=path['fullpath']
 	print(f"copying from {fromStorageName}://{key} to {dst}")
 #	ic(bucket,bucket.name)
-#	debug(client.list_objects(Bucket=bucket.name))
+#	ic(client.list_objects(Bucket=bucket.name))
 	client.download_file(Filename=dst,Bucket=bucket.name,Key=key)
 	if move:
 		changeStorageInDatabase(destStorageName,id)
@@ -242,7 +242,7 @@ def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,m
 	key=path['fullpath']
 	print(f"copying from {src} to {destStorageName}://{key}")
 #	ic(bucket,bucket.name)
-#	debug(client.list_objects(Bucket=bucket.name))
+#	ic(client.list_objects(Bucket=bucket.name))
 	client.upload_file(Filename=src,Bucket=bucket.name,Key=key)
 	if move:
 		changeStorageInDatabase(destStorageName,id)
@@ -255,24 +255,24 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 	bucket1,client1=getS3BucketAndClient(fromStorageName)
 	bucket2,client2=getS3BucketAndClient(destStorageName)
 	key=path['fullpath']
-	print(f"copying from {fromStorageName}://{key} to {destStorageName}://{key}")
+	print(f"Copying from {fromStorageName}://{key} to {destStorageName}://{key}")
 	with tempfile.TemporaryFile() as fp:
 		client1.download_fileobj(Fileobj=fp,Bucket=bucket1.name,Key=key)
 		fp.seek(0)
 		client2.upload_fileobj(Fileobj=fp,Bucket=bucket2.name,Key=key)
 	if move:
 		changeStorageInDatabase(destStorageName,id)
-		print(f"removing original file {fromStorageName}://{key}")
+		print(f"Removing original file {fromStorageName}://{key}")
 		client.delete_object(Bucket=bucket1.name,Key=key)
 
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 	if fromStorageName==None:
 		fromStorageName=autodetect_storage_for_id(row['id'])
-#	debug(f"movefile({row},{path},{fromStorageName},{destStorageName})")
+#	ic(f"movefile({row},{path},{fromStorageName},{destStorageName})")
 #	try:
 	if fromStorageName==destStorageName:
-		print(f"refusing to copy/move file '{row}' to and from the same storage. Skipping.")
+		print(f"Refusing to copy/move datafile (id={row['id']}) that is already in storage '{destStorageName}'. Skipping.")
 		return
 
 	storageDict=getStorageDict()
@@ -308,7 +308,7 @@ def mv_or_cp(args,move):
 		exit(1)
 	objectsToMove=getList(args)
 	autodetect_storage(args)
-	debug('objectsToMove',objectsToMove,args['type'])
+	ic('objectsToMove',objectsToMove,args['type'])
 	filePaths=get_filepaths(idlist=[str(x['id']) for x in objectsToMove],separatePaths=True)
 	for row in objectsToMove:
 		#ic(row)
@@ -346,14 +346,14 @@ def fsck(args):
 		filepaths=get_filepaths([str(x['id']) for x in filesToCheck])
 	else:
 		filepaths=get_filepaths()
-	debug(filesToCheck)
+	ic(filesToCheck)
 	#print filepaths
 	#print "Will check "+str(len(filepaths))+" files."
 	storages=getStorageDict()
 	checked, errors, skipped = 0, 0, 0
 	for f in filepaths:
 		try:
-			debug(f"fscking {f} {filepaths[f]}")
+			ic(f"fscking {f} {filepaths[f]}")
 			if storages[filepaths[f]['storage']]['type']=='file':
 				fp=storages[filepaths[f]['storage']]['path']+"/"+filepaths[f]['fullpath']
 				fstat=os.stat(fp)
@@ -378,10 +378,10 @@ def fsck(args):
 				print(f"size mismatch for {filepaths[f]}  id: {f}: {actualsize}!={sizeindb}")
 				errors+=1
 			else:
-				debug(f"OK {filepaths[f]['fullpath']}")
+				ic(f"OK {filepaths[f]['fullpath']}")
 		except Exception as e:
 			print(f"Error examining {filepaths[f]}  id: {f}")
-			debug(e)
+			ic(e)
 			errors+=1
 		checked+=1
 	print(f"Total objects: {checked};  Skipped: {skipped};  Errors: {errors};  OK: {checked-skipped-errors}")
@@ -407,7 +407,7 @@ def getStorageDict():
 
 def calculateStorageDict():
 	storageTypeOutput=subprocess.run(ASADMIN+" list-jvm-options | grep 'files\..*\.type='", shell=True, check=True, capture_output=True, text=True).stdout.splitlines()
-	debug(storageTypeOutput)
+	ic(storageTypeOutput)
 	storageDict={}
 	for x in storageTypeOutput:
 		sp=x.split('=')
@@ -428,17 +428,8 @@ def calculateStorageDict():
 		storageDict[storage['name']]=storage
 	return storageDict
 
-def debug(*debug,**kdebug):
-	if DEBUG_ENABLED:
-		if kdebug and debug:
-			ic(debug,kdebug)
-		elif debug:
-			ic(debug)
-		elif kdebug:
-			ic(kdebug)
-
 def get_records_for_query(query):
-	debug(query)
+	ic(query)
 	dataverse_db_connection = create_database_connection()
 	cursor = dataverse_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 	cursor.execute(query)
@@ -468,7 +459,7 @@ def get_filepaths(idlist=None,separatePaths=True):
 	result={}
 	for r in records:
 		if separatePaths:
-			debug('storages',storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
+			ic('storages',storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
 			result.update({r['id'] : {'storagepath': storages[r['storage']]['path'], 'fullpath': r['fullpath'], 'storage': r['storage']}})
 #			exit(3)
 		else:
@@ -509,10 +500,20 @@ COMMANDS={
 	"fsck" : fsck,
 }
 
+def setup_debugging(args):
+	global DEBUG_ENABLED
+	DEBUG_ENABLED=args['debug']
+	if DEBUG_ENABLED:
+		ic.enable()
+		ic.configureOutput(prefix='debug| ')
+	else:
+		ic.disable()
+	ic('args',args)
+
 def main():
 	types=["storage","dataverse","dataset","datafile"]
 #	print COMMANDS.keys()
-
+	
 	ap = argparse.ArgumentParser()
 	ap.add_argument("command", choices=COMMANDS.keys(), help="what to do")
 	ap.add_argument("-n", "--name", required=False, help="name of the object")
@@ -525,11 +526,9 @@ def main():
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
-
-	debug('args',args)
-#	autodetect_params(args)
-	global DEBUG_ENABLED
-	DEBUG_ENABLED=args['debug']
+	
+	setup_debugging(args)
+	
 	args['command']=COMMANDS[args['command']]
 	args['command'](args)
 
