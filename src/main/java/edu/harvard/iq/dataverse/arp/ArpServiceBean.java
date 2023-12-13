@@ -810,9 +810,7 @@ public class ArpServiceBean implements java.io.Serializable {
         if (!invalidNames.isEmpty()) {
             cedarTemplateErrors.invalidNames.addAll(invalidNames);
         }
-
-        List<String> mdbNames = metadataBlockService.listMetadataBlocks().stream().map(MetadataBlock::getName).collect(Collectors.toList());
-
+        
         for (String prop : propNames) {
             // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
             // ie. we can have an MDB named "journal" and a prop name "journal" as well.
@@ -825,35 +823,14 @@ public class ArpServiceBean implements java.io.Serializable {
             if (actProp.has("@type")) {
                 propType = actProp.get("@type").getAsString();
                 propType = propType.substring(propType.lastIndexOf("/") + 1);
-                String termUri = Optional.ofNullable(getJsonElement(cedarTemplateJson, "properties.@context.properties." + prop + ".enum[0]")).map(String::valueOf).orElse("").replaceAll("\"", "");
-                termUri = termUri.equals("null") ? "" : termUri;
-                boolean isNew = true;
-                for (var entry: dvPropTermUriPairs.entrySet()) {
-                    var k = entry.getKey();
-                    var v = entry.getValue();
-                    if (v.equals(termUri)) {
-                        DatasetFieldType original = datasetFieldService.findByName(k);
-                        // There's no need to create overrides if the original metadata block is updated
-                        if (!mdbName.equals(original.getMetadataBlock().getName())) {
-                            DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
-                            override.setOriginal(original);
-                            override.setTitle(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
-                            override.setLocalName(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
-                            cedarTemplateErrors.incompatiblePairs.put(prop, override);
-                            isNew = false;
-                        }
-                    }
-                }
-
-                if (isNew && !dvPropTermUriPairs.containsKey(prop)) {
-                    dvPropTermUriPairs.put(prop, termUri);
-                }
+                createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
 
             } else {
                 propType = actProp.get("type").getAsString();
                 actProp = getJsonObject(actProp, "items");
                 String itemsType = actProp.get("@type").getAsString();
                 if (itemsType.substring(itemsType.lastIndexOf("/") + 1).equals("TemplateField")) {
+                    createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
                     continue;
                 }
             }
@@ -872,6 +849,34 @@ public class ArpServiceBean implements java.io.Serializable {
         }
 
         return cedarTemplateErrors;
+    }
+    
+    // props that require DatasetFieldTypeOverride creation are stored in the cedarTemplateErrors.incompatiblePairs
+    // these values are processed later when the override(s) are actually saved in: edu.harvard.iq.dataverse.arp.ArpServiceBean.createOrUpdateMdbFromCedarTemplate
+    private void createOverrideIfRequired(JsonObject actProp, String propName, JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String mdbName) {
+        String termUri = Optional.ofNullable(getJsonElement(cedarTemplateJson, "properties.@context.properties." + propName + ".enum[0]")).map(String::valueOf).orElse("").replaceAll("\"", "");
+        termUri = termUri.equals("null") ? "" : termUri;
+        boolean isNew = true;
+        for (var entry: dvPropTermUriPairs.entrySet()) {
+            var k = entry.getKey();
+            var v = entry.getValue();
+            if (v.equals(termUri)) {
+                DatasetFieldType original = datasetFieldService.findByName(k);
+                // There's no need to create overrides if the original metadata block is updated
+                if (!mdbName.equals(original.getMetadataBlock().getName())) {
+                    DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
+                    override.setOriginal(original);
+                    override.setTitle(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
+                    override.setLocalName(actProp.has("schema:name") ? actProp.get("schema:name").getAsString() : "");
+                    cedarTemplateErrors.incompatiblePairs.put(propName, override);
+                    isNew = false;
+                }
+            }
+        }
+
+        if (isNew && !dvPropTermUriPairs.containsKey(propName)) {
+            dvPropTermUriPairs.put(propName, termUri);
+        }
     }
 
     /**
