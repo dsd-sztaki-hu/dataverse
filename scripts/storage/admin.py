@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import configparser
-import psycopg2
-import psycopg2.extras
+import psycopg2, psycopg2.extras
 import sys, os, io, re
 import pprint, argparse, subprocess
+import requests
 from stat import *
 from config import (ConfigSectionMap)
 from database import (query_database, get_last_timestamp, record_datafile_status, get_datafile_status, create_database_connection)
@@ -426,6 +426,18 @@ def calculateStorageDict():
 			print(f"ERROR: len(storageDirectoryOutput)=={len(storageDirectoryOutput)}, it should be 0 or 1!!!")
 			exit(1)
 		storageDict[storage['name']]=storage
+	storageSitesOutput=requests.get('http://localhost:8080/api/admin/storageSites').json()['data']
+	for x in storageSitesOutput:
+		if x['name'] not in storageDict:
+			storageDict[x['name']]={}
+			storageDict[x['name']]["name"]=x["name"]
+			storageDict[x['name']]["type"]=''
+			storageDict[x['name']]["path"]=''
+			storageDict[x['name']]["freeMegabytes"]=''
+			storageDict[x['name']]["freePercent"]=''
+		storageDict[x['name']]["transferProtocols"]=x["transferProtocols"]
+		storageDict[x['name']]["primaryStorage"]=x["primaryStorage"]
+		storageDict[x['name']]["id"]=x["id"]
 	return storageDict
 
 def get_records_for_query(query):
