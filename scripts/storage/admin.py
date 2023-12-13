@@ -40,9 +40,11 @@ def getList(args):
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
-		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id FROM dataset ds1 NATURAL JOIN dvobject dvo1 JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id
+		rsl_fields = ', dsv.id as vid, storagesite.name, rsl.status' if args['remote_locations'] else ''
+		rsl_end = ', dsv.id, storagesite.name, rsl.status' if args['remote_locations'] else ''
+		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id """+rsl_fields+""" FROM dataset ds1 NATURAL JOIN dvobject dvo1 LEFT OUTER JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id JOIN datasetversion dsv ON ds1.id=dsv.dataset_id LEFT OUTER JOIN dvobjectremotestoragelocation rsl ON dsv.id=datasetversion_id LEFT OUTER JOIN storagesite ON site_id=storagesite.id
 		     WHERE true"""
-		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier,dvo1.owner_id"
+		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier,dvo1.owner_id"+rsl_end
 		if args['ownerid'] is not None:
 			q+=" AND dvo1.owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
@@ -92,6 +94,10 @@ def ls(args):
 		table.add_column('type')
 		table.add_column('size',justify="right")
 		table.add_column('ownerid',justify="right")
+		if args['remote_locations']:
+			table.add_column('versionid')
+			table.add_column('site')
+			table.add_column('status')
 		for r in records:
 			table.add_row(*[str(v) for v in r.values()])
 
@@ -132,6 +138,7 @@ def destinationFileChecks(dst,destStoragePath,filesize,id):
 	if not os.path.exists(dstDir):
 		print("creating "+dstDir)
 		os.makedirs(dstDir)
+		shutil.chown(dstDir,user=ConfigSectionMap("Dataverse")['user'],group=ConfigSectionMap("Dataverse")['group'])
 	return True
 
 def moveFileChecks(row,path,fromStorageName,destStorageName):
@@ -155,6 +162,7 @@ def move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName
 		return
 	print(f"copying from {src} to {dst}")
 	shutil.copyfile(src, dst)
+	shutil.chown(dst, user=ConfigSectionMap("Dataverse")['user'], group=ConfigSectionMap("Dataverse")['group'])
 	if move:
 		changeStorageInDatabase(destStorageName,row['id'])
 		print(f"removing original file {src}")
@@ -228,6 +236,7 @@ def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,m
 #	ic(bucket,bucket.name)
 #	ic(client.list_objects(Bucket=bucket.name))
 	client.download_file(Filename=dst,Bucket=bucket.name,Key=key)
+	shutil.chown(dst,user=ConfigSectionMap("Dataverse")['user'],group=ConfigSectionMap("Dataverse")['group'])
 	if move:
 		changeStorageInDatabase(destStorageName,id)
 		print(f"removing original file {fromStorageName}://{key}")
@@ -265,6 +274,11 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 		print(f"Removing original file {fromStorageName}://{key}")
 		client.delete_object(Bucket=bucket1.name,Key=key)
 
+def update_storage_site_info(destStorageName,id):
+	api_token = ConfigSectionMap("Dataverse")['apitoken']
+	ic.enable()
+	ic(requests.get(f'http://localhost:8080/api/datasets/{id}/versions/:latest-published/storageSites',headers={"X-Dataverse-key":api_token}).json())
+#	exit(4)
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 	if fromStorageName==None:
@@ -293,6 +307,9 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 
 def cp(args):
 	mv_or_cp(args,move=False)
+	if args['type']=='dataset':
+		update_storage_site_info(args['to_storage'],args['ids'])
+
 
 def mv(args):
 	mv_or_cp(args,move=True)
@@ -328,6 +345,7 @@ def get_new_args(args, ids=None, ownerid=None, ownername=None, recursive=None, t
 		'command': args['command'],
 		'ownerid': ownerid,
 		'ownername': ownername,
+		'remote_locations': args['remote_locations'],
 	}
 
 def recurse(args, ownerid):
@@ -501,6 +519,7 @@ def autodetect_params(args):
 	autodetect_storage(args)
 
 COMMANDS={
+	"getList" : getList,
 	"list" : ls,
 	"ls" : ls,
 	"move" : mv,
@@ -535,9 +554,10 @@ def main():
 	ap.add_argument("-s", "--storage", required=False, help="storage to list/move items from")
 	ap.add_argument("--to-storage", required=False, help="move to the datastore of this name, required for move")
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
+	ap.add_argument("--remote-locations", required=False, action='store_true', help="print remote location information")
 	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
-	
+	ic(args)
 	setup_debugging(args)
 	
 	args['command']=COMMANDS[args['command']]
