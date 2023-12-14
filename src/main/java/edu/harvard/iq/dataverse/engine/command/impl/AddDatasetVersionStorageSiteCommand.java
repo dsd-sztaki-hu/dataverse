@@ -11,6 +11,7 @@ import java.util.logging.Logger;
  *
  * @author pallinger
  */
+@RequiredPermissions(Permission.EditDataset)
 public class AddDatasetVersionStorageSiteCommand  extends AbstractCommand<DatasetVersion> {
 
 	private static final Logger logger = Logger.getLogger(AddDatasetVersionStorageSiteCommand.class.getCanonicalName());

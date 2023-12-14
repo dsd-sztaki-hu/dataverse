@@ -317,7 +317,11 @@ public class JsonParser {
 	
 	public DatasetVersionStorageSite parseDatasetVersionStorageSite(JsonObject obj) throws JsonParseException {
 		DatasetVersionStorageSite dvss = new DatasetVersionStorageSite();
-		dvss.setStorageSite(parseStorageSite(obj.getJsonObject("storageSite")));
+//		if(obj.getJsonObject("storageSiteId")!=null) {
+//			dvss.setStorageSite()
+//		} else {
+			dvss.setStorageSite(parseStorageSite(obj.getJsonObject("storageSite")));
+//		}
 		dvss.setStatus(DatasetVersionStorageSite.StorageStatusEnum.fromString(obj.getString("status")));
 		return dvss;
 	}

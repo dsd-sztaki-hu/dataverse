@@ -13,6 +13,7 @@ import java.util.logging.Logger;
  *
  * @author pallinger
  */
+@RequiredPermissions(Permission.EditDataset)
 public class EditDatasetVersionStorageSiteCommand  extends AbstractCommand<DatasetVersion> {
 
 	private static final Logger logger = Logger.getLogger(EditDatasetVersionStorageSiteCommand.class.getCanonicalName());

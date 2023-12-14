@@ -13,6 +13,7 @@ import java.util.logging.Logger;
  *
  * @author pallinger
  */
+@RequiredPermissions(Permission.EditDataset)
 public class DeleteDatasetVersionStorageSiteCommand  extends AbstractCommand<DatasetVersion> {
 
 	private static final Logger logger = Logger.getLogger(DeleteDatasetVersionStorageSiteCommand.class.getCanonicalName());
