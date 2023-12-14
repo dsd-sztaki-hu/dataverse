@@ -40,9 +40,13 @@ def getList(args):
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
 	elif args['type']=='dataset':
+		if args['cpap_only']:
+			args['remote_locations']=True
 		rsl_fields = ', dsv.id as vid, storagesite.name, rsl.status' if args['remote_locations'] else ''
 		rsl_end = ', dsv.id, storagesite.name, rsl.status' if args['remote_locations'] else ''
-		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id """+rsl_fields+""" FROM dataset ds1 NATURAL JOIN dvobject dvo1 LEFT OUTER JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id JOIN datasetversion dsv ON ds1.id=dsv.dataset_id LEFT OUTER JOIN dvobjectremotestoragelocation rsl ON dsv.id=datasetversion_id LEFT OUTER JOIN storagesite ON site_id=storagesite.id
+		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id """+rsl_fields+""" FROM dataset ds1 NATURAL JOIN dvobject dvo1 
+		     LEFT OUTER JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id JOIN datasetversion dsv ON ds1.id=dsv.dataset_id 
+		     LEFT OUTER JOIN dvobjectremotestoragelocation rsl ON dsv.id=datasetversion_id LEFT OUTER JOIN storagesite ON site_id=storagesite.id
 		     WHERE true"""
 		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier,dvo1.owner_id"+rsl_end
 		if args['ownerid'] is not None:
@@ -53,6 +57,10 @@ def getList(args):
 			q+=" AND ds1.id in ("+args['ids']+")"
 		if args['storage'] is not None:
 			q+=" AND dvo1.storageidentifier LIKE '"+args['storage']+"://%'"
+		if args['rslstatus'] is not None:
+			q+=" AND rsl.status='"+args['rslstatus']+"'"
+		if args['cpap_only']:
+			q+=" AND rsl.status IN ('CPAP','CPIN') AND storagesite.name='"+args['to_storage']+"'"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
 		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN (SELECT datafile_id,label,directorylabel,MAX(datasetversion_id) FROM filemetadata GROUP BY datafile_id,label,directorylabel) fm ON dvo.id=fm.datafile_id WHERE true"
@@ -124,7 +132,6 @@ def changeStorageInDatabase(destStorageName,id,type='datafile'):
 	query+="WHERE id=%s"
 	#	query=f"storageidentifier=REPLACE(storageidentifier,'${fromStorageName}://','{destStorageName}://')"
 #	ic(query,paramTuple)
-	print("updating database: "+(query%paramTuple))
 	#	exit(0)
 	sql_update(query,paramTuple)
 
@@ -144,7 +151,7 @@ def destinationFileChecks(dst,destStoragePath,filesize,id):
 def moveFileChecks(row,path,fromStorageName,destStorageName):
 	storageDict=getStorageDict()
 	src=path['storagepath']+"/"+path['fullpath']
-	dst=storageDict[destStorageName]['path']+"/"+path['fullpath']
+	dst=get_path(destStorageName,path['fullpath'])
 	id=str(row['id'])
 	if src==dst:
 		print(f"Skipping object {id}, as already in storage "+destStorageName)
@@ -224,12 +231,19 @@ def getS3BucketAndClient(storageName):
 	myBucket, conn = getS3BucketAndConnection(storageName)
 	return myBucket, conn.meta.client
 
+def get_path(storageName,fullpath):
+	storageDict=getStorageDict()
+	if storageDict[storageName]['type']=='file':
+		return storageDict[storageName]['path']+"/"+fullpath
+	elif storageDict[storageName]['type']=='s3':
+		return fullpath
+
 def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
 	id=str(row['id'])
-	dst=storageDict[destStorageName]['path']+"/"+path['fullpath']
+	dst=get_path(destStorageName,path['fullpath'])
 	if not destinationFileChecks(dst,storageDict[destStorageName]['path'],row['filesize'],id):
-		return
+		return False
 	bucket,client=getS3BucketAndClient(fromStorageName)
 	key=path['fullpath']
 	print(f"copying from {fromStorageName}://{key} to {dst}")
@@ -241,12 +255,13 @@ def move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,m
 		changeStorageInDatabase(destStorageName,id)
 		print(f"removing original file {fromStorageName}://{key}")
 		client.delete_object(Bucket=bucket.name,Key=key)
+	return True
 
 def move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move):
 	storageDict=getStorageDict()
 	id=str(row['id'])
 #	ic(storageDict[destStorageName]['path'],path[1])
-	src=storageDict[fromStorageName]['path']+"/"+path['fullpath']
+	src=get_path(fromStorageName,path['fullpath'])
 	bucket,client=getS3BucketAndClient(destStorageName)
 	key=path['fullpath']
 	print(f"copying from {src} to {destStorageName}://{key}")
@@ -287,29 +302,48 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 #	try:
 	if fromStorageName==destStorageName:
 		print(f"Refusing to copy/move datafile (id={row['id']}) that is already in storage '{destStorageName}'. Skipping.")
-		return
+		return True
+	elif fsck(get_new_args(storage=fromStorageName,to_storage=destStorageName, ids=str(row['id']), type='datafile'),silent=True):
+		print(f"Refusing to copy/move datafile (id={row['id']}) that is already also in storage '{destStorageName}'. Skipping.")
+		return True
 
 	storageDict=getStorageDict()
 	if storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='file':
-		move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move)
+		return move_or_copy_file_from_file_to_file(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='file':
-		move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
+		return move_or_copy_file_from_s3_to_file(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='file' and storageDict[destStorageName]["type"]=='s3':
-		move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
+		return move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
-		move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
+		return move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='swift' or storageDict[destStorageName]["type"]=='swift':
 		print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
+		return False
 	else:
 		print(f"Moving files from {storageDict[fromStorageName]['type']} to {storageDict[destStorageName]['type']} stores is not supported yet")
+		return False
 #	except Exception as e:
 #		print(f"moving file {row['1']} (id: {row['id']}) caused an exception: {e}")
+
+
+
+def cpap(args):
+	to_copy=getList(get_new_args(args,cpap_only=True,type='dataset',recursive=True))
+	ic(to_copy)
+	for dvo in to_copy:
+		if dvo['type']=='dataset':
+			sql_update("UPDATE dvobjectremotestoragelocation SET status='CPIN' WHERE datasetversion_id=%s AND site_id=(SELECT id FROM storagesite WHERE name=%s)",(dvo['vid'],dvo['name']))
+		elif dvo['type']=='datafile':
+			cp(get_new_args(args, command=cp, ids=str(dvo['id']), type='datafile'))
+	for dvo in to_copy:
+		if dvo['type']=='dataset':
+			sql_update("UPDATE dvobjectremotestoragelocation SET status='CPDN' WHERE datasetversion_id=%s AND site_id=(SELECT id FROM storagesite WHERE name=%s)",(dvo['vid'],dvo['name']))
+
 
 def cp(args):
 	mv_or_cp(args,move=False)
 	if args['type']=='dataset':
 		update_storage_site_info(args['to_storage'],args['ids'])
-
 
 def mv(args):
 	mv_or_cp(args,move=True)
@@ -335,58 +369,72 @@ def mv_or_cp(args,move):
 		elif move:
 			changeStorageInDatabase(args['to_storage'],row['id'],row['type'])
 
-def get_new_args(args, ids=None, ownerid=None, ownername=None, recursive=None, type='dataverse'):
+def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, 'command': None, 'remote_locations': None, 'cpap_only': None, 'rslstatus': None,}, 
+                 ids=None, 
+                 ownerid=None, 
+                 ownername=None, 
+                 recursive=None, 
+                 type=None,
+                 cpap_only=None, 
+                 command=None, 
+                 storage=None,
+                 to_storage=None):
 	return {
 		'ids': ids,
-		'type': type,
-		'to_storage': args['to_storage'],
-		'storage': args['storage'],
+		'type': type if type!=None else args['type'],
+		'to_storage': to_storage if to_storage!=None else args['to_storage'],
+		'storage': storage if storage!=None else args['storage'],
 		'recursive': recursive if recursive!=None else args['recursive'],
-		'command': args['command'],
+		'command': command if command!=None else args['command'],
 		'ownerid': ownerid,
 		'ownername': ownername,
 		'remote_locations': args['remote_locations'],
+		'cpap_only': cpap_only if cpap_only!=None else args['cpap_only'],
+		'rslstatus': args['rslstatus'],
 	}
 
 def recurse(args, ownerid):
 	out=[]
 	if args['recursive']:
-		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataverse'))
-		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataset'))
+		if args['type']==None or args['type']=='dataverse':
+			out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataverse'))
+		if args['type']==None or args['type']=='dataverse':
+			out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='dataset'))
 		out+=COMMANDS[args['command']](get_new_args(args, ownerid=ownerid, type='datafile'))
 	return out
 
 
 ### this is for checking that the files in the database are all there on disk where they should be
-def fsck(args):
+def fsck(args, silent=False):
+	ic()
 	if args['storage'] is not None or args['ownerid'] is not None or args['ids'] is not None:
 		filesToCheck=getList(args)
-		ic(filesToCheck)
 		filepaths=get_filepaths([str(x['id']) for x in filesToCheck])
 	else:
 		filepaths=get_filepaths()
-	#print filepaths
+	#ic(filepaths)
 	#print "Will check "+str(len(filepaths))+" files."
-	storages=getStorageDict()
 	checked, errors, skipped = 0, 0, 0
 	for f in filepaths:
 		try:
 			ic(f"fscking {f} {filepaths[f]}")
-			if storages[filepaths[f]['storage']]['type']=='file':
-				fp=storages[filepaths[f]['storage']]['path']+"/"+filepaths[f]['fullpath']
+			storage=args['to_storage'] if args['to_storage'] else filepaths[f]['storage']
+			storageType=getStorageDict()[storage]['type']
+			if storageType=='file':
+				fp=get_path(storage,filepaths[f]['fullpath'])
 				fstat=os.stat(fp)
 				if not S_ISREG(fstat.st_mode):
 					print(filepaths[f] + " is not a normal file!")
 					errors+=1
 				actualsize=fstat.st_size
-			elif storages[filepaths[f]['storage']]['type']=='s3':
-				bucket,client=getS3BucketAndClient(filepaths[f]['storage'])
+			elif storageType=='s3':
+				bucket,client=getS3BucketAndClient(storage)
 				#oa=client.get_object_attributes(Bucket=bucket.name,Key=filepaths[f][1],ObjectAttributes=['Checksum','ObjectSize'])
 				oa=client.list_objects_v2(Bucket=bucket.name,Prefix=filepaths[f]['fullpath'])['Contents'][0]
 				#ic(getList(get_new_args(args,id=f,type="datafile"))[0])
 				actualsize=oa['Size']
 			else:
-				print(f"fsck not implemented yet for {storages[filepaths[f]['storage']]['type']}!")
+				print(f"fsck not implemented yet for {storageType}!")
 				skipped+=1
 				continue
 
@@ -398,11 +446,12 @@ def fsck(args):
 			else:
 				ic(f"OK {filepaths[f]['fullpath']}")
 		except Exception as e:
-			print(f"Error examining {filepaths[f]}  id: {f}")
+			if not silent: print(f"Error examining {filepaths[f]}  id: {f}")
 			ic(e)
 			errors+=1
 		checked+=1
-	print(f"Total objects: {checked};  Skipped: {skipped};  Errors: {errors};  OK: {checked-skipped-errors}")
+	if not silent: print(f"Total objects: {checked};  Skipped: {skipped};  Errors: {errors};  OK: {checked-skipped-errors}")
+	return errors==0 and skipped==0
 
 #def checkFileInFilesystem():
 #	
@@ -416,7 +465,7 @@ def fsck(args):
 #		result[l[0]]={'path': l[1]+'/', 'free': l[2], 'freePercent': l[3]}
 #	return result
 
-storageDict=None
+storageDict=None  
 def getStorageDict():
 	global storageDict
 	if storageDict==None:
@@ -425,7 +474,7 @@ def getStorageDict():
 
 def calculateStorageDict():
 	storageTypeOutput=subprocess.run(ASADMIN+" list-jvm-options | grep 'files\..*\.type='", shell=True, check=True, capture_output=True, text=True).stdout.splitlines()
-	ic(storageTypeOutput)
+#	ic(storageTypeOutput)
 	storageDict={}
 	for x in storageTypeOutput:
 		sp=x.split('=')
@@ -469,6 +518,7 @@ def get_records_for_query(query):
 	return records
 
 def sql_update(query, params):
+	print("updating database: "+(query%params))
 	dataverse_db_connection = create_database_connection()
 	cursor = dataverse_db_connection.cursor()
 	cursor.execute(query, params)
@@ -489,7 +539,7 @@ def get_filepaths(idlist=None,separatePaths=True):
 	result={}
 	for r in records:
 		if separatePaths:
-			ic('storages',storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
+#			ic('storages',storages,r['storage'],storages[r['storage']],r['fullpath'],r['storage'])
 			result.update({r['id'] : {'storagepath': storages[r['storage']]['path'], 'fullpath': r['fullpath'], 'storage': r['storage']}})
 #			exit(3)
 		else:
@@ -508,6 +558,7 @@ def autodetect_storage_for_id(id):
 	return get_records_for_query("SELECT REGEXP_REPLACE(storageidentifier,':.*','') as storage FROM dvobject WHERE id IN ("+str(id)+")")[0]['storage']
 
 def autodetect_storage(args):
+	ic(args)
 	if args['storage']==None and args['ids'] is not None:
 		if args['type']=='dataverse':
 			args['storage']=get_records_for_query("SELECT storagedriver as storage FROM dataverse WHERE id IN ("+args['ids']+")")[0]['storage']
@@ -526,6 +577,8 @@ COMMANDS={
 	"mv" : mv,
 	"copy" : cp,
 	"cp" : cp,
+	"copyApproved": cpap,
+	"cpap": cpap,
 	"check" : fsck,
 	"fsck" : fsck,
 }
@@ -552,13 +605,16 @@ def main():
 	ap.add_argument("--ownerid", required=False, help="id of the containing/owner object")
 	ap.add_argument("-t", "--type", choices=types, required=False, help="type of objects to list/move")
 	ap.add_argument("-s", "--storage", required=False, help="storage to list/move items from")
+	ap.add_argument("--rslstatus", required=False, help="remote storage location status")
 	ap.add_argument("--to-storage", required=False, help="move to the datastore of this name, required for move")
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	ap.add_argument("--remote-locations", required=False, action='store_true', help="print remote location information")
+	ap.add_argument("--cpap-only", required=False, action='store_true', help="filter for Copy Approved")
 	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
-	ic(args)
+	
 	setup_debugging(args)
+	ic(args)
 	
 	args['command']=COMMANDS[args['command']]
 	args['command'](args)

@@ -4,6 +4,7 @@ status=${1}
 dsversion=${2}
 site=${3}
 
+echo "INSERT INTO dvobjectremotestoragelocation VALUES ('$status' , $dsversion, $site) ON CONFLICT(datasetversion_id, site_id) DO UPDATE set status='$status'"
 echo "INSERT INTO dvobjectremotestoragelocation VALUES ('$status' , $dsversion, $site) ON CONFLICT(datasetversion_id, site_id) DO UPDATE set status='$status'" | psql dvndb postgres
 
 exit 0
