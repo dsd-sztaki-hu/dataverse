@@ -53,6 +53,8 @@ def getList(args):
 			q+=" AND dvo1.owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
 			q+=" AND ds1.id IN (SELECT DISTINCT id FROM dvobject WHERE owner_id IN (SELECT id FROM dataverse WHERE alias='"+args['ownername']+"'"+"))"
+		if args['remote_locations']:
+			q+=" AND versionstate='RELEASED'"
 		if args['ids'] is not None:
 			q+=" AND ds1.id in ("+args['ids']+")"
 		if args['storage'] is not None:
@@ -289,11 +291,6 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 		print(f"Removing original file {fromStorageName}://{key}")
 		client.delete_object(Bucket=bucket1.name,Key=key)
 
-def update_storage_site_info(destStorageName,id):
-	api_token = ConfigSectionMap("Dataverse")['apitoken']
-	ic.enable()
-	ic(requests.get(f'http://localhost:8080/api/datasets/{id}/versions/:latest-published/storageSites',headers={"X-Dataverse-key":api_token}).json())
-#	exit(4)
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 	if fromStorageName==None:
@@ -326,24 +323,44 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 #		print(f"moving file {row['1']} (id: {row['id']}) caused an exception: {e}")
 
 
+def get_storage_site_info(destStorageName,id):
+	api_token = ConfigSectionMap("Dataverse")['apitoken']
+	ic.enable()
+	ic(requests.get(f'http://localhost:8080/api/datasets/{id}/versions/:latest-published/storageSites',headers={"X-Dataverse-key":api_token}).json())
+#	exit(4)
+
+def update_storage_site_status(storageName, vid, status):
+	sql_update("""UPDATE dvobjectremotestoragelocation SET status=%s
+	              WHERE datasetversion_id=%s AND site_id=(SELECT id FROM storagesite WHERE name=%s)""",(status,vid,storageName))
+
+def upsert_storage_site_status(storageName, vid, status):
+	ic("""INSERT INTO dvobjectremotestoragelocation VALUES (%s, %s, (SELECT id FROM storagesite WHERE name=%s))
+	              ON CONFLICT(datasetversion_id, site_id) DO UPDATE set status=%s""",(status,vid,storageName,status))
+	sql_update("""INSERT INTO dvobjectremotestoragelocation VALUES (%s, %s, (SELECT id FROM storagesite WHERE name=%s))
+	              ON CONFLICT(datasetversion_id, site_id) DO UPDATE set status=%s""",(status,vid,storageName,status))
 
 def cpap(args):
 	to_copy=getList(get_new_args(args,cpap_only=True,type='dataset',recursive=True))
 	ic(to_copy)
 	for dvo in to_copy:
 		if dvo['type']=='dataset':
-			sql_update("UPDATE dvobjectremotestoragelocation SET status='CPIN' WHERE datasetversion_id=%s AND site_id=(SELECT id FROM storagesite WHERE name=%s)",(dvo['vid'],dvo['name']))
+			update_storage_site_status(dvo['name'], dvo['vid'], 'CPIN')
 		elif dvo['type']=='datafile':
 			cp(get_new_args(args, command=cp, ids=str(dvo['id']), type='datafile'))
 	for dvo in to_copy:
 		if dvo['type']=='dataset':
-			sql_update("UPDATE dvobjectremotestoragelocation SET status='CPDN' WHERE datasetversion_id=%s AND site_id=(SELECT id FROM storagesite WHERE name=%s)",(dvo['vid'],dvo['name']))
-
+			update_storage_site_status(dvo['name'], dvo['vid'], 'CPDN')
 
 def cp(args):
-	mv_or_cp(args,move=False)
+	dataset_list=[]
 	if args['type']=='dataset':
-		update_storage_site_info(args['to_storage'],args['ids'])
+		dataset_list = getList(get_new_args(args,ids=args['ids'],recursive=False,remote_locations=True))
+		for ds in dataset_list:
+			upsert_storage_site_status(args['to_storage'], ds['vid'], 'CPIN')
+	mv_or_cp(args,move=False)
+	if args['recursive']:
+		for ds in dataset_list:
+			update_storage_site_status(args['to_storage'], ds['vid'], 'CPDN')
 
 def mv(args):
 	mv_or_cp(args,move=True)
@@ -378,7 +395,8 @@ def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, '
                  cpap_only=None, 
                  command=None, 
                  storage=None,
-                 to_storage=None):
+                 to_storage=None,
+                 remote_locations=None,):
 	return {
 		'ids': ids,
 		'type': type if type!=None else args['type'],
@@ -388,7 +406,7 @@ def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, '
 		'command': command if command!=None else args['command'],
 		'ownerid': ownerid,
 		'ownername': ownername,
-		'remote_locations': args['remote_locations'],
+		'remote_locations': remote_locations if remote_locations!=None else args['remote_locations'],
 		'cpap_only': cpap_only if cpap_only!=None else args['cpap_only'],
 		'rslstatus': args['rslstatus'],
 	}
