@@ -1,0 +1,4 @@
+access_key_id: "XXXXXXXXXXXXXXXXXX"
+secret_access_key: "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+bucket: "BBBBBBBBBBBBB"
+endpoint_url: "https://CCC.DDD.EEE:6780"

@@ -867,6 +867,7 @@ public class SystemConfig {
          * SettingsServiceBean.
          */
         POSIX("posix"),
+        S3("s3"),
         GLOBUS("globus");
 
         private final String text;

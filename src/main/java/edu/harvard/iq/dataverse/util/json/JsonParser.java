@@ -12,6 +12,7 @@ import edu.harvard.iq.dataverse.DatasetFieldServiceBean;
 import edu.harvard.iq.dataverse.DatasetFieldType;
 import edu.harvard.iq.dataverse.DatasetFieldValue;
 import edu.harvard.iq.dataverse.DatasetVersion;
+import edu.harvard.iq.dataverse.DatasetVersionStorageSite;
 import edu.harvard.iq.dataverse.Dataverse;
 import edu.harvard.iq.dataverse.DataverseContact;
 import edu.harvard.iq.dataverse.DataverseTheme;
@@ -28,6 +29,7 @@ import edu.harvard.iq.dataverse.datasetutility.OptionalFileParams;
 import edu.harvard.iq.dataverse.harvest.client.HarvestingClient;
 import edu.harvard.iq.dataverse.license.License;
 import edu.harvard.iq.dataverse.license.LicenseServiceBean;
+import edu.harvard.iq.dataverse.locality.StorageSite;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.workflow.Workflow;
@@ -303,6 +305,35 @@ public class JsonParser {
         return enums;
     }
 
+	public StorageSite parseStorageSite(JsonObject obj) throws JsonParseException {
+		StorageSite ss = new StorageSite();
+		ss.setId(obj.getJsonNumber("id").longValueExact());
+		ss.setName(obj.getString("name"));
+		ss.setHostname(obj.getString("hostname"));
+		ss.setPrimaryStorage(obj.getBoolean("primaryStorage"));
+		ss.setTransferProtocols(obj.getString("transferProtocols"));
+		return ss;
+	}
+	
+	public DatasetVersionStorageSite parseDatasetVersionStorageSite(JsonObject obj) throws JsonParseException {
+		DatasetVersionStorageSite dvss = new DatasetVersionStorageSite();
+//		if(obj.getJsonObject("storageSiteId")!=null) {
+//			dvss.setStorageSite()
+//		} else {
+			dvss.setStorageSite(parseStorageSite(obj.getJsonObject("storageSite")));
+//		}
+		dvss.setStatus(DatasetVersionStorageSite.StorageStatusEnum.fromString(obj.getString("status")));
+		return dvss;
+	}
+	
+	public List<DatasetVersionStorageSite> parseDatasetVersionStorageSites(JsonObject obj) throws JsonParseException {
+		List<DatasetVersionStorageSite> dvsss = new ArrayList<>();
+		for(JsonValue storageSiteJsonValue : obj.asJsonArray()) {
+			dvsss.add(parseDatasetVersionStorageSite(storageSiteJsonValue.asJsonObject()));
+		}
+		return dvsss;
+	}
+	
     public DatasetVersion parseDatasetVersion(JsonObject obj) throws JsonParseException {
         return parseDatasetVersion(obj, new DatasetVersion());
     }
