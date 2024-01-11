@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.DatasetFieldCompoundValue;
 import edu.harvard.iq.dataverse.DatasetFieldValue;
 import edu.harvard.iq.dataverse.DatasetLock;
 import edu.harvard.iq.dataverse.DatasetVersion;
+import edu.harvard.iq.dataverse.DatasetVersionStorageSite;
 import edu.harvard.iq.dataverse.Dataverse;
 import edu.harvard.iq.dataverse.DataverseContact;
 import edu.harvard.iq.dataverse.DataverseFacet;
@@ -45,6 +46,7 @@ import static edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder.jsonObjectB
 
 import edu.harvard.iq.dataverse.workflow.Workflow;
 import edu.harvard.iq.dataverse.workflow.step.WorkflowStepData;
+import java.math.BigDecimal;
 
 import java.util.*;
 import javax.json.Json;
@@ -401,6 +403,22 @@ public class JsonPrinter {
         return bld;
     }
     
+	public static JsonObjectBuilder json(DatasetVersionStorageSite dsvst) {
+		JsonObjectBuilder bld = jsonObjectBuilder()
+				.add("datasetVersionId", dsvst.getDatasetVersion().getId())
+				.add("site", dsvst.getSite().getName())
+				.add("status", dsvst.getStatus().toString());
+		
+		return bld;
+	}
+	
+	public static JsonArrayBuilder json(Collection<DatasetVersionStorageSite> dsvstCollection) {
+		JsonArrayBuilder bld = Json.createArrayBuilder();
+		for(DatasetVersionStorageSite dsvst: dsvstCollection){
+			bld.add(json(dsvst));
+		}
+		return bld;
+	}
     
     public static JsonObjectBuilder jsonDataFileList(List<DataFile> dataFiles){
     
