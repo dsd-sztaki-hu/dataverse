@@ -2,7 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.locality.StorageSite;
 import java.util.*;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  * This is to track alternative storage sites for a given dataset version.
