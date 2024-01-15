@@ -940,7 +940,9 @@ public class RoCrateManager {
         
         if (newDatasetId == null) {
             //add new dataset
-            newDatasetId = "#" + UUID.randomUUID();
+            // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
+            // although this is is just a SHOULD not a MUST by the spec.
+            newDatasetId = "#" + UUID.randomUUID() + "/";
             ContextualEntity newDataset = new ContextualEntity.ContextualEntityBuilder()
                     .addType("Dataset")
                     .setId(newDatasetId)
@@ -1493,7 +1495,9 @@ public class RoCrateManager {
                 if (hasPart.isObject()) {
                     isVirtual = processDatasetAndFileEntities(datasetAndFileEntities, hasPart, dvDatasetFiles, extraMetadata);
                     if (idNeedsToBeUpdated && !isVirtual) {
-                        String newId  = "#" + UUID.randomUUID();
+                        // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
+                        // although this is is just a SHOULD not a MUST by the spec.
+                        String newId  = "#" + UUID.randomUUID() + "/";
                         ((ObjectNode) datasetEntity).put("@id", newId);
                         entityNode.put("@id", newId);
                     }
