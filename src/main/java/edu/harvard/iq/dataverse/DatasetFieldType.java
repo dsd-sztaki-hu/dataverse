@@ -7,8 +7,14 @@ import edu.harvard.iq.dataverse.util.json.JsonLDTerm;
 import java.util.*;
 
 import java.io.Serializable;
-import javax.faces.model.SelectItem;
-import javax.persistence.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.MissingResourceException;
+import jakarta.faces.model.SelectItem;
+import jakarta.persistence.*;
 
 /**
  * Defines the meaning and constraints of a metadata field and its values.

@@ -5,10 +5,8 @@
  */
 package edu.harvard.iq.dataverse;
 
-import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
-import edu.harvard.iq.dataverse.arp.*;
-import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.harvard.iq.dataverse.util.MarkupChecker;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -17,11 +15,18 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.TreeMap;
+
+import jakarta.ejb.EJB;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
+// ARP specific
+import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.util.JsfHelper;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
-import javax.faces.view.ViewScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 /**
  *
@@ -34,6 +39,9 @@ public class DatasetVersionUI implements Serializable {
 
     @EJB
     DataverseServiceBean dataverseService;
+    @Inject
+    SettingsWrapper settingsWrapper;
+
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
 
@@ -346,7 +354,7 @@ public class DatasetVersionUI implements Serializable {
         }
         return dsf;
     }
-    
+
     private void setExternalVocabularyValues(DatasetFieldType datasetFieldType) throws ArpException {
         if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.TEXT)) {
             List<ControlledVocabularyValue> externalVocabValues = arpServiceBean.collectExternalVocabValues(datasetFieldType);
@@ -355,7 +363,7 @@ public class DatasetVersionUI implements Serializable {
             }
         }
     }
-    
+
     private void initExternalVocabularyValues(List<DatasetField> datasetFields) throws ArpException {
         for (var dsf : datasetFields) {
             if (dsf.getDatasetFieldType().isCompound()) {
@@ -405,7 +413,7 @@ public class DatasetVersionUI implements Serializable {
                 return Integer.valueOf(a).compareTo(Integer.valueOf(b));
             }
         });
-        
+
         if (createBlanks) {
             try {
                 initExternalVocabularyValues(retList);
@@ -438,6 +446,9 @@ public class DatasetVersionUI implements Serializable {
         //TODO: A lot of clean up on the logic of this method
         metadataBlocksForView.clear();
         metadataBlocksForEdit.clear();
+
+        List<MetadataBlock> systemMDBlocks = settingsWrapper.getSystemMetadataBlocks();
+
         Long dvIdForInputLevel = datasetVersion.getDataset().getOwner().getId();
         
         if (!dataverseService.find(dvIdForInputLevel).isMetadataBlockRoot()){
@@ -482,7 +493,7 @@ public class DatasetVersionUI implements Serializable {
             if (!datasetFieldsForView.isEmpty()) {
                 metadataBlocksForView.put(mdb, datasetFieldsForView);
             }
-            if (!datasetFieldsForEdit.isEmpty()) {
+            if (!datasetFieldsForEdit.isEmpty() && !systemMDBlocks.contains(mdb)) {
                 metadataBlocksForEdit.put(mdb, datasetFieldsForEdit);
             }
         }
