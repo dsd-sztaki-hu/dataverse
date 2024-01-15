@@ -1995,12 +1995,21 @@ public class Access extends AbstractApiBean {
     @Path("datafiles/rocrate/{datasetIdft : .+}")
     @POST
     @Produces({"application/zip"})
-    public Response roCrateZip(String fileIds, @QueryParam("version") String version, @PathParam("datasetIdft") String datasetIdft, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) throws WebApplicationException {
-        return downloadRoCrateZip(fileIds, version, datasetIdft, uriInfo, headers, response);
+    @AuthRequired
+    public Response roCrateZip(
+            @Context ContainerRequestContext crc,
+            String fileIds,
+            @QueryParam("version") String version,
+            @PathParam("datasetIdft") String datasetIdft,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletResponse response
+    ) throws WebApplicationException {
+        return downloadRoCrateZip(getRequestUser(crc), fileIds, version, datasetIdft, uriInfo, headers, response);
     }
 
     // To prevent merge conflicts copied the body of the downloadDatafiles below and modified by adding the ro-crate-metadata.json to the zip as well
-    private Response downloadRoCrateZip(String rawFileIds, String version, String datasetIdtf, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response) throws WebApplicationException {
+    private Response downloadRoCrateZip(User user, String rawFileIds, String version, String datasetIdtf, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response) throws WebApplicationException {
         final long zipDownloadSizeLimit = systemConfig.getZipDownloadLimit();
 
         logger.fine("setting zip download size limit to " + zipDownloadSizeLimit + " bytes.");
@@ -2022,7 +2031,7 @@ public class Access extends AbstractApiBean {
         String customZipServiceUrl = settingsService.getValueForKey(SettingsServiceBean.Key.CustomZipDownloadServiceUrl);
         boolean useCustomZipService = customZipServiceUrl != null;
 
-        User apiTokenUser = findAPITokenUser(); //for use in adding gb records if necessary
+        User apiTokenUser = findAPITokenUser(user); //for use in adding gb records if necessary
 
         Boolean getOrig = false;
         for (String key : uriInfo.getQueryParameters().keySet()) {
@@ -2035,7 +2044,7 @@ public class Access extends AbstractApiBean {
         if (useCustomZipService) {
             URI redirect_uri = null;
             try {
-                redirect_uri = handleCustomZipDownload(customZipServiceUrl, fileIds, apiTokenUser, uriInfo, headers, false, true);
+                redirect_uri = handleCustomZipDownload(user, customZipServiceUrl, fileIds, apiTokenUser, uriInfo, headers, false, true);
             } catch (WebApplicationException wae) {
                 throw wae;
             }
@@ -2076,7 +2085,7 @@ public class Access extends AbstractApiBean {
                             logger.fine("attempting to look up file id " + fileId);
                             DataFile file = dataFileService.find(fileId);
                             if (file != null) {
-                                if (isAccessAuthorized(file)) {
+                                if (isAccessAuthorized(user, file)) {
 
                                     logger.fine("adding datafile (id=" + file.getId() + ") to the download list of the ZippedDownloadInstance.");
                                     //downloadInstance.addDataFile(file);

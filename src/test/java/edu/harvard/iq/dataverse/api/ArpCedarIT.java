@@ -2,12 +2,12 @@ package edu.harvard.iq.dataverse.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.response.Response;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import edu.harvard.iq.dataverse.arp.ExportToCedarParams;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -33,11 +33,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
-import static javax.ws.rs.core.Response.Status.OK;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import static jakarta.ws.rs.core.Response.Status.OK;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ArpCedarIT {
     
@@ -51,7 +51,7 @@ public class ArpCedarIT {
     
     private static ExportToCedarParams cedarParams;
     
-    @BeforeClass
+    @BeforeEach
     public static void initCEDAR() {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
@@ -91,12 +91,12 @@ public class ArpCedarIT {
         }
     }
 
-    @BeforeClass
+    @BeforeEach
     public static void setUpClass() {
         RestAssured.baseURI = UtilIT.getRestAssuredBaseUri();
     }
     
-    @AfterClass
+    @AfterEach
     public static void removeTestDataFromCEDAR() throws Exception {
         String encodedFolderId = URLEncoder.encode(cedarParams.folderId, StandardCharsets.UTF_8);
         deleteFolderAndContents(encodedFolderId, cedarParams.apiKey, cedarParams.cedarDomain);

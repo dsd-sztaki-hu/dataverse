@@ -73,6 +73,9 @@ import edu.harvard.iq.dataverse.dataaccess.S3AccessIO;
 import edu.harvard.iq.dataverse.dataaccess.StorageIO;
 import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
 import edu.harvard.iq.dataverse.engine.command.exception.UnforcedCommandException;
+import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetStorageSizeCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.RevokeRoleCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.UpdateDvObjectPIDMetadataCommand;
 import edu.harvard.iq.dataverse.makedatacount.DatasetExternalCitations;
 import edu.harvard.iq.dataverse.makedatacount.DatasetExternalCitationsServiceBean;
 import edu.harvard.iq.dataverse.makedatacount.DatasetMetrics;
@@ -159,9 +162,16 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.amazonaws.services.s3.model.PartETag;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
-import edu.harvard.iq.dataverse.engine.command.impl.AddDatasetVersionStorageSiteCommand;
+
 import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.lang3.tuple.Pair;
+
+// ARP specific
+import java.io.StringReader;
+import edu.harvard.iq.dataverse.util.JsfHelper;
+import edu.harvard.iq.dataverse.engine.command.impl.AddDatasetVersionStorageSiteCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.EditDatasetVersionStorageSiteCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.DeleteDatasetVersionStorageSiteCommand;
 
 @Path("datasets")
 public class Datasets extends AbstractApiBean {
@@ -697,34 +707,40 @@ public class Datasets extends AbstractApiBean {
 
 
     @GET
+    @AuthRequired
     @Path("{id}/versions/{versionId}/storageSites")
-    public Response getVersionStorageSite( @PathParam("id") String datasetId,
-			                               @PathParam("versionId") String versionId,
-										   @Context UriInfo uriInfo,
-										   @Context HttpHeaders headers) {
+    public Response getVersionStorageSite(
+            @Context ContainerRequestContext crc,
+            @PathParam("id") String datasetId,
+            @PathParam("versionId") String versionId,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) {
 		return response( req -> {
-				findAuthenticatedUserOrDie(); // TODO: Is being authenticated enough to access this information? Maybe...? Meditate on this, we should!
-				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
-				return ok(json(dsv.getStorageSites()));
-		});
+            getRequestAuthenticatedUserOrDie(crc); // TODO: Is being authenticated enough to access this information? Maybe...? Meditate on this, we should!
+            DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
+            return ok(dvstsJson(dsv.getStorageSites()));
+		}, getRequestUser(crc));
 
 	}
 
 	/** This is a helper function for preparing for and running DatasetVersionStorageSite-related commands.
 	 */
-	private Response executeDatasetVersionStorageSiteCommand(DataverseRequest req,
-	                                                     String datasetId,
-														 String versionId,
-											             UriInfo uriInfo,
-											             HttpHeaders headers,
-														 String storageSiteJson,
-														 Class<? extends Command> commandClass,
-														 String successMessage) {
+	private Response executeDatasetVersionStorageSiteCommand(
+            DataverseRequest req,
+             String datasetId,
+             String versionId,
+             UriInfo uriInfo,
+             HttpHeaders headers,
+             String storageSiteJson,
+             Class<? extends Command> commandClass,
+             String successMessage
+    ) {
 		try ( StringReader rdr = new StringReader(storageSiteJson) ) {
 			if(":draft".equals(versionId))
 				return error( Response.Status.BAD_REQUEST, "Not allowed to assign/edit storage sites for a draft version!");
 
-			javax.json.JsonObject storageSiteJsonObj = Json.createReader(rdr).readObject();
+			jakarta.json.JsonObject storageSiteJsonObj = Json.createReader(rdr).readObject();
 			DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
 			DatasetVersionStorageSite storageSite = jsonParser().parseDatasetVersionStorageSite(storageSiteJsonObj);
 
@@ -743,62 +759,78 @@ public class Datasets extends AbstractApiBean {
 
     @POST
 	@Consumes("application/json")
+    @AuthRequired
     @Path("{id}/versions/{versionId}/storageSite")
-    public Response addVersionStorageSite( @PathParam("id") String datasetId,
-			                                @PathParam("versionId") String versionId,
-											@Context UriInfo uriInfo,
-											@Context HttpHeaders headers,
-											String storageSiteJson) {
+    public Response addVersionStorageSite(
+            @Context ContainerRequestContext crc,
+            @PathParam("id") String datasetId,
+            @PathParam("versionId") String versionId,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            String storageSiteJson
+    ) {
 		return response( req -> {
 			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
 					AddDatasetVersionStorageSiteCommand.class,
 					"Dataset "+ datasetId + " version " + versionId + " storagesites gained a new storage site entry: "+storageSiteJson);
-        });
+        }, getRequestUser(crc));
 	}
 
 
 	@PUT
 	@Consumes("application/json")
+    @AuthRequired
     @Path("{id}/versions/{versionId}/storageSite")
-    public Response editVersionStorageSite( @PathParam("id") String datasetId,
-			                                @PathParam("versionId") String versionId,
-											@Context UriInfo uriInfo,
-											@Context HttpHeaders headers,
-											String storageSiteJson) {
+    public Response editVersionStorageSite(
+            @Context ContainerRequestContext crc,
+            @PathParam("id") String datasetId,
+            @PathParam("versionId") String versionId,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            String storageSiteJson
+    ) {
 		return response( req -> {
 			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
 					EditDatasetVersionStorageSiteCommand.class,
 					"Dataset "+ datasetId + " version " + versionId + " storagesite updated to " +storageSiteJson);
-        });
+        }, getRequestUser(crc));
 	}
 
 	@DELETE
 	@Consumes("application/json")
+    @AuthRequired
     @Path("{id}/versions/{versionId}/storageSite")
-    public Response deleteVersionStorageSite( @PathParam("id") String datasetId,
-			                                @PathParam("versionId") String versionId,
-											@Context UriInfo uriInfo,
-											@Context HttpHeaders headers,
-											String storageSiteJson) {
+    public Response deleteVersionStorageSite(
+            @Context ContainerRequestContext crc,
+            @PathParam("id") String datasetId,
+            @PathParam("versionId") String versionId,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            String storageSiteJson
+    ) {
 		return response( req -> {
 			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
 					DeleteDatasetVersionStorageSiteCommand.class,
 					"Dataset "+ datasetId + " version " + versionId + " storagesite " +storageSiteJson+" deleted.");
-        });
+        }, getRequestUser(crc));
 	}
 
     @GET
     @Path("{id}/versions/{versionId}/totalFileSize")
-    public Response getVersionTotalFileSize( @PathParam("id") String datasetId,
-	                                         @PathParam("versionId") String versionId,
-	                                         @Context UriInfo uriInfo,
-	                                         @Context HttpHeaders headers) {
+    @AuthRequired
+    public Response getVersionTotalFileSize(
+            @Context ContainerRequestContext crc,
+            @PathParam("id") String datasetId,
+            @PathParam("versionId") String versionId,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers
+    ) {
 		return response( req -> {
 				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
 				JsonObjectBuilder bld = jsonObjectBuilder();
 				bld.add("totalFileSize", dsv.getTotalFileSize());
 				return ok(bld);
-		});
+		}, getRequestUser(crc));
 	}
 
     @GET

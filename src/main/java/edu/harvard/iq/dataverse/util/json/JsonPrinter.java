@@ -1245,7 +1245,7 @@ public class JsonPrinter {
         return bld;
     }
 
-    public static JsonArrayBuilder json(Collection<DatasetVersionStorageSite> dsvstCollection) {
+    public static JsonArrayBuilder dvstsJson(Collection<DatasetVersionStorageSite> dsvstCollection) {
         JsonArrayBuilder bld = Json.createArrayBuilder();
         for(DatasetVersionStorageSite dsvst: dsvstCollection){
             bld.add(json(dsvst));

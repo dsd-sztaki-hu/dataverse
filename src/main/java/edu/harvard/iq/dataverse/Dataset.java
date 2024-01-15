@@ -39,7 +39,9 @@ import edu.harvard.iq.dataverse.storageuse.StorageUse;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 
+// ARP specific
 import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
+import java.util.Optional;
 
 /**
  *

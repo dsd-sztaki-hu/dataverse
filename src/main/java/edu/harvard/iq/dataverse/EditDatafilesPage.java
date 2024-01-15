@@ -2209,18 +2209,24 @@ public class EditDatafilesPage implements java.io.Serializable {
 
                     if (roCrateInputStream != null) {
                         try {
-                            // Note: A single uploaded file may produce multiple datafiles -
-                            // for example, multiple files can be extracted from an uncompressed
-                            // zip file.
-                            CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+
+                            // This is a file upload in the context of creating a brand new
+                            // dataset that does not yet exist in the database. We must
+                            // use the version of the Create New Files constructor that takes
+                            // the parent Dataverse as the extra argument:
+
+                            // FileUtil.createDataFiles is gone in 6.1, use CreateNewDataFilesCommand instead
+                            //CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+                            Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(dvRequestService.getDataverseRequest(), workingVersion, roCrateInputStream, roCrateName, roCrateType, null, uploadSessionQuota, null, null, null, workingVersion.getDataset().getOwner());
+                            CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
+
                             dFileList = createDataFilesResult.getDataFiles();
                             String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
-                            if (createDataFilesError != null) {
+                            if(createDataFilesError != null) {
                                 errorMessages.add(createDataFilesError);
                             }
-
-                        } catch (IOException ioex) {
-                            logger.warning("Failed to process and/or save the file " + roCrateName + "; " + ioex.getMessage());
+                        } catch (CommandException ex) {
+                            logger.log(Level.SEVERE, "Failed to process and/or save the file"+ roCrateName + "; " + ex.getMessage(), new Object[]{roCrateName});
                             return;
                         }
                     }

@@ -3321,9 +3321,9 @@ public class DatasetPage implements java.io.Serializable {
 
     public void startRoCrateZipDownload() {
         this.setSelectedFiles(workingVersion.getFileMetadatas());
-        boolean validate = validateFilesForDownload(false, false);
+        boolean validate = validateFilesForDownload(false);
         if (validate) {
-            updateGuestbookResponse(false, false);
+            updateGuestbookResponse(false, false, false);
             if(!getValidateFilesOutcome().equals("Mixed")){
                 var dataset = guestbookResponse.getDataset();
                 var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
