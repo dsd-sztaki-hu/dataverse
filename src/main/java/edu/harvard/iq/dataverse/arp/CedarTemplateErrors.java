@@ -2,8 +2,8 @@ package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,7 +17,7 @@ public class CedarTemplateErrors {
     public CedarTemplateErrors() {
     }
 
-    public javax.json.JsonObject toJson() {
+    public jakarta.json.JsonObject toJson() {
         NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
 
         if (!unprocessableElements.isEmpty()) {

@@ -4,8 +4,8 @@ import edu.harvard.iq.dataverse.DatasetFieldType;
 import edu.harvard.iq.dataverse.DatasetServiceBean;
 import edu.harvard.iq.dataverse.MetadataBlock;
 
-import javax.ejb.Stateless;
-import javax.inject.Named;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Named;
 import javax.persistence.*;
 import java.util.List;
 import java.util.logging.Logger;

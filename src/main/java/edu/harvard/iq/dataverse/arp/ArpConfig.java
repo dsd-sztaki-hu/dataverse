@@ -3,9 +3,9 @@ package edu.harvard.iq.dataverse.arp;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 
 import javax.annotation.PostConstruct;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.inject.Named;
+import jakarta.ejb.EJB;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;

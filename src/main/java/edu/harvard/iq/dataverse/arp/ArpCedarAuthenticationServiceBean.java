@@ -2,8 +2,8 @@ package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 
-import javax.ejb.Stateless;
-import javax.inject.Named;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;

@@ -3,8 +3,8 @@ package edu.harvard.iq.dataverse.api.arp;
 
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 
-import javax.ejb.Stateless;
-import javax.inject.Named;
+import jakarta.ejb.Stateless;
+import jakarta.inject.Named;
 
 @Named
 @Stateless

@@ -22,11 +22,11 @@ import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import org.apache.solr.client.solrj.SolrServerException;
 
-import javax.ejb.EJB;
-import javax.inject.Inject;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.ejb.EJB;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -37,7 +37,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
-import static javax.ws.rs.core.Response.Status.*;
+import static jakarta.ws.rs.core.Response.Status.*;
+import static edu.harvard.iq.dataverse.api.ApiConstants.STATUS_ERROR;
 
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
@@ -598,7 +599,7 @@ public class ArpApi extends AbstractApiBean {
             if (!response.getStatusInfo().toEnum().equals(Response.Status.OK)) {
                 throw new Exception("Failed to load dataset fields");
             }
-            metadataBlockName = ((javax.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
+            metadataBlockName = ((jakarta.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
             arpService.updateMetadataBlock(dvIdtf, metadataBlockName);
         } catch (Exception e) {
             e.printStackTrace();
