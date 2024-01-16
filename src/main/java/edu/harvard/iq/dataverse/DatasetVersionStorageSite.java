@@ -12,7 +12,7 @@ import jakarta.persistence.*;
  */
 //@Entity
 @Table(	name = "dvobjectremotestoragelocation",
-		indexes = {@Index(columnList="dvobject_id")},
+		indexes = {@Index(columnList="datasetversion_id")},
 		uniqueConstraints = {@UniqueConstraint(columnNames = {"datasetversion_id"}),@UniqueConstraint(columnNames = {"storagesite_id"})})
 public class DatasetVersionStorageSite implements java.io.Serializable {
 	@Id
