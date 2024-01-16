@@ -10,7 +10,7 @@ import jakarta.persistence.*;
  * This junction table contains the secondary and tertiary locations that the data is copied to.
  * @author pallinger
  */
-@Entity
+//@Entity
 @Table(	name = "dvobjectremotestoragelocation",
 		indexes = {@Index(columnList="dvobject_id")},
 		uniqueConstraints = {@UniqueConstraint(columnNames = {"datasetversion_id"}),@UniqueConstraint(columnNames = {"storagesite_id"})})

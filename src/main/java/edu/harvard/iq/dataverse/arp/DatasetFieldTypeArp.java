@@ -3,7 +3,7 @@ package edu.harvard.iq.dataverse.arp;
 import edu.harvard.iq.dataverse.DatasetFieldType;
 import edu.harvard.iq.dataverse.MetadataBlock;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 
 /**

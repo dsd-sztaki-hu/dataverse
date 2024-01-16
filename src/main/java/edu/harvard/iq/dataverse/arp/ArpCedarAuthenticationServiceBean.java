@@ -4,9 +4,9 @@ import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import java.util.List;
 
 @Stateless

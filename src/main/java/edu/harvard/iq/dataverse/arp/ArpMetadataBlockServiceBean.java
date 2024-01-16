@@ -6,7 +6,7 @@ import edu.harvard.iq.dataverse.MetadataBlock;
 
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;

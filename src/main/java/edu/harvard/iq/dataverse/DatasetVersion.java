@@ -216,7 +216,7 @@ public class DatasetVersion implements Serializable {
     @Transient 
     private JsonObject archivalStatus;
 	
-	@OneToMany(mappedBy="datasetVersion", cascade={CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
+	//@OneToMany(mappedBy="datasetVersion", cascade={CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
 	private List<DatasetVersionStorageSite> storageSites;
     
 	public long getTotalFileSize() {
