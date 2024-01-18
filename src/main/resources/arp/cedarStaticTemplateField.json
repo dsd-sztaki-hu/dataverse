@@ -21,6 +21,5 @@
   "schema:description": "Help Text",
   "additionalProperties": false,
   "schema:name": "",
-  "@id": "tmp",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }
