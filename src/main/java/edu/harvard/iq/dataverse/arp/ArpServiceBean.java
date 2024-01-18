@@ -106,6 +106,7 @@ public class ArpServiceBean implements java.io.Serializable {
     static {
         fileClassHu = loadJsonFromResource("arp/fileClass.hu.json");
         fileClassEn = loadJsonFromResource("arp/fileClass.en.json");
+        System.setProperty("jdk.httpclient.HttpClient.log", "requests,responses,headers,body");
     }
 
     public static String generateNamedUuid(String name) {
@@ -1092,6 +1093,7 @@ public class ArpServiceBean implements java.io.Serializable {
     public void updateMetadataBlock(String dvIdtf, String metadataBlockName) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
         String solrUpdaterAddress = arpConfig.get("arp.solr.updater.address");
+        logger.fine("Updating solr, calling "+solrUpdaterAddress);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(solrUpdaterAddress))
                 .GET()
