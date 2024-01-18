@@ -46,7 +46,7 @@ services:
     ports:
       - "8080:8080" # HTTP (Dataverse Application)
       - "4848:4848" # HTTP (Payara Admin Console)
-      - "9009:9009" # JDWP
+      - "19009:9009" # JDWP
       - "8686:8686" # JMX
     networks:
       - dataverse
@@ -206,8 +206,8 @@ services:
     image: minio/minio
     restart: on-failure
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "19000:9000"
+      - "19001:9001"
     networks:
       - dataverse
     volumes:
