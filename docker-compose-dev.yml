@@ -58,7 +58,7 @@ services:
       - ./docker-dev-volumes/app/data:/dv
       - ./docker-dev-volumes/app/secrets:/secrets
       # ARP specific
-      # Mapp the glassfish applications folder so that we can update webapp resources using scripts/cpwebapp.sh
+      # Map the glassfish applications folder so that we can update webapp resources using scripts/cpwebapp.sh
       - ./docker-dev-volumes/glassfish/applications:/opt/payara/appserver/glassfish/domains/domain1/applications
       # Uncomment for changes to xhtml to be deployed immediately (if supported your IDE or toolchain).
       # Replace 6.0 with the current version.
@@ -69,6 +69,66 @@ services:
     mem_limit: 2147483648 # 2 GiB
     mem_reservation: 1024m
     privileged: false
+    # ARP specific
+    # Note: env vr substitution doesn't work with fabric8 (ie. mvn -Pct docker:run), so we need to use
+    # explicit arp.orgx base domain here. Also, need host-gateway instead of host.docker.internal
+    extra_hosts:
+      - "artifact.arp.orgx:host-gateway"
+      - "auth.arp.orgx:host-gateway"
+      - "cedar.arp.orgx:host-gateway"
+      - "component.arp.orgx:host-gateway"
+      - "group.arp.orgx:host-gateway"
+      - "impex.arp.orgx:host-gateway"
+      - "internals.arp.orgx:host-gateway"
+      - "messaging.arp.orgx:host-gateway"
+      - "open.arp.orgx:host-gateway"
+      - "openview.arp.orgx:host-gateway"
+      - "repo.arp.orgx:host-gateway"
+      - "resource.arp.orgx:host-gateway"
+      - "schema.arp.orgx:host-gateway"
+      - "submission.arp.orgx:host-gateway"
+      - "terminology.arp.orgx:host-gateway"
+      - "user.arp.orgx:host-gateway"
+      - "valuerecommender.arp.orgx:host-gateway"
+      - "worker.arp.orgx:host-gateway"
+      - "demo.cee.arp.orgx:host-gateway"
+      - "demo-dist.cee.arp.orgx:host-gateway"
+      - "docs.cee.arp.orgx:host-gateway"
+      - "docs-dist.cee.arp.orgx:host-gateway"
+      - "api-php.cee.arp.orgx:host-gateway"
+      - "artifacts.arp.orgx:host-gateway"
+      - "monitor.arp.orgx:host-gateway"
+      - "monitoring.arp.orgx:host-gateway"
+      - "bridging.arp.orgx:host-gateway"
+      - "arp-dataverse.arp.orgx:host-gateway"
+#      - "artifact.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "auth.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "cedar.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "component.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "group.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "impex.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "internals.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "messaging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "open.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "openview.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "repo.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "resource.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "schema.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "submission.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "terminology.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "user.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "valuerecommender.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "worker.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "demo.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "demo-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "docs.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "docs-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "api-php.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "artifacts.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "monitor.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "monitoring.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "bridging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+#      - "arp-dataverse.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
 
   dev_bootstrap:
     container_name: "dev_bootstrap"
@@ -223,6 +283,7 @@ services:
   #
 
   solr-updater:
+    hostname: "solr-updater"
     image: dataverse-solr-updater:latest
     container_name: "dv-solr-updater"
     environment:
@@ -233,12 +294,17 @@ services:
     ports:
       - '8984:3000'
     volumes:
-      - ./docker-dev-volumes/solr:/var/solr
+      - ./docker-dev-volumes/solr/data/data:/var/solr/data
+    networks:
+      - dataverse
 
   dataverse-rocrate-preview:
+    hostname: "rocrate-preview"
     image: dataverse-rocrate-preview:latest
     ports:
       - '8985:8082'
+    networks:
+      - dataverse
 
 networks:
   dataverse:
