@@ -37,14 +37,6 @@ mvn -Pct docker:stop
 
 > Note: you cannot run [docker-compose-dev.yml](docker-compose-dev.yml) directly, eg. `docker-compose -f docker-compose-dev.yml up` won't work. Also `docker:run` doesn't allow running more than one docker-compose.yaml diles. This is a pitty, otherwise we could have our own separate `docker-compose-arp.yml` with our overrides and settings and could leave the original [docker-compose-dev.yml](docker-compose-dev.yml) intact. For now, we had to do our changes and additions right in [docker-compose-dev.yml](docker-compose-dev.yml). 
 
-# Config Dataverse
-
-Dataverse needs to access the solr updater and ro crate preview generator from within the container. We could use http://host.docker.internal:8984 and http://host.docker.internal:8985, but as both are inside docker, use the docker hostname:
-
-```
-curl -X PUT -d http://solr-updater:3000 http://localhost:8080/api/admin/settings/arp.solr.updater.address
-curl -X PUT -d http://rocrate-preview:8082 http://localhost:8080/api/admin/settings/arp.rocrate.previewgenerator.address
-```
 
 # Sync CEDAR and DV metaadatablocks
 
