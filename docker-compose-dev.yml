@@ -46,7 +46,7 @@ services:
     ports:
       - "8080:8080" # HTTP (Dataverse Application)
       - "4848:4848" # HTTP (Payara Admin Console)
-      - "19009:9009" # JDWP
+      - "19009:9009" # JDWP, ARP override
       - "8686:8686" # JMX
     networks:
       - dataverse
@@ -57,6 +57,7 @@ services:
     volumes:
       - ./docker-dev-volumes/app/data:/dv
       - ./docker-dev-volumes/app/secrets:/secrets
+      # ARP specific
       # Mapp the glassfish applications folder so that we can update webapp resources using scripts/cpwebapp.sh
       - ./docker-dev-volumes/glassfish/applications:/opt/payara/appserver/glassfish/domains/domain1/applications
       # Uncomment for changes to xhtml to be deployed immediately (if supported your IDE or toolchain).
@@ -206,8 +207,8 @@ services:
     image: minio/minio
     restart: on-failure
     ports:
-      - "19000:9000"
-      - "19001:9001"
+      - "19000:9000" # ARP override
+      - "19001:9001" # ARP override
     networks:
       - dataverse
     volumes:
@@ -216,6 +217,28 @@ services:
       MINIO_ROOT_USER: 4cc355_k3y
       MINIO_ROOT_PASSWORD: s3cr3t_4cc355_k3y
     command: server /data
+
+  #
+  # ARP specific containers
+  #
+
+  solr-updater:
+    image: dataverse-solr-updater:latest
+    container_name: "dv-solr-updater"
+    environment:
+      #- DATAVERSE_URL=http://host.docker.internal:8080
+      - DATAVERSE_URL=http://dataverse:8080
+      - SOLR_URL=http://solr:8983
+      - SOLR_SCHEMA_XML_PATH=/var/solr/data/collection1/conf/schema.xml
+    ports:
+      - '8984:3000'
+    volumes:
+      - ./docker-dev-volumes/solr:/var/solr
+
+  dataverse-rocrate-preview:
+    image: dataverse-rocrate-preview:latest
+    ports:
+      - '8985:8082'
 
 networks:
   dataverse:
