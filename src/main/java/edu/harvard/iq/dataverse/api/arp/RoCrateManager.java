@@ -568,7 +568,8 @@ public class RoCrateManager {
         DataFile dataFile = fileMetadata.getDataFile();
         fileId = "#" + dataFile.getId() + "::" + UUID.randomUUID();
         fileEntityBuilder.setId(fileId);
-        fileEntityBuilder.addProperty("@arpPid", dataFile.getGlobalId().toString());
+        var globalId = dataFile.getGlobalId();
+        fileEntityBuilder.addProperty("@arpPid", (globalId != null ? globalId.toString() : ""));
         fileEntityBuilder.addProperty("hash", dataFile.getChecksumValue());
         fileEntityBuilder.addProperty("name", fileName);
         fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());

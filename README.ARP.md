@@ -43,12 +43,13 @@ Be default the file PIDs are not enabled. It has to be enabled globally (:FilePI
 
 ```
 curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:FilePIDsEnabled
-curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowEnablingFilePIDsPerCollection
-curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost/api/dataverses/root/attribute/filePIDsEnabled?value=true"
 ```
 
-curl -X PUT -H "X-Dataverse-key:56adcb8a-df8d-41ee-b72d-91ccb9d54069" "http://localhost:8080/api/dataverses/root/attribute/filePIDsEnabled?value=true"
-
+Maybe also these, but not sure:
+```
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowEnablingFilePIDsPerCollection
+curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost:8080/api/dataverses/root/attribute/filePIDsEnabled?value=true"
+```
 
 
 # Other development settings
