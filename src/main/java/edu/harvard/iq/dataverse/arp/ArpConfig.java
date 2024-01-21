@@ -1,8 +1,12 @@
 package edu.harvard.iq.dataverse.arp;
 
+import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 
 import javax.annotation.PostConstruct;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
@@ -36,6 +40,22 @@ public class ArpConfig
             defaultProperties.load(input);
         } catch (IOException ex) {
             ex.printStackTrace();
+        }
+    }
+
+    public static void ensureStaticInstance() {
+        if (ArpConfig.instance == null) {
+            String appVersion = JvmSettings.VERSION.lookup();
+            String lookup = "java:global/dataverse-" + appVersion + "/ArpConfig";
+            try {
+                InitialContext ic = new InitialContext();
+                ArpConfig arpConfig = (ArpConfig) ic.lookup(lookup);
+                arpConfig.init();
+                System.out.println("arpConfig: " + ArpConfig.instance);
+            } catch (NamingException e) {
+                logger.severe(lookup + " is not available. Make sure the version used for lookup matches the curreent Dataverse version");
+                e.printStackTrace();
+            }
         }
     }
 

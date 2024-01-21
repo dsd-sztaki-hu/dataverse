@@ -1,6 +1,7 @@
 package edu.kit.datamanager.ro_crate.preview;
 
 import edu.harvard.iq.dataverse.arp.ArpConfig;
+import edu.harvard.iq.dataverse.settings.JvmSettings;
 
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -34,15 +35,9 @@ public class PreviewGenerator {
 // the current dataverse varsion (java:global/dataverse-5.13) and sowith every DV update we also have to take care
 // to update this._
 //
-//    static {
-//        try {
-//            InitialContext ic = new InitialContext();
-//            ArpConfig arpConfig = (ArpConfig) ic.lookup("java:global/dataverse-5.13/ArpConfig");
-//        } catch (NamingException e) {
-//            logger.severe("java:global/dataverse-5.13/ArpConfig is not available. Make sure the version used for lookup matches the curreent Dataverse version" );
-//            e.printStackTrace();
-//        }
-//    }
+static {
+    ArpConfig.ensureStaticInstance();
+}
 
     /**
      * The method that from the location of the crate generates the html file.
