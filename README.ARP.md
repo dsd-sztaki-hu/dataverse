@@ -35,8 +35,28 @@ Stopping the stack (ometimes have to do explicitly because dev_smtp is not kille
 mvn -Pct docker:stop
 ```
 
-> Note: you cannot run [docker-compose-dev.yml](docker-compose-dev.yml) directly, eg. `docker-compose -f docker-compose-dev.yml up` won't work. Also `docker:run` doesn't allow running more than one docker-compose.yaml diles. This is a pitty, otherwise we could have our own separate `docker-compose-arp.yml` with our overrides and settings and could leave the original [docker-compose-dev.yml](docker-compose-dev.yml) intact. For now, we had to do our changes and additions right in [docker-compose-dev.yml](docker-compose-dev.yml). 
+> Note: you cannot run [docker-compose-dev.yml](docker-compose-dev.yml) directly, eg. `docker-compose -f docker-compose-dev.yml up` won't work. Also `docker:run` doesn't allow running more than one docker-compose.yaml files. This is a pitty, otherwise we could have our own separate `docker-compose-arp.yml` with our overrides and settings and could leave the original [docker-compose-dev.yml](docker-compose-dev.yml) intact. For now, we had to do our changes and additions right in [docker-compose-dev.yml](docker-compose-dev.yml). 
 
+# Enable file pid
+
+Be default the file PIDs are not enabled. It has to be enabled globally (:FilePIDsEnabled) and then also AllowEnablingFilePIDsPerCollection to that we can set it on the Root dataverse as well:
+
+```
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:FilePIDsEnabled
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowEnablingFilePIDsPerCollection
+curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost/api/dataverses/root/attribute/filePIDsEnabled?value=true"
+```
+
+curl -X PUT -H "X-Dataverse-key:56adcb8a-df8d-41ee-b72d-91ccb9d54069" "http://localhost:8080/api/dataverses/root/attribute/filePIDsEnabled?value=true"
+
+
+
+# Other development settings
+
+```
+curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY
+curl -X PUT -d 'false' http://localhost:8080/api/admin/settings/:AllowCors
+```
 
 # Sync CEDAR and DV metaadatablocks
 
@@ -69,7 +89,9 @@ curl -X POST 'http://localhost:8080/api/admin/arp/syncMdbsWithCedar' \
 
 # Dev setup
 
-
+```
+curl -X POST -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n admin:admin | base64)" http://localhost:4849/management/domain/domain1/applications/application/dataverse/_undeploy
+```
 - https://dataverse-guide--9959.org.readthedocs.build/en/9959/container/dev-usage.html#ide-triggered-re-deployments
 - Import [watchers.xml](scripts%2Fintellij%2Fwatchers.xml) file watcher to have xhtml, js, etc files automatically updated in the container
     - See discussion here: https://dataverse.zulipchat.com/#narrow/stream/375812-containers/topic/faster.20redeploy/near/415973553
