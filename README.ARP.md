@@ -37,6 +37,14 @@ mvn -Pct docker:stop
 
 > Note: you cannot run [docker-compose-dev.yml](docker-compose-dev.yml) directly, eg. `docker-compose -f docker-compose-dev.yml up` won't work. Also `docker:run` doesn't allow running more than one docker-compose.yaml files. This is a pitty, otherwise we could have our own separate `docker-compose-arp.yml` with our overrides and settings and could leave the original [docker-compose-dev.yml](docker-compose-dev.yml) intact. For now, we had to do our changes and additions right in [docker-compose-dev.yml](docker-compose-dev.yml). 
 
+# Allow connection from anywhere
+
+Enable CORS with "Access-Control-Allow-Origin: "*":
+
+```
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowCors
+```
+
 # Enable file pid
 
 Be default the file PIDs are not enabled. It has to be enabled globally (:FilePIDsEnabled) and then also AllowEnablingFilePIDsPerCollection to that we can set it on the Root dataverse as well:
@@ -54,9 +62,10 @@ curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost:8080/api/dataverse
 
 # Other development settings
 
+Builtin users for unit tests:
+
 ```
 curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY
-curl -X PUT -d 'false' http://localhost:8080/api/admin/settings/:AllowCors
 ```
 
 # Sync CEDAR and DV metaadatablocks
