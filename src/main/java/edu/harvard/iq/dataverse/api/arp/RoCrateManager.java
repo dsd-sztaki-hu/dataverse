@@ -10,6 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
@@ -1040,13 +1041,8 @@ public class RoCrateManager {
     }
 
     public String getRoCrateFolder(DatasetVersion version) {
-        var dataset = version.getDataset();
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
-            filesRootDirectory = "/tmp/files";
-        }
-
-        var baseName = String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+        String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
+        var baseName = String.join(File.separator, localDir, "ro-crate-metadata");
         if (!version.isDraft()) {
             baseName += "_v" + version.getFriendlyVersionNumber();
         }
@@ -1054,12 +1050,7 @@ public class RoCrateManager {
     }
     
     public String getRoCrateParentFolder(Dataset dataset) {
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
-            filesRootDirectory = "/tmp/files";
-        }
-
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
+        return StorageUtils.getLocalRoCrateDir(dataset);
     }
 
     public String getRoCratePath(DatasetVersion version) {
@@ -1076,12 +1067,8 @@ public class RoCrateManager {
     // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
     public String getRoCrateFolderForPreProcess(DatasetVersion version) {
         var dataset = version.getDataset();
-        String filesRootDirectory = System.getProperty("dataverse.files.directory");
-        if (filesRootDirectory == null || filesRootDirectory.isEmpty()) {
-            filesRootDirectory = "/tmp/files";
-        }
-
-        return String.join(File.separator, filesRootDirectory, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage(), "ro-crate-metadata");
+        String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
+        return String.join(File.separator, localDir, "ro-crate-metadata");
     }
     
     public void deleteDraftVersion(DatasetVersion datasetVersion) throws IOException {

@@ -43,7 +43,28 @@ services:
         -Ddataverse.files.minio1.download-redirect=false
         -Ddataverse.files.minio1.access-key=4cc355_k3y
         -Ddataverse.files.minio1.secret-key=s3cr3t_4cc355_k3y
-        -Ddataverse.files.directory=/dv/store
+        -Ddataverse.files.sztaki.type=s3
+        -Ddataverse.files.sztaki.label=SZTAKI
+        -Ddataverse.files.sztaki.custom-endpoint-url=http://minio:9000
+        -Ddataverse.files.sztaki.custom-endpoint-region=us-east-1
+        -Ddataverse.files.sztaki.bucket-name=sztakibucket
+        -Ddataverse.files.sztaki.path-style-access=true
+        -Ddataverse.files.sztaki.upload-redirect=false
+        -Ddataverse.files.sztaki.download-redirect=false
+        -Ddataverse.files.sztaki.access-key=4cc355_k3y
+        -Ddataverse.files.sztaki.secret-key=s3cr3t_4cc355_k3y
+        -Ddataverse.files.sztaki.directory=/dv/store/sztaki
+        -Ddataverse.files.wigner.type=s3
+        -Ddataverse.files.wigner.label=Wigner
+        -Ddataverse.files.wigner.custom-endpoint-url=http://minio:9000
+        -Ddataverse.files.wigner.custom-endpoint-region=us-east-1
+        -Ddataverse.files.wigner.bucket-name=wignerbucket
+        -Ddataverse.files.wigner.path-style-access=true
+        -Ddataverse.files.wigner.upload-redirect=false
+        -Ddataverse.files.wigner.download-redirect=false
+        -Ddataverse.files.wigner.access-key=4cc355_k3y
+        -Ddataverse.files.wigner.secret-key=s3cr3t_4cc355_k3y
+        -Ddataverse.files.wigner.directory=/dv/store/wigner
     ports:
       - "8080:8080" # HTTP (Dataverse Application)
       - "4848:4848" # HTTP (Payara Admin Console)
@@ -273,11 +294,72 @@ services:
     networks:
       - dataverse
     volumes:
-      - minio_storage:/data
+      - ./docker-dev-volumes/minio:/data
     environment:
       MINIO_ROOT_USER: 4cc355_k3y
       MINIO_ROOT_PASSWORD: s3cr3t_4cc355_k3y
     command: server /data
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - dev_minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 4cc355_k3y s3cr3t_4cc355_k3y;
+      /usr/bin/mc mb myminio/sztakibucket;
+      /usr/bin/mc policy set readwrite myminio/sztakibucket;
+      /usr/bin/mc mb myminio/wignerbucket;
+      /usr/bin/mc policy set readwrite myminio/wignerbucket;
+      exit 0;
+      "
+    networks:
+      - dataverse
+    volumes:
+      - ./docker-dev-volumes/minio:/data
+
+#  s3fs-sztaki:
+#    image: efrecon/s3fs:1.80
+#    devices:
+#      - /dev/fuse
+#    cap_add:
+#      - SYS_ADMIN
+#    security_opt:
+#      - apparmor=unconfined
+#    environment:
+#      - S3FS_DEBUG=1
+#      - AWS_S3_BUCKET=sztakibucket
+#      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
+#      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
+#      - S3FS_ARGS="-o allow_other -o use_path_request_style -o url=http://minioX:9000"
+#      - UID=${UID:-1000}
+#      - GID=${GID:-1000}
+#    volumes:
+#      - ./docker-dev-volumes/app/data/store/sztaki:/opt/s3fs/bucket:rshared
+#    networks:
+#      - dataverse
+#    depends_on:
+#      - dev_minio
+#
+#
+#  s3fs-wigner:
+#    image: efrecon/s3fs:1.80
+#    devices:
+#      - /dev/fuse
+#    cap_add:
+#      - SYS_ADMIN
+#    security_opt:
+#      - apparmor=unconfined
+#    environment:
+#      - AWS_S3_BUCKET=wignerbucket
+#      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
+#      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
+#      - UID=${UID:-1000}
+#      - GID=${GID:-1000}
+#    volumes:
+#      - ./docker-dev-volumes/app/data/store/wigner:/opt/s3fs/bucket:rshared
+
+
 
   #
   # ARP specific containers

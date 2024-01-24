@@ -16,7 +16,20 @@
     ```
     mvn -Pct clean package
     ```
-   
+1. Init minio buckets (mvn -Pct docker:run fails at createbuckets, that's why we need it separately)
+    ```
+   docker-compose -f docker-compose-dev.yml up dev_minio createbuckets
+   ```
+
+Optional. If you want to actually map minio buckets to folders accessible to Dataverse, you need fuse. Eg. On macOS 13.5:
+
+https://github.com/osxfuse/osxfuse/issues/908
+
+```
+brew install --cask macfuse
+sudo kextload /Library/Filesystems/macfuse.fs/Contents/Extensions/13/macfuse.kext
+```
+
 # Running the stack
 
 ```
@@ -100,7 +113,12 @@ curl -X POST 'http://localhost:8080/api/admin/arp/syncMdbsWithCedar' \
 # Dev setup
 
 ```
-curl -X POST -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n admin:admin | base64)" http://localhost:4849/management/domain/domain1/applications/application/dataverse/_undeploy
+curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n admin:admin | base64)" http://localhost:4849/management/domain/domain1/applications/application/dataverse
+
+curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n admin:admin | base64)" http://localhost:4849/management/domain/domain1/applications/application/dataverse
+
+curl -X GET -H "Content-Type: application/json" -H "Authorization: Basic $(echo -n admin:admin | base64)" http://localhost:4849/management/domain/domain1/applications
+
 ```
 - https://dataverse-guide--9959.org.readthedocs.build/en/9959/container/dev-usage.html#ide-triggered-re-deployments
 - Import [watchers.xml](scripts%2Fintellij%2Fwatchers.xml) file watcher to have xhtml, js, etc files automatically updated in the container
