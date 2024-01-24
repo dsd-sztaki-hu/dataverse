@@ -45,18 +45,32 @@ public class ArpConfig
 
     public static void ensureStaticInstance() {
         if (ArpConfig.instance == null) {
-            String appVersion = JvmSettings.VERSION.lookup();
-            String lookup = "java:global/dataverse-" + appVersion + "/ArpConfig";
-            try {
-                InitialContext ic = new InitialContext();
-                ArpConfig arpConfig = (ArpConfig) ic.lookup(lookup);
-                arpConfig.init();
-                System.out.println("arpConfig: " + ArpConfig.instance);
-            } catch (NamingException e) {
-                logger.severe(lookup + " is not available. Make sure the version used for lookup matches the curreent Dataverse version");
-                e.printStackTrace();
+            var lookup = "java:global/dataverse/ArpConfig";
+            var inst = getArpConfig(lookup);
+            if (inst == null) {
+                logger.info("ArpConfig with lookup '"+lookup+"' is not available.");
+                String appVersion = JvmSettings.VERSION.lookup();
+                var lookup2 = "java:global/dataverse-" + appVersion + "/ArpConfig";
+                logger.info("Trying to get ArpConfig with lookup '"+lookup2+"'.");
+                inst = getArpConfig(lookup2);
+                if (inst == null) {
+                    logger.severe("ArpConfig is not neither via '"+lookup+"' not '"+lookup2+"'");
+                }
             }
         }
+    }
+
+    private static ArpConfig getArpConfig(String lookup) {
+        try {
+            InitialContext ic = new InitialContext();
+            ArpConfig arpConfig = (ArpConfig) ic.lookup(lookup);
+            arpConfig.init();
+            System.out.println("arpConfig: " + ArpConfig.instance);
+            return ArpConfig.instance;
+        } catch (NamingException e) {
+            // ignore for now
+        }
+        return null;
     }
 
     @PostConstruct
