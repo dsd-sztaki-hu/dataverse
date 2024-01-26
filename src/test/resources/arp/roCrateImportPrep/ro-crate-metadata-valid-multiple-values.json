@@ -1,0 +1,155 @@
+{
+  "@context" : [ "https://w3id.org/ro/crate/1.1/context", {
+    "author" : "http://purl.org/dc/terms/creator",
+    "dsDescriptionValue" : "https://dataverse.org/schema/citation/dsDescriptionValue",
+    "subject" : "http://purl.org/dc/terms/subject",
+    "datasetContact" : "https://dataverse.org/schema/citation/datasetContact",
+    "title" : "http://purl.org/dc/terms/title",
+    "authorAffiliation" : "https://dataverse.org/schema/citation/authorAffiliation",
+    "datasetContactName" : "https://dataverse.org/schema/citation/datasetContactName",
+    "datasetContactEmail" : "https://dataverse.org/schema/citation/datasetContactEmail",
+    "authorName" : "https://dataverse.org/schema/citation/authorName",
+    "dsDescription" : "https://dataverse.org/schema/citation/dsDescription",
+    "dateOfDeposit" : "http://purl.org/dc/terms/dateSubmitted",
+    "datasetContactAffiliation" : "https://dataverse.org/schema/citation/datasetContactAffiliation",
+    "depositor" : "https://dataverse.org/schema/citation/depositor"
+  } ],
+  "@graph" : [ {
+    "@id" : "./",
+    "@type" : "Dataset",
+    "@arpPid" : "doi:10.5072/FK2/B5QZDJ",
+    "license" : {
+      "@id" : "http://creativecommons.org/publicdomain/zero/1.0"
+    },
+    "datePublished" : "2024-01-24T13:48:39.368286+01:00",
+    "author" : {
+      "@id" : "#9::a5f85ad7-89b2-42df-ad2b-a4f176c17b2a"
+    },
+    "datasetContact" : [{
+      "@id" : "#10::2aea9435-a0d8-4b3c-a727-b1a6bf44f287"
+    }, {
+      "@id" : "#13::e32f8827-2a7c-4dc2-8fb0-853d5bf53d1d"
+    }],
+    "dsDescription" : [{
+      "@id" : "#11::fec52185-647e-470b-b2dd-c364462b82be"
+      },
+      {
+        "@id" : "#12::04fd9e9c-1ce6-4f0a-90cd-0153e44e8b1b"
+      }
+    ],
+    "subject" : ["Engineering"],
+    "title" : "PreProcessTestDataset",
+    "depositor" : "Admin, Dataverse",
+    "dateOfDeposit" : "2024-01-24",
+    "conformsTo" : [ {
+      "@id" : "https://repo.arp.orgx/templates/22678914-7e13-42ee-8f2f-dd0b7a8b9fa8"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/cd282230-864d-424d-9a76-829a44116075"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/3698da2c-304d-481f-851d-a38f2ba84027"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/aa17c043-a6a6-4c1b-9a4d-fe4f35b59972"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/24da716f-06c7-4183-9153-edc89f78521d"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/688bb9fe-cd31-4eb9-a127-2ae85bd61ebb"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/c25525ff-f47c-4be3-a938-ddd006a001c0"
+    }, {
+      "@id" : "https://repo.arp.orgx/templates/189fb282-da84-4c3c-8866-d7504025c634"
+    } ],
+    "hasPart" : [ {
+      "@id" : "#14662129-6dfe-4fb9-8c17-24660c34c9c6"
+    }, {
+      "@id" : "#5::43ea7a59-8bfe-4443-b642-f453f106184e"
+    }, {
+      "@id" : "#38047203-6a43-4b5a-b8ab-a30844017e40"
+    } ]
+  }, {
+    "about" : {
+      "@id" : "./"
+    },
+    "conformsTo" : {
+      "@id" : "https://w3id.org/ro/crate/1.1"
+    },
+    "@id" : "ro-crate-metadata.json",
+    "@type" : "CreativeWork"
+  }, {
+    "@arpPid" : "",
+    "hash" : "8742faa56f97a47add4a452e9f7e3478",
+    "name" : "testFile3.jpg",
+    "contentSize" : 823762.0,
+    "encodingFormat" : "image/jpeg",
+    "directoryLabel" : "folder_3",
+    "@id" : "#4::28098c75-6227-4c81-8bf4-fe84b870af8b",
+    "@type" : "File"
+  }, {
+    "@arpPid" : "",
+    "hash" : "9becc8149d9959129a232b4a4baa016d",
+    "name" : "testFile1.pdf",
+    "contentSize" : 269696.0,
+    "encodingFormat" : "application/pdf",
+    "@id" : "#5::43ea7a59-8bfe-4443-b642-f453f106184e",
+    "@type" : "File"
+  }, {
+    "@arpPid" : "",
+    "hash" : "3e824c6d807b8117f0d6ea1bfb981c94",
+    "name" : "testFile2.json",
+    "contentSize" : 12259.0,
+    "encodingFormat" : "application/json",
+    "directoryLabel" : "folder_1/folder_2",
+    "@id" : "#6::80aedcea-5eda-47db-9164-538ab00e3058",
+    "@type" : "File"
+  }, {
+    "name" : "folder_1",
+    "@id" : "#14662129-6dfe-4fb9-8c17-24660c34c9c6",
+    "@type" : "Dataset",
+    "hasPart" : {
+      "@id" : "#73d90bac-968c-4e17-b74b-606a411648dc"
+    }
+  }, {
+    "name" : "folder_2",
+    "@id" : "#73d90bac-968c-4e17-b74b-606a411648dc",
+    "@type" : "Dataset",
+    "hasPart" : {
+      "@id" : "#6::80aedcea-5eda-47db-9164-538ab00e3058"
+    }
+  }, {
+    "name" : "folder_3",
+    "@id" : "#38047203-6a43-4b5a-b8ab-a30844017e40",
+    "@type" : "Dataset",
+    "hasPart" : {
+      "@id" : "#4::28098c75-6227-4c81-8bf4-fe84b870af8b"
+    }
+  }, {
+    "authorName" : "Admin, Dataverse",
+    "authorAffiliation" : "Dataverse.org",
+    "name" : "Admin, Dataverse; (Dataverse.org)",
+    "@id" : "#9::a5f85ad7-89b2-42df-ad2b-a4f176c17b2a",
+    "@type" : "author"
+  }, {
+    "datasetContactName" : "Admin, Dataverse",
+    "datasetContactAffiliation" : "Dataverse.org",
+    "datasetContactEmail" : "dataverse@mailinator.com",
+    "name" : "Admin, Dataverse; (Dataverse.org); ",
+    "@id" : "#10::2aea9435-a0d8-4b3c-a727-b1a6bf44f287",
+    "@type" : "datasetContact"
+  }, {
+    "datasetContactName" : "Second, Contact",
+    "datasetContactAffiliation" : "Dataverse.org",
+    "datasetContactEmail" : "dataverse2@mailinator.com",
+    "name" : "Second, Contact; (Dataverse.org); ",
+    "@id" : "#13::e32f8827-2a7c-4dc2-8fb0-853d5bf53d1d",
+    "@type" : "datasetContact"
+  }, {
+    "dsDescriptionValue" : "Dataset for testing the functions related to RO-Crate preparation for import.",
+    "name" : "Dataset for testing the functions related to RO-Crate preparation for import.",
+    "@id" : "#11::fec52185-647e-470b-b2dd-c364462b82be",
+    "@type" : "dsDescription"
+  }, {
+    "dsDescriptionValue" : "Second desc",
+    "name" : "Dataset for testing the functions related to RO-Crate preparation for import.",
+    "@id" : "#12::04fd9e9c-1ce6-4f0a-90cd-0153e44e8b1b",
+    "@type" : "dsDescription"
+  } ]
+}
