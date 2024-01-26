@@ -36,6 +36,13 @@ sudo kextload /Library/Filesystems/macfuse.fs/Contents/Extensions/13/macfuse.kex
 mvn -Pct docker:run
 ```
 
+
+In the future, once issue #9959 is merged: without actually deploying the app, just running the infra containers:
+
+```
+mvn -Pct docker:run -Dapp.deploy.skip
+```
+
 http://localhost:8080
 ```
 User: dataverseAdmin 
