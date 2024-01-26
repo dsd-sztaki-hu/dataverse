@@ -22,40 +22,7 @@ import edu.harvard.iq.dataverse.datasetutility.NoFilesException;
 import edu.harvard.iq.dataverse.datasetutility.OptionalFileParams;
 import edu.harvard.iq.dataverse.engine.command.Command;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
-import edu.harvard.iq.dataverse.engine.command.impl.AbstractSubmitToArchiveCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.AddLockCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.AssignRoleCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.CreatePrivateUrlCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.CuratePublishedDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.DeleteDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.DeleteDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.DeleteDatasetLinkingDataverseCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.DeletePrivateUrlCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.DestroyDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.FinalizeDatasetPublicationCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetSpecificPublishedDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDraftDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetLatestPublishedDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetPrivateUrlCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.ImportFromFileSystemCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.LinkDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.ListRoleAssignments;
-import edu.harvard.iq.dataverse.engine.command.impl.ListVersionsCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.MoveDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.PublishDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.PublishDatasetResult;
-import edu.harvard.iq.dataverse.engine.command.impl.RemoveLockCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.RequestRsyncScriptCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.ReturnDatasetToAuthorCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.SetDatasetCitationDateCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.SetCurationStatusCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.SubmitDatasetForReviewCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetTargetURLCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetThumbnailCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.*;
 import edu.harvard.iq.dataverse.export.DDIExportServiceBean;
 import edu.harvard.iq.dataverse.export.ExportService;
 import edu.harvard.iq.dataverse.externaltools.ExternalTool;
@@ -71,9 +38,6 @@ import edu.harvard.iq.dataverse.dataaccess.S3AccessIO;
 import edu.harvard.iq.dataverse.dataaccess.StorageIO;
 import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
 import edu.harvard.iq.dataverse.engine.command.exception.UnforcedCommandException;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetStorageSizeCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.RevokeRoleCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDvObjectPIDMetadataCommand;
 import edu.harvard.iq.dataverse.makedatacount.DatasetExternalCitations;
 import edu.harvard.iq.dataverse.makedatacount.DatasetExternalCitationsServiceBean;
 import edu.harvard.iq.dataverse.makedatacount.DatasetMetrics;
@@ -85,10 +49,7 @@ import edu.harvard.iq.dataverse.makedatacount.MakeDataCountUtil;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.*;
 import edu.harvard.iq.dataverse.util.bagit.OREMap;
-import edu.harvard.iq.dataverse.util.json.JSONLDUtil;
-import edu.harvard.iq.dataverse.util.json.JsonLDTerm;
-import edu.harvard.iq.dataverse.util.json.JsonParseException;
-import edu.harvard.iq.dataverse.util.json.JsonUtil;
+import edu.harvard.iq.dataverse.util.json.*;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.*;
 import static edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder.jsonObjectBuilder;
@@ -149,6 +110,9 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import com.amazonaws.services.s3.model.PartETag;
+import edu.harvard.iq.dataverse.engine.command.impl.AddDatasetVersionStorageSiteCommand;
+import java.lang.reflect.InvocationTargetException;
+import org.apache.commons.lang3.tuple.Pair;
 
 @Path("datasets")
 public class Datasets extends AbstractApiBean {
@@ -461,7 +425,7 @@ public class Datasets extends AbstractApiBean {
     @GET
     @Path("{id}/versions/{versionId}")
     public Response getVersion( @PathParam("id") String datasetId, @PathParam("versionId") String versionId, @Context UriInfo uriInfo, @Context HttpHeaders headers) {
-        return response( req -> {
+        return response( (DataverseRequest req) -> {
             DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
             return (dsv == null || dsv.getId() == null) ? notFound("Dataset version not found")
                     : ok(json(dsv));
@@ -540,7 +504,112 @@ public class Datasets extends AbstractApiBean {
             return notFound("metadata block named " + blockName + " not found");
         });
     }
-    
+
+    @GET
+    @Path("{id}/versions/{versionId}/storageSites")
+    public Response getVersionStorageSite( @PathParam("id") String datasetId,
+			                               @PathParam("versionId") String versionId,
+										   @Context UriInfo uriInfo,
+										   @Context HttpHeaders headers) {
+		return response( req -> {
+				findAuthenticatedUserOrDie(); // TODO: Is being authenticated enough to access this information? Maybe...? Meditate on this, we should!
+				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
+				return ok(json(dsv.getStorageSites()));
+		});
+		
+	}
+
+	/** This is a helper function for preparing for and running DatasetVersionStorageSite-related commands.
+	 */
+	private Response executeDatasetVersionStorageSiteCommand(DataverseRequest req, 
+	                                                     String datasetId,
+														 String versionId,
+											             UriInfo uriInfo,
+											             HttpHeaders headers,
+														 String storageSiteJson,
+														 Class<? extends Command> commandClass,
+														 String successMessage) {
+		try ( StringReader rdr = new StringReader(storageSiteJson) ) {
+			if(":draft".equals(versionId)) 
+				return error( Response.Status.BAD_REQUEST, "Not allowed to assign/edit storage sites for a draft version!");
+			
+			javax.json.JsonObject storageSiteJsonObj = Json.createReader(rdr).readObject();
+			DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
+			DatasetVersionStorageSite storageSite = jsonParser().parseDatasetVersionStorageSite(storageSiteJsonObj);
+			
+			execCommand(commandClass.getConstructor(dsv.getClass(),req.getClass(),storageSite.getClass()).newInstance(dsv, req, storageSite));
+			return ok(successMessage);
+		} catch (WrappedResponse ex) {
+			return ex.getResponse();
+		} catch (JsonParseException ex) {
+			logger.log(Level.SEVERE, "Semantic error parsing DatasetVersionStorageSites Json: " + ex.getMessage(), ex);
+			return error( Response.Status.BAD_REQUEST, "Error parsing DatasetVersionStorageSites Json: " + ex.getMessage() );
+		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+			Logger.getLogger(Datasets.class.getName()).log(Level.SEVERE, null, ex);
+			return error( Response.Status.INTERNAL_SERVER_ERROR, "Error executing request: " + ex.getMessage() );
+		}
+	}
+	
+    @POST
+	@Consumes("application/json")
+    @Path("{id}/versions/{versionId}/storageSite")
+    public Response addVersionStorageSite( @PathParam("id") String datasetId,
+			                                @PathParam("versionId") String versionId,
+											@Context UriInfo uriInfo,
+											@Context HttpHeaders headers,
+											String storageSiteJson) {
+		return response( req -> {
+			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
+					AddDatasetVersionStorageSiteCommand.class,
+					"Dataset "+ datasetId + " version " + versionId + " storagesites gained a new storage site entry: "+storageSiteJson);
+        });
+	}
+
+	
+	@PUT
+	@Consumes("application/json")
+    @Path("{id}/versions/{versionId}/storageSite")
+    public Response editVersionStorageSite( @PathParam("id") String datasetId,
+			                                @PathParam("versionId") String versionId,
+											@Context UriInfo uriInfo,
+											@Context HttpHeaders headers,
+											String storageSiteJson) {
+		return response( req -> {
+			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
+					EditDatasetVersionStorageSiteCommand.class,
+					"Dataset "+ datasetId + " version " + versionId + " storagesite updated to " +storageSiteJson);
+        });
+	}
+
+	@DELETE
+	@Consumes("application/json")
+    @Path("{id}/versions/{versionId}/storageSite")
+    public Response deleteVersionStorageSite( @PathParam("id") String datasetId,
+			                                @PathParam("versionId") String versionId,
+											@Context UriInfo uriInfo,
+											@Context HttpHeaders headers,
+											String storageSiteJson) {
+		return response( req -> {
+			return executeDatasetVersionStorageSiteCommand(req,datasetId,versionId,uriInfo,headers,storageSiteJson,
+					DeleteDatasetVersionStorageSiteCommand.class,
+					"Dataset "+ datasetId + " version " + versionId + " storagesite " +storageSiteJson+" deleted.");
+        });
+	}
+	
+    @GET
+    @Path("{id}/versions/{versionId}/totalFileSize")
+    public Response getVersionTotalFileSize( @PathParam("id") String datasetId,
+	                                         @PathParam("versionId") String versionId,
+	                                         @Context UriInfo uriInfo,
+	                                         @Context HttpHeaders headers) {
+		return response( req -> {
+				DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
+				JsonObjectBuilder bld = jsonObjectBuilder();
+				bld.add("totalFileSize", dsv.getTotalFileSize());
+				return ok(bld);
+		});
+	}
+	
     @GET
     @Path("{id}/modifyRegistration")
     public Response updateDatasetTargetURL(@PathParam("id") String id ) {

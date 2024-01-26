@@ -4,6 +4,7 @@ import edu.harvard.iq.dataverse.util.MarkupChecker;
 import edu.harvard.iq.dataverse.util.PersonOrOrgUtil;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.DatasetFieldType.FieldType;
+import edu.harvard.iq.dataverse.authorization.users.User;
 import edu.harvard.iq.dataverse.branding.BrandingUtil;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.harvard.iq.dataverse.license.License;
@@ -206,7 +207,18 @@ public class DatasetVersion implements Serializable {
     
     @Transient 
     private JsonObject archivalStatus;
+	
+	@OneToMany(mappedBy="datasetVersion", cascade={CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
+	private List<DatasetVersionStorageSite> storageSites;
     
+	public long getTotalFileSize() {
+		long totalFileSize=0L;
+		for(FileMetadata fm : fileMetadatas) {
+			totalFileSize+=fm.getDataFile().getFilesize();
+		}
+		return totalFileSize;
+	}
+
     public Long getId() {
         return this.id;
     }
@@ -438,6 +450,14 @@ public class DatasetVersion implements Serializable {
         this.datasetVersionUsers = datasetVersionUsers;
     }
 
+	public List<DatasetVersionStorageSite> getStorageSites() {
+		return storageSites;
+	}
+
+	public void setStorageSites(List<DatasetVersionStorageSite> storageSites) {
+		this.storageSites = storageSites;
+	}
+	
     public List<String> getVersionContributorIdentifiers() {
         if (this.getDatasetVersionUsers() == null) {
             return Collections.emptyList();

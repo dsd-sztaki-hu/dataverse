@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.locality.StorageSite;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,6 +35,7 @@ import javax.validation.constraints.Size;
 
 import edu.harvard.iq.dataverse.util.DateUtil;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
+import javax.persistence.ManyToMany;
 
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -124,7 +126,7 @@ public class Template implements Serializable {
     public void setTermsOfUseAndAccess(TermsOfUseAndAccess termsOfUseAndAccess) {
         this.termsOfUseAndAccess = termsOfUseAndAccess;
     }
-
+	
     @OneToMany(mappedBy = "template", orphanRemoval = true, cascade = {CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
     //@OrderBy("datasetField.displayOrder") 
     private List<DatasetField> datasetFields = new ArrayList<>();
