@@ -408,6 +408,18 @@ public class ArpServiceBean implements java.io.Serializable {
                 throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+getTemplateAgainResponse.body());
             }
 
+            // Make the artifact open to be viewed in OpenView
+            HttpRequest makeArtifactOpen = HttpRequest.newBuilder()
+                    .uri(new URI("https://resource." + cedarDomain + "/command/make-artifact-open"))
+                    .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString("{\"@id\":\""+cedarId+"\"}"))
+                    .build();
+            HttpResponse<String> makeArtifactOpenResponse = client.send(makeArtifactOpen, ofString());
+            if (makeArtifactOpenResponse.statusCode() != 200) {
+                throw new Exception("An error occurred during making template open: " + cedarTemplate.get("schema:name").textValue()+": "+makeArtifactOpenResponse.body());
+            }
+
+            // Now return the reloaded template JSON
             return getTemplateAgainResponse.body();
         }
         // If not found, create it now
