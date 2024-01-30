@@ -748,7 +748,7 @@ public class ArpServiceBean implements java.io.Serializable {
                             }
                             mdbArp.setMetadataBlock(mdb);
                             mdbArp.setCedarDefinition(templateJson);
-                            mdbArp.setRoCrateConformsToId(conformsToId);
+                            mdbArp.setRoCrateConformsToId(convertCedarTemplateIdToW3id(conformsToId));
                             arpMetadataBlockServiceBean.save(mdbArp);
                             break;
 
@@ -1366,6 +1366,27 @@ public class ArpServiceBean implements java.io.Serializable {
         datePublished.addProperty("readonly", "true");
         datePublished.addProperty("type", "Date");
         return datePublished;
+    }
+
+    public String convertCedarTemplateIdToW3id(String schemaId) {
+        // https://repo.arp.orgx/templates/33677b82-7973-3e4c-b09d-b5189e095627
+        // -->
+        // https://w3id.org/arp/localdev/schema/33677b82-7973-3e4c-b09d-b5189e095627
+        String w3IdBase = arpConfig.get("arp.w3id.base");
+        String cedarDomain = arpConfig.get("arp.cedar.domain");
+        String uuid = schemaId.substring(schemaId.indexOf("templates/") + "templates/".length());
+        return w3IdBase+"/schema/"+uuid;
+    }
+
+    public String convertW3idToCedarTemplateId(String w3Id) {
+        // https://w3id.org/arp/localdev/schema/33677b82-7973-3e4c-b09d-b5189e095627
+        // -->
+        // https://repo.arp.orgx/templates/33677b82-7973-3e4c-b09d-b5189e095627
+        String w3IdBase = arpConfig.get("arp.w3id.base");
+        String cedarDomain = arpConfig.get("arp.cedar.domain");
+        String uuid = w3Id.substring(w3Id.indexOf("schema/") + "schema/".length());
+        return "https://repo."+cedarDomain+"/templates/"+uuid;
+
     }
 
 }
