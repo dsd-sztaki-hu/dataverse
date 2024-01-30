@@ -1468,7 +1468,8 @@ public class RoCrateManager {
                 DataFile dataFile = dvDatasetFiles.stream().filter(f ->
                         f.getChecksumValue().equals(fileHash)
                 ).findFirst().get();
-                String arpPid = dataFile.getGlobalId().toString();
+                var globalId = dataFile.getGlobalId();
+                String arpPid = globalId != null ? globalId.toString() : "";
                 entityNode.put("@arpPid", arpPid);
             }
 
