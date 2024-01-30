@@ -945,6 +945,14 @@ public class RoCrateManager {
             // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
             // although this is is just a SHOULD not a MUST by the spec.
             newDatasetId = "#" + UUID.randomUUID() + "/";
+            // Trial with path based ID. processDatasetAndFileEntities will regenerate ID as ut expect #UUID/ as ID
+            // for now
+            // @id MUST be either a URI Path relative to the RO Crate root, or an absolute URI. The id SHOULD end with /
+//            String parentId = parentObj.get("@id").textValue();
+//            if (parentId.equals("./")) {
+//                parentId = "";
+//            }
+//            newDatasetId = parentId+folderName+"/";
             ContextualEntity newDataset = new ContextualEntity.ContextualEntityBuilder()
                     .addType("Dataset")
                     .setId(newDatasetId)
@@ -1451,7 +1459,9 @@ public class RoCrateManager {
         String oldId = datasetEntity.get("@id").textValue();
         boolean idNeedsToBeUpdated = false;
         try {
-            UUID.fromString(oldId.startsWith("#") ? oldId.substring(1) : oldId);
+            int startIndex = oldId.indexOf('#') + 1; // Add 1 to skip the '#' character itself
+            int endIndex = oldId.indexOf('/');
+            UUID.fromString(oldId.startsWith("#") ? oldId.substring(startIndex, endIndex) : oldId);
         } catch (IllegalArgumentException ex) {
             idNeedsToBeUpdated = true;
         }
