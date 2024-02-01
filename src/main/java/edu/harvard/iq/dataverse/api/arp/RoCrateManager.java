@@ -516,7 +516,7 @@ public class RoCrateManager {
         // "@id's starting with # as these signify the reference is internal to the crate"
         // the compoundIdAndUuidSeparator separates the id of the parent compound value from the uuid
         // the parent compound id is used to get the correct values upon modifying the RO-Crate with data from AROMA
-        contextualEntityBuilder.setId("#" + compoundValue.getId() + compoundIdAndUuidSeparator + UUID.randomUUID());
+        contextualEntityBuilder.setId(createRoIdForCompound(compoundValue));
 
         String nameFieldValue = null;
 
@@ -577,7 +577,7 @@ public class RoCrateManager {
         String fileId;
         FileEntity.FileEntityBuilder fileEntityBuilder = new FileEntity.FileEntityBuilder();
         DataFile dataFile = fileMetadata.getDataFile();
-        fileId = "#" + dataFile.getId() + "::" + UUID.randomUUID();
+        fileId = createRoIdForDataFile(dataFile);
         fileEntityBuilder.setId(fileId);
         var globalId = dataFile.getGlobalId();
         fileEntityBuilder.addProperty("@arpPid", (globalId != null ? globalId.toString() : ""));
@@ -680,7 +680,7 @@ public class RoCrateManager {
                 var fmd = datasetFile.get();
                 if (importMapping != null) {
                     String oldFileId = fe.get("@id").textValue();
-                    String newFileId = "#" + fmd.getDataFile().getId() + "::" + UUID.randomUUID();
+                    String newFileId = createRoIdForDataFile(fmd.getDataFile());
                     replaceFileIdInHasParts(roCrate, oldFileId, newFileId);
                     fe.put("@id", newFileId);
                 }
@@ -954,7 +954,7 @@ public class RoCrateManager {
             //add new dataset
             // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
             // although this is is just a SHOULD not a MUST by the spec.
-            newDatasetId = "#" + UUID.randomUUID() + "/";
+            newDatasetId = createRoIdForDataset();
             ContextualEntity newDataset = new ContextualEntity.ContextualEntityBuilder()
                     .addType("Dataset")
                     .setId(newDatasetId)
@@ -1787,7 +1787,7 @@ public class RoCrateManager {
                     if (idNeedsToBeUpdated && !isVirtual) {
                         // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
                         // although this is is just a SHOULD not a MUST by the spec.
-                        String newId  = "#" + UUID.randomUUID() + "/";
+                        String newId  = createRoIdForDataset();
                         ((ObjectNode) datasetEntity).put("@id", newId);
                         entityNode.put("@id", newId);
                     }
@@ -1878,7 +1878,7 @@ public class RoCrateManager {
             if (!compoundFieldProps.isEmpty()) {
                 if (!isProcessedId(oldId)) {
                     DatasetFieldCompoundValue valueToObtainIdFrom = compoundValues.get(positionOfProp);
-                    String newId = "#" + valueToObtainIdFrom.getId() + compoundIdAndUuidSeparator + UUID.randomUUID();
+                    String newId = createRoIdForCompound(valueToObtainIdFrom);
                     var rootDataEntity = roCrate.getRootDataEntity().getProperties().get(propName);
                     if (rootDataEntity.isObject()) {
                         ((ObjectNode) rootDataEntity).put("@id", newId);
@@ -2133,4 +2133,29 @@ public class RoCrateManager {
         return optionalCvv.get();
     }
 
+    private String createRoIdForDataFile(DataFile dataFile) {
+        return  "#" + dataFile.getId() + "::" + UUID.randomUUID();
+    }
+
+    private String getDataFileIdFromRoId(String fileRoId) {
+        return fileRoId.split("::")[0].substring(1);
+    }
+
+    // We use this generation logic for datasets that are the part of an RO-Crate (folder paths in DV)
+    // not for Datasets as DV Objects, this might change later when the w3id is implemented
+    private String createRoIdForDataset() {
+        return "#" + UUID.randomUUID() + "/";
+    }
+    
+//    At this point this function would be useless 
+//    private Long getDatasetIdFromRoId(String roId) {
+//        
+//    }
+
+    private String createRoIdForCompound(DatasetFieldCompoundValue compoundValue) {
+        return "#" + compoundValue.getId() + compoundIdAndUuidSeparator + UUID.randomUUID();
+    }
+    private Long getCompoundIdFromRoId(String roId) {
+        return Long.valueOf(roId.split(compoundIdAndUuidSeparator)[0].substring(1));
+    }
 }
