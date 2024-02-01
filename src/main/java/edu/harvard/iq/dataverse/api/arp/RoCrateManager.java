@@ -214,7 +214,7 @@ public class RoCrateManager {
                 for (Iterator<JsonNode> it = entityToUpdate.elements(); it.hasNext();) {
                     JsonNode entity = it.next();
                     String rootEntityId = entity.get("@id").textValue();
-                    if (!compoundValueIds.contains(rootEntityId.split(compoundIdAndUuidSeparator)[0].substring(1))) {
+                    if (!compoundValueIds.contains(getCompoundIdFromRoId(rootEntityId))) {
                         ContextualEntity contextualEntityToDelete = contextualEntities.stream().filter(contextualEntity -> contextualEntity.getId().equals(rootEntityId)).findFirst().get();
                         List<String> compoundValueProps = datasetField.getDatasetFieldType().getChildDatasetFieldTypes().stream().map(DatasetFieldType::getName).collect(Collectors.toList());
                         // Delete the properties from the contextual entity that was removed from DV,
@@ -247,7 +247,7 @@ public class RoCrateManager {
             } else if (entityToUpdate.isArray()) {
                 String matchingId = "";
                 for (var idObj : entityToUpdate) {
-                    if (idObj.get("@id").textValue().split(compoundIdAndUuidSeparator)[0].substring(1).equals(compoundValue.getId().toString())) {
+                    if (getCompoundIdFromRoId(idObj.get("@id").textValue()).equals(compoundValue.getId().toString())) {
                         matchingId = idObj.get("@id").textValue();
                         break;
                     }
@@ -636,7 +636,7 @@ public class RoCrateManager {
         List<FileMetadata> datasetFiles = datasetVersion.getFileMetadatas();
 
         roCrateFileEntities.forEach(fe -> {
-            String dataFileId = fe.get("@id").textValue().split("::")[0].substring(1);
+            String dataFileId = getDataFileIdFromRoId(fe.get("@id").textValue());
             Optional<FileMetadata> datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
@@ -667,7 +667,7 @@ public class RoCrateManager {
             if (isVirtualFile(fe)) {
                 return;
             }
-            String dataFileId = fe.get("@id").textValue().split("::")[0].substring(1);
+            String dataFileId = getDataFileIdFromRoId(fe.get("@id").textValue());
             Optional<FileMetadata> datasetFile;
             if (importMapping == null) {
                 datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
@@ -2145,11 +2145,16 @@ public class RoCrateManager {
     }
 
     private String createRoIdForDataFile(DataFile dataFile) {
-        return  "#" + dataFile.getId() + "::" + UUID.randomUUID();
+        // https://w3id.org/arp/ro-id/doi:A10.5072/FK2/ZL0O25/file/123
+        return createRoidWithFieldName(
+                dataFile.getOwner(),
+                "file",
+                dataFile.getId()
+        );
     }
 
-    private String getDataFileIdFromRoId(String fileRoId) {
-        return fileRoId.split("::")[0].substring(1);
+    private String getDataFileIdFromRoId(String roId) {
+        return getLastPathElementAsId(roId);
     }
 
     // We use this generation logic for datasets that are the part of an RO-Crate (folder paths in DV)
@@ -2164,9 +2169,36 @@ public class RoCrateManager {
 //    }
 
     private String createRoIdForCompound(DatasetFieldCompoundValue compoundValue) {
-        return "#" + compoundValue.getId() + compoundIdAndUuidSeparator + UUID.randomUUID();
+        // https://w3id.org/arp/ro-id/doi:A10.5072/FK2/ZL0O25/author/2088
+        return createRoidWithFieldName(
+                compoundValue.getParentDatasetField().getDatasetVersion().getDataset(),
+                compoundValue.getParentDatasetField().getDatasetFieldType().getName(),
+                compoundValue.getId()
+        );
     }
-    private Long getCompoundIdFromRoId(String roId) {
-        return Long.valueOf(roId.split(compoundIdAndUuidSeparator)[0].substring(1));
+
+    private String getCompoundIdFromRoId(String roId) {
+        return getLastPathElementAsId(roId);
+    }
+
+    private String getLastPathElementAsId(String roId) {
+        String[] pathSegments = roId.split("/");
+        try {
+            return pathSegments[pathSegments.length - 1];
+        }
+        catch (NumberFormatException ex) {
+            throw new RuntimeException("Invalid ro-id"+roId);
+        }
+    }
+
+    private String createRoidWithFieldName(Dataset dataset, String fieldName, Long dvId) {
+        // https://w3id.org/arp/ro-id/doi:A10.5072/FK2/ZL0O25/author/2088
+        String w3IdBase = arpConfig.get("arp.w3id.base");
+        String pid = dataset.getGlobalId().asString();
+        var roid = w3IdBase + "/ro-id/" + pid
+                + "/" + fieldName
+                + "/" + dvId;
+        return roid;
+
     }
 }
