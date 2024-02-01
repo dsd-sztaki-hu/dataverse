@@ -1306,41 +1306,21 @@ public class RoCrateManager {
     }
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
-    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJson) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode = mapper.readTree(roCrateJson);
-
-        JsonNode roCrateEntities = rootNode.withArray("@graph");
-        
-        removeReverseProperties(roCrateEntities);
-        
-        try (FileWriter writer = new FileWriter(getRoCratePathForPreProcess(dataset.getLatestVersion()))) {
-            writer.write(rootNode.toPrettyString());
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-
+    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws JsonProcessingException, ArpException {
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolderForPreProcess(dataset.getLatestVersion()));
-        ObjectNode rootDataEntityProps = roCrate.getRootDataEntity().getProperties();
-        RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
-        var roCrateContext = new ObjectMapper().readTree(roCrate.getJsonMetadata()).get("@context").get(1);
+        RoCrate latestVersionRoCrate = roCrateFolderReader.readCrate(getRoCrateFolderForPreProcess(dataset.getLatestVersion()));
+        RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate);
+
+        var prepErrors = roCrateImportPrepResult.errors;
+        if (!prepErrors.isEmpty()) {
+            throw new ArpException(String.join("\n", prepErrors));
+        }
         
+        RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
         
-        rootDataEntityProps.fieldNames().forEachRemaining(fieldName -> {
-            if (!fieldName.startsWith("@") && !propsToIgnore.contains(fieldName)) {
-                var fieldByName = fieldService.findByName(fieldName);
-                // Only handle if field  belongs to DV
-                if (!roCrateContext.has(fieldName) && fieldByName != null) {
-                    roCrateContextUpdater.addValuePairToContext(fieldName, fieldByName.getUri());
-                }
-            }
-        });
+        collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
         
-        collectConformsToIds(dataset, roCrate.getRootDataEntity());
-        
-        return roCrate;
+        return roCrateToImport;
     }
 
     public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString) throws JsonProcessingException {
@@ -1364,7 +1344,7 @@ public class RoCrateManager {
             return preProcessResult;
         }
         
-        RoCrate preProcessedRoCrate = roCrateStringReader.parseCrate(roCrateJsonString);
+        RoCrate preProcessedRoCrate = roCrateStringReader.parseCrate(rootNode.toPrettyString());
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
         var roCrateContext = new ObjectMapper().readTree(preProcessedRoCrate.getJsonMetadata()).get("@context").get(1);
         
@@ -1375,6 +1355,9 @@ public class RoCrateManager {
         // remove the id of the rootDataset and the jsonDescriptor, the other id-s will be removed during processing the entities
         roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getRootDataEntity().getId());
         roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getJsonDescriptor().getId());
+        // the license obj coming from AROMA is not really an id object, and its URL value is stored as a string in dv
+        // remove this type of "id"-s too
+        roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "URL".equals(entry.getValue()));
         
         // process the dataset and file entities
         // check id and hash pairs for files, these can not be modified
@@ -1384,6 +1367,8 @@ public class RoCrateManager {
         if (!roCrateEntityIdsAndTypes.isEmpty()) {
             preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
         }
+        
+        preProcessResult.setRoCrate(preProcessedRoCrate);
         
         return preProcessResult;
     }
@@ -1739,13 +1724,13 @@ public class RoCrateManager {
                 String entityId = entity.get("@id").textValue();
                 if (!encounteredIdsWithTypes.containsKey(entityId)) {
                     if (!entity.has("@type")) {
-                        entityType = entity.get("@type").textValue();
                         if (entityId == null) {
                             preProcessResult.errors.add("Missing '@type' for entity: " + entity);
                         } else {
                             preProcessResult.errors.add("The entity with id: '" + entityId + "' does not have a '@type'.");
                         }
                     }
+                    entityType = getTypeAsString(entity);
                     encounteredIdsWithTypes.put(entityId, entityType);
                 } else {
                     preProcessResult.errors.add("The RO-Crate contains the following '@id' multiple times: " + entityId);

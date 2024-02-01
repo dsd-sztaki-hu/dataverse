@@ -14,9 +14,9 @@ import java.io.IOException;
 // maybe we should ask for this functionality or create a pr
 
 /**
- * A class for reading a crate from a folder.
+ * A class for reading a crate from a String.
  *
- * @author Nikola Tzotchev on 9.2.2022 г.
+ * @author Norbert Finta.
  * @version 1
  */
 public class StringReader implements ReaderStrategy {
