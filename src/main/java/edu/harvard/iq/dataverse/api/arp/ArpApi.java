@@ -743,7 +743,7 @@ public class ArpApi extends AbstractApiBean {
             @Context ContainerRequestContext crc,
             @PathParam("persistentId") String persistentId,
             String roCrateJson
-    ) throws JsonProcessingException {
+    ) {
         Dataset dataset;
         RoCrate preProcessedRoCrate;
         AuthenticatedUser user;
@@ -755,7 +755,7 @@ public class ArpApi extends AbstractApiBean {
                         BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
             }
             preProcessedRoCrate = roCrateManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
-        } catch (IOException | RuntimeException e) {
+        } catch (IOException | RuntimeException | ArpException e) {
             e.printStackTrace();
             return error(INTERNAL_SERVER_ERROR, e.getMessage());
         } 
@@ -823,7 +823,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
             return ex.getResponse();
-        } catch (IOException | SolrServerException ex) {
+        } catch (IOException | SolrServerException ex ) {
             ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
