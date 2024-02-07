@@ -954,15 +954,7 @@ public class RoCrateManager {
             //add new dataset
             // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
             // although this is is just a SHOULD not a MUST by the spec.
-            newDatasetId = createRoIdForDataset();
-            // Trial with path based ID. processDatasetAndFileEntities will regenerate ID as ut expect #UUID/ as ID
-            // for now
-            // @id MUST be either a URI Path relative to the RO Crate root, or an absolute URI. The id SHOULD end with /
-//            String parentId = parentObj.get("@id").textValue();
-//            if (parentId.equals("./")) {
-//                parentId = "";
-//            }
-//            newDatasetId = parentId+folderName+"/";
+            newDatasetId = createRoIdForDataset(folderName, parentObj);
             ContextualEntity newDataset = new ContextualEntity.ContextualEntityBuilder()
                     .addType("Dataset")
                     .setId(newDatasetId)
@@ -1413,13 +1405,22 @@ public class RoCrateManager {
             }
             // compare the file ids and hashes with the values from the previous version of the RO-Crate
             if (!latestRoCrateFilesWithHashes.isEmpty()) {
-                var fileHash = entity.get("hash").textValue();
                 var originalFileEntity = latestRoCrate.getEntityById(entityId);
                 if (originalFileEntity == null) {
+                    if (!entity.has("hash")) {
+                        // this is a new virtual file
+                        return;
+                    }
+                    var fileHash = entity.get("hash").textValue();
                     if (latestRoCrateFilesWithHashes.containsKey(entity.get("hash").textValue())) {
                         preProcessResult.errors.add("Corrupted id found for a File entity with hash: " + fileHash);
                     }
                 } else {
+                    if (!entity.has("hash") && !originalFileEntity.getProperties().has("hash")) {
+                        // this is a virtual file
+                        return;
+                    }
+                    var fileHash = entity.get("hash").textValue();
                     if (!originalFileEntity.getProperty("hash").textValue().equals(fileHash)) {
                         preProcessResult.errors.add("Corrupted hash found for a File entity with id: " + entityId);
                     }
@@ -1637,10 +1638,11 @@ public class RoCrateManager {
     }
 
     public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
         String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream().map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
-        List<JsonNode> rootHasPartDatasets = new ArrayList<>();
+        ArrayNode rootHasPartDatasets = mapper.createArrayNode();
         Map<String, ArrayList<String>> extraMetadata = Map.ofEntries(
                 Map.entry("virtualDatasetAdded", new ArrayList<>()),
                 Map.entry("virtualFileAdded", new ArrayList<>()),
@@ -1712,7 +1714,9 @@ public class RoCrateManager {
 
         // Must collect the datafiles this way to only process the ones that belong to the actual dataset version
         List<DataFile> dvDatasetFiles = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getDataFile).collect(Collectors.toList());
-        rootHasPartDatasets.forEach(ds -> processDatasetAndFileEntities(datasetAndFileEntities, ds, dvDatasetFiles, extraMetadata));
+        // the root dataset's hasPart is handled differently, it has to be merged separately
+        mergeHasParts(roCrate, rootHasPartDatasets, rootDataEntityProperties, mapper);
+        rootHasPartDatasets.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
         
         roCrate.setRoCratePreview(new AutomaticPreview());
 
@@ -1752,34 +1756,20 @@ public class RoCrateManager {
         return encounteredIdsWithTypes;
     }
 
-    // Update the id of the dataset and file entities in case they are not following the format: #UUID for datasets and
-    // #datafileId::UUID for files
-    // add @arpPid to the file entities again, because this property is getting removed by AROMA
-    // recursively process the child entities for datasets (folders)
-    // during processing the entities this function collects the data to generate the rocrate-extras.json too
-    private boolean processDatasetAndFileEntities(Map<String, ObjectNode> datasetAndFileEntities, JsonNode datasetEntity, List<DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata) {
-        String oldId = datasetEntity.get("@id").textValue();
-        boolean idNeedsToBeUpdated = false;
-        try {
-            int startIndex = oldId.indexOf('#') + 1; // Add 1 to skip the '#' character itself
-            int endIndex = oldId.indexOf('/');
-            UUID.fromString(oldId.startsWith("#") ? oldId.substring(startIndex, endIndex) : oldId);
-        } catch (IllegalArgumentException ex) {
-            idNeedsToBeUpdated = true;
-        }
-
-        ObjectNode entityNode = datasetAndFileEntities.get(oldId);
-
+    private boolean postProcessDatasetAndFileEntities(RoCrate roCrate, JsonNode parentEntity, List<DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata, ObjectNode parentObj, ObjectMapper mapper) {
+        String oldId = parentEntity.get("@id").textValue();
+        var entity = roCrate.getEntityById(oldId);
+        var entityNode = entity.getProperties();
         if (hasType(entityNode, "File")) {
-            // If the dataset contains a non-virtual file, that means the dataset is non-virtual too
-            boolean isVirtualFile = isVirtualFile(entityNode);
+            String fileHash = entityNode.has("hash") ? entityNode.get("hash").textValue() : "";
+            var dataFileOpt = dvDatasetFiles.stream().filter(f ->
+                            f.getChecksumValue().equals(fileHash))
+                            .findFirst();
+            boolean isVirtualFile = dataFileOpt.isEmpty();
             if (isVirtualFile) {
                 extraMetadata.get("virtualFileAdded").add(entityNode.get("@id").textValue());
             } else {
-                String fileHash = entityNode.get("hash").textValue();
-                DataFile dataFile = dvDatasetFiles.stream().filter(f ->
-                        f.getChecksumValue().equals(fileHash)
-                ).findFirst().get();
+                DataFile dataFile = dataFileOpt.get();
                 var globalId = dataFile.getGlobalId();
                 String arpPid = globalId != null ? globalId.toString() : "";
                 entityNode.put("@arpPid", arpPid);
@@ -1791,21 +1781,26 @@ public class RoCrateManager {
             return isVirtualFile;
         } else {
             boolean isVirtual;
+            // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
+            // although this is just a SHOULD not a MUST by the spec.
+            String newId  = createRoIdForDataset(entityNode.get("name").textValue(), parentObj);
+            boolean gotNewId = !newId.equals(oldId);
+            if (gotNewId) {
+                ((ObjectNode) parentEntity).put("@id", newId);
+                entityNode.put("@id", newId);
+            }
             JsonNode hasPart = entityNode.get("hasPart");
             if (hasPart != null && !hasPart.isEmpty()) {
                 if (hasPart.isObject()) {
-                    isVirtual = processDatasetAndFileEntities(datasetAndFileEntities, hasPart, dvDatasetFiles, extraMetadata);
-                    if (idNeedsToBeUpdated && !isVirtual) {
-                        // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
-                        // although this is is just a SHOULD not a MUST by the spec.
-                        String newId  = createRoIdForDataset();
-                        ((ObjectNode) datasetEntity).put("@id", newId);
-                        entityNode.put("@id", newId);
-                    }
+                    isVirtual = postProcessDatasetAndFileEntities(roCrate, hasPart, dvDatasetFiles, extraMetadata, entityNode, mapper);
                 } else {
+                    // the root dataset's hasPart is already merged
+                    if (!parentObj.get("@id").textValue().equals("./")) {
+                        mergeHasParts(roCrate, hasPart, entityNode, mapper);
+                    }
                     ArrayList<Boolean> isVirtualResults = new ArrayList<>();
                     for (var arrayVal : hasPart) {
-                        isVirtualResults.add(processDatasetAndFileEntities(datasetAndFileEntities, arrayVal, dvDatasetFiles, extraMetadata));
+                        isVirtualResults.add(postProcessDatasetAndFileEntities(roCrate, arrayVal, dvDatasetFiles, extraMetadata, entityNode, mapper));
                     }
                     isVirtual = !isVirtualResults.contains(false);
                 }
@@ -1813,7 +1808,7 @@ public class RoCrateManager {
                 // This is a virtual Dataset from AROMA
                 isVirtual = true;
             }
-            
+
             if (isVirtual) {
                 extraMetadata.get("virtualDatasetAdded").add(entityNode.get("@id").textValue());
             }
@@ -1821,13 +1816,70 @@ public class RoCrateManager {
             if (datasetHasExtraMetadata(entityNode)) {
                 extraMetadata.get("datasetWithMetadata").add(entityNode.get("@id").textValue());
             }
-            
+
             return isVirtual;
         }
     }
 
+    private void mergeHasParts(RoCrate roCrate, JsonNode hasPart, JsonNode parentNode, ObjectMapper mapper) {
+        // check if the hasPart array contains any duplicates that need to be merged
+        var it = hasPart.iterator();
+        while (it.hasNext()) {
+            var idObj = it.next();
+            var originalId = idObj.get("@id").textValue();
+            var originalEntity = roCrate.getEntityById(originalId).getProperties();
+            String generatedId  = createRoIdForDataset(originalEntity.get("name").textValue(), parentNode);
+            // the entity got a new id, check if merging is required
+            if (!originalId.equals(generatedId)) {
+                var alreadyPresentEntity = roCrate.getEntityById(generatedId).getProperties();
+                originalEntity.put("@id", generatedId);
+                if (alreadyPresentEntity != null) {
+                    mergeDatasets(originalEntity, alreadyPresentEntity, mapper);
+                    it.remove();
+                    roCrate.deleteEntityById(originalId);
+                } else {
+                    ((ObjectNode) idObj).put("@id", generatedId);
+                }
+            }
+        }
+    }
+
+    private void mergeDatasets(ObjectNode fromDs, ObjectNode toDs, ObjectMapper mapper) {
+        fromDs.fields().forEachRemaining(field -> {
+            if (!field.getKey().equals("hasPart")) {
+                toDs.set(field.getKey(), field.getValue());
+            }
+        });
+
+        // Get hasPart properties from both nodes
+        JsonNode fromHasPart = fromDs.get("hasPart");
+        JsonNode toHasPart = toDs.get("hasPart");
+
+        // Create an array node to hold the merged content
+        ArrayNode mergedHasPart = mapper.createArrayNode();
+
+        // Add hasPartOne content to mergedHasPart if it's an array or object
+        if (fromHasPart != null) {
+            if (fromHasPart.isArray()) {
+                mergedHasPart.addAll((ArrayNode) fromHasPart);
+            } else {
+                mergedHasPart.add(fromHasPart);
+            }
+        }
+
+        if (toHasPart != null) {
+            if (toHasPart.isArray()) {
+                mergedHasPart.addAll((ArrayNode) toHasPart);
+            } else {
+                mergedHasPart.add(toHasPart);
+            }
+        }
+
+        toDs.set("hasPart", mergedHasPart);
+    }
+
     private boolean isVirtualFile(ObjectNode file) {
-        return !isProcessedId(file.get("@id").textValue());
+        return !file.has("@arpPid");
     }
     
     private boolean isProcessedId(String id) {
@@ -1887,18 +1939,16 @@ public class RoCrateManager {
             // Take the intersection of the property names of the compoundFieldProps and entityProps, if the result is an empty set, the entity contained props only from AROMA, and none from DV
             // the id of this entity can not be updated (since there's no compound value for the entity)
             if (!compoundFieldProps.isEmpty()) {
-                if (!isProcessedId(oldId)) {
-                    DatasetFieldCompoundValue valueToObtainIdFrom = compoundValues.get(positionOfProp);
-                    String newId = createRoIdForCompound(valueToObtainIdFrom);
-                    var rootDataEntity = roCrate.getRootDataEntity().getProperties().get(propName);
-                    if (rootDataEntity.isObject()) {
-                        ((ObjectNode) rootDataEntity).put("@id", newId);
-                    } else {
-                        ((ObjectNode) rootDataEntity.get(positionOfProp)).put("@id", newId);
-                    }
-
-                    contextualEntityToUpdateId.get().getProperties().put("@id", newId);
+                DatasetFieldCompoundValue valueToObtainIdFrom = compoundValues.get(positionOfProp);
+                String newId = createRoIdForCompound(valueToObtainIdFrom);
+                var rootDataEntity = roCrate.getRootDataEntity().getProperties().get(propName);
+                if (rootDataEntity.isObject()) {
+                    ((ObjectNode) rootDataEntity).put("@id", newId);
+                } else {
+                    ((ObjectNode) rootDataEntity.get(positionOfProp)).put("@id", newId);
                 }
+
+                contextualEntityToUpdateId.get().getProperties().put("@id", newId);
                 return true;
             }
         }
@@ -2159,8 +2209,12 @@ public class RoCrateManager {
 
     // We use this generation logic for datasets that are the part of an RO-Crate (folder paths in DV)
     // not for Datasets as DV Objects, this might change later when the w3id is implemented
-    private String createRoIdForDataset() {
-        return "#" + UUID.randomUUID() + "/";
+    private String createRoIdForDataset(String folderName, JsonNode parentObj) {
+        String parentId = parentObj.get("@id").textValue();
+        if (parentId.equals("./")) {
+            parentId = "";
+        }
+        return parentId + folderName + "/";
     }
 
 //    At this point this function would be useless
