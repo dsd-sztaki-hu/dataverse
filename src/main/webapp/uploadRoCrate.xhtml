@@ -60,7 +60,11 @@
                             roCrateData.push({name: 'roCrateJson', value: roCrateJsonText})
                         } else {
                             const error = document.getElementById("emptyFileError");
-                            error.innerHTML = "The .zip can not contain empty files."
+                            if (roCrateJson === false) {
+                                error.innerHTML = "The .zip can not contain empty files."
+                            } else {
+                                error.innerHTML = "Missing 'ro-crate-metadata.json'."
+                            }
                             return false;
                         }
                         await sendRoCrateData(roCrateData)
