@@ -6512,7 +6512,9 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public String getDownloadRoCrateMessage() {
-        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+        long zipDownloadLimit = settingsWrapper.getZipDownloadLimit() / (1024*1024);
+        var message = zipDownloadLimit > 1024 ? zipDownloadLimit / 1024 + " GB" : zipDownloadLimit + " MB";
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
     }
 
     public void downloadRoCrate() throws Exception {
