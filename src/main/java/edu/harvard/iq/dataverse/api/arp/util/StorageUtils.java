@@ -3,6 +3,7 @@ package edu.harvard.iq.dataverse.api.arp.util;
 import edu.harvard.iq.dataverse.Dataset;
 import edu.harvard.iq.dataverse.dataaccess.DataAccess;
 import edu.harvard.iq.dataverse.dataaccess.FileAccessIO;
+import edu.harvard.iq.dataverse.dataaccess.S3AccessIO;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,19 +54,19 @@ public class StorageUtils
             else {
                 String dir = null;
                 var driverId = dataset.getEffectiveStorageDriverId();
-                if (driverId.equals(SZTAKI_STORAGE_ID) || driverId.equals(WIGNER_STORAGE_ID)) {
+                if (storageIO instanceof S3AccessIO) {
                     dir = System.getProperty("dataverse.files." + driverId + "." + "directory", null);
                     if (dir == null) {
                         throw new RuntimeException("Value for 'dataverse.files." + driverId + ".directory' property has not been specified. "+
                                 "Use JVM_ARGS or 'asadmin $ASADMIN_OPTS create-jvm-options' with value '-Ddataverse.files." + driverId + ".directory'");
                     }
+                    // TODO: these needs to be tuned to the actual S3 filemapping solution. it may not actually store in this
+                    // dir!
+                    return String.join(File.separator, dir, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
                 }
                 else {
                     throw new RuntimeException("Unknown storage drive id: '"+driverId+"'");
                 }
-                // TODO: these needs to be tuned to the actual S3 filemapping solution. it may not actually store in this
-                // dir!
-                return String.join(File.separator, dir, dataset.getAuthorityForFileStorage(), dataset.getIdentifierForFileStorage());
             }
         } catch (IOException e) {
             logger.severe("Unable to get RO-Crate dir: "+e.getMessage());
