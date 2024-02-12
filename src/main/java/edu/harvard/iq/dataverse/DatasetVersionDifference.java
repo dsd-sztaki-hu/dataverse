@@ -5,6 +5,7 @@ import edu.harvard.iq.dataverse.datavariable.VarGroup;
 import edu.harvard.iq.dataverse.datavariable.VariableMetadataUtil;
 import edu.harvard.iq.dataverse.util.StringUtil;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,6 +40,7 @@ public final class DatasetVersionDifference {
     private List<String[]> changedTermsAccess = new ArrayList<>();
     private List<Object[]> summaryDataForNote = new ArrayList<>();
     private List<Object[]> blockDataForNote = new ArrayList<>();
+    private boolean roCrateRelatedChangesOnly;
 
     private VariableMetadataUtil variableMetadataUtil;
     
@@ -171,6 +173,24 @@ public final class DatasetVersionDifference {
             return Integer.valueOf(a).compareTo(b);
         });
         getTermsDifferences();
+        setRoCrateRelatedChangesOnly(areAllListsEmpty());
+    }
+
+    public boolean areAllListsEmpty() {
+        Field[] fields = this.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (List.class.isAssignableFrom(field.getType())) {
+                try {
+                    List<?> list = (List<?>) field.get(this);
+                    if (list != null && !list.isEmpty()) {
+                        return false;
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return true;
     }
     
     private void getReplacedFiles() {
@@ -1360,7 +1380,14 @@ public final class DatasetVersionDifference {
         
         return retVal;
     }
-    
+
+    public boolean isRoCrateRelatedChangesOnly() {
+        return roCrateRelatedChangesOnly;
+    }
+
+    public void setRoCrateRelatedChangesOnly(boolean roCrateRelatedChangesOnly) {
+        this.roCrateRelatedChangesOnly = roCrateRelatedChangesOnly;
+    }
     
     public class DifferenceSummaryGroup {
         
