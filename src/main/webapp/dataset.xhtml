@@ -1368,6 +1368,9 @@
                                 #{bundle['file.viewDiffDialog.lastUpdated']}: #{DatasetPage.datasetVersionDifference.newVersion.localeLastUpdateTime}
                             </div>
                         </div>
+                        <ui:fragment rendered="#{DatasetPage.datasetVersionDifference.roCrateRelatedChangesOnly}">
+                            <h:outputText styleClass="highlightBold" value="#{bundle['arp.rocrate.related.changes.description']}" />
+                        </ui:fragment>
                         <ui:fragment rendered="#{!empty(DatasetPage.datasetVersionDifference.detailDataByBlock)}">
                             <ui:repeat value="#{DatasetPage.datasetVersionDifference.detailDataByBlock}" var="block">
                                 <div class="panel panel-default">
