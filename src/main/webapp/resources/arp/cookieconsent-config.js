@@ -1,5 +1,7 @@
 //created at: https://playground.cookieconsent.orestbida.com/
-import 'https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@v3.0.0/dist/cookieconsent.umd.js';
+
+// This is strange, but we actually need the .xhtml at the end because it is imported from an XHTML file.
+import './cookieconsent.umd.js.xhtml';
 
 CookieConsent.run({
     guiOptions: {
@@ -40,7 +42,7 @@ CookieConsent.run({
                     acceptNecessaryBtn: "Összes visszautasítása",
                     savePreferencesBtn: "Beállítások mentése",
                     closeIconLabel: "Bezárás",
-                    serviceCounterLabel: "Szolgáltatások",
+                    serviceCounterLabel: "szolgáltatás",
                     sections: [
                         {
                             title: "Sütik használata",

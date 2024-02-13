@@ -12,6 +12,33 @@
       xml:lang="#{dataverseSession.localeCode}">
     <f:view locale="#{dataverseSession.localeCode}">
     <h:head>
+        <script>
+          // Passing this to cookieconsent-config.js
+          var localeCode = "#{dataverseSession.localeCode}";
+        </script>
+        <script type="module" src="#{resource['arp/cookieconsent-config.js']}?version=#{settingsWrapper.appVersion}"></script>
+        <!-- Google tag (gtag.js)
+            Note: must use  text/plain for cookie consent to work properly
+            https://cookieconsent.orestbida.com/advanced/manage-scripts.html
+        -->
+        <script
+                type="text/plain"
+                async="true"
+                src="https://www.googletagmanager.com/gtag/js?id=G-3FPX68ZSES"
+                data-category="analytics"
+                data-service="Google Analytics"
+        ></script>
+        <script
+                type="text/plain"
+                data-category="analytics"
+                data-service="Google Analytics"
+        >
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-3FPX68ZSES');
+        </script>
 	<o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
         <f:facet name="first">
             <o:resourceInclude path="/CustomizationFilesServlet?customFileType=analytics" />
@@ -82,11 +109,6 @@
         <script defer="defer" src="#{resource['js/jquery.matchHeight.js']}?version=#{settingsWrapper.appVersion}"></script>
         <script src="#{resource['js/jquery.sharrre.js']}?version=#{settingsWrapper.appVersion}"></script>
         <script src="#{resource['js/clipboard.min.js']}?version=#{settingsWrapper.appVersion}"></script>
-        <script>
-            // Passing this to cookieconsent-config.js
-            var localeCode = "#{dataverseSession.localeCode}";
-        </script>
-        <script type="module" src="#{resource['arp/cookieconsent-config.js']}?version=#{settingsWrapper.appVersion}"></script>
         <o:onloadScript>bind_bsui_components();</o:onloadScript>
         <ui:fragment rendered="#{settingsWrapper.getCVocConf(false).size() > 0}">
             <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
