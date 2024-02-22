@@ -2208,15 +2208,21 @@ public class Access extends AbstractApiBean {
 
     private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset, String version) throws IOException {
         DatasetVersion dsVersion = dataset.getVersions().stream().filter(dsv -> Objects.equals(dsv.getFriendlyVersionNumber(), version)).findFirst().orElse(dataset.getLatestVersionForCopy());
-        byte[] roCrateBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCratePath(dsVersion)));
+        var roCratePath = Paths.get(roCrateManager.getRoCratePath(dsVersion));
+        byte[] roCrateBytes = Files.exists(roCratePath) ? Files.readAllBytes(roCratePath) : null;
         String metadataFileName = arpConfig.get("arp.rocrate.metadata.name");
         String metadataMimeType = "application/json";
-        zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);
+        if (roCrateBytes != null) {
+            zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);   
+        }
 
-        byte[] roCrateHtmlPreviewBytes = Files.readAllBytes(Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dsVersion)));
+        var previewPath = Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dsVersion));
+        byte[] roCrateHtmlPreviewBytes = Files.exists(previewPath) ? Files.readAllBytes(previewPath) : null;
         String previewFileName = arpConfig.get("arp.rocrate.html.preview.name");
         String previewMimeType = "text/html";
-        zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);
+        if (roCrateHtmlPreviewBytes != null) {
+            zipper.addRoCrateToZipStream(roCrateHtmlPreviewBytes, previewFileName, previewMimeType);
+        }
     }
 
 
