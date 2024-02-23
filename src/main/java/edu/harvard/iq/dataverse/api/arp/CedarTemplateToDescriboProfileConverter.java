@@ -96,6 +96,11 @@ public class CedarTemplateToDescriboProfileConverter {
             JsonObject property = cedarTemplate.getAsJsonObject("properties").getAsJsonObject(propertyName);
             String propertyType = Optional.ofNullable(property.get("@type")).map(JsonElement::getAsString).orElse(null);
             //String inputId = getStringList(cedarTemplate, "properties.@context.properties." + propertyName + ".enum").get(0);
+            
+            // richtext type can not be used in Describo, leave it out from the profile
+            if (Optional.ofNullable(getJsonElement(property, "_ui.inputType")).map(JsonElement::getAsString).orElse("").equals("richtext")) {
+                continue;
+            }
             String inputId = getJsonElement(cedarTemplate, "properties.@context.properties")
                     .getAsJsonObject()
                     .getAsJsonObject(propertyName)
@@ -154,6 +159,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setMinLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minLength")).map(JsonElement::getAsInt).orElse(null));
         describoInput.setMaxLength(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxLength")).map(JsonElement::getAsInt).orElse(null));
         describoInput.setRegex(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.regex")).map(JsonElement::getAsString).orElse(null));
+        describoInput.setPlaceholder(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.watermark")).map(JsonElement::getAsString).orElse(null));
         describoInput.setMultiple(allowMultiple);
 
         List<String> literalValues;
@@ -174,6 +180,31 @@ public class CedarTemplateToDescriboProfileConverter {
                 describoInput.setValues(literalValues);
             }
         }
+        
+        if (Objects.equals(fieldType, "numeric")) {
+            // minValue and maxValue always handled as an int, even for long, double and float numbers
+            describoInput.setMinValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minValue")).map(JsonElement::getAsInt).orElse(null));
+            describoInput.setMaxValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxValue")).map(JsonElement::getAsInt).orElse(null));
+            Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.numberType"))
+                    .map(JsonElement::getAsString)
+                    .ifPresent(cedarNumberType -> describoInput.setNumberType(cedarDescriboNumberTypes.get(cedarNumberType)));
+        }
+
+        if (Objects.equals(fieldType, "temporal")) {
+            Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.temporalType"))
+                    .map(JsonElement::getAsString)
+                    .ifPresent(cedarDateType -> describoInput.setType(cedarDescriboDateTypes.get(cedarDateType)));
+        }
+        
+        // hard-coded regexes
+        if (Objects.equals(fieldType, "email")) {
+            describoInput.setRegex("^((?!\\.)[\\w\\-_.]*[^.])(@\\w+)(\\.\\w+(\\.\\w+)?[^.\\W])$");
+        }
+
+        if (Objects.equals(fieldType, "phone-number")) {
+            describoInput.setRegex("(?:([+]\\d{1,4})[-.\\s]?)?(?:[(](\\d{1,3})[)][-.\\s]?)?(\\d{1,4})[-.\\s]?(\\d{1,4})[-.\\s]?(\\d{1,9})");
+        }
+        
 
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
     }
@@ -248,6 +279,20 @@ public class CedarTemplateToDescriboProfileConverter {
             "radio", List.of("Select"),
             "phone-number", List.of("Text"),
             "email", List.of("Text")
+    );
+
+    Map<String, List<String>> cedarDescriboNumberTypes = Map.of(
+            "xsd:decimal", List.of("Any"),
+            "xsd:long", List.of("Long"),
+            "xsd:int", List.of("Int"),
+            "xsd:double", List.of("Double"),
+            "xsd:float", List.of("Float")
+    );
+
+    Map<String, List<String>> cedarDescriboDateTypes = Map.of(
+            "xsd:dateTime", List.of("DateTime"),
+            "xsd:date", List.of("Date"),
+            "xsd:time", List.of("Time")
     );
 
     public List<String> getDescriboType(JsonObject templateField) {
@@ -325,6 +370,8 @@ public class CedarTemplateToDescriboProfileConverter {
         private Integer minLength;
         private Integer maxLength;
         private String regex;
+        private String placeholder;
+        private List<String> numberType;
 
         public DescriboInput() {
         }
@@ -441,6 +488,22 @@ public class CedarTemplateToDescriboProfileConverter {
         public void setRegex(String regex)
         {
             this.regex = regex;
+        }
+
+        public String getPlaceholder() {
+            return placeholder;
+        }
+
+        public void setPlaceholder(String placeholder) {
+            this.placeholder = placeholder;
+        }
+
+        public List<String> getNumberType() {
+            return numberType;
+        }
+
+        public void setNumberType(List<String> numberType) {
+            this.numberType = numberType;
         }
     }
 

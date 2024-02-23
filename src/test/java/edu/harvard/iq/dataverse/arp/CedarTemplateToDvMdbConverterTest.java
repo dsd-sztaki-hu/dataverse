@@ -1,4 +1,4 @@
-package edu.harvard.iq.dataverse;
+package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.api.arp.CedarTemplateToDvMdbConverter;
 import org.junit.jupiter.api.Test;
