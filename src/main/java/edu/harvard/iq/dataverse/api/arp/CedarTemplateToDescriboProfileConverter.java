@@ -196,6 +196,15 @@ public class CedarTemplateToDescriboProfileConverter {
                     .ifPresent(cedarDateType -> describoInput.setType(cedarDescriboDateTypes.get(cedarDateType)));
         }
         
+        // hard-coded regexes
+        if (Objects.equals(fieldType, "email")) {
+            describoInput.setRegex("^((?!\\.)[\\w\\-_.]*[^.])(@\\w+)(\\.\\w+(\\.\\w+)?[^.\\W])$");
+        }
+
+        if (Objects.equals(fieldType, "phone-number")) {
+            describoInput.setRegex("(?:([+]\\d{1,4})[-.\\s]?)?(?:[(](\\d{1,3})[)][-.\\s]?)?(\\d{1,4})[-.\\s]?(\\d{1,4})[-.\\s]?(\\d{1,9})");
+        }
+        
 
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
     }
