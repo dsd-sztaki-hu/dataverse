@@ -1363,7 +1363,7 @@ public class RoCrateManager {
 
         // process the dataset and file entities
         // check id and hash pairs for files, these can not be modified
-        validateDatasetAndFileEntities(preProcessedRoCrate, latestRoCrate, roCrateEntityIdsAndTypes, preProcessResult);
+        validateDatasetAndFileEntities(preProcessedRoCrate, latestRoCrate, roCrateEntityIdsAndTypes, preProcessResult, roCrateContext, roCrateContextUpdater);
         
         // make sure all ids are processed
         if (!roCrateEntityIdsAndTypes.isEmpty()) {
@@ -1377,7 +1377,7 @@ public class RoCrateManager {
 
     // validate the file and dataset entities through the RO-Crate's hasPart
     // this way we can check the files that are not part of any datasets and can traverse datasets from the top level
-    private void validateDatasetAndFileEntities(RoCrate preProcessedRoCrate, RoCrate latestRoCrate, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult) {
+    private void validateDatasetAndFileEntities(RoCrate preProcessedRoCrate, RoCrate latestRoCrate, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater) {
         // collect the file entities and their hashes in a hashmap for better performance
         Map<String, ObjectNode> latestRoCrateFilesWithHashes = latestRoCrate == null ? new HashMap<>() : Stream.concat(
                         latestRoCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties),
@@ -1388,18 +1388,21 @@ public class RoCrateManager {
                         Function.identity()));
 
         preProcessedRoCrate.getRootDataEntity().hasPart.forEach(entityId -> {
-            validateDataEntity(entityId, preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, new HashSet<>());
+            validateDataEntity(entityId, preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, new HashSet<>(), roCrateContext, roCrateContextUpdater);
         });
     }
 
     // Validate a given RO-Crate Data Entity
-    private void validateDataEntity(String entityId,RoCrate preProcessedRoCrate, RoCrate latestRoCrate, Map<String, ObjectNode> latestRoCrateFilesWithHashes, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, HashSet<String> circularReferenceIds) {
+    private void validateDataEntity(String entityId,RoCrate preProcessedRoCrate, RoCrate latestRoCrate, Map<String, ObjectNode> latestRoCrateFilesWithHashes, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, HashSet<String> circularReferenceIds, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater) {
         var entity = preProcessedRoCrate.getEntityById(entityId).getProperties();
         var entityType = getTypeAsString(entity);
         roCrateEntityIdsAndTypes.remove(entityId);
         if (!entityType.equals("File") && !entityType.equals("Dataset")) {
             preProcessResult.errors.add("Entity with id: '" + entityId + "' has an invalid type: " + entityType);
         }
+        entity.fields().forEachRemaining(field ->
+                validateField(field, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
+        );
         if (entityType.equals("File")) {
             var invalidFileProps = validateFileEntityProps(entity);
             if (!invalidFileProps.isEmpty()) {
@@ -1440,10 +1443,10 @@ public class RoCrateManager {
                 }
                 if (dsHasPart.isArray()) {
                     for (var idObj : dsHasPart) {
-                        validateDataEntity(idObj.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds);
+                        validateDataEntity(idObj.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
                     }
                 } else {
-                    validateDataEntity(dsHasPart.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds);
+                    validateDataEntity(dsHasPart.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
                 }
             }
         }
