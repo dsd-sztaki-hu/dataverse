@@ -147,7 +147,8 @@ public class CedarTemplateToDescriboProfileConverter {
         }
 
         describoInput.setId(inputId);
-        describoInput.setName(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null));
+        // Replace the ":" with "." upon generating the Describo Profile from the CEDAR Template
+        describoInput.setName(Objects.requireNonNull(Optional.ofNullable(templateField.get("schema:name")).map(JsonElement::getAsString).orElse(null)).replace(":","."));
         String label = getLocalizedLabel(templateField);
         describoInput.setLabel(label);
         String help = getLocalizedHelp(templateField);
@@ -212,7 +213,8 @@ public class CedarTemplateToDescriboProfileConverter {
     private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName) {
         DescriboInput describoInput = new DescriboInput();
 
-        String propName = templateElement.get("schema:name").getAsString();
+        // Replace the ":" with "." upon generating the Describo Profile from the CEDAR Template 
+        String propName = templateElement.get("schema:name").getAsString().replace(":", ".");
         
         describoInput.setId(inputId);
         describoInput.setName(propName);
