@@ -34,6 +34,10 @@ import jakarta.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,6 +46,19 @@ import java.util.stream.Collectors;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import static jakarta.ws.rs.core.Response.Status.*;
 import static edu.harvard.iq.dataverse.api.ApiConstants.STATUS_ERROR;
+
+import java.net.URI;
+import jakarta.ws.rs.core.HttpHeaders;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
+
 
 @Path("arp")
 public class ArpApi extends AbstractApiBean {
@@ -90,6 +107,33 @@ public class ArpApi extends AbstractApiBean {
 
     @Inject
     DataverseSession dataverseSession;
+
+    HttpClient proxyClient;
+
+    public ArpApi() throws NoSuchAlgorithmException, KeyManagementException
+    {
+        // Configure proxyClient to ignore SSL Certs
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[]{};
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        // Install the all-trusting trust manager
+        SSLContext sslContext = SSLContext.getInstance("SSL");
+        sslContext.init(null, trustAllCerts, new SecureRandom());
+
+        // Create a HttpClient with the custom SSLContext
+        proxyClient = HttpClient.newBuilder()
+                .sslContext(sslContext)
+                .build();
+    }
 
     /**
      * Checks whether a CEDAR template is valid for use as a Metadatablock.
@@ -827,6 +871,72 @@ public class ArpApi extends AbstractApiBean {
             ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
+        }
+    }
+
+    /**
+     * Proxies requests to the cedar resource server for reading public schemas. Since we cannot have a CEDAR user which
+     * only has read right, therefore we cannot have the api key in AROMA, otherwise malicious users may make modifications
+     * in the name of that user. Instead we have this poxy, which aonly allows GET access to schemas and also
+     * adds the neccesary api key authentication to request. For this to work the arp.cedar.domain and
+     * arp.cedar.proxyApiKey configurations must be set.
+     *
+     * @param urlInPath the URL to download
+     * @param incomingHeaders the request headers
+     *
+     * @return contents of urlInPath
+     */
+    @GET
+    @Path("/cedarResourceProxy/{url}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cedarResourceProxy(
+            @PathParam("url") String urlInPath,
+            @Context HttpHeaders incomingHeaders
+    ) {
+        String subdomain = "resource."+arpConfig.get("arp.cedar.domain");
+        String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
+
+        if (urlInPath == null || urlInPath.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("URL parameter is required").build();
+        }
+
+        try {
+            URI uri = new URI(urlInPath);
+            if (!uri.getHost().endsWith(subdomain)) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
+            }
+
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(uri)
+                    .GET();
+
+            // Set authorization and accept headers explicitly
+            requestBuilder.header("Authorization", "apiKey " + apiKey);
+            requestBuilder.header("Accept", "application/json");
+
+            // Forward the request
+            HttpResponse<byte[]> proxiedResponse = proxyClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
+
+            // Begin building the response to the client
+            Response.ResponseBuilder responseBuilder = Response.ok(proxiedResponse.body());
+
+            // Filter and set response headers
+            java.net.http.HttpHeaders responseHeaders = proxiedResponse.headers();
+            responseHeaders.map().forEach((key, values) -> {
+                if (!List.of("Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailer", "Transfer-Encoding", "Upgrade", "Content-Encoding", "Content-Length").contains(key)) {
+                    responseBuilder.header(key, String.join(",", values));
+                }
+            });
+
+            // Add CORS headers to the response
+            responseBuilder.header("Access-Control-Allow-Origin", "*")
+                    .header("Access-Control-Allow-Methods", "GET")
+                    .header("Access-Control-Allow-Headers", "*");
+
+            return responseBuilder.build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity("Failed to proxy request: " + e.getMessage()).build();
         }
     }
 
