@@ -61,19 +61,20 @@
     "datasetContactName" : "Admin, Dataverse",
     "datasetContactAffiliation" : "Dataverse.org",
     "datasetContactEmail" : "finta@sztaki.hu",
-    "name" : "Admin, Dataverse; (Dataverse.org); ",
-    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/97",
-    "@type" : "datasetContact"
+    "name" : "Admin, Dataverse; (Dataverse.org); "
   }, {
     "authorName" : "Admin, Dataverse",
     "authorAffiliation" : "Dataverse.org",
     "name" : "Admin, Dataverse; (Dataverse.org)",
-    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98",
-    "@type" : "author"
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
   }, {
     "dsDescriptionValue" : "Descr_1",
     "name" : "Descr_1",
-    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99",
     "@type" : "dsDescription"
+  }, {
+    "authorName" : "Admin, Dataverse DUPLICATED",
+    "authorAffiliation" : "Dataverse.org DUPLICATED",
+    "name" : "Admin, Dataverse; (Dataverse.org) DUPLICATED",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
   } ]
 }

@@ -48,13 +48,9 @@ public class RoCrateImportPrepTest {
     * */
     @Test
     public void testOriginalRoCrate() throws JsonProcessingException {
-//        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-//        RoCrate roCrate = roCrateFolderReader.readCrate("/Users/fintanorbert/Work/dataverse/payara5/glassfish/domains/domain1/files/10.5072/FK2/B5QZDJ/ro-crate-metadata");
-
-        
         String roCrateJsonString = null;
         try {
-            roCrateJsonString = Files.readString(Paths.get("/Users/fintanorbert/Work/dataverse/payara5/glassfish/domains/domain1/files/10.5072/FK2/B5QZDJ/ro-crate-metadata/ro-crate-metadata.json"));
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/initialRoCrate/ro-crate-metadata.json"));
         } catch (IOException e) {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
@@ -65,47 +61,68 @@ public class RoCrateImportPrepTest {
     
     /*
     * Test that multiple values are only allowed where they are allowed by the scheme.
-    * Processing an array of one value should be allowed.
+    * Processing an array of one value should be allowed for single values too.
     * 
     * Diff:
-    *   - @graph[0].dsDescription
-        + @graph[0].dsDescription[0]
-          [
-            {
-              "@id" : "#11::fec52185-647e-470b-b2dd-c364462b82be",
-              "@type" : "dsDescription"
-            }
-          ]
-        
-        + @graph[0].dsDescription[1].@id
-          "#12::04fd9e9c-1ce6-4f0a-90cd-0153e44e8b1b"
-        
-        + @graph[0].dsDescription[1].dsDescriptionValue
-          "Second desc"
-          
-        //this is still allowed, since the array contains a single value only
-        - @graph[0].subject
-        + @graph[0].subject[0]
-          "Engineering"
-        
-        + @graph[0].datasetContact[1].@id
-          "#13::e32f8827-2a7c-4dc2-8fb0-853d5bf53d1d"
-        
-        + @graph[0].datasetContact[1].datasetContactName
-          "Second, Contact"
-        
-        + @graph[0].datasetContact[1].datasetContactAffiliation
-          "Dataverse.org"
-        
-        + @graph[0].datasetContact[1].datasetContactEmail
-          "dataverse2@mailinator.com"
+    *  + @graph[0].datePublished
+        "2024-02-28T11:34:41.522162203Z"
+      + @graph[0].datasetContact[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/102"
+      + @graph[0].datasetContact[1].datasetContactName
+        "Second PointOfContact"
+      + @graph[0].datasetContact[1].datasetContactEmail
+        "pointof@mail.com"
+      + @graph[0].datasetContact[1].datasetContactAffiliation
+        "Dataverse.org"
+      + @graph[0].author[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/106"
+      + @graph[0].author[1].authorName
+        "Second Author"
+      + @graph[0].author[1].authorAffiliation
+        "SecondAuthAffiliation"
+      + @graph[0].dsDescription[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/113"
+      + @graph[0].dsDescription[1].dsDescriptionValue
+        "Descr_2"
+      + @graph[0].dsDescription[1].dsDescriptionDate
+        "1111-12-12"
+      + @graph[0].publication[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/publication/103"
+      + @graph[0].publication[1].publicationCitation
+        "RelatedPubl_2"
+      + @graph[0].publication[1].publicationIDType
+        "cstr"
+      + @graph[0].publication[1].publicationIDNumber
+        "456"
+      + @graph[0].publication[1].publicationURL
+        "https://relpubtwo.com"
+      + @graph[0].producer[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104"
+      + @graph[0].producer[1].producerName
+        "ProdTwo"
+      + @graph[0].producer[1].producerAffiliation
+        "ProdTwoAff"
+      + @graph[0].producer[1].producerAbbreviation
+        "ProdTwoAN"
+      + @graph[0].producer[1].producerURL
+        "https://prodtwo.com"
+      + @graph[0].producer[1].producerLogoURL
+        "https://prodtwologo.com"
+      + @graph[0].keyword[1].@id
+        "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/keyword/109"
+      + @graph[0].keyword[1].keywordValue
+        "SecondKwTerm"
+      + @graph[0].keyword[1].keywordVocabulary
+        "SecondCvn"
+      + @graph[0].keyword[1].keywordVocabularyURI
+        "https://secondcvn.com"
        
     * */
     @Test
     public void testMultipleValuesForAllowedFields() throws JsonProcessingException {
         String roCrateJsonString = null;
         try {
-            roCrateJsonString = Files.readString(Paths.get("/Users/fintanorbert/Work/dataverse/src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-valid-multiple-values.json"));
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-valid-multiple-values.json"));
         } catch (IOException e) {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
@@ -113,6 +130,121 @@ public class RoCrateImportPrepTest {
         var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         processResult.errors.forEach(logger::info);
         Assertions.assertTrue(processResult.errors.isEmpty());
+    }
+
+    /*
+    Neither the subject nor the dsDescription fields allow multiple values.
+    
+    Diff:
+        + @graph[0].dsDescription[1].@id
+            "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/113"
+        + @graph[0].dsDescription[1].dsDescriptionDate
+            "1111-12-12"
+        + @graph[0].subject
+            [ "Engineering", "Law" ]
+    * */
+    @Test
+    public void testMultipleValuesForNotAllowedFields() throws JsonProcessingException {
+        String roCrateJsonString = null;
+        try {
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-invalid-multiple-values.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            Assertions.assertEquals(0, 1);
+        }
+        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        processResult.errors.forEach(logger::info);
+        Assertions.assertFalse(processResult.errors.isEmpty());
+    }
+
+    /*
+    Test that parent-child entity pairs are present for every field, even if the field does not exist in dv.
+    
+    Diff:
+        - @graph[0].author
+        {
+          "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
+        }
+        + @graph[0].producer
+        {
+          "@id": "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108"
+        }
+        - {
+            "dsDescriptionValue" : "Descr_1",
+            "name" : "Descr_1",
+            "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99",
+            "@type" : "dsDescription"
+          }
+          + {
+            "producerName" : "ProdTwo",
+            "producerAffiliation" : "ProdTwoAff",
+            "producerAbbreviation" : "ProdTwoAN",
+            "producerURL" : "https://prodtwo.com",
+            "producerLogoURL" : "https://prodtwologo.com",
+            "name" : "ProdTwo; (ProdTwoAff); (ProdTwoAN); <a href=\"https://prodtwo.com\" target=\"_blank\" rel=\"noopener\">https://prodtwo.com</a>; <img src=\"https://prodtwologo.com\" alt=\"Logo URL\" class=\"metadata-logo\"/><br/>",
+            "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104",
+            "@type" : "producer"
+          }
+    
+    */
+    @Test
+    public void testMissingChildOrParenEntities() throws JsonProcessingException {
+        String roCrateJsonString = null;
+        try {
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-missing-entities.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            Assertions.assertEquals(0, 1);
+        }
+        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        processResult.errors.forEach(logger::info);
+        Assertions.assertFalse(processResult.errors.isEmpty());
+        // The child node for the producer was removed (field does not exist in dv)
+        Assertions.assertTrue(processResult.errors.contains("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108'"));
+        // The child node for the dsDescription was removed (field exists in dv)
+        Assertions.assertTrue(processResult.errors.contains("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99'"));
+        // The parent node for the dsDescription was removed (field exists in dv), 
+        // The producer node has no parent entity (field does not exist in dv)
+        Assertions.assertTrue(processResult.errors.contains("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: [https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98, https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104]"));
+    }
+
+    /*
+    Test that serious errors are found at pre-checking the entities.
+    
+    Diff:
+        - @graph[2].@id
+          "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/97"
+        - @graph[2].@type
+          "datasetContact"
+        - @graph[3].@type
+          "author"
+        - @graph[4].@type
+          "dsDescription"
+        + @graph[5]
+          {
+            "authorName": "Admin, Dataverse DUPLICATED",
+            "authorAffiliation": "Dataverse.org DUPLICATED",
+            "name": "Admin, Dataverse; (Dataverse.org) DUPLICATED",
+            "@id": "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
+          }
+    */
+    @Test
+    public void testFailingAtPreCheck() throws JsonProcessingException {
+        String roCrateJsonString = null;
+        try {
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-fail-at-pre-check.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            Assertions.assertEquals(0, 1);
+        }
+        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        processResult.errors.forEach(logger::info);
+        Assertions.assertFalse(processResult.errors.isEmpty());
+        Assertions.assertTrue(processResult.errors.contains("Missing '@id' for entity: {\"datasetContactName\":\"Admin, Dataverse\",\"datasetContactAffiliation\":\"Dataverse.org\",\"datasetContactEmail\":\"finta@sztaki.hu\",\"name\":\"Admin, Dataverse; (Dataverse.org); \"}"));
+        Assertions.assertTrue(processResult.errors.contains("The entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98' does not have a '@type'."));
+        Assertions.assertTrue(processResult.errors.contains("Missing '@id' for entity: {\"dsDescriptionValue\":\"Descr_1\",\"name\":\"Descr_1\",\"@type\":\"dsDescription\"}"));
+        Assertions.assertTrue(processResult.errors.contains("The RO-Crate contains the following '@id' multiple times: https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"));
+        
     }
 
     private static void mockDatasetFieldSvc() {
@@ -149,7 +281,7 @@ public class RoCrateImportPrepTest {
         }
         datasetContactType.setChildDatasetFieldTypes(datasetContactTypes);
 
-        DatasetFieldType dsDescriptionType = datasetFieldTypeSvc.add(new DatasetFieldType("dsDescription", DatasetFieldType.FieldType.TEXT, true));
+        DatasetFieldType dsDescriptionType = datasetFieldTypeSvc.add(new DatasetFieldType("dsDescription", DatasetFieldType.FieldType.TEXT, false));
         Set<DatasetFieldType> dsDescriptionTypes = new HashSet<>();
         dsDescriptionTypes.add(datasetFieldTypeSvc.add(new DatasetFieldType("dsDescriptionValue", DatasetFieldType.FieldType.TEXT, false)));
         for (DatasetFieldType t : dsDescriptionTypes) {
@@ -177,8 +309,8 @@ public class RoCrateImportPrepTest {
         subjectType.setAllowControlledVocabulary(true);
         subjectType.setControlledVocabularyValues(Arrays.asList(
                 new ControlledVocabularyValue(1l, "Engineering", subjectType),
-                new ControlledVocabularyValue(2l, "law", subjectType),
-                new ControlledVocabularyValue(3l, "cs", subjectType)
+                new ControlledVocabularyValue(2l, "Law", subjectType),
+                new ControlledVocabularyValue(3l, "Computer and Information Science", subjectType)
         ));
 
         DatasetFieldType pubIdType = datasetFieldTypeSvc.add(new DatasetFieldType("publicationIdType", DatasetFieldType.FieldType.TEXT, false));

@@ -1,69 +1,96 @@
 {
   "@context" : [ "https://w3id.org/ro/crate/1.1/context", {
-    "author" : "http://purl.org/dc/terms/creator",
     "dsDescriptionValue" : "https://dataverse.org/schema/citation/dsDescriptionValue",
     "subject" : "http://purl.org/dc/terms/subject",
-    "datasetContact" : "https://dataverse.org/schema/citation/datasetContact",
+    "topicClassVocabURI" : "https://dataverse.org/schema/citation/topicClassVocabURI",
     "title" : "http://purl.org/dc/terms/title",
-    "authorAffiliation" : "https://dataverse.org/schema/citation/authorAffiliation",
+    "keywordVocabulary" : "https://dataverse.org/schema/citation/keywordVocabulary",
+    "keywordVocabularyURI" : "https://dataverse.org/schema/citation/keywordVocabularyURI",
     "datasetContactName" : "https://dataverse.org/schema/citation/datasetContactName",
+    "dsDescriptionDate" : "https://dataverse.org/schema/citation/dsDescriptionDate",
+    "producerAbbreviation" : "https://dataverse.org/schema/citation/producerAbbreviation",
+    "publication" : "http://purl.org/dc/terms/isReferencedBy",
+    "topicClassVocab" : "https://dataverse.org/schema/citation/topicClassVocab",
+    "journalArticleType" : "https://dataverse.org/schema/journal/journalArticleType",
+    "producerLogoURL" : "https://dataverse.org/schema/citation/producerLogoURL",
+    "topicClassValue" : "https://dataverse.org/schema/citation/topicClassValue",
+    "keyword" : "https://dataverse.org/schema/citation/keyword",
+    "publicationIDType" : "http://purl.org/spar/datacite/ResourceIdentifierScheme",
+    "author" : "http://purl.org/dc/terms/creator",
+    "producerName" : "https://dataverse.org/schema/citation/producerName",
+    "publicationIDNumber" : "http://purl.org/spar/datacite/ResourceIdentifier",
+    "publicationCitation" : "http://purl.org/dc/terms/bibliographicCitation",
+    "datasetContact" : "https://dataverse.org/schema/citation/datasetContact",
+    "producerURL" : "https://dataverse.org/schema/citation/producerURL",
+    "authorAffiliation" : "https://dataverse.org/schema/citation/authorAffiliation",
+    "topicClassification" : "https://dataverse.org/schema/citation/topicClassification",
+    "producerAffiliation" : "https://dataverse.org/schema/citation/producerAffiliation",
     "datasetContactEmail" : "https://dataverse.org/schema/citation/datasetContactEmail",
     "authorName" : "https://dataverse.org/schema/citation/authorName",
     "dsDescription" : "https://dataverse.org/schema/citation/dsDescription",
     "dateOfDeposit" : "http://purl.org/dc/terms/dateSubmitted",
-    "datasetContactAffiliation" : "https://dataverse.org/schema/citation/datasetContactAffiliation",
-    "depositor" : "https://dataverse.org/schema/citation/depositor"
+    "producer" : "https://dataverse.org/schema/citation/producer",
+    "depositor" : "https://dataverse.org/schema/citation/depositor",
+    "publicationURL" : "https://schema.org/distribution",
+    "keywordValue" : "https://dataverse.org/schema/citation/keywordValue"
   } ],
   "@graph" : [ {
     "@id" : "./",
     "@type" : "Dataset",
-    "@arpPid" : "doi:10.5072/FK2/B5QZDJ",
+    "@arpPid" : "doi:10.5072/FK2/UWPDNR",
     "license" : {
       "@id" : "http://creativecommons.org/publicdomain/zero/1.0"
     },
-    "datePublished" : "2024-01-24T13:48:39.368286+01:00",
-    "author" : {
-      "@id" : "#9::a5f85ad7-89b2-42df-ad2b-a4f176c17b2a"
-    },
-    "datasetContact" : [{
-      "@id" : "#10::2aea9435-a0d8-4b3c-a727-b1a6bf44f287"
+    "datePublished" : "2024-02-28T11:41:10.885495067Z",
+    "datasetContact" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/97"
     }, {
-      "@id" : "#13::e32f8827-2a7c-4dc2-8fb0-853d5bf53d1d"
-    }],
-    "dsDescription" : [{
-      "@id" : "#11::fec52185-647e-470b-b2dd-c364462b82be"
-      },
-      {
-        "@id" : "#12::04fd9e9c-1ce6-4f0a-90cd-0153e44e8b1b"
-      }
-    ],
-    "subject" : ["Engineering"],
-    "title" : "PreProcessTestDataset",
-    "depositor" : "Admin, Dataverse",
-    "dateOfDeposit" : "2024-01-24",
-    "conformsTo" : [ {
-      "@id" : "https://repo.arp.orgx/templates/22678914-7e13-42ee-8f2f-dd0b7a8b9fa8"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/cd282230-864d-424d-9a76-829a44116075"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/3698da2c-304d-481f-851d-a38f2ba84027"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/aa17c043-a6a6-4c1b-9a4d-fe4f35b59972"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/24da716f-06c7-4183-9153-edc89f78521d"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/688bb9fe-cd31-4eb9-a127-2ae85bd61ebb"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/c25525ff-f47c-4be3-a938-ddd006a001c0"
-    }, {
-      "@id" : "https://repo.arp.orgx/templates/189fb282-da84-4c3c-8866-d7504025c634"
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/102"
     } ],
-    "hasPart" : [ {
-      "@id" : "#14662129-6dfe-4fb9-8c17-24660c34c9c6"
+    "author" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
     }, {
-      "@id" : "#5::43ea7a59-8bfe-4443-b642-f453f106184e"
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/106"
+    } ],
+    "dsDescription" : {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99"
+    },
+    "title" : "Test Dataset",
+    "subject" : "Engineering",
+    "dateOfDeposit" : "2024-02-28",
+    "depositor" : "Admin, Dataverse",
+    "conformsTo" : [ {
+      "@id" : "https://w3id.org/arp/dev/schema/33677b82-7973-3e4c-b09d-b5189e095627"
     }, {
-      "@id" : "#38047203-6a43-4b5a-b8ab-a30844017e40"
+      "@id" : "https://w3id.org/arp/dev/schema/aaaaaaaa-bbbb-cccc-dddd-65d43571f306"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/schema/640c3586-5db2-3a81-a681-c008cf7404fe"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/schema/1053e91c-9ad0-3cee-8824-532b6fdbdc10"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/schema/c9cac144-6260-33fe-886e-71a42914ef9f"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/schema/92e5b89e-6300-3972-9540-c1ab5b93f1d9"
+    } ],
+    "publication" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/publication/100"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/publication/103"
+    } ],
+    "producer" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104"
+    } ],
+    "topicClassification" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/topicClassification/110"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/topicClassification/105"
+    } ],
+    "keyword" : [ {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/keyword/107"
+    }, {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/keyword/109"
     } ]
   }, {
     "about" : {
@@ -75,81 +102,96 @@
     "@id" : "ro-crate-metadata.json",
     "@type" : "CreativeWork"
   }, {
-    "@arpPid" : "",
-    "hash" : "8742faa56f97a47add4a452e9f7e3478",
-    "name" : "testFile3.jpg",
-    "contentSize" : 823762.0,
-    "encodingFormat" : "image/jpeg",
-    "directoryLabel" : "folder_3",
-    "@id" : "#4::28098c75-6227-4c81-8bf4-fe84b870af8b",
-    "@type" : "File"
+    "datasetContactName" : "Second PointOfContact",
+    "datasetContactEmail" : "pointof@mail.com",
+    "name" : "Second PointOfContact; ",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/102",
+    "@type" : "datasetContact"
   }, {
-    "@arpPid" : "",
-    "hash" : "9becc8149d9959129a232b4a4baa016d",
-    "name" : "testFile1.pdf",
-    "contentSize" : 269696.0,
-    "encodingFormat" : "application/pdf",
-    "@id" : "#5::43ea7a59-8bfe-4443-b642-f453f106184e",
-    "@type" : "File"
+    "producerName" : "ProdOne",
+    "producerAffiliation" : "ProdOneAff",
+    "producerAbbreviation" : "ProdOneAN",
+    "producerURL" : "https://prodone.com",
+    "producerLogoURL" : "https://prodonelogo.com",
+    "name" : "ProdOne; (ProdOneAff); (ProdOneAN); <a href=\"https://prodone.com\" target=\"_blank\" rel=\"noopener\">https://prodone.com</a>; <img src=\"https://prodonelogo.com\" alt=\"Logo URL\" class=\"metadata-logo\"/><br/>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108",
+    "@type" : "producer"
   }, {
-    "@arpPid" : "",
-    "hash" : "3e824c6d807b8117f0d6ea1bfb981c94",
-    "name" : "testFile2.json",
-    "contentSize" : 12259.0,
-    "encodingFormat" : "application/json",
-    "directoryLabel" : "folder_1/folder_2",
-    "@id" : "#6::80aedcea-5eda-47db-9164-538ab00e3058",
-    "@type" : "File"
+    "keywordValue" : "SecondKwTerm",
+    "keywordVocabulary" : "SecondCvn",
+    "keywordVocabularyURI" : "https://secondcvn.com",
+    "name" : "SecondKwTerm; (SecondCvn); <a href=\"https://secondcvn.com\" target=\"_blank\" rel=\"noopener\">https://secondcvn.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/keyword/109",
+    "@type" : "keyword"
   }, {
-    "name" : "folder_1",
-    "@id" : "#14662129-6dfe-4fb9-8c17-24660c34c9c6",
-    "@type" : "Dataset",
-    "hasPart" : {
-      "@id" : "#73d90bac-968c-4e17-b74b-606a411648dc"
-    }
+    "datasetContactName" : "Admin, Dataverse",
+    "datasetContactAffiliation" : "Dataverse.org",
+    "datasetContactEmail" : "finta@sztaki.hu",
+    "name" : "Admin, Dataverse; (Dataverse.org); ",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/97",
+    "@type" : "datasetContact"
   }, {
-    "name" : "folder_2",
-    "@id" : "#73d90bac-968c-4e17-b74b-606a411648dc",
-    "@type" : "Dataset",
-    "hasPart" : {
-      "@id" : "#6::80aedcea-5eda-47db-9164-538ab00e3058"
-    }
-  }, {
-    "name" : "folder_3",
-    "@id" : "#38047203-6a43-4b5a-b8ab-a30844017e40",
-    "@type" : "Dataset",
-    "hasPart" : {
-      "@id" : "#4::28098c75-6227-4c81-8bf4-fe84b870af8b"
-    }
+    "topicClassValue" : "FirstTc",
+    "topicClassVocab" : "FirstTcCvn",
+    "topicClassVocabURI" : "http://firsttccvn.com",
+    "name" : "FirstTc; (FirstTcCvn); <a href=\"http://firsttccvn.com\" target=\"_blank\" rel=\"noopener\">http://firsttccvn.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/topicClassification/110",
+    "@type" : "topicClassification"
   }, {
     "authorName" : "Admin, Dataverse",
     "authorAffiliation" : "Dataverse.org",
     "name" : "Admin, Dataverse; (Dataverse.org)",
-    "@id" : "#9::a5f85ad7-89b2-42df-ad2b-a4f176c17b2a",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98",
     "@type" : "author"
   }, {
-    "datasetContactName" : "Admin, Dataverse",
-    "datasetContactAffiliation" : "Dataverse.org",
-    "datasetContactEmail" : "dataverse@mailinator.com",
-    "name" : "Admin, Dataverse; (Dataverse.org); ",
-    "@id" : "#10::2aea9435-a0d8-4b3c-a727-b1a6bf44f287",
-    "@type" : "datasetContact"
-  }, {
-    "datasetContactName" : "Second, Contact",
-    "datasetContactAffiliation" : "Dataverse.org",
-    "datasetContactEmail" : "dataverse2@mailinator.com",
-    "name" : "Second, Contact; (Dataverse.org); ",
-    "@id" : "#13::e32f8827-2a7c-4dc2-8fb0-853d5bf53d1d",
-    "@type" : "datasetContact"
-  }, {
-    "dsDescriptionValue" : "Dataset for testing the functions related to RO-Crate preparation for import.",
-    "name" : "Dataset for testing the functions related to RO-Crate preparation for import.",
-    "@id" : "#11::fec52185-647e-470b-b2dd-c364462b82be",
+    "dsDescriptionValue" : "Descr_1",
+    "name" : "Descr_1",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99",
     "@type" : "dsDescription"
   }, {
-    "dsDescriptionValue" : "Second desc",
-    "name" : "Dataset for testing the functions related to RO-Crate preparation for import.",
-    "@id" : "#12::04fd9e9c-1ce6-4f0a-90cd-0153e44e8b1b",
-    "@type" : "dsDescription"
+    "publicationCitation" : "RelatedPubl_2",
+    "publicationIDType" : "cstr",
+    "publicationIDNumber" : "456",
+    "publicationURL" : "https://relpubtwo.com",
+    "name" : "RelatedPubl_2; cstr: ; 456; <a href=\"https://relpubtwo.com\" target=\"_blank\" rel=\"noopener\">https://relpubtwo.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/publication/103",
+    "@type" : "publication"
+  }, {
+    "producerName" : "ProdTwo",
+    "producerAffiliation" : "ProdTwoAff",
+    "producerAbbreviation" : "ProdTwoAN",
+    "producerURL" : "https://prodtwo.com",
+    "producerLogoURL" : "https://prodtwologo.com",
+    "name" : "ProdTwo; (ProdTwoAff); (ProdTwoAN); <a href=\"https://prodtwo.com\" target=\"_blank\" rel=\"noopener\">https://prodtwo.com</a>; <img src=\"https://prodtwologo.com\" alt=\"Logo URL\" class=\"metadata-logo\"/><br/>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104",
+    "@type" : "producer"
+  }, {
+    "publicationCitation" : "RelatedPubl_1",
+    "publicationIDType" : "ark",
+    "publicationIDNumber" : "123",
+    "publicationURL" : "https://relpubone.com",
+    "name" : "RelatedPubl_1; ark: ; 123; <a href=\"https://relpubone.com\" target=\"_blank\" rel=\"noopener\">https://relpubone.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/publication/100",
+    "@type" : "publication"
+  }, {
+    "keywordValue" : "FirstKwTerm",
+    "keywordVocabulary" : "FirstCvn",
+    "keywordVocabularyURI" : "https://firstcvn.com",
+    "name" : "FirstKwTerm; (FirstCvn); <a href=\"https://firstcvn.com\" target=\"_blank\" rel=\"noopener\">https://firstcvn.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/keyword/107",
+    "@type" : "keyword"
+  }, {
+    "topicClassValue" : "SecondTc",
+    "topicClassVocab" : "SecondTcCvn",
+    "topicClassVocabURI" : "http://secondtccvn.com",
+    "name" : "SecondTc; (SecondTcCvn); <a href=\"http://secondtccvn.com\" target=\"_blank\" rel=\"noopener\">http://secondtccvn.com</a>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/topicClassification/105",
+    "@type" : "topicClassification"
+  }, {
+    "authorName" : "Second Author",
+    "authorAffiliation" : "SecondAuthAffiliation",
+    "name" : "Second Author; (SecondAuthAffiliation)",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/106",
+    "@type" : "author"
   } ]
 }

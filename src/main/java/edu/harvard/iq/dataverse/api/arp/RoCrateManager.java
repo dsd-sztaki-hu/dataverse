@@ -69,7 +69,7 @@ public class RoCrateManager {
 
     private final String compoundIdAndUuidSeparator = "::";
     
-    private final List<String> propsToIgnore = List.of("conformsTo", "name", "hasPart");
+    private final List<String> propsToIgnore = List.of("conformsTo", "name", "hasPart", "license");
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat", "directoryLabel", "description", "identifier", "@arpPid", "hash");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
     @EJB
@@ -1367,12 +1367,55 @@ public class RoCrateManager {
         
         // make sure all ids are processed
         if (!roCrateEntityIdsAndTypes.isEmpty()) {
-            preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
+            // remove the compound values that are not part of dv, and their types could not be validated
+            Iterator<Map.Entry<String , String>> iterator = roCrateEntityIdsAndTypes.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, String> entry = iterator.next();
+                var fieldByName = fieldService.findByName(entry.getValue());
+                // if fieldByName is null that means the field not exists in dv
+                if (fieldByName == null) {
+                    // if the Root RO-Crate has any entity containing the id, the id can be removed
+                    if (containsId(preProcessedRoCrate.getRootDataEntity().getProperties(), entry.getKey())) {
+                        iterator.remove();   
+                    } else {
+                        // there is no parent entity for the child entity
+                    }
+                }
+            }
+
+            // remaining values must contain errors
+            if (!roCrateEntityIdsAndTypes.isEmpty()) {
+                preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());   
+            }
         }
 
         preProcessResult.setRoCrate(preProcessedRoCrate);
         
         return preProcessResult;
+    }
+
+    private boolean containsId(JsonNode node, String id) {
+        if (node.isObject()) {
+            Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                if (field.getValue().isTextual() && field.getValue().textValue().contains(id)) {
+                    return true;
+                }
+                if (field.getValue().isObject() || field.getValue().isArray()) {
+                    if (containsId(field.getValue(), id)) {
+                        return true;
+                    }
+                }
+            }
+        } else if (node.isArray()) {
+            for (JsonNode element : node) {
+                if (containsId(element, id)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // validate the file and dataset entities through the RO-Crate's hasPart
@@ -1491,6 +1534,23 @@ public class RoCrateManager {
                 }
             } else {
                 // field not yet exists in dv, in this case we can not check the types
+                // only the presence of a child entity
+                if (fieldValue.isObject()) {
+                    var childId = fieldValue.get("@id").textValue();
+                    var childEntity = roCrate.getEntityById(childId);
+                    if (childEntity == null) {
+                        preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                    }
+                } else if (fieldValue.isArray()) {
+                    for (var idObj : fieldValue) {
+                        var childId = idObj.get("@id").textValue();
+                        var childEntity = roCrate.getEntityById(childId);
+                        if (childEntity == null) {
+                            preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                        }
+                    }
+                }
+                
             }
         }
     }
@@ -1499,14 +1559,21 @@ public class RoCrateManager {
     private void validateCompoundField(RoCrate roCrate, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater, String fieldName, JsonNode idObj, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult) {
         if (!idObj.has("@id")) {
             preProcessResult.errors.add("The parent obj with DatasetFieldType: " + fieldName + " must contain a '@id' reference'");
+            return;
         }
 
         var entityId = idObj.get("@id").textValue();
         roCrateEntityIdsAndTypes.remove(entityId);
-        var entityProperties = roCrate.getEntityById(entityId).getProperties();
+        var entity = roCrate.getEntityById(entityId);
+        if (entity == null) {
+            preProcessResult.errors.add("No child entity found for the parent entity with id: '" + entityId + "'");
+            return;
+        }
+        var entityProperties = entity.getProperties();
 
         if (!entityProperties.has("@type") || !getTypeAsString(entityProperties).equals(fieldName)) {
             preProcessResult.errors.add("The entity with id: '" + entityId + "' has invalid type! The correct type would be: " + fieldName);
+            return;
         }
 
         if (entityProperties.has("conformsTo")) {
@@ -1746,8 +1813,9 @@ public class RoCrateManager {
                         } else {
                             preProcessResult.errors.add("The entity with id: '" + entityId + "' does not have a '@type'.");
                         }
+                    } else {
+                        entityType = getTypeAsString(entity);
                     }
-                    entityType = getTypeAsString(entity);
                     encounteredIdsWithTypes.put(entityId, entityType);
                 } else {
                     preProcessResult.errors.add("The RO-Crate contains the following '@id' multiple times: " + entityId);
