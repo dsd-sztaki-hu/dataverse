@@ -897,14 +897,17 @@ public class ArpApi extends AbstractApiBean {
         String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
 
         if (urlInPath == null || urlInPath.isBlank()) {
+            logger.severe("/cedarResourceProxy: URL path parameter is missing");
             return Response.status(Response.Status.BAD_REQUEST).entity("URL parameter is required").build();
         }
 
         try {
             URI uri = new URI(urlInPath);
             if (!uri.getHost().endsWith(subdomain)) {
+                logger.severe("/cedarResourceProxy: Invalid URL: "+uri);
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
             }
+            logger.info("/cedarResourceProxy: proxying URL: "+uri);
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(uri)
@@ -935,6 +938,7 @@ public class ArpApi extends AbstractApiBean {
 
             return responseBuilder.build();
         } catch (Exception e) {
+            logger.severe("/cedarResourceProxy: "+e.getMessage());
             e.printStackTrace();
             return Response.serverError().entity("Failed to proxy request: " + e.getMessage()).build();
         }
