@@ -874,11 +874,33 @@ public class ArpApi extends AbstractApiBean {
         }
     }
 
+    @GET
+    @Path("/cedarResourceProxy/{cedarUrl}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cedarResourceProxyUrlInPath(
+            @PathParam("cedarUrl") String cedarUrl,
+            @Context HttpHeaders incomingHeaders
+    )
+    {
+        return doCedarResourceProxy(cedarUrl, incomingHeaders);
+    }
+
+    @GET
+    @Path("/cedarResourceProxy")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cedarResourceProxyUrlInQuery(
+            @QueryParam("url") String cedarUrl,
+            @Context HttpHeaders incomingHeaders
+    )
+    {
+        return doCedarResourceProxy(cedarUrl, incomingHeaders);
+    }
+
     /**
      * Proxies requests to the cedar resource server for reading public schemas. Since we cannot have a CEDAR user which
      * only has read right, therefore we cannot have the api key in AROMA, otherwise malicious users may make modifications
      * in the name of that user. Instead we have this poxy, which aonly allows GET access to schemas and also
-     * adds the neccesary api key authentication to request. For this to work the arp.cedar.domain and
+     * adds the necessary api key authentication to request. For this to work the arp.cedar.domain and
      * arp.cedar.proxyApiKey configurations must be set.
      *
      * @param urlInPath the URL to download
@@ -886,23 +908,21 @@ public class ArpApi extends AbstractApiBean {
      *
      * @return contents of urlInPath
      */
-    @GET
-    @Path("/cedarResourceProxy/{url}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response cedarResourceProxy(
-            @PathParam("url") String urlInPath,
+    public Response doCedarResourceProxy(
+            String cedarUrl,
             @Context HttpHeaders incomingHeaders
-    ) {
+    ){
         String subdomain = "resource."+arpConfig.get("arp.cedar.domain");
         String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
 
-        if (urlInPath == null || urlInPath.isBlank()) {
+
+        if (cedarUrl == null || cedarUrl.isBlank()) {
             logger.severe("/cedarResourceProxy: URL path parameter is missing");
             return Response.status(Response.Status.BAD_REQUEST).entity("URL parameter is required").build();
         }
 
         try {
-            URI uri = new URI(urlInPath);
+            URI uri = new URI(cedarUrl);
             if (!uri.getHost().endsWith(subdomain)) {
                 logger.severe("/cedarResourceProxy: Invalid URL: "+uri);
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
@@ -940,7 +960,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (Exception e) {
             logger.severe("/cedarResourceProxy: "+e.getMessage());
             e.printStackTrace();
-            return Response.serverError().entity("Failed to proxy request: " + e.getMessage()).build();
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
         }
     }
 
