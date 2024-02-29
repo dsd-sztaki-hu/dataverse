@@ -1274,6 +1274,7 @@ public class ArpServiceBean implements java.io.Serializable {
             // Force reloading language bundles/
             ResourceBundle.clearCache();
         } catch (Exception e) {
+            e.printStackTrace();
             logger.log(Level.SEVERE, "Updating metadatablock "+""+" from CEDAR template failed", e);
             throw new RuntimeException(e);
         }
