@@ -25,8 +25,8 @@
     "datasetContact" : {
       "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/datasetContact/97"
     },
-    "author" : {
-      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"
+    "producer" : {
+      "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108"
     },
     "dsDescription" : {
       "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99"
@@ -71,9 +71,13 @@
     "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98",
     "@type" : "author"
   }, {
-    "dsDescriptionValue" : "Descr_1",
-    "name" : "Descr_1",
-    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99",
-    "@type" : "dsDescription"
-  } ]
+    "producerName" : "ProdTwo",
+    "producerAffiliation" : "ProdTwoAff",
+    "producerAbbreviation" : "ProdTwoAN",
+    "producerURL" : "https://prodtwo.com",
+    "producerLogoURL" : "https://prodtwologo.com",
+    "name" : "ProdTwo; (ProdTwoAff); (ProdTwoAN); <a href=\"https://prodtwo.com\" target=\"_blank\" rel=\"noopener\">https://prodtwo.com</a>; <img src=\"https://prodtwologo.com\" alt=\"Logo URL\" class=\"metadata-logo\"/><br/>",
+    "@id" : "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104",
+    "@type" : "producer"
+  }]
 }
