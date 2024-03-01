@@ -34,6 +34,8 @@ import jakarta.inject.Named;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -2339,7 +2341,7 @@ public class RoCrateManager {
         if (parentId.equals("./")) {
             parentId = "";
         }
-        return parentId + folderName + "/";
+        return parentId + URLEncoder.encode(folderName.replaceAll("\\s", "_"), StandardCharsets.UTF_8) + "/";
     }
 
 //    At this point this function would be useless
