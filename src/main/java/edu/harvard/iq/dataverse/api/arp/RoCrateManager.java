@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -111,10 +113,10 @@ public class RoCrateManager {
         // Make sure license and datePublished is set
         var props = rootDataEntity.getProperties();
         props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(version)));
-        ZonedDateTime now = ZonedDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
-        String formattedDate = now.format(formatter);
+
+        String formattedDate = getDatePublishedForRoCrate(version);
         props.put("datePublished", formattedDate);
+
         rootDataEntity.setProperties(props);
 
         // Remove the entities from the RO-Crate that had been deleted from DV
@@ -1086,18 +1088,68 @@ public class RoCrateManager {
         String latestPublishedPath = getRoCrateFolder(datasetVersion.getDataset().getLatestVersionForCopy());
         FileUtils.copyDirectory(new File(latestPublishedPath), new File(draftPath));
     }
-    
+
+    // TODO: when this is called from releaseDataset the dataset won't actually be released yet, so we won't
+    // have a releaseTime, so getDatePublishedForRoCrate() will fall back to the current, which will be a bit
+    // different then the actual releaseDate at the end.
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
-        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
-        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+        saveRoCrateVersion(dataset, versionNumber);
+//        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
+//        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
+
+
     public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException
     {
         String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
+        // Make sure we have the up-to-date datePublished when the dataset is published.
+        updateDatePublishedInRoCrate(dataset, roCrateFolderPath);
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
-    
+
+    public void updateDatePublishedInRoCrate(Dataset dataset, String roCrateFolderPath) {
+        DatasetVersion lastVersion = dataset.getLatestVersion();
+
+        // Load crate
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
+        var roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+
+        updateDatePublishedInRoCrate(roCrate, getDatePublishedForRoCrate(lastVersion));
+
+        // Save crate, update preview
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+    }
+
+    public String getDatePublishedForRoCrate(DatasetVersion version) {
+        // Take either release, lst update or current time. For published version it must be always the released date
+        Date publishedDate = null;
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        if (version.getReleaseTime() != null) {
+            publishedDate = version.getReleaseTime();
+        }
+//        else if (version.getLastUpdateTime() != null) {
+//            publishedDate = version.getLastUpdateTime();
+//        }
+        else {
+            publishedDate = new Date();
+        }
+        ZonedDateTime zonedDateTime = publishedDate.toInstant().atZone(ZoneId.systemDefault());
+        OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
+        return offsetDateTime.format(formatter);
+    }
+
+    public void updateDatePublishedInRoCrate(RoCrate roCrate, String datePublished) {
+        // Set datePublished
+        ObjectMapper mapper = new ObjectMapper();
+        RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
+        var props = rootDataEntity.getProperties();
+        props.put("datePublished", datePublished);
+        rootDataEntity.setProperties(props);
+    }
+
     public void saveUploadedRoCrate(Dataset dataset, String roCrateJsonString) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String roCratePath = getRoCratePath(dataset.getLatestVersion());
@@ -1721,7 +1773,7 @@ public class RoCrateManager {
                 Map.entry("datasetWithMetadata", new ArrayList<>()),
                 Map.entry("fileWithMetadata", new ArrayList<>())
         );
-        
+
         // We must take the union of the dataEntities and the contextualEntities,
         // since a single file is considered a dataEntity
         // a file in a folder considered a contextualEntity and its parent folder considered a dataEntity
@@ -1789,7 +1841,10 @@ public class RoCrateManager {
         // the root dataset's hasPart is handled differently, it has to be merged separately
         mergeHasParts(roCrate, rootHasPart, rootDataEntityProperties, mapper);
         rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
-        
+
+        // Always update the date published to something meaningful
+        updateDatePublishedInRoCrate(roCrate, getDatePublishedForRoCrate(dataset.getLatestVersion()));
+
         roCrate.setRoCratePreview(new AutomaticPreview());
 
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
