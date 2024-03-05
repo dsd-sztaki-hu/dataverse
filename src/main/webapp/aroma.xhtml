@@ -18,11 +18,10 @@
             <script>
                 setTimeout(() => {
                   const persistentId = "#{persistentId}";
-                  const currentUserApiKey = "#{DatasetPage.currentUserApiKey}"; // Somehow it ccannot be passed from file.xhmtl or dataset.xhtml
                   const language = "#{language}";
                   const showFile = "#{showFile}";
                   const version = "#{version}";
-                  let uri = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;apiKey="+currentUserApiKey+"&amp;lang="+language+"&amp;embed="+true;
+                  let uri = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;lang="+language+"&amp;embed="+true;
                   if (showFile) {
                     uri += "&amp;showFile="+showFile;
                   }

@@ -937,7 +937,7 @@
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;apiKey=#{DatasetPage.currentUserApiKey}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"
+                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}" value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"
                                             rendered="#{!widgetWrapper.widgetView}"
                                             disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}"
                                             target="_blank">
