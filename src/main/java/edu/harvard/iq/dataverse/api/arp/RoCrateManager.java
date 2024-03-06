@@ -656,15 +656,16 @@ public class RoCrateManager {
     public void removeDatasetContactEmail(DatasetVersion datasetVersion) {
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
         RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(datasetVersion));
+        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
         String roCrateFolderPath = getRoCrateFolder(datasetVersion);
         //remove the datasetContactEmail from the RO-Crate upon publishing the Dataset
-        roCrate.getAllContextualEntities().stream().filter(ce ->
+        roCrateWithPreview.getAllContextualEntities().stream().filter(ce ->
                         getTypeAsString(ce.getProperties()).equals("datasetContact"))
                 .findFirst()
                 .ifPresent(contextualEntity -> contextualEntity.getProperties().remove("datasetContactEmail"));
 
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+        roCrateFolderWriter.save(roCrateWithPreview, roCrateFolderPath);
     }
     
     
