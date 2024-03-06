@@ -1077,6 +1077,11 @@ public class RoCrateManager {
         }
         return baseName;
     }
+
+    public String getDraftRoCrateFolder(Dataset dataset) {
+        String localDir = StorageUtils.getLocalRoCrateDir(dataset);
+        return String.join(File.separator, localDir, "ro-crate-metadata", ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
     
     public String getRoCrateParentFolder(Dataset dataset) {
         return StorageUtils.getLocalRoCrateDir(dataset);
@@ -1132,6 +1137,13 @@ public class RoCrateManager {
         // Make sure we have the up-to-date datePublished when the dataset is published.
         updateDatePublishedInRoCrate(dataset, roCrateFolderPath);
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+    }
+    
+    public void saveRoCrateDraftVersion(DatasetVersion version) throws IOException {
+        String roCrateFolderPath = getRoCrateFolder(version);
+        String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
+        var draftPath = String.join(File.separator, localDir, "ro-crate-metadata");
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(draftPath));
     }
 
     public void updateDatePublishedInRoCrate(Dataset dataset, String roCrateFolderPath) {

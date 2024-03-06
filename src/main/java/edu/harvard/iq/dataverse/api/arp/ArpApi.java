@@ -728,6 +728,7 @@ public class ArpApi extends AbstractApiBean {
                 if (!Files.exists(Paths.get(roCratePath))) {
                     roCrateManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
+                        roCrateManager.saveRoCrateDraftVersion(opened);
                         roCrateManager.removeDatasetContactEmail(opened);
                     }
                 }
@@ -737,20 +738,27 @@ public class ArpApi extends AbstractApiBean {
                 if (needToRegenerate(roCrateJson)) {
                     roCrateManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
+                        roCrateManager.saveRoCrateDraftVersion(opened);
                         roCrateManager.removeDatasetContactEmail(opened);
                     }
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 }
-                var resp = Response.ok(roCrateJson.toString());
+                Response.ResponseBuilder resp;
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
                 if (privateUrlUser || authenticatedUser == null || (dataset.isLocked() && !dataset.isLockedFor(DatasetLock.Reason.InReview)) 
                         || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
                         || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
+                    resp = Response.ok(roCrateJson.toString());
                     resp = resp.header("X-Arp-RoCrate-Readonly", true)
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+                } else {
+                    // the editable version of the requested latest version
+                    BufferedReader br = new BufferedReader(new FileReader(roCrateManager.getDraftRoCrateFolder(dataset)));
+                    JsonObject draftRoCrateJson = gson.fromJson(br, JsonObject.class);
+                    resp = Response.ok(draftRoCrateJson.toString());
                 }
 
                 return resp.build();
