@@ -1080,9 +1080,18 @@ public class RoCrateManager {
     // This function always returns the folder path of a "draft" RO-CRATE
     // This function should only be used in the pre-processing of the RO-CRATE-s coming from AROMA
     public String getRoCrateFolderForPreProcess(DatasetVersion version) {
-        var dataset = version.getDataset();
         String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
-        return String.join(File.separator, localDir, "ro-crate-metadata");
+        var supposedToExistPath = String.join(File.separator, localDir, "ro-crate-metadata");
+        if (!Files.exists(Paths.get(supposedToExistPath))) {
+            var latestPublished = version.getDataset().getReleasedVersion();
+            if (latestPublished != null) {
+                return getRoCrateFolder(latestPublished); 
+            } else {
+                return  null;
+            }
+            
+        }
+        return supposedToExistPath;
     }
     
     public void deleteDraftVersion(DatasetVersion datasetVersion) throws IOException {
@@ -1364,7 +1373,8 @@ public class RoCrateManager {
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
     public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws JsonProcessingException, ArpException {
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate latestVersionRoCrate = roCrateFolderReader.readCrate(getRoCrateFolderForPreProcess(dataset.getLatestVersion()));
+        String latestVersionRoCrateFolderPath = getRoCrateFolderForPreProcess(dataset.getLatestVersion());
+        RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? roCrateFolderReader.readCrate(latestVersionRoCrateFolderPath) : null;
         RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate);
 
         var prepErrors = roCrateImportPrepResult.errors;
