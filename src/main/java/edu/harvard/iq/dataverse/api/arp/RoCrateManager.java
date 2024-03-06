@@ -653,6 +653,21 @@ public class RoCrateManager {
         
     }
     
+    public void removeDatasetContactEmail(DatasetVersion datasetVersion) {
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(datasetVersion));
+        String roCrateFolderPath = getRoCrateFolder(datasetVersion);
+        //remove the datasetContactEmail from the RO-Crate upon publishing the Dataset
+        roCrate.getAllContextualEntities().stream().filter(ce ->
+                        getTypeAsString(ce.getProperties()).equals("datasetContact"))
+                .findFirst()
+                .ifPresent(contextualEntity -> contextualEntity.getProperties().remove("datasetContactEmail"));
+
+        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
+        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+    }
+    
+    
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas, Map<String, String> importMapping) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         List<FileMetadata> datasetFiles = fileMetadatas.stream().map(FileMetadata::createCopy).collect(Collectors.toList());

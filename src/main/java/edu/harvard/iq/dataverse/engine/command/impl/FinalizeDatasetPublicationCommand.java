@@ -12,6 +12,7 @@ import edu.harvard.iq.dataverse.Dataverse;
 import edu.harvard.iq.dataverse.DvObject;
 import edu.harvard.iq.dataverse.Embargo;
 import edu.harvard.iq.dataverse.UserNotification;
+import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
@@ -51,7 +52,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
 
     private static final Logger logger = Logger.getLogger(FinalizeDatasetPublicationCommand.class.getName());
 
-
+    private final RoCrateManager roCrateManager = new RoCrateManager();
 
     /**
      * mirror field from {@link PublishDatasetCommand} of same name
@@ -296,6 +297,8 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             // ... but it is important to only update the export time stamp if the 
             // export was indeed successful.
         }        
+        
+        roCrateManager.removeDatasetContactEmail(dataset.getLatestVersion());
         
         return retVal;
     }
