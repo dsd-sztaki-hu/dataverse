@@ -460,11 +460,6 @@
                                                                 <h:outputText value="#{bundle['dataset.editBtn.itemLabel.thumbnailsAndWidgets']}"/>
                                                             </h:outputLink>
                                                         </li>
-                                                        <li>
-                                                            <h:outputLink value="/dataset-storagesites.xhtml?datasetId=#{DatasetPage.dataset.id}">
-                                                                <h:outputText value="#{bundle['dataset.editBtn.itemLabel.selectStorageSites']}"/>
-                                                            </h:outputLink>
-                                                        </li>
                                                         <ui:fragment rendered="#{DatasetPage.datasetConfigureTools.size() >= 1}">
                                                             <li class="dropdown-header">#{bundle['dataset.accessBtn.header.configure']} <span class="glyphicon glyphicon-cog"/></li>
                                                             <!-- Configure tool links -->
