@@ -653,18 +653,27 @@ public class RoCrateManager {
         
     }
     
-    public void removeDatasetContactEmail(DatasetVersion datasetVersion) {
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrate = roCrateFolderReader.readCrate(getRoCrateFolder(datasetVersion));
-        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
-        String roCrateFolderPath = getRoCrateFolder(datasetVersion);
+    public void removeDatasetContactEmail(RoCrate roCrate) {
         //remove the datasetContactEmail from the RO-Crate upon publishing the Dataset
-        roCrateWithPreview.getAllContextualEntities().stream().filter(ce ->
+        roCrate.getAllContextualEntities().stream().filter(ce ->
                         getTypeAsString(ce.getProperties()).equals("datasetContact"))
                 .forEach(contextualEntity -> contextualEntity.getProperties().remove("datasetContactEmail"));
+    }
+    
+    /*
+    Upon the dataset's successful publication, removes any sensitive data from the RO-Crate and updates the publicationDate
+    */
+    public void finalizeRoCrateForDatasetVersion(DatasetVersion datasetVersion) {
+        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrateFolderReader.readCrate(getRoCrateFolder(datasetVersion))).setPreview(new AutomaticPreview()).build();
+        String roCrateFolderPath = getRoCrateFolder(datasetVersion);
+       
+        removeDatasetContactEmail(roCrateWithPreview);
+        updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
 
         RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
         roCrateFolderWriter.save(roCrateWithPreview, roCrateFolderPath);
+        
     }
     
     
@@ -1134,8 +1143,6 @@ public class RoCrateManager {
     public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException
     {
         String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
-        // Make sure we have the up-to-date datePublished when the dataset is published.
-        updateDatePublishedInRoCrate(dataset, roCrateFolderPath);
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
     
@@ -1144,21 +1151,6 @@ public class RoCrateManager {
         String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
         var draftPath = String.join(File.separator, localDir, "ro-crate-metadata");
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(draftPath));
-    }
-
-    public void updateDatePublishedInRoCrate(Dataset dataset, String roCrateFolderPath) {
-        DatasetVersion lastVersion = dataset.getLatestVersion();
-
-        // Load crate
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
-        var roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
-
-        updateDatePublishedInRoCrate(roCrate, getDatePublishedForRoCrate(lastVersion));
-
-        // Save crate, update preview
-        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
     }
 
     public String getDatePublishedForRoCrate(DatasetVersion version) {
@@ -1181,11 +1173,9 @@ public class RoCrateManager {
 
     public void updateDatePublishedInRoCrate(RoCrate roCrate, String datePublished) {
         // Set datePublished
-        ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         var props = rootDataEntity.getProperties();
         props.put("datePublished", datePublished);
-        rootDataEntity.setProperties(props);
     }
 
     public void saveUploadedRoCrate(Dataset dataset, String roCrateJsonString) throws IOException {
@@ -1880,9 +1870,6 @@ public class RoCrateManager {
         // the root dataset's hasPart is handled differently, it has to be merged separately
         mergeHasParts(roCrate, rootHasPart, rootDataEntityProperties, mapper);
         rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
-
-        // Always update the date published to something meaningful
-        updateDatePublishedInRoCrate(roCrate, getDatePublishedForRoCrate(dataset.getLatestVersion()));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
 

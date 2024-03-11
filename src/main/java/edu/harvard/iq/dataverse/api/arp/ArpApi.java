@@ -729,7 +729,7 @@ public class ArpApi extends AbstractApiBean {
                     roCrateManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
                         roCrateManager.saveRoCrateDraftVersion(opened);
-                        roCrateManager.removeDatasetContactEmail(opened);
+                        roCrateManager.finalizeRoCrateForDatasetVersion(opened);
                     }
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
@@ -739,7 +739,7 @@ public class ArpApi extends AbstractApiBean {
                     roCrateManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
                         roCrateManager.saveRoCrateDraftVersion(opened);
-                        roCrateManager.removeDatasetContactEmail(opened);
+                        roCrateManager.finalizeRoCrateForDatasetVersion(opened);
                     }
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);

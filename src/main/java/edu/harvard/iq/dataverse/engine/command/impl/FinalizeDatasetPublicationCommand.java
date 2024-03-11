@@ -298,7 +298,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             // export was indeed successful.
         }        
         
-        roCrateManager.removeDatasetContactEmail(dataset.getLatestVersion());
+        roCrateManager.finalizeRoCrateForDatasetVersion(dataset.getLatestVersion());
         
         return retVal;
     }
