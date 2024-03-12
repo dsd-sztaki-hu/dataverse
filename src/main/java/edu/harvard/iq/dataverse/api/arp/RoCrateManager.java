@@ -12,6 +12,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateNameProvider;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.kit.datamanager.ro_crate.RoCrate;
@@ -99,6 +100,9 @@ public class RoCrateManager {
     
     @EJB 
     DataFileServiceBean datafileService;
+    
+    @EJB
+    RoCrateNameProvider roCrateNameProvider;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -545,9 +549,7 @@ public class RoCrateManager {
         else {
             // Similar to metadataFragment.xhtml, but we separate using ';' instead of space
             // <ui:repeat value="#{compoundValue.displayValueMap.entrySet().toArray()}" var="cvPart" varStatus="partStatus">
-            nameFieldValue = compoundValue.getDisplayValueMap().entrySet().stream()
-                    .map(o -> o.getValue())
-                    .collect(Collectors.joining("; "));
+            nameFieldValue = roCrateNameProvider.generateRoCrateName(compoundValue);
         }
 
         // if we have set any value for nameFieldValue use that
