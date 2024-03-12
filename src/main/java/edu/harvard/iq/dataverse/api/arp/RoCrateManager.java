@@ -12,6 +12,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateConformsToIdProvider;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateNameProvider;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
@@ -103,6 +104,9 @@ public class RoCrateManager {
     
     @EJB
     RoCrateNameProvider roCrateNameProvider;
+
+    @EJB
+    RoCrateConformsToIdProvider roCrateConformsToProvider;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -325,19 +329,12 @@ public class RoCrateManager {
 
     private void collectConformsToIds(Dataset dataset, RootDataEntity rootDataEntity)
     {
-        collectConformsToIds(rootDataEntity, dataset.getOwner().getMetadataBlocks(), new ObjectMapper());
+        collectConformsToIds(rootDataEntity, dataset, new ObjectMapper());
     }
 
-    private void collectConformsToIds(RootDataEntity rootDataEntity, Collection<MetadataBlock> conformsToMdbs, ObjectMapper mapper) {
+    private void collectConformsToIds(RootDataEntity rootDataEntity, Dataset dataset, ObjectMapper mapper) {
         var conformsToArray = mapper.createArrayNode();
-        var conformsToIdsFromMdbs = conformsToMdbs.stream().map(mdb -> {
-            var mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlock(mdb);
-            if (mdbArp == null) {
-                throw new Error("No ARP metadatablock found for metadatablock '"+mdb.getName()+
-                        "'. You need to upload the metadatablock to CEDAR and back to Dataverse to connect it with its CEDAR template representation");
-            }
-            return mdbArp.getRoCrateConformsToId();
-        }).collect(Collectors.toList());
+        var conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
 
         Set<String> existingConformsToIds = new HashSet<>();
         if (rootDataEntity.getProperties().has("conformsTo")) {
@@ -1374,17 +1371,9 @@ public class RoCrateManager {
             }
         }
 
-        List<String> mdbIds = conformsToIds.stream()
-                .map(id -> {
-                    // If not found, map to null, filter it later
-                    var mdbArp = arpMetadataBlockServiceBean.findByRoCrateConformsToId(id);
-                    if (mdbArp == null) {
-                        return null;
-                    }
-                    return mdbArp.getMetadataBlock().getIdString();
-                })
-                .filter(s -> s != null)
-                .collect(Collectors.toList());
+        List<String> mdbIds = roCrateConformsToProvider.findMetadataBlockForConformsToIds(conformsToIds).stream()
+                .map(MetadataBlock::getIdString)
+                .toList();
         
         return fieldService.findAllOrderedById().stream().filter(datasetFieldType -> mdbIds.contains(datasetFieldType.getMetadataBlock().getIdString())).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
     }
