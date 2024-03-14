@@ -28,6 +28,7 @@
                   if (version) {
                       uri += "&amp;version="+version;
                   }
+                  uri += "#{DatasetPage.optionalApiKeyParameterForAroma}";
                   document.getElementById('iframeId').src = uri;
                 }, 10)
             </script>

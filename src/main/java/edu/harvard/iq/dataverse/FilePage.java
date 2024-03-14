@@ -7,6 +7,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.DatasetVersionServiceBean.RetrieveDatasetVersionResponse;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.dataaccess.SwiftAccessIO;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -151,6 +152,8 @@ public class FilePage implements java.io.Serializable {
 
     @EJB
     ArpConfig arpConfig;
+    @EJB
+    ArpServiceBean arpService;
 
     private String aromaAddress = "";
 
@@ -1308,14 +1311,14 @@ public class FilePage implements java.io.Serializable {
         this.aromaAddress = aromaAddress;
     }
 
-    public String getCurrentUserApiKey() {
-        User user = session.getUser();
-        if (user instanceof AuthenticatedUser) {
-            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
-            return token.getTokenString();
+    public String getCurrentUserApiKeyForAroma() {
+        // Only return apiKey if auth setting allows that
+        if (!arpConfig.get("arp.aroma.auth").toLowerCase().equals("apikey")) {
+            return null;
         }
-        return null;
+        return arpService.getCurrentUserApiKey(session);
     }
+
 
     public String getLanguage() {
         return session.getLocaleCode().equals("en") ? "en" : "hu";

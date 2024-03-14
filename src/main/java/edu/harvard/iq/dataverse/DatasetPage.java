@@ -277,6 +277,8 @@ public class DatasetPage implements java.io.Serializable {
     RoCrateUploadServiceBean roCrateUploadService;
     @EJB
     ArpConfig arpConfig;
+    @EJB
+    ArpServiceBean arpService;
 
     private String aromaAddress = "";
 
@@ -6553,19 +6555,20 @@ public class DatasetPage implements java.io.Serializable {
         return java.net.URLEncoder.encode(persistentId);
     }
 
-    public String getCurrentUserApiKey() {
-        User user = session.getUser();
-        if (user instanceof AuthenticatedUser) {
-            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
-            return token.getTokenString();
-        } else if (user instanceof PrivateUrlUser) {
-            PrivateUrlUser privateUrlUser = (PrivateUrlUser) user;
-            PrivateUrl privUrl = privateUrlService.getPrivateUrlFromDatasetId(privateUrlUser.getDatasetId());
-            ApiToken apiToken = new ApiToken();
-            apiToken.setTokenString(privUrl.getToken());
-            return apiToken.getTokenString();
+    public String getCurrentUserApiKeyForAroma() {
+        // Only return apiKey if auth setting allows that
+        if (!arpConfig.get("arp.aroma.auth").toLowerCase().equals("apikey")) {
+            return null;
         }
-        return null;
+        return arpService.getCurrentUserApiKey(session);
+    }
+
+    public String getOptionalApiKeyParameterForAroma() {
+        String apiKey = getCurrentUserApiKeyForAroma();
+        if (apiKey == null) {
+            return "";
+        }
+        return "&apiKey="+apiKey;
     }
 
     public String getLanguage() {
