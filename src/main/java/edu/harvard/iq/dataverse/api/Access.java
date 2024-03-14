@@ -36,10 +36,10 @@ import edu.harvard.iq.dataverse.ThemeWidgetFragment;
 
 import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
 
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.RoleAssignee;
@@ -78,7 +78,6 @@ import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 
-import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -126,8 +125,7 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import jakarta.ws.rs.core.StreamingOutput;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import java.net.URISyntaxException;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.ServerErrorException;
@@ -195,8 +193,9 @@ public class Access extends AbstractApiBean {
     PermissionsWrapper permissionsWrapper;
     @Inject
     MakeDataCountLoggingServiceBean mdcLogService;
+    
     @EJB
-    RoCrateManager roCrateManager;
+    RoCrateServiceBean roCrateServiceBean;
     @EJB
     ArpConfig arpConfig;
 
@@ -2208,7 +2207,7 @@ public class Access extends AbstractApiBean {
 
     private void addRoCrateFilesToZipStream(DataFileZipper zipper, Dataset dataset, String version) throws IOException {
         DatasetVersion dsVersion = dataset.getVersions().stream().filter(dsv -> Objects.equals(dsv.getFriendlyVersionNumber(), version)).findFirst().orElse(dataset.getLatestVersionForCopy());
-        var roCratePath = Paths.get(roCrateManager.getRoCratePath(dsVersion));
+        var roCratePath = Paths.get(roCrateServiceBean.getRoCratePath(dsVersion));
         byte[] roCrateBytes = Files.exists(roCratePath) ? Files.readAllBytes(roCratePath) : null;
         String metadataFileName = arpConfig.get("arp.rocrate.metadata.name");
         String metadataMimeType = "application/json";
@@ -2216,7 +2215,7 @@ public class Access extends AbstractApiBean {
             zipper.addRoCrateToZipStream(roCrateBytes, metadataFileName, metadataMimeType);   
         }
 
-        var previewPath = Paths.get(roCrateManager.getRoCrateHtmlPreviewPath(dsVersion));
+        var previewPath = Paths.get(roCrateServiceBean.getRoCrateHtmlPreviewPath(dsVersion));
         byte[] roCrateHtmlPreviewBytes = Files.exists(previewPath) ? Files.readAllBytes(previewPath) : null;
         String previewFileName = arpConfig.get("arp.rocrate.html.preview.name");
         String previewMimeType = "text/html";

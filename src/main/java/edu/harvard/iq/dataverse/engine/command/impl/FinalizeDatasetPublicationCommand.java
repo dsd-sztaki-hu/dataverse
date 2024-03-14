@@ -12,7 +12,7 @@ import edu.harvard.iq.dataverse.Dataverse;
 import edu.harvard.iq.dataverse.DvObject;
 import edu.harvard.iq.dataverse.Embargo;
 import edu.harvard.iq.dataverse.UserNotification;
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
@@ -52,7 +52,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
 
     private static final Logger logger = Logger.getLogger(FinalizeDatasetPublicationCommand.class.getName());
 
-    private final RoCrateManager roCrateManager = new RoCrateManager();
+    private final RoCrateExportManager roCrateExportManager = new RoCrateExportManager();
 
     /**
      * mirror field from {@link PublishDatasetCommand} of same name
@@ -298,7 +298,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             // export was indeed successful.
         }        
         
-        roCrateManager.finalizeRoCrateForDatasetVersion(dataset.getLatestVersion());
+        roCrateExportManager.finalizeRoCrateForDatasetVersion(dataset.getLatestVersion());
         
         return retVal;
     }

@@ -3,11 +3,8 @@ package edu.harvard.iq.dataverse.arp;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.harvard.iq.dataverse.ControlledVocabularyValue;
 import edu.harvard.iq.dataverse.DatasetFieldType;
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
 import edu.harvard.iq.dataverse.mocks.MockDatasetFieldSvc;
-import edu.kit.datamanager.ro_crate.RoCrate;
-import edu.kit.datamanager.ro_crate.reader.FolderReader;
-import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,8 +32,7 @@ public class RoCrateImportPrepTest {
     
     private static final Logger logger = Logger.getLogger(RoCrateImportPrepTest.class.getCanonicalName());
     private static final MockDatasetFieldSvc datasetFieldTypeSvc = new MockDatasetFieldSvc();
-    
-    private static final RoCrateManager roCrateManager = new RoCrateManager(datasetFieldTypeSvc);
+    private static final RoCrateImportManager roCrateImportManager = new RoCrateImportManager(datasetFieldTypeSvc);
 
     @BeforeAll
     public static void setUpClass() {
@@ -55,7 +51,7 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         Assertions.assertTrue(processResult.errors.isEmpty());
     }
     
@@ -127,7 +123,7 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         processResult.errors.forEach(logger::info);
         Assertions.assertTrue(processResult.errors.isEmpty());
     }
@@ -152,7 +148,7 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         processResult.errors.forEach(logger::info);
         Assertions.assertFalse(processResult.errors.isEmpty());
     }
@@ -196,7 +192,7 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         processResult.errors.forEach(logger::info);
         Assertions.assertFalse(processResult.errors.isEmpty());
         // The child node for the producer was removed (field does not exist in dv)
@@ -237,7 +233,7 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateManager.prepareRoCrateForDataverseImport(roCrateJsonString);
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
         processResult.errors.forEach(logger::info);
         Assertions.assertFalse(processResult.errors.isEmpty());
         Assertions.assertTrue(processResult.errors.contains("Missing '@id' for entity: {\"datasetContactName\":\"Admin, Dataverse\",\"datasetContactAffiliation\":\"Dataverse.org\",\"datasetContactEmail\":\"finta@sztaki.hu\",\"name\":\"Admin, Dataverse; (Dataverse.org); \"}"));

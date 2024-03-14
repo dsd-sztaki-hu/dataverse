@@ -1,8 +1,8 @@
 package edu.harvard.iq.dataverse;
 
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
-import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateUploadServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.DataFile.ChecksumType;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
@@ -137,7 +137,7 @@ public class EditDatafilesPage implements java.io.Serializable {
     @EJB
     IndexServiceBean indexService;
     @EJB
-    RoCrateManager roCrateManager;
+    RoCrateExportManager roCrateExportManager;
     @Inject
     DataverseRequestServiceBean dvRequestService;
     @Inject
@@ -1028,7 +1028,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (fileReplacePageHelper.runSaveReplacementFile_Phase2()) {
             JsfHelper.addSuccessMessage(getBundleString("file.message.replaceSuccess"));
             try {
-                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
+                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
@@ -1276,7 +1276,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
             try {
-                roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
+                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
@@ -1289,7 +1289,7 @@ public class EditDatafilesPage implements java.io.Serializable {
             // the landing page. BUT ONLY if the file still exists - i.e., if 
             // the user hasn't just deleted it!
             try {
-                roCrateManager.updateRoCrateFileMetadatas(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
+                roCrateExportManager.updateRoCrateFileMetadatas(datasetService.find(dataset.getId()).getLatestVersion().getDataset());
             } catch (Exception e) {
                 e.printStackTrace();
                 JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));

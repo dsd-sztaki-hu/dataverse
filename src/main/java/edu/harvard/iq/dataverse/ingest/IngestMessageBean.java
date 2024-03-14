@@ -21,6 +21,7 @@
 package edu.harvard.iq.dataverse.ingest;
 
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.util.BundleUtil;
@@ -40,7 +41,7 @@ import jakarta.jms.MessageListener;
 import jakarta.jms.ObjectMessage;
 
 // ARP specific
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+
 
 /**
  *
@@ -65,7 +66,7 @@ public class IngestMessageBean implements MessageListener {
     @EJB UserNotificationServiceBean userNotificationService;
     @EJB AuthenticationServiceBean authenticationServiceBean;
     @EJB
-    RoCrateManager roCrateManager;
+    RoCrateExportManager roCrateExportManager;
 
    
     public IngestMessageBean() {
@@ -190,7 +191,7 @@ public class IngestMessageBean implements MessageListener {
                 if (dataset != null && dataset.getId() != null) {
                     datasetService.removeDatasetLocks(dataset, DatasetLock.Reason.Ingest);
                 }
-                roCrateManager.updateRoCrateFileMetadataAfterIngest(ingestMessage.getFileIds());
+                roCrateExportManager.updateRoCrateFileMetadataAfterIngest(ingestMessage.getFileIds());
             } catch (Exception ex) {
                 ex.printStackTrace(); // application was unable to remove the datasetLock
             }

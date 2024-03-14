@@ -4,7 +4,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.DatasetLock.Reason;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -164,7 +164,6 @@ import com.amazonaws.services.s3.model.PartETag;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 
 import java.lang.reflect.InvocationTargetException;
-import org.apache.commons.lang3.tuple.Pair;
 
 // ARP specific
 import java.io.StringReader;
@@ -255,7 +254,7 @@ public class Datasets extends AbstractApiBean {
     DatasetVersionFilesServiceBean datasetVersionFilesServiceBean;
 
     @EJB
-    RoCrateManager roCrateManager;
+    RoCrateExportManager roCrateExportManager;
 
     /**
      * Used to consolidate the way we parse and handle dataset versions.
@@ -1484,7 +1483,7 @@ public class Datasets extends AbstractApiBean {
                 } else {
 
                     try {
-                        roCrateManager.saveRoCrateVersion(ds, true, false);
+                        roCrateExportManager.saveRoCrateVersion(ds, true, false);
                     } catch (IOException e) {
                         JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
                     }
@@ -1502,7 +1501,7 @@ public class Datasets extends AbstractApiBean {
                         isMinor));
 
                 try {
-                    roCrateManager.saveRoCrateVersion(ds, false, isMinor);
+                    roCrateExportManager.saveRoCrateVersion(ds, false, isMinor);
                 } catch (IOException e) {
                     JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
                 }

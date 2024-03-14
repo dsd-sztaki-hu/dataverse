@@ -1,8 +1,9 @@
 package edu.harvard.iq.dataverse;
 
-import edu.harvard.iq.dataverse.api.arp.RoCrateManager;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -165,7 +166,7 @@ import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import edu.harvard.iq.dataverse.arp.RoCrateUploadServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateUploadServiceBean;
 
 /**
  *
@@ -272,9 +273,11 @@ public class DatasetPage implements java.io.Serializable {
     GlobusServiceBean globusService;
 
     @EJB
-    RoCrateManager roCrateManager;
+    RoCrateExportManager roCrateExportManager;
     @Inject
     RoCrateUploadServiceBean roCrateUploadService;
+    @EJB
+    RoCrateServiceBean roCrateServiceBean;
     @EJB
     ArpConfig arpConfig;
 
@@ -2902,7 +2905,7 @@ public class DatasetPage implements java.io.Serializable {
         }
 
         try {
-            roCrateManager.saveRoCrateVersion(dataset, false, minor);
+            roCrateExportManager.saveRoCrateVersion(dataset, false, minor);
         } catch (IOException e) {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
         }
@@ -2978,7 +2981,7 @@ public class DatasetPage implements java.io.Serializable {
         }
 
         try {
-            roCrateManager.saveRoCrateVersion(dataset, true, false);
+            roCrateExportManager.saveRoCrateVersion(dataset, true, false);
         } catch (IOException e) {
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
         }
@@ -3116,7 +3119,7 @@ public class DatasetPage implements java.io.Serializable {
             commandEngine.submit(cmd);
             JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("datasetVersion.message.deleteSuccess"));
             deleteCommandSuccess = true;
-            roCrateManager.deleteDraftVersion(dataset.getLatestVersion());
+            roCrateExportManager.deleteDraftVersion(dataset.getLatestVersion());
         } catch (CommandException ex) {
             JH.addMessage(FacesMessage.SEVERITY_FATAL, BundleUtil.getStringFromBundle("dataset.message.deleteFailure"));
             logger.severe(ex.getMessage());
@@ -4072,9 +4075,9 @@ public class DatasetPage implements java.io.Serializable {
         try {
             // This happens only upon importing a new RO-CRATE from a .zip
             if (Objects.equals(editMode, EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
-                roCrateManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
+                roCrateExportManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
             }
-            roCrateManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
+            roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
         } catch (Exception e) {
             e.printStackTrace();
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
@@ -6527,7 +6530,7 @@ public class DatasetPage implements java.io.Serializable {
         response.setHeader("Content-Disposition", "attachment;filename=\""+ roCrateZipName +"\"");
 
         OutputStream outputStream = response.getOutputStream();
-        outputStream.write(zipFolder(Path.of(roCrateManager.getRoCrateFolder(workingVersion))));
+        outputStream.write(zipFolder(Path.of(roCrateServiceBean.getRoCrateFolder(workingVersion))));
         outputStream.flush();
         outputStream.close();
 

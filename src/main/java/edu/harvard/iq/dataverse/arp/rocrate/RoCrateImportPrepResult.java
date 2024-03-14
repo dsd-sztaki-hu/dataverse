@@ -1,4 +1,4 @@
-package edu.harvard.iq.dataverse.arp;
+package edu.harvard.iq.dataverse.arp.rocrate;
 
 import edu.kit.datamanager.ro_crate.RoCrate;
 

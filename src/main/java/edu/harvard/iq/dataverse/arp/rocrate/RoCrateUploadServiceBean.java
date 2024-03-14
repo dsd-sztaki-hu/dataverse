@@ -1,4 +1,4 @@
-package edu.harvard.iq.dataverse.arp;
+package edu.harvard.iq.dataverse.arp.rocrate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.kit.datamanager.ro_crate.RoCrate;
