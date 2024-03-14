@@ -13,6 +13,13 @@ import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
 import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
+import edu.harvard.iq.dataverse.authorization.users.ApiToken;
+import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
+import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
+import edu.harvard.iq.dataverse.authorization.users.User;
+import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
+import edu.harvard.iq.dataverse.privateurl.PrivateUrlServiceBean;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -93,6 +100,12 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     protected ArpConfig arpConfig;
+
+    @EJB
+    AuthenticationServiceBean authService;
+
+    @EJB
+    PrivateUrlServiceBean privateUrlService;
 
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
@@ -1388,6 +1401,21 @@ public class ArpServiceBean implements java.io.Serializable {
         String uuid = w3Id.substring(w3Id.indexOf("schema/") + "schema/".length());
         return "https://repo."+cedarDomain+"/templates/"+uuid;
 
+    }
+
+    public String getCurrentUserApiKey(DataverseSession session) {
+        User user = session.getUser();
+        if (user instanceof AuthenticatedUser) {
+            var token = authService.getValidApiTokenForUser((AuthenticatedUser) user);
+            return token.getTokenString();
+        } else if (user instanceof PrivateUrlUser) {
+            PrivateUrlUser privateUrlUser = (PrivateUrlUser) user;
+            PrivateUrl privUrl = privateUrlService.getPrivateUrlFromDatasetId(privateUrlUser.getDatasetId());
+            ApiToken apiToken = new ApiToken();
+            apiToken.setTokenString(privUrl.getToken());
+            return apiToken.getTokenString();
+        }
+        return null;
     }
 
 }

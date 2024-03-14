@@ -21,6 +21,7 @@ import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVe
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.ConstraintViolationUtil;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
@@ -986,5 +987,50 @@ public class ArpApi extends AbstractApiBean {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
         }
     }
+
+    /**
+     * Get the api key (api token) for a user authenticated via JSESSIONID
+     * @param cedarUrl
+     * @param incomingHeaders
+     * @return
+     */
+    @GET
+    @Path("/apiKey")
+    @Produces(MediaType.APPLICATION_JSON)
+    @AuthRequired
+    public Response getApiKey(
+            @Context ContainerRequestContext crc,
+            @Context HttpHeaders incomingHeaders
+    )
+    {
+        try {
+            var apiKey = arpService.getCurrentUserApiKey(dataverseSession);
+            Map<String, String> map = null;
+            if (apiKey == null) {
+                map = Map.of();
+            }
+            else {
+                map = Map.of("apiKey", apiKey);
+            }
+            return Response.status(OK).entity(map).build();
+        }
+        catch (Exception ex) {
+            ex.printStackTrace();
+            return Response.status(OK).entity(ex.getMessage()).build();
+        }
+
+//        try {
+//            // Check auth. Even without this, we would just return no apiKey, but rather return an appropriate error
+//            AuthenticatedUser u = getRequestAuthenticatedUserOrDie(crc);
+//        } catch (WrappedResponse e) {
+//            String error = ConstraintViolationUtil.getErrorStringForConstraintViolations(e.getCause());
+//            if (!error.isEmpty()) {
+//                logger.log(Level.INFO, error);
+//                return e.refineResponse(error);
+//            }
+//            return e.getResponse();
+//        }
+    }
+
 
 }
