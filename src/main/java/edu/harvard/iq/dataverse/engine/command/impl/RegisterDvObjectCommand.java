@@ -145,7 +145,6 @@ public class RegisterDvObjectCommand extends AbstractVoidCommand {
     private Boolean processMigrateHandle (CommandContext ctxt){
         boolean retval = true;
         if(!target.isInstanceofDataset()) return false;
-        if(!target.getProtocol().equals(HandlenetServiceBean.HDL_PROTOCOL)) return false;
         
         AlternativePersistentIdentifier api = new AlternativePersistentIdentifier();
         api.setProtocol(target.getProtocol());

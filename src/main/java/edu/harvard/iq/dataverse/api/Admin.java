@@ -1469,7 +1469,7 @@ public class Admin extends AbstractApiBean {
 	}
 
     @POST
-	@AuthRequired
+    @AuthRequired
     @Path("{id}/reregisterHDLToPID")
     public Response reregisterHdlToPID(@Context ContainerRequestContext crc, @PathParam("id") String id) {
         logger.info("Starting to reregister  " + id + " Dataset Id. (from hdl to doi)" + new Date());
@@ -1504,6 +1504,49 @@ public class Admin extends AbstractApiBean {
         
         return ok(BundleUtil.getStringFromBundle("admin.api.migrateHDL.success"));
     }
+
+    @POST
+    @AuthRequired
+    @Path("{id}/reregisterPID")
+    public Response reregisterPID(@Context ContainerRequestContext crc, @PathParam("id") String id, @QueryParam("force") boolean force) {
+        String currentProtocol=Svc.get(SettingsServiceBean.Key.Protocol.toString());
+        logger.info("Starting to reregister  " + id + " Dataset Id. (from "+originalProtocol+" to "+currentProtocol+")" + new Date());
+        try {
+            if (originalProtocol.equals(currentProtocol)) {
+                if (force) {
+                    logger.info("Protocol is the same, but force specified. Proceeding.");
+                } else {
+                    logger.info("Bad Request protocol is the same, and force not specified.");
+                    return error(Status.BAD_REQUEST, BundleUtil.getStringFromBundle("admin.api.migratePID.failure.must.be.different"));
+                }
+            }
+
+            User u = getRequestUser(crc);
+            if (!u.isSuperuser()) {
+                logger.info("Bad Request Unauthor " );
+                return error(Status.UNAUTHORIZED, BundleUtil.getStringFromBundle("admin.api.auth.mustBeSuperUser"));
+            }
+
+            DataverseRequest r = createDataverseRequest(u);
+            Dataset ds = findDatasetOrDie(id);
+            if (ds.getIdentifier() != null && !ds.getIdentifier().isEmpty()) {
+                execCommand(new RegisterDvObjectCommand(r, ds, true));
+            } else {
+                return error(Status.BAD_REQUEST, BundleUtil.getStringFromBundle("admin.api.migratePID.failure.noOriginalIdentifier"));
+            }
+
+        } catch (WrappedResponse r) {
+            logger.info("Failed to migrate Dataset id: " + id);
+            return badRequest(BundleUtil.getStringFromBundle("admin.api.migratePID.failure", Arrays.asList(id)));
+        } catch (Exception e) {
+            logger.info("Failed to migrate Dataset id: " + id + " Unexpected Exception " + e.getMessage());
+            List<String> args = Arrays.asList(id,e.getMessage());
+            return badRequest(BundleUtil.getStringFromBundle("admin.api.migratePID.failureWithException", args));
+        }
+
+        return ok(BundleUtil.getStringFromBundle("admin.api.migratePID.success"));
+    }
+
 
     @GET
     @AuthRequired
