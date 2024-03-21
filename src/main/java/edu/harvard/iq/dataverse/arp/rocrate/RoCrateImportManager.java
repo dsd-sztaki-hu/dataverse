@@ -25,13 +25,14 @@ import edu.kit.datamanager.ro_crate.writer.FolderWriter;
 import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -413,13 +414,14 @@ public class RoCrateImportManager {
         RoCrate preProcessedRoCrate = roCrateStringReader.parseCrate(rootNode.toPrettyString());
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
         var roCrateContext = new ObjectMapper().readTree(preProcessedRoCrate.getJsonMetadata()).get("@context").get(1);
+        String rootDataEntityId = preProcessedRoCrate.getRootDataEntity().getId();
 
         preProcessedRoCrate.getRootDataEntity().getProperties().fields().forEachRemaining(field ->
-                validateField(field, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
+                prepareAndValidateField(field, rootDataEntityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
         );
 
         // remove the id of the rootDataset and the jsonDescriptor, the other id-s will be removed during processing the entities
-        roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getRootDataEntity().getId());
+        roCrateEntityIdsAndTypes.remove(rootDataEntityId);
         roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getJsonDescriptor().getId());
         // the license obj coming from AROMA is not really an id object, and its URL value is stored as a string in dv
         // remove this type of "id"-s too
@@ -508,7 +510,7 @@ public class RoCrateImportManager {
             preProcessResult.errors.add("Entity with id: '" + entityId + "' has an invalid type: " + entityType);
         }
         entity.fields().forEachRemaining(field ->
-                validateField(field, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
+                prepareAndValidateField(field, entityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
         );
         if (entityType.equals("File")) {
             var invalidFileProps = validateFileEntityProps(entity);
@@ -560,7 +562,7 @@ public class RoCrateImportManager {
     }
 
     // Validate field values and collect the field URIs in the RO-Crate context
-    private void validateField(Map.Entry<String, JsonNode> field, RoCrate roCrate, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater, RoCrateImportPrepResult preProcessResult, HashMap<String, String> roCrateEntityIdsAndTypes, boolean lvl2) {
+    private void prepareAndValidateField(Map.Entry<String, JsonNode> field, String parentId, RoCrate roCrate, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater, RoCrateImportPrepResult preProcessResult, HashMap<String, String> roCrateEntityIdsAndTypes, boolean lvl2) {
         var fieldName = field.getKey();
         var fieldValue = field.getValue();
         if (!fieldName.startsWith("@") && !roCrateServiceBean.propsToIgnore.contains(fieldName)) {
@@ -583,7 +585,7 @@ public class RoCrateImportManager {
                                 .forEach(cvvList -> cvvList.forEach(cvv -> controlledVocabularyValues.add(cvv.getStrValue())));*/
                         fieldByName.getControlledVocabularyValues().forEach(cvv -> controlledVocabularyValues.add(cvv.getStrValue()));
                     }
-                    validatePrimitiveField(fieldType, fieldName, fieldValue, controlledVocabularyValues, false, preProcessResult);
+                    prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, fieldValue, parentId, controlledVocabularyValues, false, preProcessResult);
                 } else if (fieldByName.isCompound()) {
                     if (lvl2) {
                         preProcessResult.errors.add("Compound values are not allowed at this level! Invalid compound value: '" + fieldName + "'.");
@@ -644,7 +646,7 @@ public class RoCrateImportManager {
             validateConformsTo(entityProperties.get("conformsTo"), entityId, preProcessResult);
         }
 
-        entityProperties.fields().forEachRemaining(field -> validateField(field, roCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true));
+        entityProperties.fields().forEachRemaining(field -> prepareAndValidateField(field, entityId, roCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true));
     }
 
     // check if a conformsToObj is valid
@@ -674,14 +676,14 @@ public class RoCrateImportManager {
 
     // check if the primitive field contains appropriate value(s), based on the fieldType definitions below:
     // https://guides.dataverse.org/en/latest/admin/metadatacustomization.html?highlight=metadata#fieldtype-definitions
-    private void validatePrimitiveField(DatasetFieldType.FieldType fieldType, String fieldName, JsonNode fieldValue, ArrayList<String> controlledVocabularyValues, boolean lvl2, RoCrateImportPrepResult preProcessResult) {
+    private void prepareAndValidatePrimitiveField(RoCrate roCrate, DatasetFieldType.FieldType fieldType, String fieldName, JsonNode fieldValue, String parentId, ArrayList<String> controlledVocabularyValues, boolean lvl2, RoCrateImportPrepResult preProcessResult) {
         if (fieldValue.isArray()) {
             if (lvl2) {
                 preProcessResult.errors.add("The field '" + fieldName + "' can not have Arrays as values, but got: " + fieldValue);
             }
             // If fieldValue is an array, validate each element
             for (JsonNode element : fieldValue) {
-                validatePrimitiveField(fieldType, fieldName, element, controlledVocabularyValues, true, preProcessResult);
+                prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, element, parentId, controlledVocabularyValues, true, preProcessResult);
             }
         } else {
             if (!controlledVocabularyValues.isEmpty()) {
@@ -690,66 +692,78 @@ public class RoCrateImportManager {
                 }
             } else {
                 switch (fieldType) {
-                    case NONE:
-                        preProcessResult.errors.add("The field: " + fieldName + " can not have fieldType 'none'");
-                        break;
-
-                    case DATE:
-                        // Validate date format (YYYY-MM-DD, YYYY-MM, or YYYY)
+                    case NONE ->
+                            preProcessResult.errors.add("The field: " + fieldName + " can not have fieldType 'none'");
+                    case DATE -> {
+                        // Validate and parse date format (YYYY-MM-DD, YYYY-MM, or YYYY are accepted)
                         if (!fieldValue.isTextual() ||
                                 !fieldValue.textValue().matches("\\d{4}-\\d{2}-\\d{2}|\\d{4}-\\d{2}|\\d{4}")) {
-                            preProcessResult.errors.add("The provided value is not a valid date for field: " + fieldName);
+                            try {
+                                String parsedDate = new SimpleDateFormat("yyyy-MM-dd")
+                                        .format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                                        .parse(fieldValue.textValue()));
+                                updatePropertyInEntity(roCrate, parentId, fieldName, parsedDate);
+                            } catch (ParseException e) {
+                                preProcessResult.errors.add("The provided value is not a valid date for field: " + fieldName);
+                            }
                         }
-                        break;
-
-                    case EMAIL:
+                    }
+                    case EMAIL -> {
                         // Validate email format
                         if (!fieldValue.isTextual() || !isEmailValid(fieldValue.textValue())) {
                             preProcessResult.errors.add("The provided value is not a valid email address for field: " + fieldName);
                         }
-                        break;
-
-                    case TEXT:
+                    }
+                    case TEXT -> {
                         // Validate that the value is a string and any text other than newlines
                         if (!fieldValue.isTextual() || fieldValue.textValue().matches(".*\\n.*")) {
                             preProcessResult.errors.add("Newlines are not allowed for field: " + fieldName);
                         }
-                        break;
-
-                    case TEXTBOX:
+                    }
+                    case TEXTBOX -> {
                         // Validate that the value is a string
                         if (!fieldValue.isTextual()) {
                             preProcessResult.errors.add("The provided value should be a string for " + fieldName + " with 'textbox' type.");
                         }
-                        break;
-
-                    case URL:
-                        // Validate URL
-                        if (!fieldValue.isTextual() || !isURLValid(fieldValue.textValue())) {
-                            preProcessResult.errors.add("If not empty, the field must contain a valid URL for field: " + fieldName);
+                    }
+                    case URL -> {
+                        // Validate and parse URL
+                        String url;
+                        if (fieldValue.isTextual()) {
+                            url = fieldValue.textValue();
+                        } else if (fieldValue.isObject()){
+                            url = roCrate.getEntityById(fieldValue.get("@id").textValue()).getProperty("name").textValue();
+                        } else {
+                            url = "";
                         }
-                        break;
-
-                    case INT:
+                        if (!isURLValid(url)) {
+                            preProcessResult.errors.add("If not empty, the field must contain a valid URL for field: " + fieldName);
+                        } else {
+                            updatePropertyInEntity(roCrate, parentId, fieldName, url);    
+                        }
+                    }
+                    case INT -> {
                         // Validate integer value
                         if (!fieldValue.isInt()) {
                             preProcessResult.errors.add("The provided value is not a valid integer for field: " + fieldName);
                         }
-                        break;
-
-                    case FLOAT:
+                    }
+                    case FLOAT -> {
                         // Validate floating-point number
                         if (!fieldValue.isFloat()) {
                             preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);
                         }
-                        break;
-
-                    default:
-                        preProcessResult.errors.add("Invalid fieldType: " + fieldType + " for field: " + fieldName);
-                        break;
+                    }
+                    default ->
+                            preProcessResult.errors.add("Invalid fieldType: " + fieldType + " for field: " + fieldName);
                 }
             }
         }
+    }
+    
+    private void updatePropertyInEntity(RoCrate roCrate, String entityId, String fieldName, String newValue) {
+        var entity = entityId.equals("./") ? roCrate.getRootDataEntity() : roCrate.getEntityById(entityId);
+        entity.getProperties().put(fieldName, newValue);
     }
 
     // check whether the dataset entity contains file entity related props
