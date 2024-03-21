@@ -1509,9 +1509,20 @@ public class Admin extends AbstractApiBean {
     @AuthRequired
     @Path("{id}/reregisterPID")
     public Response reregisterPID(@Context ContainerRequestContext crc, @PathParam("id") String id, @QueryParam("force") boolean force) {
-        String currentProtocol=Svc.get(SettingsServiceBean.Key.Protocol.toString());
-        logger.info("Starting to reregister  " + id + " Dataset Id. (from "+originalProtocol+" to "+currentProtocol+")" + new Date());
         try {
+            User u = getRequestUser(crc);
+            if (!u.isSuperuser()) {
+                logger.info("Bad Request Unauthor " );
+                return error(Status.UNAUTHORIZED, BundleUtil.getStringFromBundle("admin.api.auth.mustBeSuperUser"));
+            }
+
+            DataverseRequest r = createDataverseRequest(u);
+            Dataset ds = findDatasetOrDie(id);
+
+            String currentProtocol=Svc.get(SettingsServiceBean.Key.Protocol.toString());
+            String originalProtocol=ds.getProtocol();
+            logger.info("Starting to reregister  " + id + " Dataset Id. (from "+originalProtocol+" to "+currentProtocol+")" + new Date());
+
             if (originalProtocol.equals(currentProtocol)) {
                 if (force) {
                     logger.info("Protocol is the same, but force specified. Proceeding.");
@@ -1521,14 +1532,6 @@ public class Admin extends AbstractApiBean {
                 }
             }
 
-            User u = getRequestUser(crc);
-            if (!u.isSuperuser()) {
-                logger.info("Bad Request Unauthor " );
-                return error(Status.UNAUTHORIZED, BundleUtil.getStringFromBundle("admin.api.auth.mustBeSuperUser"));
-            }
-
-            DataverseRequest r = createDataverseRequest(u);
-            Dataset ds = findDatasetOrDie(id);
             if (ds.getIdentifier() != null && !ds.getIdentifier().isEmpty()) {
                 execCommand(new RegisterDvObjectCommand(r, ds, true));
             } else {
