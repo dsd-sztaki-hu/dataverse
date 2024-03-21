@@ -19,9 +19,9 @@ from rich.console import Console
 from rich.table import Table
 
 
-GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara5")
+GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara6")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
-_ENABLED=False
+DEBUG_ENABLED=False
 ### list dataverses/datasets/datafiles in a storage
 ### TODO: display some statistics
 def getList(args):
@@ -289,7 +289,7 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 	if move:
 		changeStorageInDatabase(destStorageName,id)
 		print(f"Removing original file {fromStorageName}://{key}")
-		client.delete_object(Bucket=bucket1.name,Key=key)
+		client1.delete_object(Bucket=bucket1.name,Key=key)
 
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
