@@ -1519,7 +1519,7 @@ public class Admin extends AbstractApiBean {
             DataverseRequest r = createDataverseRequest(u);
             Dataset ds = findDatasetOrDie(id);
 
-            String currentProtocol=Svc.get(SettingsServiceBean.Key.Protocol.toString());
+            String currentProtocol=settingsSvc.get(SettingsServiceBean.Key.Protocol.toString());
             String originalProtocol=ds.getProtocol();
             logger.info("Starting to reregister  " + id + " Dataset Id. (from "+originalProtocol+" to "+currentProtocol+")" + new Date());
 
