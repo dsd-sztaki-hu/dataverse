@@ -293,9 +293,7 @@ public class RoCrateImportManager {
             }
         } else {
             String value = "";
-            if (fieldValue.isTextual()) {
-                value = fieldValue.textValue();
-            } else {
+            if (fieldValue.isObject()) {
                 var entity = roCrate.getEntityById(fieldValue.get("@id").textValue());
                 if (entity != null) {
                     value = entity.getProperty("name").textValue();
@@ -304,6 +302,10 @@ public class RoCrateImportManager {
                     // however, the property from the rootDataset is not getting removed properly, so we must set it to null here
                     roCrate.getRootDataEntity().getProperties().set(datasetFieldType.getName(), null);
                 }
+            } else if (fieldValue.isTextual()){
+                value = fieldValue.textValue();
+            } else {
+                value = fieldValue.asText();
             }
             setSingleValue(dsfToUpdate, value);
         }
@@ -750,7 +752,7 @@ public class RoCrateImportManager {
                     }
                     case FLOAT -> {
                         // Validate floating-point number
-                        if (!fieldValue.isFloat()) {
+                        if (!fieldValue.isFloatingPointNumber()) {
                             preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);
                         }
                     }
