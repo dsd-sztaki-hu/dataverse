@@ -965,7 +965,9 @@ public class ArpApi extends AbstractApiBean {
             HttpResponse<byte[]> proxiedResponse = proxyClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
 
             // Begin building the response to the client
-            Response.ResponseBuilder responseBuilder = Response.ok(proxiedResponse.body());
+            Response.ResponseBuilder responseBuilder = Response.
+                    status(proxiedResponse.statusCode()).
+                    entity(proxiedResponse.body());
 
             // Filter and set response headers
             java.net.http.HttpHeaders responseHeaders = proxiedResponse.headers();
