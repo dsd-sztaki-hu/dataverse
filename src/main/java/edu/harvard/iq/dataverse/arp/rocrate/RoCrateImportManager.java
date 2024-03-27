@@ -229,7 +229,13 @@ public class RoCrateImportManager {
                                     childDatasetField.setSingleValue(linkedObj.get("name").textValue());
                                 }
                             } else {
-                                childDatasetField.setSingleValue(fieldValue.textValue());
+                                String valueToSet;
+                                if (fieldValue.isTextual()) {
+                                    valueToSet = fieldValue.textValue();
+                                } else {
+                                    valueToSet = fieldValue.asText();
+                                }
+                                childDatasetField.setSingleValue(valueToSet);
                             }
                         }
                     } else {
