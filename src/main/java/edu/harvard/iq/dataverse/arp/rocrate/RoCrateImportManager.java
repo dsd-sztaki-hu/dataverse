@@ -753,7 +753,13 @@ public class RoCrateImportManager {
                     case FLOAT -> {
                         // Validate floating-point number
                         if (!fieldValue.isFloatingPointNumber()) {
-                            preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);
+                            if (fieldValue.isNumber()) {
+                                var floatVal = Float.valueOf(fieldValue.asText());
+                                var entity = parentId.equals("./") ? roCrate.getRootDataEntity() : roCrate.getEntityById(parentId);
+                                entity.getProperties().put(fieldName, floatVal);
+                            } else {
+                                preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);   
+                            }
                         }
                     }
                     default ->
