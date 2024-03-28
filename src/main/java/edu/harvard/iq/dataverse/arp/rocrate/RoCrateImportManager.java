@@ -400,6 +400,34 @@ public class RoCrateImportManager {
     public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString) throws JsonProcessingException {
         return prepareRoCrateForDataverseImport(roCrateJsonString, null);
     }
+    
+    // AROMA often sends mixed-type arrays for numeric values, this function fixes the types for the arrays
+    // the fixes type should the datasetfieldtype but the ro-crate lib breaks if the arrays are not string arrays
+    private void normalizeArrayContent(JsonNode entities) {
+        var mapper = new ObjectMapper();
+        // collect the primitive dsf-s, only these type of arrays have to be normalized
+        var primitiveDsfTypeMap = fieldService.findAllOrderedById().stream().filter(DatasetFieldType::isPrimitive).collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
+        entities.forEach(entity -> {
+            entity.fields().forEachRemaining(field -> {
+                // primitive dsf with an array value
+                if (field.getValue().isArray() && primitiveDsfTypeMap.containsKey(field.getKey())) {
+                    var fieldType = primitiveDsfTypeMap.get(field.getKey()).getFieldType();
+                    if (fieldType.equals(DatasetFieldType.FieldType.INT) || fieldType.equals(DatasetFieldType.FieldType.FLOAT)) {
+                        // numbers have to be in string format otherwise the edu.kit.datamanager.ro_crate.reader.RoCrateReader.moveRootEntitiesFromGraphToCrate fails to create the rootNode
+                        var stringArray = mapper.createArrayNode();
+                        field.getValue().forEach(elem -> {
+                            if (elem.isTextual()) {
+                                stringArray.add(elem.textValue());
+                            } else {
+                                stringArray.add(elem.asText());
+                            }
+                        });
+                        field.setValue(stringArray);
+                    }
+                }
+            });
+        });
+    }
 
     // Prepare a given RO-Crate JSON String to be imported into Dataverse
     // This includes validation by the schema (mdbs) and removing unprocessable fields
@@ -417,6 +445,8 @@ public class RoCrateImportManager {
         if (!preProcessResult.errors.isEmpty()) {
             return preProcessResult;
         }
+        
+        normalizeArrayContent(roCrateEntities);
 
         RoCrate preProcessedRoCrate = roCrateStringReader.parseCrate(rootNode.toPrettyString());
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
