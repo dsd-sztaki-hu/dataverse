@@ -265,7 +265,6 @@ public class RoCrateImportManager {
                     // collect and update the already present values to keep their id-s
                     int index = 0;
                     List<DatasetFieldValue> fieldValues = dsfToUpdate.getDatasetFieldValues();
-                    List<DatasetFieldValue> newFieldValues = dsfToUpdate.getDatasetFieldValues();
                     for (Iterator<JsonNode> it = fieldValue.elements(); it.hasNext(); ) {
                         JsonNode e = it.next();
                         String newValue;
@@ -280,15 +279,11 @@ public class RoCrateImportManager {
                             // keep the original id
                             DatasetFieldValue updatedValue = fieldValues.get(index);
                             updatedValue.setValue(newValue);
-                            newFieldValues.add(updatedValue);
                         } else {
-                            DatasetField dsf = new DatasetField();
-                            dsf.setDatasetFieldType(datasetFieldType);
-                            newFieldValues.add(new DatasetFieldValue(dsf, newValue));
+                            fieldValues.add(new DatasetFieldValue(dsfToUpdate, newValue));
                         }
                         index++;
                     }
-                    dsfToUpdate.setDatasetFieldValues(newFieldValues);
                 }
             } else {
                 String newValue;
