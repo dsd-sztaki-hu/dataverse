@@ -710,6 +710,88 @@ public class RoCrateImportManager {
             validateConformsToObj(conformsToProperty, entityId, preProcessResult);
         }
     }
+    
+    private ArrayNode parseDateArray(String fieldName, JsonNode dateArray, RoCrateImportPrepResult preProcessResult) {
+        var mapper = new ObjectMapper();
+        var parsedDateArray = mapper.createArrayNode();
+        dateArray.forEach(date -> {
+            if (!date.isTextual() ||
+                    !date.textValue().matches("\\d{4}-\\d{2}-\\d{2}|\\d{4}-\\d{2}|\\d{4}")) {
+                try {
+                    String parsedDate = new SimpleDateFormat("yyyy-MM-dd")
+                            .format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                                    .parse(date.textValue()));
+                    parsedDateArray.add(parsedDate);
+                } catch (ParseException e) {
+                    preProcessResult.errors.add("The provided value is not a valid date for field: " + fieldName);
+                }
+            } else {
+                parsedDateArray.add(date);
+            }
+        });
+        
+        return parsedDateArray;
+    }
+    
+    private ArrayNode parseUrlArray(String fieldName, JsonNode urlArray, RoCrate roCrate, RoCrateImportPrepResult preProcessResult) {
+        var mapper = new ObjectMapper();
+        var parsedUrlArray = mapper.createArrayNode();
+        urlArray.forEach(url -> {
+            String parsedUrl;
+            if (url.isTextual()) {
+                parsedUrl = url.textValue();
+            } else if (url.isObject()){
+                parsedUrl = roCrate.getEntityById(url.get("@id").textValue()).getProperty("name").textValue();
+            } else {
+                parsedUrl = "";
+            }
+            if (!isURLValid(parsedUrl)) {
+                preProcessResult.errors.add("If not empty, the field must contain a valid URL for field: " + fieldName);
+            } else {
+                parsedUrlArray.add(parsedUrl);
+            }
+        });
+        
+        return parsedUrlArray;
+    }
+    
+    private ArrayNode parseIntArray(String fieldName, JsonNode intArray, RoCrateImportPrepResult preProcessResult) {
+        var mapper = new ObjectMapper();
+        var parsedIntArray = mapper.createArrayNode();
+        intArray.forEach(intNumber -> {
+            if (!intNumber.isInt()) {
+                try {
+                    var parsedInt = Integer.parseInt(intNumber.asText());
+                    parsedIntArray.add(parsedInt);
+                } catch (Exception e) {
+                    preProcessResult.errors.add("The provided value is not a valid integer for field: " + fieldName);
+                }
+            } else {
+                parsedIntArray.add(intNumber);
+            }
+        });
+        
+        return parsedIntArray;
+    }
+
+    private ArrayNode parseFloatArray(String fieldName, JsonNode intArray, RoCrateImportPrepResult preProcessResult) {
+        var mapper = new ObjectMapper();
+        var parsedFloatArray = mapper.createArrayNode();
+        intArray.forEach(floatNumber -> {
+            if (!floatNumber.isFloatingPointNumber()) {
+                try {
+                    var parsedFloat = Float.parseFloat(floatNumber.asText());
+                    parsedFloatArray.add(parsedFloat);
+                } catch (Exception e) {
+                    preProcessResult.errors.add("The provided value is not a valid integer for field: " + fieldName);
+                }
+            } else {
+                parsedFloatArray.add(floatNumber);
+            }
+        });
+
+        return parsedFloatArray;
+    }
 
     // check if the primitive field contains appropriate value(s), based on the fieldType definitions below:
     // https://guides.dataverse.org/en/latest/admin/metadatacustomization.html?highlight=metadata#fieldtype-definitions
@@ -718,9 +800,29 @@ public class RoCrateImportManager {
             if (lvl2) {
                 preProcessResult.errors.add("The field '" + fieldName + "' can not have Arrays as values, but got: " + fieldValue);
             }
-            // If fieldValue is an array, validate each element
-            for (JsonNode element : fieldValue) {
-                prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, element, parentId, controlledVocabularyValues, true, preProcessResult);
+            switch (fieldType) {
+                case DATE -> {
+                    var parsedDateArray = parseDateArray(fieldName, fieldValue, preProcessResult);
+                    updatePropertyInEntity(roCrate, parentId, fieldName, parsedDateArray);
+                }
+                case URL -> {
+                    var parsedUrlArray = parseUrlArray(fieldName, fieldValue, roCrate, preProcessResult);
+                    updatePropertyInEntity(roCrate, parentId, fieldName, parsedUrlArray);
+                }
+                case INT -> {
+                    var parsedIntArray = parseIntArray(fieldName, fieldValue, preProcessResult);
+                    updatePropertyInEntity(roCrate, parentId, fieldName, parsedIntArray);
+                }
+                case FLOAT -> {
+                    var parsedFloatArray = parseFloatArray(fieldName, fieldValue, preProcessResult);
+                    updatePropertyInEntity(roCrate, parentId, fieldName, parsedFloatArray);
+                }
+                default -> {
+                    // If fieldValue is an array and does not need parsing, validate each element
+                    for (JsonNode element : fieldValue) {
+                        prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, element, parentId, controlledVocabularyValues, true, preProcessResult);
+                    }
+                }
             }
         } else {
             if (!controlledVocabularyValues.isEmpty()) {
@@ -739,7 +841,7 @@ public class RoCrateImportManager {
                                 String parsedDate = new SimpleDateFormat("yyyy-MM-dd")
                                         .format(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
                                         .parse(fieldValue.textValue()));
-                                updatePropertyInEntity(roCrate, parentId, fieldName, parsedDate);
+                                updatePropertyInEntity(roCrate, parentId, fieldName, new TextNode(parsedDate));
                             } catch (ParseException e) {
                                 preProcessResult.errors.add("The provided value is not a valid date for field: " + fieldName);
                             }
@@ -776,24 +878,31 @@ public class RoCrateImportManager {
                         if (!isURLValid(url)) {
                             preProcessResult.errors.add("If not empty, the field must contain a valid URL for field: " + fieldName);
                         } else {
-                            updatePropertyInEntity(roCrate, parentId, fieldName, url);    
+                            updatePropertyInEntity(roCrate, parentId, fieldName, new TextNode(url));    
                         }
                     }
+                    // numbers have to be in string format otherwise the edu.kit.datamanager.ro_crate.reader.RoCrateReader.moveRootEntitiesFromGraphToCrate fails to create the rootNode
                     case INT -> {
                         // Validate integer value
                         if (!fieldValue.isInt()) {
-                            preProcessResult.errors.add("The provided value is not a valid integer for field: " + fieldName);
+                            try {
+                                var intVal = Integer.parseInt(fieldValue.asText());
+                                var entity = parentId.equals("./") ? roCrate.getRootDataEntity() : roCrate.getEntityById(parentId);
+                                entity.getProperties().put(fieldName, intVal);
+                            } catch (Exception e) {
+                                preProcessResult.errors.add("The provided value is not a valid integer for field: " + fieldName);
+                            }
                         }
                     }
                     case FLOAT -> {
                         // Validate floating-point number
                         if (!fieldValue.isFloatingPointNumber()) {
-                            if (fieldValue.isNumber()) {
-                                var floatVal = Float.valueOf(fieldValue.asText());
+                            try {
+                                var floatVal = Float.parseFloat(fieldValue.asText());
                                 var entity = parentId.equals("./") ? roCrate.getRootDataEntity() : roCrate.getEntityById(parentId);
                                 entity.getProperties().put(fieldName, floatVal);
-                            } else {
-                                preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);   
+                            } catch (Exception e) {
+                                preProcessResult.errors.add("The provided value is not a valid floating-point number for field: " + fieldName);
                             }
                         }
                     }
@@ -804,9 +913,9 @@ public class RoCrateImportManager {
         }
     }
     
-    private void updatePropertyInEntity(RoCrate roCrate, String entityId, String fieldName, String newValue) {
+    private void updatePropertyInEntity(RoCrate roCrate, String entityId, String fieldName, JsonNode newValue) {
         var entity = entityId.equals("./") ? roCrate.getRootDataEntity() : roCrate.getEntityById(entityId);
-        entity.getProperties().put(fieldName, newValue);
+        entity.getProperties().set(fieldName, newValue);
     }
 
     // check whether the dataset entity contains file entity related props
