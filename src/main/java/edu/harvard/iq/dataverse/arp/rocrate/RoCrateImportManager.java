@@ -271,8 +271,10 @@ public class RoCrateImportManager {
                         String newValue;
                         if (e.isTextual()) {
                             newValue = e.textValue();
-                        } else {
+                        } else if (e.isObject()){
                             newValue = roCrate.getEntityById(e.get("@id").textValue()).getProperty("name").textValue();
+                        } else {
+                            newValue = e.asText();
                         }
                         if (fieldValues.size() > index) {
                             // keep the original id
@@ -292,8 +294,10 @@ public class RoCrateImportManager {
                 String newValue;
                 if (fieldValue.isTextual()) {
                     newValue = fieldValue.textValue();
-                } else {
+                } else if (fieldValue.isObject()){
                     newValue = roCrate.getEntityById(fieldValue.get("@id").textValue()).getProperty("name").textValue();
+                } else {
+                    newValue = fieldValue.asText();
                 }
                 setSingleValue(dsfToUpdate, newValue);
             }
