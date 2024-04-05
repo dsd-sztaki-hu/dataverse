@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.ArpException;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.JsfHelper;
@@ -13,8 +14,16 @@ import edu.kit.datamanager.ro_crate.RoCrate;
 
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
+import jakarta.ws.rs.core.Response;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.FileUploadEvent;
+import org.primefaces.model.file.UploadedFile;
+
 import java.io.*;
 import java.util.*;
 import java.util.function.Function;
@@ -42,26 +51,33 @@ public class RoCrateUploadServiceBean implements Serializable {
     private ObjectNode roCrateParsed;
     // The @graph node
     private ArrayNode roCrateGraph;
+    
+    private UploadedFile uploadedRoCrate;
 
     // Mapping of the imported RO-CRATE file ids and their actual dataFile representation storageIdentifiers
     private HashMap<String, String> importMapping = new HashMap<>();
 
-    public void handleRoCrateUpload() {
-        String roCrateJsonString = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateJson");
-        String roCrateAsBase64 = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateAsBase64");
-        String roCrateName = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateName");
-        String roCrateType = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap().get("roCrateType");
-        setRoCrateJsonString(roCrateJsonString);
-        setRoCrateAsBase64(roCrateAsBase64);
+    public void handleDnd(FileUploadEvent event) {
+        UploadedFile uploadedRoCrateZip = event.getFile();
+        String roCrateName = uploadedRoCrateZip.getFileName();
+        String roCrateType = uploadedRoCrateZip.getContentType();
         setRoCrateName(roCrateName);
         setRoCrateType(roCrateType);
         try {
-            setRoCrateInputStream(processRoCrateZip(roCrateAsBase64));
+            setRoCrateInputStream(processRoCrateZip(uploadedRoCrateZip.getContent()));
+            if (roCrateJsonString == null) {
+                throw new ArpException("Missing " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+            }
         } catch (Exception e) {
             setRoCrateJsonString(null);
             setRoCrateInputStream(null);
+            if (e instanceof ArpException) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error: ", e.getMessage()));
+                FacesContext.getCurrentInstance().getExternalContext().setResponse(Response.serverError());
+            }
             e.printStackTrace();
-            JsfHelper.addErrorMessage("Can not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
+            JsfHelper.addErrorMessage("Could not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
         }
     }
     
@@ -177,36 +193,44 @@ public class RoCrateUploadServiceBean implements Serializable {
         }
     }
 
-    private ByteArrayInputStream processRoCrateZip(String roCrateAsBase64) throws IOException {
-        byte[] roCrateBytes = Base64.getDecoder().decode(roCrateAsBase64.split(",")[1]);
-        String entryNameToDelete = ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
+    public ByteArrayInputStream processRoCrateZip(byte[] roCrateBytes) {
+        List<String> entryNamesToDelete = List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        try (baos; ByteArrayInputStream bais = new ByteArrayInputStream(roCrateBytes);
-             ZipInputStream zis = new ZipInputStream(bais);
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
+        try ( baos;
+              ByteArrayInputStream bais = new ByteArrayInputStream(roCrateBytes);
+              ZipInputStream zipInputStream = new ZipInputStream(bais);
+              ZipOutputStream zos = new ZipOutputStream(baos)
+        ) {
             ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (!entry.getName().contains(entryNameToDelete)) {
-                    byte[] buffer = new byte[1024 * 32];
-                    int bytesRead;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                int bytesRead;
+                byte[] buffer = new byte[1024 * 32];
+                if (!entryNamesToDelete.contains(entry.getName())) {
                     zos.putNextEntry(entry);
-                    while ((bytesRead = zis.read(buffer)) != -1) {
+                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
                         zos.write(buffer, 0, bytesRead);
                     }
                     zos.closeEntry();
+                } else if (entry.getName().contains(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME)) {
+                    var cs = new ByteArrayOutputStream();
+                    while ((bytesRead = zipInputStream.read(buffer)) != -1) {
+                        cs.write(buffer, 0, bytesRead);
+                    }
+                    var jsonString = cs.toString();
+                    setRoCrateJsonString(jsonString);
                 }
             }
-            // the zip contained only the ro-crate-metadata.json
+            // If the zip contained only the ro-crate-metadata.json, return null
             if (baos.size() == 0) {
                 return null;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            JsfHelper.addErrorMessage("Could not process the content of the uploaded RO-Crate.zip " + e.getMessage());
+            JsfHelper.addErrorMessage("Could not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
             return null;
         }
-
+        
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
@@ -345,4 +369,11 @@ public class RoCrateUploadServiceBean implements Serializable {
         this.importMapping = importMapping;
     }
 
+    public UploadedFile getUploadedRoCrate() {
+        return uploadedRoCrate;
+    }
+
+    public void setUploadedRoCrate(UploadedFile uploadedRoCrate) {
+        this.uploadedRoCrate = uploadedRoCrate;
+    }
 }

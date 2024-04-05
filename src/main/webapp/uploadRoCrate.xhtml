@@ -2,76 +2,72 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
-    <h:head>
-        <h2>RO-Crate upload</h2>
-    </h:head>
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:jsf="http://xmlns.jcp.org/jsf"
+>
+<h:head>
+    <h2>RO-Crate upload</h2>
+</h:head>
 
-    <h:body>
-        <ui:composition template="/dataverse_template.xhtml">
-            <ui:define name="body">
-                <h:form id="uploadForm" method="post" enctype="multipart/form-data">
-                    <label for="fileInput">Choose a file to upload:</label>
-                    <input type="file" id="fileInput" name="fileInput" accept="application/zip" />
-                    <span id="emptyFileError"></span>
-                    <br />
-                    <input type="submit" value="Upload" />
-                    <p:remoteCommand name="sendRoCrateData" actionListener="#{roCrateUploadServiceBean.handleRoCrateUpload}" />
-                </h:form>
+<ui:param name="maxFileUploadSize" value="#{systemConfig.getMaxFileUploadSizeInBytes()}"/>
 
-                <script type="module">
-                    import { unzip } from 'https://cdn.skypack.dev/unzipit';
-                    const uploadForm = document.getElementById("uploadForm");
-                    const fileInput = document.getElementById("fileInput");
-                    const searchParams = new URLSearchParams(window.location.search)
-                    const ownerId = new URLSearchParams(window.location.search).get('ownerId')
+<h:body>
+    <ui:composition template="/dataverse_template.xhtml">
+        <ui:define name="body">
 
-                    const toBase64 = file => new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = () => resolve(reader.result);
-                        reader.onerror = error => reject(error);
-                    });
+            <!-- Upload -->
+            <div class="panel-group" role="tablist" aria-multiselectable="true" id="fileUploadFragment">
+                <div jsf:id="httpPanel" class="panel panel-default">
+                    <div role="tab" id="headingHTTP" data-toggle="collapse" data-target="#panelCollapseHTTP" class="panel-heading text-info" aria-expanded="true" aria-controls="panelCollapseHTTP">
+                        #{bundle['file.fromHTTP']} &#160;<span class="glyphicon glyphicon-chevron-up"/>
+                    </div>
+                    <div id="panelCollapseHTTP" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingHTTP">
+                        <h:form id="uploadForm" method="post" enctype="multipart/form-data">
+                            <script>
+                                //<![CDATA[
+                                function uploadWidgetDropMsg() {
+                                    const fileUpload = $('div[id$="fileUpload"] div.ui-fileupload-content');
+                                    if ($(fileUpload).children('#dragdropMsg').length === 0) {
+                                        $(fileUpload).prepend('<div id="dragdropMsg">#{bundle['file.selectToAdd.dragdropMsg']}</div>');
+                                    }
+                                }
 
-                    async function readFiles(files) {
-                        const {entries} = await unzip(files);
-                        Object.values(entries).forEach(f => console.log(f.name + " " + f.size))
-                        if (Object.values(entries).some(f => !f.isDirectory &amp;&amp; f.size === 0)) {
-                            return false;
-                        }
-                        return Object.values(entries).find(f => f.name === 'ro-crate-metadata.json');
-                    }
+                                $(document).ready(function () {
+                                    uploadWidgetDropMsg();
+                                });
+                                //]]>
+                            </script>
+                            <div class="panel-body" jsf:id="contentOfHttpPanel">
+                                <script>
+                                    function handleUploadComplete() {
+                                        const ownerId = new URLSearchParams(window.location.search).get('ownerId')
+                                        location.href = "dataset.xhtml?ownerId=" + ownerId;
+                                    }
+                                </script>
+                                <p:growl id="messageForLabelsRoCrateUpload" showDetail="true" />
+                                <p:fileUpload id="fileUpload"
+                                              mode="advanced"
+                                              auto="true"
+                                              multiple="false"
+                                              allowTypes="/(\.|\/)(zip)$/"
+                                              label="#{bundle['file.selectToAddBtn']}"
+                                              dragDropSupport="true"
+                                              sizeLimit="#{maxFileUploadSize}"
+                                              listener="#{roCrateUploadServiceBean.handleDnd}"
+                                              invalidSizeMessage="#{bundle['file.edit.error.file_exceeds_limit']}"
+                                              update="messageForLabelsRoCrateUpload"
+                                              oncomplete="javascript:handleUploadComplete()"
+                                />
+                            </div>
+                        </h:form>
+                    </div>
+                </div>
+            </div>
+            <!-- END: Upload -->
 
-                    uploadForm.addEventListener("submit", async function (event) {
-                        event.preventDefault();
-                        const roCrate = fileInput.files[0];
-                        const roCrateName = roCrate.name;
-                        const roCrateType = roCrate.type;
-                        const roCrateJson = await readFiles(roCrate)
-                        const blob = new Blob([roCrate], {type: 'application/zip'});
-                        const roCrateAsBase64 = await toBase64(blob);
-                        let roCrateData = [
-                            {name: 'roCrateAsBase64', value: roCrateAsBase64},
-                            {name: 'roCrateName', value: roCrateName},
-                            {name: 'roCrateType', value: roCrateType}
-                        ]
-                        if (roCrateJson) {
-                            const roCrateJsonText = await roCrateJson.text();
-                            roCrateData.push({name: 'roCrateJson', value: roCrateJsonText})
-                        } else {
-                            const error = document.getElementById("emptyFileError");
-                            if (roCrateJson === false) {
-                                error.innerHTML = "The .zip can not contain empty files."
-                            } else {
-                                error.innerHTML = "Missing 'ro-crate-metadata.json'."
-                            }
-                            return false;
-                        }
-                        await sendRoCrateData(roCrateData)
-                        location.href = "dataset.xhtml?ownerId=" + ownerId;
-                    });
-                </script>
-            </ui:define>
-        </ui:composition>
-    </h:body>
+        </ui:define>
+
+
+    </ui:composition>
+</h:body>
 </html>

@@ -111,6 +111,7 @@ public class ArpServiceBean implements java.io.Serializable {
     private EntityManager em;
 
     public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
+    public static String RO_CRATE_PREVIEW_HTML_NAME = "ro-crate-preview.html";
     public static String RO_CRATE_EXTRAS_JSON_NAME = "ro-crate-extras.json";
 
     private static JsonObject fileClassHu;
