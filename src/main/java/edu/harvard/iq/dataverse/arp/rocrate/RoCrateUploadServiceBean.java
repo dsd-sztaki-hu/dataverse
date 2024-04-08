@@ -15,6 +15,7 @@ import edu.kit.datamanager.ro_crate.RoCrate;
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 import jakarta.ws.rs.core.Response;
@@ -46,6 +47,7 @@ public class RoCrateUploadServiceBean implements Serializable {
     private String roCrateAsBase64;
     private String roCrateName;
     private String roCrateType;
+    private String ownerId;
     private InputStream roCrateInputStream;
     // The parsed roCrateJsonString
     private ObjectNode roCrateParsed;
@@ -68,13 +70,14 @@ public class RoCrateUploadServiceBean implements Serializable {
             if (roCrateJsonString == null) {
                 throw new ArpException("Missing " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
             }
+            ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+            externalContext.redirect("dataset.xhtml?ownerId=" + ownerId);
         } catch (Exception e) {
             setRoCrateJsonString(null);
             setRoCrateInputStream(null);
             if (e instanceof ArpException) {
-                FacesContext.getCurrentInstance().addMessage(null,
-                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Error: ", e.getMessage()));
-                FacesContext.getCurrentInstance().getExternalContext().setResponse(Response.serverError());
+                FacesContext.getCurrentInstance().addMessage(null, 
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("arp.rocrate.is.missing.summary"), BundleUtil.getStringFromBundle("arp.rocrate.is.missing", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))));
             }
             e.printStackTrace();
             JsfHelper.addErrorMessage("Could not process the " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME + "\n" + e.getMessage());
@@ -375,5 +378,13 @@ public class RoCrateUploadServiceBean implements Serializable {
 
     public void setUploadedRoCrate(UploadedFile uploadedRoCrate) {
         this.uploadedRoCrate = uploadedRoCrate;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 }

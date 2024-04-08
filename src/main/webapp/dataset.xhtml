@@ -2118,7 +2118,9 @@
 
                     // Set selected tab based on #tabName. Note: tabView's widget name is just "content",
                     // so roll with it
-                    selectTabByName('content', tabName);
+                    if (tabName) {
+                        selectTabByName('content', tabName);
+                    }
                   });
 
                   //]]>
