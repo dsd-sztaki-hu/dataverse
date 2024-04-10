@@ -259,31 +259,27 @@ public class RoCrateImportManager {
         DatasetField dsfToUpdate = updatedVersion.getDatasetField(datasetFieldType);
         if (datasetFieldType.isAllowMultiples()) {
             if (fieldValue.isArray()) {
-                if (fieldValue.elements().hasNext() && fieldValue.elements().next().isTextual()) {
-                    setSingleValue(dsfToUpdate, fieldValue.textValue());
-                } else {
-                    // collect and update the already present values to keep their id-s
-                    int index = 0;
-                    List<DatasetFieldValue> fieldValues = dsfToUpdate.getDatasetFieldValues();
-                    for (Iterator<JsonNode> it = fieldValue.elements(); it.hasNext(); ) {
-                        JsonNode e = it.next();
-                        String newValue;
-                        if (e.isTextual()) {
-                            newValue = e.textValue();
-                        } else if (e.isObject()){
-                            newValue = roCrate.getEntityById(e.get("@id").textValue()).getProperty("name").textValue();
-                        } else {
-                            newValue = e.asText();
-                        }
-                        if (fieldValues.size() > index) {
-                            // keep the original id
-                            DatasetFieldValue updatedValue = fieldValues.get(index);
-                            updatedValue.setValue(newValue);
-                        } else {
-                            fieldValues.add(new DatasetFieldValue(dsfToUpdate, newValue));
-                        }
-                        index++;
+                // collect and update the already present values to keep their id-s
+                int index = 0;
+                List<DatasetFieldValue> fieldValues = dsfToUpdate.getDatasetFieldValues();
+                for (Iterator<JsonNode> it = fieldValue.elements(); it.hasNext(); ) {
+                    JsonNode e = it.next();
+                    String newValue;
+                    if (e.isTextual()) {
+                        newValue = e.textValue();
+                    } else if (e.isObject()){
+                        newValue = roCrate.getEntityById(e.get("@id").textValue()).getProperty("name").textValue();
+                    } else {
+                        newValue = e.asText();
                     }
+                    if (fieldValues.size() > index) {
+                        // keep the original id
+                        DatasetFieldValue updatedValue = fieldValues.get(index);
+                        updatedValue.setValue(newValue);
+                    } else {
+                        fieldValues.add(new DatasetFieldValue(dsfToUpdate, newValue));
+                    }
+                    index++;
                 }
             } else {
                 String newValue;
