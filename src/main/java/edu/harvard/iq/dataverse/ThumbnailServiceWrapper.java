@@ -13,6 +13,10 @@ import edu.harvard.iq.dataverse.util.SystemConfig;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+import edu.harvard.iq.dataverse.dataaccess.DataAccess;
+import edu.harvard.iq.dataverse.dataaccess.StorageIO;
+import edu.harvard.iq.dataverse.dataset.DatasetUtil;
+import java.io.IOException;
 
 import jakarta.ejb.EJB;
 import jakarta.enterprise.context.RequestScoped;
@@ -170,13 +174,25 @@ public class ThumbnailServiceWrapper implements java.io.Serializable  {
 
         if (thumbnailFile == null) {
 
-            // We attempt to auto-select via the optimized, native query-based method
+            boolean hasDatasetLogo = false;
+            StorageIO<DvObject> storageIO = null;
+            try {
+                storageIO = DataAccess.getStorageIO(dataset);
+                if (storageIO.isAuxObjectCached(DatasetUtil.datasetLogoFilenameFinal)) {
+                    // If not, return null/use the default, otherwise pass the logo URL
+                    hasDatasetLogo = true;
+                }
+            } catch (IOException ioex) {
+                logger.warning("getDatasetCardImageAsUrl(): Failed to initialize dataset StorageIO for "
+                        + dataset.getStorageIdentifier() + " (" + ioex.getMessage() + ")");
+            }
+            // If no other logo we attempt to auto-select via the optimized, native
+            // query-based method
             // from the DatasetVersionService:
-            if (datasetVersionService.getThumbnailByVersionId(versionId) == null) {
+            if (!hasDatasetLogo && datasetVersionService.getThumbnailByVersionId(versionId) == null) {
                 return null;
             }
         }
-
         String url = SystemConfig.getDataverseSiteUrlStatic() + "/api/datasets/" + dataset.getId() + "/logo";
         logger.fine("getDatasetCardImageAsUrl: " + url);
         this.dvobjectThumbnailsMap.put(datasetId,url);
