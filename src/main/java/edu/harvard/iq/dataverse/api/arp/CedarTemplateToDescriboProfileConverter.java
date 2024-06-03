@@ -210,6 +210,8 @@ public class CedarTemplateToDescriboProfileConverter {
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
     }
 
+    // "dataverseFile" is a special Template Element in CEDAR that is used to represent file relations
+    // this property needs to be handled differently
     private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName) {
         DescriboInput describoInput = new DescriboInput();
 
@@ -222,7 +224,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setLabel(label);
         String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
         describoInput.setHelp(help);
-        describoInput.setType(List.of(propName));
+        describoInput.setType(List.of(propName.equals("dataverseFile") ? "File" : propName));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
