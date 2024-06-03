@@ -477,7 +477,17 @@ public class RoCrateImportManager {
                     if (containsId(preProcessedRoCrate.getRootDataEntity().getProperties(), entry.getKey())) {
                         iterator.remove();
                     } else {
-                        // there is no parent entity for the child entity
+                        // check if any file entity contains the id
+                        AtomicBoolean idAlreadyRemoved = new AtomicBoolean(false);
+                        preProcessedRoCrate.getAllDataEntities().forEach(entity -> {
+                            if (idAlreadyRemoved.get()) {
+                                return;
+                            }
+                            if (containsId(entity.getProperties(), entry.getKey())) {
+                                iterator.remove();
+                                idAlreadyRemoved.set(true);
+                            }
+                        });
                     }
                 }
             }
