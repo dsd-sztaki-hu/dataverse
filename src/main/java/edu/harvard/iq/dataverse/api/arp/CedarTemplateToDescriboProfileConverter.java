@@ -116,12 +116,12 @@ public class CedarTemplateToDescriboProfileConverter {
                             || (property.has("minItems") || property.has("maxItems"));
                     processTemplateField(property, allowMultiple, inputId, processedDescriboProfileValues, parentName);
                 } else if (actPropertyType.equals("TemplateElement")) {
-                    processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName);
+                    processTemplateElement(property, processedDescriboProfileValues, false, inputId, parentName, getJsonObject(cedarTemplate, "_ui.propertyLabels"));
                 }
             } else {
                 String actPropertyType = property.get("type").getAsString();
                 if (actPropertyType.equals("array")) {
-                    processArray(property, processedDescriboProfileValues, inputId, parentName);
+                    processArray(property, processedDescriboProfileValues, inputId, parentName, getJsonObject(cedarTemplate, "_ui.propertyLabels"));
                 }
             }
         }
@@ -212,11 +212,15 @@ public class CedarTemplateToDescriboProfileConverter {
 
     // "dataverseFile" is a special Template Element in CEDAR that is used to represent file relations
     // this property needs to be handled differently
-    private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName) {
+    private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName, JsonObject propertyLabels) {
         DescriboInput describoInput = new DescriboInput();
+        
+        String elementName = templateElement.get("schema:name").getAsString();
+        String elementNameReplaced = templateElement.get("schema:name").getAsString().replace(":", ".");
 
         // Replace the ":" with "." upon generating the Describo Profile from the CEDAR Template 
-        String propName = templateElement.get("schema:name").getAsString().replace(":", ".");
+        String propName = propertyLabels != null ? propertyLabels.get(elementName).getAsString().replace(":", ".") : elementNameReplaced;
+        String type = templateElement.has("schema:identifier") ? templateElement.get("schema:identifier").getAsString().replace(":", ".") : elementNameReplaced;
         
         describoInput.setId(inputId);
         describoInput.setName(propName);
@@ -224,7 +228,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setLabel(label);
         String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
         describoInput.setHelp(help);
-        describoInput.setType(List.of(propName.equals("dataverseFile") ? "File" : propName));
+        describoInput.setType(List.of(type.equals("dataverseFile") ? "File" : propName));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
@@ -235,13 +239,13 @@ public class CedarTemplateToDescriboProfileConverter {
         processTemplate(templateElement, processedDescriboProfileValues, propName);
     }
 
-    public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId, String parentName) {
+    public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId, String parentName, JsonObject propertyLabels) {
         JsonObject items = array.getAsJsonObject("items");
         String inputType = Optional.ofNullable(getJsonElement(items, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         if (inputType != null) {
             processTemplateField(items, true, inputId, processedDescriboProfileValues, parentName);
         } else {
-            processTemplateElement(items, processedDescriboProfileValues, true, inputId, parentName);
+            processTemplateElement(items, processedDescriboProfileValues, true, inputId, parentName, propertyLabels);
         }
     }
     
