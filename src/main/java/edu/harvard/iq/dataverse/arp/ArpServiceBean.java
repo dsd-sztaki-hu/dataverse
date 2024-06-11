@@ -964,9 +964,8 @@ public class ArpServiceBean implements java.io.Serializable {
         List<String> propLabels = getJsonObject(cedarTemplateJson, "_ui.propertyLabels").entrySet().stream()
                 .map(e -> e.getValue().getAsString()).collect(Collectors.toList());
 
-        // The "schema:name" property is used as the type of the property in AROMA
-        // its value is the same as the value of the "schema:identifier" property
-        String aromaType = cedarTemplateJson.get("schema:name").getAsString();
+        // The "schema:identifier" property is used as the type of the property in AROMA
+        String aromaType = cedarTemplateJson.has("schema:identifier") ? cedarTemplateJson.get("schema:identifier").getAsString() : cedarTemplateJson.get("schema:name").getAsString();
 
         // "dataverseFile" is a special Template Element in CEDAR that is used to represent file relations
         // this property needs to be handled differently
@@ -977,7 +976,7 @@ public class ArpServiceBean implements java.io.Serializable {
                 .filter(s -> s.getValue() > 1 ||
                         !s.getKey().matches("^(?![_\\W].*_$)[^0-9:]\\w*(:?\\w*)*") ||
                         listOfStaticFields.contains(s.getKey()) && metadataBlockService.findByName(mdbName) == null
-                        && !aromaType.equals("dataverseFile")
+                        && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset")
                 )
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());

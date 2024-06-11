@@ -221,6 +221,7 @@ public class CedarTemplateToDescriboProfileConverter {
         // Replace the ":" with "." upon generating the Describo Profile from the CEDAR Template 
         String propName = propertyLabels != null ? propertyLabels.get(elementName).getAsString().replace(":", ".") : elementNameReplaced;
         String type = templateElement.has("schema:identifier") ? templateElement.get("schema:identifier").getAsString().replace(":", ".") : elementNameReplaced;
+        String actualType = type.equals("dataverseFile") ? "File" : type.equals("dataverseDataset") ? "Dataset" : propName;
         
         describoInput.setId(inputId);
         describoInput.setName(propName);
@@ -228,7 +229,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setLabel(label);
         String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
         describoInput.setHelp(help);
-        describoInput.setType(List.of(type.equals("dataverseFile") ? "File" : propName));
+        describoInput.setType(List.of(actualType));
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
