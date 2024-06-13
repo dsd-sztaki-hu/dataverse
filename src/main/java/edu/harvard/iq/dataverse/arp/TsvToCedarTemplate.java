@@ -268,7 +268,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
                 ? jsonSchema.get("properties").getAsJsonObject().get(datasetField.getName()).getAsJsonObject().deepCopy()
                 : EMPTY_CEDAR_TEMPLATE_FIELD.deepCopy();
 
-        processCommonFields(templateField, datasetField, dataverseMetadataBlock);
+        processCommonFields(templateField, datasetField, dataverseMetadataBlock, false);
         
 
         switch (fieldType) {
@@ -338,7 +338,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
         final var finalElement = templateElement;
 
-        processCommonFields(templateElement, datasetField, dataverseMetadataBlock);
+        processCommonFields(templateElement, datasetField, dataverseMetadataBlock, true);
         children.forEach(child -> {
             JsonArray cvvs = new JsonArray();
             controlledVocabularyValues.stream()
@@ -355,7 +355,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         addValueToParent(jsonSchema, templateElement, datasetField, false, dataverseMetadataBlock);
     }
 
-    private void processCommonFields(JsonObject templateElement, DataverseDatasetField datasetField, DataverseMetadataBlock dataverseMetadataBlock) {
+    private void processCommonFields(JsonObject templateElement, DataverseDatasetField datasetField, DataverseMetadataBlock dataverseMetadataBlock, boolean setIdentifier) {
 
         /*
          * fieldnames can not contain dots in CEDAR, so we replace them with colons before exporting the template
@@ -378,6 +378,10 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         }
 
         templateElement.addProperty("schema:name", propName);
+        // For template elements set the identifier to the "schema:name"
+        if (setIdentifier) {
+            templateElement.addProperty("schema:identifier", propName);
+        }
         templateElement.addProperty("schema:description", datasetField.getDescription());
         try {
             // We need dot notation to access prop translation
