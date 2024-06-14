@@ -1008,6 +1008,10 @@ public class ArpServiceBean implements java.io.Serializable {
                     continue;
                 }
             }
+            var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
+            if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
+                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", prop));
+            }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
                     cedarTemplateErrors.unprocessableElements.add(newPath);

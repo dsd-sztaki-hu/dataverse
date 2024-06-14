@@ -165,7 +165,7 @@ public class ArpApi extends AbstractApiBean {
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        if (!(errors.invalidNames.isEmpty() && errors.unprocessableElements.isEmpty())) {
+        if (!(errors.invalidNames.isEmpty() && errors.unprocessableElements.isEmpty() && errors.errors.isEmpty())) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                             .add("status", STATUS_ERROR)
