@@ -986,6 +986,10 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         
         for (String prop : propNames) {
+            var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
+            if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
+                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", prop));
+            }
             // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
             // ie. we can have an MDB named "journal" and a prop name "journal" as well.
             // if (mdbNames.contains(prop)) {
@@ -1007,10 +1011,6 @@ public class ArpServiceBean implements java.io.Serializable {
                     createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
                     continue;
                 }
-            }
-            var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
-            if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
-                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", prop));
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
@@ -1041,7 +1041,7 @@ public class ArpServiceBean implements java.io.Serializable {
             if (v.equals(termUri)) {
                 DatasetFieldType original = datasetFieldService.findByName(k);
                 // There's no need to create overrides if the original metadata block is updated
-                if (!mdbName.equals(original.getMetadataBlock().getName())) {
+                if (original != null && !mdbName.equals(original.getMetadataBlock().getName())) {
                     DatasetFieldTypeOverride override = new DatasetFieldTypeOverride();
                     override.setOriginal(original);
                     override.setTitle(actProp.has("skos:prefLabel") ? actProp.get("skos:prefLabel").getAsString() : "");
