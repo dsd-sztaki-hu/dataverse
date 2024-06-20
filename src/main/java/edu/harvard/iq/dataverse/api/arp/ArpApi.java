@@ -25,6 +25,7 @@ import edu.harvard.iq.dataverse.util.ConstraintViolationUtil;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -43,6 +44,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -118,18 +123,19 @@ public class ArpApi extends AbstractApiBean {
     @Inject
     DataverseSession dataverseSession;
 
-    HttpClient proxyClient;
+    public ArpApi() throws NoSuchAlgorithmException, KeyManagementException {
+    }
 
-    public ArpApi() throws NoSuchAlgorithmException, KeyManagementException
-    {
-        // Configure proxyClient to ignore SSL Certs
+    private HttpClient createHttpClient(ExecutorService executorService) throws NoSuchAlgorithmException, KeyManagementException {
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
                     public X509Certificate[] getAcceptedIssuers() {
                         return new X509Certificate[]{};
                     }
+
                     public void checkClientTrusted(X509Certificate[] certs, String authType) {
                     }
+
                     public void checkServerTrusted(X509Certificate[] certs, String authType) {
                     }
                 }
@@ -139,11 +145,15 @@ public class ArpApi extends AbstractApiBean {
         SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(null, trustAllCerts, new SecureRandom());
 
-        // Create a HttpClient with the custom SSLContext
-        proxyClient = HttpClient.newBuilder()
+        // Create a HttpClient with the custom SSLContext and ExecutorService
+        return HttpClient.newBuilder()
                 .sslContext(sslContext)
+                .executor(executorService)
                 .build();
     }
+
+
+
 
     /**
      * Checks whether a CEDAR template is valid for use as a Metadatablock.
@@ -927,31 +937,34 @@ public class ArpApi extends AbstractApiBean {
      * adds the necessary api key authentication to request. For this to work the arp.cedar.domain and
      * arp.cedar.proxyApiKey configurations must be set.
      *
-     * @param urlInPath the URL to download
+     * @param cedarUrl        the URL to download
      * @param incomingHeaders the request headers
-     *
-     * @return contents of urlInPath
+     * @return contents of cedarUrl
      */
+    @GET
+    @Path("proxy")
     public Response doCedarResourceProxy(
-            String cedarUrl,
+            @QueryParam("cedarUrl") String cedarUrl,
             @Context HttpHeaders incomingHeaders
-    ){
-        String subdomain = "resource."+arpConfig.get("arp.cedar.domain");
+    ) {
+        String subdomain = "resource." + arpConfig.get("arp.cedar.domain");
         String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
-
 
         if (cedarUrl == null || cedarUrl.isBlank()) {
             logger.severe("/cedarResourceProxy: URL path parameter is missing");
             return Response.status(Response.Status.BAD_REQUEST).entity("URL parameter is required").build();
         }
 
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
+            HttpClient proxyClient = createHttpClient(executorService);
+
             URI uri = new URI(cedarUrl);
             if (!uri.getHost().endsWith(subdomain)) {
-                logger.severe("/cedarResourceProxy: Invalid URL: "+uri);
+                logger.severe("/cedarResourceProxy: Invalid URL: " + uri);
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
             }
-            logger.info("/cedarResourceProxy: proxying URL: "+uri);
+            logger.info("/cedarResourceProxy: proxying URL: " + uri);
 
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .uri(uri)
@@ -961,13 +974,15 @@ public class ArpApi extends AbstractApiBean {
             requestBuilder.header("Authorization", "apiKey " + apiKey);
             requestBuilder.header("Accept", "application/json");
 
-            // Forward the request
-            HttpResponse<byte[]> proxiedResponse = proxyClient.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
+            // Forward the request asynchronously
+            CompletableFuture<HttpResponse<byte[]>> responseFuture = proxyClient.sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
+
+            HttpResponse<byte[]> proxiedResponse = responseFuture.get(); // Blocking wait for the response
 
             // Begin building the response to the client
-            Response.ResponseBuilder responseBuilder = Response.
-                    status(proxiedResponse.statusCode()).
-                    entity(proxiedResponse.body());
+            Response.ResponseBuilder responseBuilder = Response
+                    .status(proxiedResponse.statusCode())
+                    .entity(proxiedResponse.body());
 
             // Filter and set response headers
             java.net.http.HttpHeaders responseHeaders = proxiedResponse.headers();
@@ -984,15 +999,26 @@ public class ArpApi extends AbstractApiBean {
 
             return responseBuilder.build();
         } catch (Exception e) {
-            logger.severe("/cedarResourceProxy: "+e.getMessage());
+            logger.severe("/cedarResourceProxy: " + e.getMessage());
             e.printStackTrace();
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
+        } finally {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                    if (!executorService.awaitTermination(1, TimeUnit.SECONDS))
+                        System.err.println("ExecutorService did not terminate");
+                }
+            } catch (InterruptedException ie) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
     /**
      * Get the api key (api token) for a user authenticated via JSESSIONID
-     * @param cedarUrl
      * @param incomingHeaders
      * @return
      */
