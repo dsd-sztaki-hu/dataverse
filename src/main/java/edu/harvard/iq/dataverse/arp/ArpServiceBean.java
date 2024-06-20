@@ -961,8 +961,9 @@ public class ArpServiceBean implements java.io.Serializable {
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
         List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
-        List<String> propLabels = getJsonObject(cedarTemplateJson, "_ui.propertyLabels").entrySet().stream()
-                .map(e -> e.getValue().getAsString()).collect(Collectors.toList());
+        JsonElement propsAndLabels = getJsonElement(cedarTemplateJson, "_ui.propertyLabels");
+        List<String> propLabels = propsAndLabels.getAsJsonObject().entrySet().stream()
+                .map(e -> e.getValue().getAsString()).toList();
 
         // The "schema:identifier" property is used as the type of the property in AROMA
         String aromaType = cedarTemplateJson.has("schema:identifier") ? cedarTemplateJson.get("schema:identifier").getAsString() : cedarTemplateJson.get("schema:name").getAsString();
@@ -988,7 +989,7 @@ public class ArpServiceBean implements java.io.Serializable {
         for (String prop : propNames) {
             var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
             if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
-                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", prop));
+                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", getPropertyLabel(propsAndLabels, prop)));
             }
             // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
             // ie. we can have an MDB named "journal" and a prop name "journal" as well.
@@ -1027,6 +1028,25 @@ public class ArpServiceBean implements java.io.Serializable {
         }
 
         return cedarTemplateErrors;
+    }
+    
+    private String getPropertyLabel(JsonElement propertyLabels, String propName) {
+        String propLabel = propName;
+        if (propertyLabels.isJsonArray()) {
+            for (JsonElement prop : propertyLabels.getAsJsonArray()) {
+                JsonObject propObj = prop.getAsJsonObject();
+                if (propObj.keySet().contains(propName)) {
+                    propLabel = propObj.get(propName).getAsString();
+                }
+            }
+        } else if (propertyLabels.isJsonObject()) {
+            JsonObject propObj = propertyLabels.getAsJsonObject();
+            if (propObj.keySet().contains(propName)) {
+                propLabel = propObj.get(propName).getAsString();
+            }
+        }
+        
+        return propLabel;
     }
     
     // props that require DatasetFieldTypeOverride creation are stored in the cedarTemplateErrors.incompatiblePairs

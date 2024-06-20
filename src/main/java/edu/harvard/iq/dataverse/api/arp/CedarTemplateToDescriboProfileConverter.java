@@ -215,16 +215,14 @@ public class CedarTemplateToDescriboProfileConverter {
     private void processTemplateElement(JsonObject templateElement, ProcessedDescriboProfileValues processedDescriboProfileValues, boolean allowMultiple, String inputId, String parentName, JsonObject propertyLabels) {
         DescriboInput describoInput = new DescriboInput();
         
-        String elementName = templateElement.get("schema:name").getAsString();
         String elementNameReplaced = templateElement.get("schema:name").getAsString().replace(":", ".");
 
         // Replace the ":" with "." upon generating the Describo Profile from the CEDAR Template 
-        String propName = propertyLabels != null ? propertyLabels.get(elementName).getAsString().replace(":", ".") : elementNameReplaced;
         String type = templateElement.has("schema:identifier") ? templateElement.get("schema:identifier").getAsString().replace(":", ".") : elementNameReplaced;
-        String actualType = type.equals("dataverseFile") ? "File" : type.equals("dataverseDataset") ? "Dataset" : propName;
+        String actualType = type.equals("dataverseFile") ? "File" : type.equals("dataverseDataset") ? "Dataset" : elementNameReplaced;
         
         describoInput.setId(inputId);
-        describoInput.setName(propName);
+        describoInput.setName(elementNameReplaced);
         String label = getLocalizedLabel(templateElement); //Optional.ofNullable(templateElement.get("skos:prefLabel")).map(JsonElement::getAsString).orElse(propName);
         describoInput.setLabel(label);
         String help = getLocalizedHelp(templateElement); // Optional.ofNullable(templateElement.get("schema:description")).map(JsonElement::getAsString).orElse(null);
@@ -234,10 +232,10 @@ public class CedarTemplateToDescriboProfileConverter {
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
 
-        processedDescriboProfileValues.classLocalizations.put(propName, new ClassLocalization(label, help));
+        processedDescriboProfileValues.classLocalizations.put(elementNameReplaced, new ClassLocalization(label, help));
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
         
-        processTemplate(templateElement, processedDescriboProfileValues, propName);
+        processTemplate(templateElement, processedDescriboProfileValues, elementNameReplaced);
     }
 
     public void processArray(JsonObject array, ProcessedDescriboProfileValues processedDescriboProfileValues, String inputId, String parentName, JsonObject propertyLabels) {
