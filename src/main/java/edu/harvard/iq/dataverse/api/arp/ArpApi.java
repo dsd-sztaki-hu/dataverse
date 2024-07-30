@@ -21,11 +21,9 @@ import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVe
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
-import edu.harvard.iq.dataverse.util.ConstraintViolationUtil;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
-import jakarta.annotation.PreDestroy;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -151,25 +149,22 @@ public class ArpApi extends AbstractApiBean {
                 .executor(executorService)
                 .build();
     }
-
-
-
-
+    
     /**
-     * Checks whether a CEDAR template is valid for use as a Metadatablock.
+     * Checks whether a CEDAR resource is valid for use in or use as a Metadatablock.
      *
      * Requires no authentication.
      *
-     * @param templateJson
+     * @param resourceJson
      * @return
      */
     @POST
-    @Path("/checkCedarTemplate")
+    @Path("/checkCedarResource")
     @Consumes("application/json")
-    public Response checkCedarTemplateCall(String templateJson) {
+    public Response checkCedarResourceCall(String resourceJson) {
         CedarTemplateErrors errors;
         try {
-            errors = arpService.checkTemplate(templateJson);
+            errors = arpService.validateCedarResource(resourceJson, true);
         } catch (Exception e) {
             e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -183,7 +178,7 @@ public class ArpApi extends AbstractApiBean {
                     ).type(MediaType.APPLICATION_JSON_TYPE).build();
         }
 
-        return ok("Valid Template");
+        return ok("Valid Resource");
     }
 
     /**
@@ -431,7 +426,7 @@ public class ArpApi extends AbstractApiBean {
         String describoProfile;
 
         try {
-            Response checkTemplateResponse = checkCedarTemplateCall(templateJson);
+            Response checkTemplateResponse = checkCedarResourceCall(templateJson);
             if (!checkTemplateResponse.getStatusInfo().toEnum().equals(Response.Status.OK)) {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);

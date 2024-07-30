@@ -25,7 +25,6 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
@@ -927,8 +926,28 @@ public class ArpServiceBean implements java.io.Serializable {
     }
     //endregion
 
+    // At this point it is enough to check whether the field follows the DV naming conventions,
+    // everything else is checked in checkCedarTemplate when the field is used in an element or a template
+    // and the identifier is already checked
+    public CedarTemplateErrors checkCedarField(JsonObject fieldObj, List<String> listOfStaticFields, String mdbName) throws Exception {
+        var errors = new CedarTemplateErrors();
+        var fieldName = fieldObj.get("schema:name").getAsString();
+        String aromaType = fieldObj.has("schema:identifier") ? fieldObj.get("schema:identifier").getAsString() : fieldObj.get("schema:name").getAsString();
+        if (notFollowsDvNamingConvention(fieldName, listOfStaticFields, aromaType, mdbName)) {
+            errors.invalidNames.add(fieldName);
+        }
+        return errors;
+    }
 
-    public CedarTemplateErrors checkTemplate(String cedarTemplate) throws Exception {
+    // "dataverseFile" and "dataverseDataset" are special Template Elements in CEDAR that are used to represent file relations
+    // these properties need to be handled differently
+    boolean notFollowsDvNamingConvention(String fieldName, List<String> listOfStaticFields, String aromaType, String mdbName) {
+        return !fieldName.matches("^(?![_\\W].*_$)[^0-9:]\\w*(:?\\w*)*") ||
+                listOfStaticFields.contains(fieldName) && metadataBlockService.findByName(mdbName) == null
+                        && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset");
+    }
+
+    public CedarTemplateErrors validateCedarResource(String cedarTemplate, boolean checkOnly) throws Exception {
         Map<String, String> propAndTermUriMap = listBlocksWithUri();
 
         // region Static fields from src/main/java/edu/harvard/iq/dataverse/api/Index.java: listOfStaticFields
@@ -945,42 +964,46 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         //endregion
 
-        // Check whether template has an identifier. TODO: we should make sure it is unique
+        // Check whether resource has an identifier. TODO: we should make sure it is unique
         var errors = new CedarTemplateErrors();
-        var idNode = new ObjectMapper().readTree(cedarTemplate).get("schema:identifier");
+        var cedarResource = new GsonBuilder().setPrettyPrinting().create().fromJson(cedarTemplate, JsonObject.class);
+        var idNode = cedarResource.get("schema:identifier");
         if (idNode == null) {
-            errors.errors.add("Template identifier missing");
+            errors.errors.add("Identifier missing");
             return errors;
         }
-        String mdbId = idNode.textValue();
-        return checkCedarTemplate(cedarTemplate, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId);
+        
+        String mdbId = idNode.getAsString();
+        var resourceType = cedarResource.get("@type").getAsString();
+        resourceType = resourceType.substring(resourceType.lastIndexOf("/") + 1);
+        
+        if (resourceType.equals("TemplateField")) {
+            return checkCedarField(cedarResource, listOfStaticFields, mdbId);
+        } else if (resourceType.equals("TemplateElement") || resourceType.equals("Template")) {
+            return checkCedarTemplate(cedarResource, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId, checkOnly);
+        } else {
+            throw new Exception("Unsupported resource type: " + resourceType);
+        }
     }
 
-    public CedarTemplateErrors checkCedarTemplate(String cedarTemplate, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName) throws Exception {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
-
-        List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
+    public CedarTemplateErrors checkCedarTemplate(JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName, boolean checkOnly) throws Exception {
+       List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
         JsonElement propsAndLabels = getJsonElement(cedarTemplateJson, "_ui.propertyLabels");
         List<String> propLabels = propsAndLabels.getAsJsonObject().entrySet().stream()
                 .map(e -> e.getValue().getAsString()).toList();
 
         // The "schema:identifier" property is used as the type of the property in AROMA
         String aromaType = cedarTemplateJson.has("schema:identifier") ? cedarTemplateJson.get("schema:identifier").getAsString() : cedarTemplateJson.get("schema:name").getAsString();
-
-        // "dataverseFile" is a special Template Element in CEDAR that is used to represent file relations
-        // this property needs to be handled differently
+        
         List<String> invalidNames = propLabels.stream().collect(
                         Collectors.groupingBy(Function.identity(), Collectors.counting()))
                 .entrySet()
                 .stream()
                 .filter(s -> s.getValue() > 1 ||
-                        !s.getKey().matches("^(?![_\\W].*_$)[^0-9:]\\w*(:?\\w*)*") ||
-                        listOfStaticFields.contains(s.getKey()) && metadataBlockService.findByName(mdbName) == null
-                        && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset")
+                        notFollowsDvNamingConvention(s.getKey(), listOfStaticFields, aromaType, mdbName)
                 )
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .toList();
 
         if (!invalidNames.isEmpty()) {
             cedarTemplateErrors.invalidNames.addAll(invalidNames);
@@ -1002,23 +1025,28 @@ public class ArpServiceBean implements java.io.Serializable {
             if (actProp.has("@type")) {
                 propType = actProp.get("@type").getAsString();
                 propType = propType.substring(propType.lastIndexOf("/") + 1);
-                createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
+                if (!checkOnly) {
+                    createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
+                }
 
             } else {
                 propType = actProp.get("type").getAsString();
                 actProp = getJsonObject(actProp, "items");
                 String itemsType = actProp.get("@type").getAsString();
                 if (itemsType.substring(itemsType.lastIndexOf("/") + 1).equals("TemplateField")) {
-                    createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
+                    //checkCedarField(actProp, listOfStaticFields, mdbName);
+                    if (!checkOnly) {
+                        createOverrideIfRequired(actProp, prop, cedarTemplateJson, cedarTemplateErrors, dvPropTermUriPairs, mdbName);
+                    }
                     continue;
                 }
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
                     cedarTemplateErrors.unprocessableElements.add(newPath);
-                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName);
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName, checkOnly);
                 } else {
-                    checkCedarTemplate(actProp.toString(), cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName);
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName, checkOnly);
                 }
             } else {
                 if (!propType.equals("TemplateField") && !propType.equals("StaticTemplateField")) {
@@ -1258,7 +1286,7 @@ public class ArpServiceBean implements java.io.Serializable {
         Set<String> overridePropNames = new HashSet<>();
 
         try {
-            CedarTemplateErrors cedarTemplateErrors = checkTemplate(templateJson);
+            CedarTemplateErrors cedarTemplateErrors = validateCedarResource(templateJson, false);
             if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty() && cedarTemplateErrors.errors.isEmpty())) {
                 throw new CedarTemplateErrorsException(cedarTemplateErrors);
             }
