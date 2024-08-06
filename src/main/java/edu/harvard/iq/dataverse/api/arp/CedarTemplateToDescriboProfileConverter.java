@@ -198,14 +198,19 @@ public class CedarTemplateToDescriboProfileConverter {
         }
         
         // hard-coded regexes
-        if (Objects.equals(fieldType, "email")) {
+        if (Objects.equals(fieldType, "email") && describoInput.getRegex() == null) {
             describoInput.setRegex("^((?!\\.)[\\w\\-_.]*[^.])(@\\w+)(\\.\\w+(\\.\\w+)?[^.\\W])$");
         }
 
-        if (Objects.equals(fieldType, "phone-number")) {
+        if (Objects.equals(fieldType, "phone-number") && describoInput.getRegex() == null) {
             describoInput.setRegex("(?:([+]\\d{1,4})[-.\\s]?)?(?:[(](\\d{1,3})[)][-.\\s]?)?(\\d{1,4})[-.\\s]?(\\d{1,4})[-.\\s]?(\\d{1,9})");
         }
         
+        if (Objects.equals(fieldType, "textfield")) {
+            Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.dateFormat"))
+                    .map(JsonElement::getAsString)
+                    .ifPresent(dateFormat -> describoInput.setDateFormat(List.of(dateFormat)));
+        }
 
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
     }
@@ -379,6 +384,7 @@ public class CedarTemplateToDescriboProfileConverter {
         private String regex;
         private String placeholder;
         private List<String> numberType;
+        private List<String> dateFormat;
 
         public DescriboInput() {
         }
@@ -511,6 +517,14 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setNumberType(List<String> numberType) {
             this.numberType = numberType;
+        }
+        
+        public List<String> getDateFormat() {
+            return dateFormat;
+        }
+
+        public void setDateFormat(List<String> dateFormat) {
+            this.dateFormat = dateFormat;
         }
     }
 
