@@ -14,38 +14,38 @@
 	studyAssayPlatform	Technology Platform	The manufacturer and name of the technology platform used in the assay (e.g. Bruker AVANCE).		text	10		TRUE	TRUE	TRUE	TRUE	FALSE	FALSE		biomedical
 	studyAssayOtherPlatform	Other Technology Platform	If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.		text	11		TRUE	FALSE	TRUE	TRUE	FALSE	FALSE		biomedical
 	studyAssayCellType	Cell Type	The name of the cell line from which the source or sample derives.		text	12		TRUE	FALSE	TRUE	TRUE	FALSE	FALSE		biomedical
-#controlledVocabulary	DatasetField	Value	identifier	displayOrder
-	studyDesignType	Case Control	EFO_0001427	0
-	studyDesignType	Cross Sectional	EFO_0001428	1
-	studyDesignType	Cohort Study	OCRE100078	2
-	studyDesignType	Nested Case Control Design	NCI_C48202	3
-	studyDesignType	Not Specified	NOT_SPECIFIED	4
-	studyDesignType	Parallel Group Design	OBI_0500006	5
-	studyDesignType	Perturbation Design	OBI_0001033	6
-	studyDesignType	Randomized Controlled Trial	MESH_D016449	7
-	studyDesignType	Technological Design	TECH_DESIGN	8
-	studyDesignType	Other	OTHER_DESIGN	9
-	studyFactorType	Age	EFO_0000246	0
-	studyFactorType	Biomarkers	BIOMARKERS	1
-	studyFactorType	Cell Surface Markers	CELL_SURFACE_M	2
-	studyFactorType	Cell Type/Cell Line	EFO_0000324;EFO_0000322	3
-	studyFactorType	Developmental Stage	EFO_0000399	4
-	studyFactorType	Disease State	OBI_0001293	5
-	studyFactorType	Drug Susceptibility	IDO_0000469	6
-	studyFactorType	Extract Molecule	FBcv_0010001	7
-	studyFactorType	Genetic Characteristics	OBI_0001404	8
-	studyFactorType	Immunoprecipitation Antibody	OBI_0000690	9
-	studyFactorType	Organism	OBI_0100026	10
-	studyFactorType	Passages	PASSAGES_FACTOR	11
-	studyFactorType	Platform	OBI_0000050	12
-	studyFactorType	Sex	EFO_0000695	13
-	studyFactorType	Strain	EFO_0005135	14
-	studyFactorType	Time Point	EFO_0000724	15
-	studyFactorType	Tissue Type	BTO_0001384	16
-	studyFactorType	Treatment Compound	EFO_0000369	17
-	studyFactorType	Treatment Type	EFO_0000727	18
-	studyFactorType	Other	OTHER_FACTOR	19
-	studyAssayMeasurementType	cell counting	ERO_0001899	0
+#controlledVocabulary	DatasetField	Value	identifier	displayOrder											
+	studyDesignType	Case Control	EFO_0001427	0											
+	studyDesignType	Cross Sectional	EFO_0001428	1											
+	studyDesignType	Cohort Study	OCRE100078	2											
+	studyDesignType	Nested Case Control Design	NCI_C48202	3											
+	studyDesignType	Not Specified	NOT_SPECIFIED	4											
+	studyDesignType	Parallel Group Design	OBI_0500006	5											
+	studyDesignType	Perturbation Design	OBI_0001033	6											
+	studyDesignType	Randomized Controlled Trial	MESH_D016449	7											
+	studyDesignType	Technological Design	TECH_DESIGN	8											
+	studyDesignType	Other	OTHER_DESIGN	9											
+	studyFactorType	Age	EFO_0000246	0											
+	studyFactorType	Biomarkers	BIOMARKERS	1											
+	studyFactorType	Cell Surface Markers	CELL_SURFACE_M	2											
+	studyFactorType	Cell Type/Cell Line	EFO_0000324;EFO_0000322	3											
+	studyFactorType	Developmental Stage	EFO_0000399	4											
+	studyFactorType	Disease State	OBI_0001293	5											
+	studyFactorType	Drug Susceptibility	IDO_0000469	6											
+	studyFactorType	Extract Molecule	FBcv_0010001	7											
+	studyFactorType	Genetic Characteristics	OBI_0001404	8											
+	studyFactorType	Immunoprecipitation Antibody	OBI_0000690	9											
+	studyFactorType	Organism	OBI_0100026	10											
+	studyFactorType	Passages	PASSAGES_FACTOR	11											
+	studyFactorType	Platform	OBI_0000050	12											
+	studyFactorType	Sex	EFO_0000695	13											
+	studyFactorType	Strain	EFO_0005135	14											
+	studyFactorType	Time Point	EFO_0000724	15											
+	studyFactorType	Tissue Type	BTO_0001384	16											
+	studyFactorType	Treatment Compound	EFO_0000369	17											
+	studyFactorType	Treatment Type	EFO_0000727	18											
+	studyFactorType	Other	OTHER_FACTOR	19											
+	studyAssayMeasurementType	cell counting	ERO_0001899	0											
 	studyAssayMeasurementType	cell sorting	CHMO_0001085	1											
 	studyAssayMeasurementType	clinical chemistry analysis	OBI_0000520	2											
 	studyAssayMeasurementType	copy number variation profiling	OBI_0000537	3											
