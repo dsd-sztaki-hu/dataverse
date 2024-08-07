@@ -199,7 +199,7 @@ public class CedarTemplateToDescriboProfileConverter {
         
         // hard-coded regexes
         if (Objects.equals(fieldType, "email") && describoInput.getRegex() == null) {
-            describoInput.setRegex("^((?!\\.)[\\w\\-_.]*[^.])(@\\w+)(\\.\\w+(\\.\\w+)?[^.\\W])$");
+            describoInput.setRegex("^((?!\\.)[\\w\\-_.]*[^.])@[\\w\\-_]+(\\.[\\w\\-_]+)*\\.[a-zA-Z]{2,}$");
         }
 
         if (Objects.equals(fieldType, "phone-number") && describoInput.getRegex() == null) {
