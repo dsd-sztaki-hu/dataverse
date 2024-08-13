@@ -83,7 +83,7 @@ services:
       - "8080:8080" # HTTP (Dataverse Application)
       # - "4949:4848" # HTTPS (Payara Admin Console)
       # - "9009:9009" # JDWP
-      - "4848:4848" # HTTP (Payara Admin Console)
+      #- "4848:4848" # HTTP (Payara Admin Console)
       - "19009:9009" # JDWP, ARP override
       - "8686:8686" # JMX
     networks:
@@ -140,34 +140,34 @@ services:
       - "monitoring.arp.orgx:host-gateway"
       - "bridging.arp.orgx:host-gateway"
       - "arp-dataverse.arp.orgx:host-gateway"
-#      - "artifact.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "auth.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "cedar.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "component.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "group.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "impex.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "internals.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "messaging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "open.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "openview.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "repo.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "resource.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "schema.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "submission.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "terminology.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "user.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "valuerecommender.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "worker.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "demo.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "demo-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "docs.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "docs-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "api-php.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "artifacts.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "monitor.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "monitoring.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "bridging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
-#      - "arp-dataverse.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "artifact.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "auth.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "cedar.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "component.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "group.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "impex.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "internals.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "messaging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "open.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "openview.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "repo.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "resource.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "schema.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "submission.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "terminology.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "user.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "valuerecommender.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "worker.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "demo.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "demo-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "docs.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "docs-dist.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "api-php.cee.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "artifacts.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "monitor.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "monitoring.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "bridging.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
+  #      - "arp-dataverse.${CEDAR_BASE_DOMAIN:-arp.orgx}:host.docker.internal"
 
   dev_bootstrap:
     container_name: "dev_bootstrap"
@@ -343,47 +343,47 @@ services:
       - dataverse
     volumes:
       - ./docker-dev-volumes/minio:/data
-
-#  s3fs-sztaki:
-#    image: efrecon/s3fs:1.80
-#    devices:
-#      - /dev/fuse
-#    cap_add:
-#      - SYS_ADMIN
-#    security_opt:
-#      - apparmor=unconfined
-#    environment:
-#      - S3FS_DEBUG=1
-#      - AWS_S3_BUCKET=sztakibucket
-#      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
-#      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
-#      - S3FS_ARGS="-o allow_other -o use_path_request_style -o url=http://minioX:9000"
-#      - UID=${UID:-1000}
-#      - GID=${GID:-1000}
-#    volumes:
-#      - ./docker-dev-volumes/app/data/store/sztaki:/opt/s3fs/bucket:rshared
-#    networks:
-#      - dataverse
-#    depends_on:
-#      - dev_minio
-#
-#
-#  s3fs-wigner:
-#    image: efrecon/s3fs:1.80
-#    devices:
-#      - /dev/fuse
-#    cap_add:
-#      - SYS_ADMIN
-#    security_opt:
-#      - apparmor=unconfined
-#    environment:
-#      - AWS_S3_BUCKET=wignerbucket
-#      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
-#      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
-#      - UID=${UID:-1000}
-#      - GID=${GID:-1000}
-#    volumes:
-#      - ./docker-dev-volumes/app/data/store/wigner:/opt/s3fs/bucket:rshared
+  
+  #  s3fs-sztaki:
+  #    image: efrecon/s3fs:1.80
+  #    devices:
+  #      - /dev/fuse
+  #    cap_add:
+  #      - SYS_ADMIN
+  #    security_opt:
+  #      - apparmor=unconfined
+  #    environment:
+  #      - S3FS_DEBUG=1
+  #      - AWS_S3_BUCKET=sztakibucket
+  #      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
+  #      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
+  #      - S3FS_ARGS="-o allow_other -o use_path_request_style -o url=http://minioX:9000"
+  #      - UID=${UID:-1000}
+  #      - GID=${GID:-1000}
+  #    volumes:
+  #      - ./docker-dev-volumes/app/data/store/sztaki:/opt/s3fs/bucket:rshared
+  #    networks:
+  #      - dataverse
+  #    depends_on:
+  #      - dev_minio
+  #
+  #
+  #  s3fs-wigner:
+  #    image: efrecon/s3fs:1.80
+  #    devices:
+  #      - /dev/fuse
+  #    cap_add:
+  #      - SYS_ADMIN
+  #    security_opt:
+  #      - apparmor=unconfined
+  #    environment:
+  #      - AWS_S3_BUCKET=wignerbucket
+  #      - AWS_S3_ACCESS_KEY_ID=4cc355_k3y
+  #      - AWS_S3_SECRET_ACCESS_KEY=s3cr3t_4cc355_k3y
+  #      - UID=${UID:-1000}
+  #      - GID=${GID:-1000}
+  #    volumes:
+  #      - ./docker-dev-volumes/app/data/store/wigner:/opt/s3fs/bucket:rshared
 
 
 

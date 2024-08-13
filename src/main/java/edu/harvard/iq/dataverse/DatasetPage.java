@@ -82,6 +82,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -3395,7 +3396,7 @@ public class DatasetPage implements java.io.Serializable {
 
     public void startRoCrateZipDownload() {
         this.setSelectedFiles(workingVersion.getFileMetadatas());
-        boolean validate = validateFilesForDownload(false);
+        boolean validate = validateFilesForDownload(false, false);
         if (validate) {
             updateGuestbookResponse(false, false, false);
             if(!getValidateFilesOutcome().equals("Mixed")){
