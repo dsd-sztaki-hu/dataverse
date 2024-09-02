@@ -926,7 +926,7 @@ public class RoCrateExportManager {
         fileEntityBuilder.addProperty("@arpPid", (globalId != null ? globalId.toString() : ""));
         fileEntityBuilder.addProperty("hash", dataFile.getChecksumValue());
         fileEntityBuilder.addProperty("name", fileName);
-        fileEntityBuilder.addProperty("contentSize", dataFile.getFilesize());
+        fileEntityBuilder.addProperty("contentSize", String.valueOf(dataFile.getFilesize()));
         fileEntityBuilder.setEncodingFormat(dataFile.getContentType());
         if (fileMetadata.getDescription() != null) {
             fileEntityBuilder.addProperty("description", fileMetadata.getDescription());
