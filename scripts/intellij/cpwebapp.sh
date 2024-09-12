@@ -23,7 +23,7 @@ if [[ $RELATIVE_PATH == src/main/webapp* ]]; then
     # Get current version. Any other way to do this? A simple VERSION file would help.
     VERSION=`perl -ne 'print $1 if /<revision>(.*?)<\/revision>/' ./modules/dataverse-parent/pom.xml`
     RELATIVE_PATH_WITHOUT_WEBAPP="${RELATIVE_PATH#src/main/webapp/}"
-    TARGET_DIR=./docker-dev-volumes/glassfish/applications/dataverse-$VERSION
+    TARGET_DIR=./target/dataverse-$VERSION
     TARGET_PATH="${TARGET_DIR}/${RELATIVE_PATH_WITHOUT_WEBAPP}"
 
     mkdir -p "$(dirname "$TARGET_PATH")"
