@@ -1,0 +1,51 @@
+<script>
+  // Show top logo when header is scrolled out
+  $(document).ready(function () {
+    var navbarIcon = document.getElementsByClassName("custom-logo")[0];
+	
+    if(/*(URL=="/") || ((URL.indexOf("dataverse.xhtml")!=-1)
+	|| (URL.indexOf("dataset.xhtml")!=-1) 
+	|| (URL.indexOf("file.xhtml")!=-1) 
+	|| (URL.indexOf("editdatafiles.xhtml")!=-1)
+	|| (URL.indexOf("dataverse-")!=-1)	
+	|| (URL.indexOf("/dataverse/")!=-1)
+	|| (URL.indexOf("/loginpage.xhtml")!=-1)
+	|| (URL.indexOf("/dashboard.xhtml")!=-1)
+	|| (URL.indexOf("/harvestsets.xhtml")!=-1)
+	|| (URL.indexOf("/harvestclients.xhtml")!=-1)
+	|| (URL.indexOf("/dataverseuser.xhtml")!=-1))*/ true){
+		navbarIcon.classList.add("hidden-logo");
+   	  window.onscroll=function(){
+	    var prevScrollpos = window.pageYOffset;
+	     if (prevScrollpos > 100) {
+		 navbarIcon.classList.remove("hidden-logo");
+	     } else {
+ 	         navbarIcon.classList.add("hidden-logo");
+	     }
+
+	  }
+	}
+    else{
+	    navbarIcon.classList.remove("hidden-logo");
+	}
+})
+</script>
+
+<div id="topcustomheader" class="container">
+    <a href="/"><img src="/branding/topbanner_arp_002.png" width="100%" /></a>
+</div>
+
+<div id="headerspacer"></div>
+
+<div id="topheaderproject" class="container" style="background-color: transparent;margin-top: 10px;margin-bottom: 0px;">
+    Az ARP Adatrepozitórium fejlesztését a <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a> által támogatott <a href="https://science-research-data.hu/" target="_blank">ARP</a> projekt végzi
+</div>
+<script>
+  var lang = document.documentElement.getAttribute('lang');
+  var topheader = document.getElementById('topheaderproject');
+  if (lang == 'hu') {
+    topheader.innerHTML = 'Az ARP Adatrepozitórium fejlesztését a <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a> által támogatott <a href="https://science-research-data.hu/" target="_blank">ARP</a> projekt végzi';
+  } else {
+    topheader.innerHTML = 'The ARP Research Data Repository is developed by the <a href="https://science-research-data.hu/" target="_blank">ARP</a> project supported by <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a>';
+  }
+</script>

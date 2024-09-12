@@ -1,0 +1,18 @@
+<div>
+    <br/>    <br/>    <br/>
+    <script>
+        // Get the lang attribute of the HTML tag
+        var lang = document.documentElement.getAttribute('lang');
+
+        // Prepare HTML strings
+        var hungarianHTML = '<h1>Ez a fejléc!</h1>';
+        var englishHTML = '<h1>This is the header!</h1>';
+
+        // Append the correct HTML to the body
+        if (lang === "hu") {
+          document.body.innerHTML += hungarianHTML;
+        } else {
+          document.body.innerHTML += englishHTML;
+        }
+    </script>
+</div>
