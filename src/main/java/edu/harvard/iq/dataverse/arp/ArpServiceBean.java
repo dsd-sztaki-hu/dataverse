@@ -947,7 +947,7 @@ public class ArpServiceBean implements java.io.Serializable {
                         && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset");
     }
 
-    public CedarTemplateErrors validateCedarResource(String cedarTemplate, boolean checkOnly) throws Exception {
+    public CedarTemplateErrors validateCedarResource(String cedarTemplate, boolean checkOnly, boolean isExport) throws Exception {
         Map<String, String> propAndTermUriMap = listBlocksWithUri();
 
         // region Static fields from src/main/java/edu/harvard/iq/dataverse/api/Index.java: listOfStaticFields
@@ -980,13 +980,13 @@ public class ArpServiceBean implements java.io.Serializable {
         if (resourceType.equals("TemplateField")) {
             return checkCedarField(cedarResource, listOfStaticFields, mdbId);
         } else if (resourceType.equals("TemplateElement") || resourceType.equals("Template")) {
-            return checkCedarTemplate(cedarResource, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId, checkOnly);
+            return checkCedarTemplate(cedarResource, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId, checkOnly, isExport);
         } else {
             throw new Exception("Unsupported resource type: " + resourceType);
         }
     }
 
-    public CedarTemplateErrors checkCedarTemplate(JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName, boolean checkOnly) throws Exception {
+    public CedarTemplateErrors checkCedarTemplate(JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName, boolean checkOnly, boolean isExport) throws Exception {
        List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
         JsonElement propsAndLabels = getJsonElement(cedarTemplateJson, "_ui.propertyLabels");
         List<String> propLabels = propsAndLabels.getAsJsonObject().entrySet().stream()
@@ -1043,10 +1043,14 @@ public class ArpServiceBean implements java.io.Serializable {
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
-                    cedarTemplateErrors.unprocessableElements.add(newPath);
-                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName, checkOnly);
+                    if (isExport) {
+                        cedarTemplateErrors.unprocessableElements.add(newPath);
+                    } else {
+                        cedarTemplateErrors.warnings.add(newPath);
+                    }
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName, checkOnly, isExport);
                 } else {
-                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName, checkOnly);
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName, checkOnly, isExport);
                 }
             } else {
                 if (!propType.equals("TemplateField") && !propType.equals("StaticTemplateField")) {
@@ -1286,7 +1290,7 @@ public class ArpServiceBean implements java.io.Serializable {
         Set<String> overridePropNames = new HashSet<>();
 
         try {
-            CedarTemplateErrors cedarTemplateErrors = validateCedarResource(templateJson, false);
+            CedarTemplateErrors cedarTemplateErrors = validateCedarResource(templateJson, false, true);
             if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty() && cedarTemplateErrors.errors.isEmpty())) {
                 throw new CedarTemplateErrorsException(cedarTemplateErrors);
             }
