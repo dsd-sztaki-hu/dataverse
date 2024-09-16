@@ -531,21 +531,21 @@ public class RoCrateImportManager {
     // this way we can check the files that are not part of any datasets and can traverse datasets from the top level
     private void validateDatasetAndFileEntities(RoCrate preProcessedRoCrate, RoCrate latestRoCrate, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater) {
         // collect the file entities and their hashes in a hashmap for better performance
-        Map<String, ObjectNode> latestRoCrateFilesWithHashes = latestRoCrate == null ? new HashMap<>() : Stream.concat(
+        Map<String, ObjectNode> latestRoCrateFileIdsAndHashes = latestRoCrate == null ? new HashMap<>() : Stream.concat(
                         latestRoCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties),
                         latestRoCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties))
                 .filter(entity -> roCrateServiceBean.hasType(entity, "File") && !roCrateServiceBean.isVirtualFile(entity))
                 .collect(Collectors.toMap(
-                        entity -> entity.get("hash").textValue(),
+                        entity -> entity.get("hash").textValue() + "-" + entity.get("@id").textValue().substring(entity.get("@id").textValue().lastIndexOf("/") + 1),
                         Function.identity()));
 
         preProcessedRoCrate.getRootDataEntity().hasPart.forEach(entityId -> {
-            validateDataEntity(entityId, preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, new HashSet<>(), roCrateContext, roCrateContextUpdater);
+            validateDataEntity(entityId, preProcessedRoCrate, latestRoCrate, latestRoCrateFileIdsAndHashes, roCrateEntityIdsAndTypes, preProcessResult, new HashSet<>(), roCrateContext, roCrateContextUpdater);
         });
     }
 
     // Validate a given RO-Crate Data Entity
-    private void validateDataEntity(String entityId,RoCrate preProcessedRoCrate, RoCrate latestRoCrate, Map<String, ObjectNode> latestRoCrateFilesWithHashes, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, HashSet<String> circularReferenceIds, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater) {
+    private void validateDataEntity(String entityId,RoCrate preProcessedRoCrate, RoCrate latestRoCrate, Map<String, ObjectNode> latestRoCrateFileIdsAndHashes, HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, HashSet<String> circularReferenceIds, JsonNode roCrateContext, RoCrate.RoCrateBuilder roCrateContextUpdater) {
         var entity = preProcessedRoCrate.getEntityById(entityId).getProperties();
         var entityType = roCrateServiceBean.getTypeAsString(entity);
         roCrateEntityIdsAndTypes.remove(entityId);
@@ -561,16 +561,16 @@ public class RoCrateImportManager {
                 preProcessResult.errors.add("File entity with id: '" + entityId + "' contains the following invalid properties: " + invalidFileProps);
             }
             // compare the file ids and hashes with the values from the previous version of the RO-Crate
-            if (!latestRoCrateFilesWithHashes.isEmpty()) {
+            if (!latestRoCrateFileIdsAndHashes.isEmpty()) {
                 var originalFileEntity = latestRoCrate.getEntityById(entityId);
                 if (originalFileEntity == null) {
                     if (!entity.has("hash")) {
                         // this is a new virtual file
                         return;
                     }
-                    var fileHash = entity.get("hash").textValue();
-                    if (latestRoCrateFilesWithHashes.containsKey(entity.get("hash").textValue())) {
-                        preProcessResult.errors.add("Corrupted id found for a File entity with hash: " + fileHash);
+                    var fileHashAndId = entity.get("hash").textValue() + "-" + entityId.substring(entityId.lastIndexOf("/") + 1);
+                    if (latestRoCrateFileIdsAndHashes.containsKey(entity.get("hash").textValue())) {
+                        preProcessResult.errors.add("Corrupted id found for a File entity with hash: " + fileHashAndId);
                     }
                 } else {
                     if (!entity.has("hash") && !originalFileEntity.getProperties().has("hash")) {
@@ -595,10 +595,10 @@ public class RoCrateImportManager {
                 }
                 if (dsHasPart.isArray()) {
                     for (var idObj : dsHasPart) {
-                        validateDataEntity(idObj.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
+                        validateDataEntity(idObj.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFileIdsAndHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
                     }
                 } else {
-                    validateDataEntity(dsHasPart.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFilesWithHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
+                    validateDataEntity(dsHasPart.get("@id").textValue(), preProcessedRoCrate, latestRoCrate, latestRoCrateFileIdsAndHashes, roCrateEntityIdsAndTypes, preProcessResult, circularReferenceIds, roCrateContext, roCrateContextUpdater);
                 }
             }
         }
@@ -1002,19 +1002,20 @@ public class RoCrateImportManager {
 
     public List<FileMetadata> updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
         List<FileMetadata> filesToBeDeleted = new ArrayList<>();
-        List<String> fileMetadataHashes = dataset.getLatestVersion().getFileMetadatas().stream().map(fmd -> fmd.getDataFile().getChecksumValue()).collect(Collectors.toList());
+        List<String> fileMetadataHashesAndIds = dataset.getLatestVersion().getFileMetadatas().stream().map(fmd -> fmd.getDataFile().getChecksumValue() + "-" + String.valueOf(fmd.getDataFile().getId()).substring(String.valueOf(fmd.getDataFile().getId()).lastIndexOf("/") + 1)).collect(Collectors.toList());
         List<ObjectNode> roCrateFileEntities = Stream.concat(
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> roCrateServiceBean.getTypeAsString(ce).equals("File")),
                 roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> roCrateServiceBean.getTypeAsString(de).equals("File"))
-        ).collect(Collectors.toList());
+        ).toList();
 
         // Update the metadata for the files in the dataset
         roCrateFileEntities.forEach(fileEntity -> {
             if (roCrateServiceBean.isVirtualFile(fileEntity)) {
                 return;
             }
-            String fileEntityHash = fileEntity.get("hash").textValue();
-            var fmd = dataset.getFiles().stream().filter(dataFile -> dataFile.getChecksumValue().equals(fileEntityHash)).findFirst().get().getFileMetadata();
+            String fileEntityId = fileEntity.get("@id").textValue();
+            String fileEntityHashAndId = fileEntity.get("hash").textValue() + "-" + fileEntityId.substring(fileEntityId.lastIndexOf("/") + 1);
+            var fmd = dataset.getFiles().stream().filter(dataFile -> (dataFile.getChecksumValue() + "-" + String.valueOf(dataFile.getId()).substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1)).equals(fileEntityHashAndId)).findFirst().get().getFileMetadata();
             fmd.setLabel(fileEntity.get("name").textValue());
             String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
             fmd.setDirectoryLabel(dirLabel);
@@ -1031,7 +1032,7 @@ public class RoCrateImportManager {
                 }
                 fmd.setCategoriesByName(tags);
             }
-            if(!fileMetadataHashes.removeIf(fmdHash -> fmdHash.equals(fileEntityHash))) {
+            if(!fileMetadataHashesAndIds.removeIf(fmdHash -> fmdHash.equals(fileEntityHashAndId))) {
                 // collect the fmd for files that were deleted in AROMA
                 filesToBeDeleted.add(fmd);
                 // the hash can not be modified in AROMA, so any modified hash should be removed from the RO-Crate as well,

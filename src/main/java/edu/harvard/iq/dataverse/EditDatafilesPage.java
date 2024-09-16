@@ -1294,6 +1294,15 @@ public class EditDatafilesPage implements java.io.Serializable {
             versionString = "DRAFT";
             return returnToFileLandingPage();
         }
+        
+        if (FileEditMode.EDIT == mode && Referrer.DATASET == referrer) {
+            try {
+                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+            }
+        }
 
         logger.fine("Redirecting to the dataset page, from the edit/upload page.");
         return returnToDraftVersion();
