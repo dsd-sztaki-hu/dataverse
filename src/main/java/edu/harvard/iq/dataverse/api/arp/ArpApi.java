@@ -159,7 +159,7 @@ public class ArpApi extends AbstractApiBean {
      * @return
      */
     @POST
-    @Path("/checkCedarTemplate")
+    @Path("/checkCedarResource")
     @Consumes("application/json")
     public Response checkCedarResourceCall(String resourceJson) {
         CedarTemplateErrors errors;
