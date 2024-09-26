@@ -1191,7 +1191,7 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
 
-    public static Map<String, String> collectHunTranslations(String cedarTemplate, String parentPath, Map<String, String> hunTranslations) {
+    public static void collectTranslations(String cedarTemplate, String parentPath, Map<String, String> hunTranslations, Map<String, String> enTranslations) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonObject cedarTemplateJson = gson.fromJson(cedarTemplate, JsonObject.class);
 
@@ -1203,10 +1203,12 @@ public class ArpServiceBean implements java.io.Serializable {
             if (cedarTemplateJson.has("hunDescription")) {
                 hunTranslations.put("metadatablock.description", getJsonElement(cedarTemplateJson, "hunDescription").getAsString());
             }
+            enTranslations.put("metadatablock.name", getJsonElement(cedarTemplateJson, "schema:identifier").getAsString());
+            enTranslations.put("metadatablock.displayName", getJsonElement(cedarTemplateJson, "schema:name").getAsString());
+            enTranslations.put("metadatablock.description", getJsonElement(cedarTemplateJson, "schema:description").getAsString());
         }
 
         List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
-        JsonObject propertyDescriptions = getJsonObject(cedarTemplateJson, "_ui.propertyDescriptions");
 
         for (String prop : propNames) {
             JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
@@ -1216,32 +1218,8 @@ public class ArpServiceBean implements java.io.Serializable {
             if (actProp.has("items")) {
                 actProp = actProp.getAsJsonObject("items");
             }
-
-            String dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
-
-            //Label
-            if (actProp.has("hunLabel")) {
-                String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
-                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunLabel);
-            }
-            else{
-                hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName),
-                        getJsonElement(actProp, "skos:prefLabel").getAsString()+" (magyarul)");
-            }
-
-            // Help text / tip
-            if (actProp.has("hunDescription")) {
-                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
-                        actProp.get("hunDescription").getAsString());
-            }
-            else {
-                // Note: english help text should be in schema:description, but it is not, it is in
-                // propertyDescriptions
-                hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
-                        propertyDescriptions.get(prop).getAsString()+" (magyarul)");
-            }
-
-            // TODO: revise how elemnets work!
+            
+            setTranslations(actProp, hunTranslations, enTranslations);
 
             if (actProp.has("@type")) {
                 propType = actProp.get("@type").getAsString();
@@ -1256,20 +1234,42 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
-                dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
-                if (actProp.has("hunTitle") && !actProp.has("hunLabel")) {
-                    String hunTitle = getJsonElement(actProp, "hunTitle").getAsString();
-                    hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunTitle);
-                }
-                if (actProp.has("hunDescription")) {
-                    String hunDescription = getJsonElement(actProp, "hunDescription").getAsString();
-                    hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName), hunDescription);
-                }
-                collectHunTranslations(actProp.toString(), newPath, hunTranslations);
+                setTranslations(actProp, hunTranslations, enTranslations);
+                collectTranslations(actProp.toString(), newPath, hunTranslations, enTranslations);
             }
         }
+    }
+    
+    private static void setTranslations(JsonObject actProp, Map<String, String> hunTranslations, Map<String, String> enTranslations) {
+        String dftName = getJsonElement(actProp, "schema:name").getAsString().replace(":", ".");
 
-        return hunTranslations;
+        //Label
+        if (actProp.has("skos:prefLabel")) {
+            String prefLabel = getJsonElement(actProp, "skos:prefLabel").getAsString();
+            enTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), prefLabel);
+            hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), prefLabel + " (magyarul)");
+        } else {
+            String name = getJsonElement(actProp, "schema:name").getAsString();
+            enTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), name);
+            hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), name + " (magyarul)");
+        }
+
+        // Use the Hungarian label if it exists
+        if (actProp.has("hunLabel")) {
+            String hunLabel = getJsonElement(actProp, "hunLabel").getAsString();
+            hunTranslations.put(String.format("datasetfieldtype.%1$s.title", dftName), hunLabel);
+        }
+
+        // Help text / tip
+        String description = getJsonElement(actProp, "schema:description").getAsString();
+        enTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName), description);
+
+        if (actProp.has("hunDescription")) {
+            hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName),
+                    actProp.get("hunDescription").getAsString());
+        } else {
+            hunTranslations.put(String.format("datasetfieldtype.%1$s.description", dftName), description + " (magyarul)");
+        }
     }
 
     protected MetadataBlock findMetadataBlock(Long id)  {
@@ -1308,44 +1308,22 @@ public class ArpServiceBean implements java.io.Serializable {
                     arpMetadataBlockServiceBean.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
                 }
                 updateMetadataBlock(dvIdtf, metadataBlockName);
-            }
+                
+                String langDirPath = System.getProperty("dataverse.lang.directory");
+                if (langDirPath != null) {
+                    Map<String, String> hunTranslations =  loadTranslationsFromBundle(langDirPath, metadataBlockName, "hu");
+                    Map<String, String> enTranslations =  loadTranslationsFromBundle(langDirPath, metadataBlockName, "en");
+                    
+                    // Update with translations from templateJson
+                    collectTranslations(templateJson, "/properties", hunTranslations, enTranslations);
 
-            String langDirPath = System.getProperty("dataverse.lang.directory");
-            if (langDirPath != null) {
-                String fileName = metadataBlockName + "_hu.properties";
-
-                // Make sure the property file exists
-                Path path = Paths.get(langDirPath+System.getProperty("file.separator")+fileName);
-                if (!Files.exists(path)) {
-                    Files.createFile(path);
+                    saveTranslationsToBundle(langDirPath, metadataBlockName, "hu", hunTranslations);
+                    saveTranslationsToBundle(langDirPath, metadataBlockName, "en", enTranslations);
+                    
+                    // Force reloading language bundles/
                     ResourceBundle.clearCache();
                 }
-
-                ResourceBundle resourceBundle = BundleUtil.getResourceBundle(metadataBlockName, Locale.forLanguageTag("hu"));
-
-                // Load with current translations
-                Map<String, String> hunTranslations = new TreeMap<>();
-                Enumeration<String> keys = resourceBundle.getKeys();
-                while (keys.hasMoreElements()) {
-                    String key = keys.nextElement();
-                    hunTranslations.put(key, resourceBundle.getString(key));
-                }
-
-                // Update with translations from templateJson
-                collectHunTranslations(templateJson, "/properties", hunTranslations);
-
-                // Convert back to properties file format
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<String, String> entry : hunTranslations.entrySet()) {
-                    sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
-                }
-
-                FileWriter writer = new FileWriter(langDirPath + "/" + fileName);
-                writer.write(sb.toString());
-                writer.close();
             }
-            // Force reloading language bundles/
-            ResourceBundle.clearCache();
         } catch (Exception e) {
             e.printStackTrace();
             logger.log(Level.SEVERE, "Updating metadatablock "+""+" from CEDAR template failed", e);
@@ -1353,6 +1331,43 @@ public class ArpServiceBean implements java.io.Serializable {
         }
 
         return mdbTsv;
+    }
+    
+    private Map<String, String> loadTranslationsFromBundle(String langDirPath, String metadataBlockName, String locale) throws IOException {
+        String propFileName = "en".equals(locale) ? metadataBlockName + ".properties" : metadataBlockName + "_" + locale + ".properties";
+        
+        // Make sure the property file exists
+        Path path = Paths.get(langDirPath+System.getProperty("file.separator")+propFileName);
+        if (!Files.exists(path)) {
+            Files.createFile(path);
+            ResourceBundle.clearCache();
+        }
+
+        ResourceBundle resourceBundle = BundleUtil.getResourceBundle(metadataBlockName, Locale.forLanguageTag(locale));
+
+        // Load with current translations
+        Map<String, String> translations = new TreeMap<>();
+        Enumeration<String> keys = resourceBundle.getKeys();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement();
+            translations.put(key, resourceBundle.getString(key));
+        }
+        
+        return translations;
+    }
+    
+    private void saveTranslationsToBundle(String langDirPath, String metadataBlockName, String locale, Map<String, String> translations) throws IOException {
+        String propFileName = "en".equals(locale) ? metadataBlockName + ".properties" : metadataBlockName + "_" + locale + ".properties";
+        
+        // Convert back to properties file format
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, String> entry : translations.entrySet()) {
+            sb.append(entry.getKey()).append('=').append(entry.getValue()).append('\n');
+        }
+
+        FileWriter writer = new FileWriter(langDirPath + "/" + propFileName);
+        writer.write(sb.toString());
+        writer.close();
     }
 
     public void syncMetadataBlockWithCedar(ArpInitialSetupParams.MdbParam mdbParam, ExportToCedarParams cedarParams) {
