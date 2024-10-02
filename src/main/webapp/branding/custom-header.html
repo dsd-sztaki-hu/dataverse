@@ -32,7 +32,7 @@
 </script>
 
 <div id="topcustomheader" class="container">
-    <a href="/"><img src="/branding/topbanner_arp_002.png" width="100%" /></a><div id="customHeaderLinks"><ul><li id="portallink"><a href="https://researchdata.hu/" target="_blank"><img src="/branding/arp_portal_btn.png" /><span class="textlink">ARP Portál</span></a></li><li id="searchlink"><a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" /><span class="textlink">Közös kereső</span></a></li></ul></div>
+    <a href="/"><img src="/branding/topbanner_arp_002.png" width="100%" /></a><div id="customHeaderLinks"><ul><li id="portallink"><a href="https://researchdata.hu/" target="_blank"><img src="/branding/arp_portal_btn.png" width="158" height="50"/><span class="textlink">ARP Portál</span></a></li><li id="searchlink"><a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Közös kereső</span></a></li></ul></div>
 </div>
 
 <div id="headerspacer"></div>
@@ -47,11 +47,11 @@
   var searchlink = document.getElementById('searchlink');
   if (lang == 'hu') {
     topheader.innerHTML = 'Az ARP Adatrepozitórium fejlesztését a <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a> által támogatott <a href="https://science-research-data.hu/" target="_blank">ARP</a> projekt végzi';
-    portallink.innerHTML = '<a href="https://researchdata.hu/" target="_blank">ARP Portál</a>';
-    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank">Közös kereső</a>';
+    portallink.innerHTML = '<a href="https://researchdata.hu/" target="_blank"><img src="/branding/arp_portal_btn.png" width="158" height="50"/><span class="textlink">ARP Portál</span></a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Közös kereső</span></a>';
   } else {
     topheader.innerHTML = 'The ARP Research Data Repository is developed by the <a href="https://science-research-data.hu/" target="_blank">ARP</a> project supported by <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a>';
-    portallink.innerHTML = '<a href="https://researchdata.hu/en" target="_blank">ARP Portal</a>';
-    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank">Federated Search</a>';
+    portallink.innerHTML = '<a href="https://researchdata.hu/en" target="_blank"><img src="/branding/arp_portal_btn.png" width="158" height="50"/><span class="textlink">ARP Portal</span></a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Federated Search</span></a>';
   }
 </script>
