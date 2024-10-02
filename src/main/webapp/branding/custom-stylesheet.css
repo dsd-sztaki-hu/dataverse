@@ -330,6 +330,19 @@ div.popover-content {
 	background: linear-gradient(180deg,hsla(0,0%,100%,0),#f0f0f0 80%);
 }
 
+#customHeaderLinks {
+	float: right;
+	margin-top: -113px;
+	background-color: transparent;
+	padding: 4px 10px;
+	border-radius: 10px;
+	font-size: 18px;
+}
+
+#customHeaderLinks a {
+	color: #337ab7;
+}
+
 @media only screen and (max-width: 605px) {
 	td.col-file-action btn-group.btn-group>.btn-group:first-child:not(:last-child)>.btn:last-child, td.col-file-action .btn-group>.btn-group:first-child:not(:last-child)>.dropdown-toggle {
 		border-top-right-radius: 10px;
