@@ -1010,16 +1010,19 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         
         for (String prop : propNames) {
+            JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
             if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
-                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", getPropertyLabel(propsAndLabels, prop)));
+                // richtext fields are not required to have a term URI, they are just for displaying help text
+                if (!Optional.ofNullable(getJsonElement(actProp, "_ui.inputType")).map(JsonElement::getAsString).orElse("").equals("richtext")) {
+                    cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", getPropertyLabel(propsAndLabels, prop)));
+                }
             }
             // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
             // ie. we can have an MDB named "journal" and a prop name "journal" as well.
             // if (mdbNames.contains(prop)) {
             //    throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
             // }
-            JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
             if (actProp.has("@type")) {
