@@ -347,6 +347,8 @@ div.popover-content {
 
 #customHeaderLinks ul {
 	list-style-type: none;
+	margin-bottom: 0;
+	padding-left: 20px;
 }
 
 #customHeaderLinks ul li {
@@ -386,6 +388,12 @@ div.popover-content {
 	}
 }
 
+@media (max-width: 768px) {
+	#customHeaderLinks {
+		margin-top: 0px;
+	}
+}
+
 @media only screen and (max-width: 605px) {
 	td.col-file-action btn-group.btn-group>.btn-group:first-child:not(:last-child)>.btn:last-child, td.col-file-action .btn-group>.btn-group:first-child:not(:last-child)>.dropdown-toggle {
 		border-top-right-radius: 10px;
@@ -421,12 +429,12 @@ div.popover-content {
  .hidden-logo{
    display:block;
  } 
- #topcustomheader{
+ #topcustomheader img{
   display:none;
  }
  #headerspacer {
 	 display: block;
-	 height: 50px;
+	 height: 0px;
  }
  html {
 	background-image: none;
