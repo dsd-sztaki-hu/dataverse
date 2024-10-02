@@ -336,7 +336,9 @@ div.popover-content {
 	background-color: transparent;
 	padding: 4px 10px;
 	border-radius: 10px;
+	border: none;
 	font-size: 18px;
+	position: relative;
 }
 
 #customHeaderLinks a {
@@ -353,6 +355,24 @@ div.popover-content {
 
 #customHeaderLinks .textlink {
 	display: none;
+}
+
+@media (max-width: 992px) {
+	#customHeaderLinks img {
+		display: none;
+	}
+
+	#customHeaderLinks .textlink {
+		display: inline;
+	}
+
+	#customHeaderLinks {
+		border: solid #e8e237;
+	}
+
+	#customHeaderLinks ul {
+		list-style-type: disc;
+	}
 }
 
 @media only screen and (max-width: 605px) {
@@ -424,8 +444,6 @@ div.popover-content {
  }
 	
 }
-
-
 
 @media only screen and (min-width: 769px){
    .hidden-logo{
