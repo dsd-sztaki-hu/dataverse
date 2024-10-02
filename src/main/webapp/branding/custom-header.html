@@ -32,7 +32,10 @@
 </script>
 
 <div id="topcustomheader" class="container">
-    <a href="/"><img src="/branding/topbanner_arp_002.png" width="100%" /></a>
+    <a href="/"><img src="/branding/topbanner_arp_002.png" width="100%" /></a><div id="customHeaderLinks" style="
+    float: right;
+    margin-top: -113px;
+"><ul><li id="portallink"><a href="https://researchdata.hu/" target="_blank">ARP Portál</a></li><li id="searchlink"><a href="https://search.researchdata.hu/" target="_blank">Közös kereső</a></li></ul></div>
 </div>
 
 <div id="headerspacer"></div>
@@ -43,9 +46,15 @@
 <script>
   var lang = document.documentElement.getAttribute('lang');
   var topheader = document.getElementById('topheaderproject');
+  var portallink = document.getElementById('portallink');
+  var searchlink = document.getElementById('searchlink');
   if (lang == 'hu') {
     topheader.innerHTML = 'Az ARP Adatrepozitórium fejlesztését a <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a> által támogatott <a href="https://science-research-data.hu/" target="_blank">ARP</a> projekt végzi';
+    portallink.innerHTML = '<a href="https://researchdata.hu/" target="_blank">ARP Portál</a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank">Közös kereső</a>';
   } else {
     topheader.innerHTML = 'The ARP Research Data Repository is developed by the <a href="https://science-research-data.hu/" target="_blank">ARP</a> project supported by <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a>';
+    portallink.innerHTML = '<a href="https://researchdata.hu/en" target="_blank">ARP Portal</a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank">Federated Search</a>';
   }
 </script>
