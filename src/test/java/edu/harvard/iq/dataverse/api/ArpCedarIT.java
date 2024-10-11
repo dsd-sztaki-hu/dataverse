@@ -397,11 +397,14 @@ public class ArpCedarIT {
     }
 
     public String createRandomSuperUser() {
-        Response createSuperuser = UtilIT.createRandomUser();
-        String superuserUsername = UtilIT.getUsernameFromResponse(createSuperuser);
-        String superuserApiToken = UtilIT.getApiTokenFromResponse(createSuperuser);
-        Response superuser = UtilIT.makeSuperUser(superuserUsername);
-        return superuserApiToken;
+        Response createUser = UtilIT.createRandomUser();
+        createUser.prettyPrint();
+        assertEquals(200, createUser.getStatusCode());
+        String username = UtilIT.getUsernameFromResponse(createUser);
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+        Response makeSuperUser = UtilIT.makeSuperUser(username);
+        assertEquals(200, makeSuperUser.getStatusCode());
+        return apiToken;
     }
     
 }
