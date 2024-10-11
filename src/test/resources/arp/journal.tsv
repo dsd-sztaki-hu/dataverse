@@ -13,29 +13,29 @@
 	journalArticleType	review article		3
 	journalArticleType	translation		4
 	journalArticleType	other		5
-	journalArticleType	rapid communication		6
-	journalArticleType	reply		7
-	journalArticleType	abstract		8
-	journalArticleType	addendum		9
-	journalArticleType	announcement		10
-	journalArticleType	article-commentary		11
-	journalArticleType	book review		12
-	journalArticleType	books received		13
-	journalArticleType	brief report		14
-	journalArticleType	calendar		15
-	journalArticleType	case report		16
-	journalArticleType	collection		17
-	journalArticleType	correction		18
-	journalArticleType	data paper		19
-	journalArticleType	discussion		20
-	journalArticleType	dissertation		21
-	journalArticleType	editorial		22
-	journalArticleType	in brief		23
-	journalArticleType	introduction		24
-	journalArticleType	letter		25
-	journalArticleType	meeting report		26
-	journalArticleType	news		27
-	journalArticleType	obituary		28
-	journalArticleType	oration		29
-	journalArticleType	partial retraction		30
-	journalArticleType	product review		31
+	journalArticleType	in brief		6
+	journalArticleType	introduction		7
+	journalArticleType	letter		8
+	journalArticleType	meeting report		9
+	journalArticleType	news		10
+	journalArticleType	obituary		11
+	journalArticleType	oration		12
+	journalArticleType	partial retraction		13
+	journalArticleType	product review		14
+	journalArticleType	rapid communication		15
+	journalArticleType	reply		16
+	journalArticleType	abstract		17
+	journalArticleType	addendum		18
+	journalArticleType	announcement		19
+	journalArticleType	article-commentary		20
+	journalArticleType	book review		21
+	journalArticleType	books received		22
+	journalArticleType	brief report		23
+	journalArticleType	calendar		24
+	journalArticleType	case report		25
+	journalArticleType	collection		26
+	journalArticleType	correction		27
+	journalArticleType	data paper		28
+	journalArticleType	discussion		29
+	journalArticleType	dissertation		30
+	journalArticleType	editorial		31

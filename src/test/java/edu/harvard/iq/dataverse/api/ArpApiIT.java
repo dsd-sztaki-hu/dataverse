@@ -68,9 +68,10 @@ public class ArpApiIT {
         assertEquals("OK", status);
 
         Map<String, String> data = JsonPath.from(body).getMap("data");
-        assertEquals(1, data.size());
+        // message and warnings is the 2
+        assertEquals(2, data.size());
         String message = data.get("message");
-        assertEquals("Valid Template", message);
+        assertEquals("Valid Resource", message);
     }
 
     @Test
@@ -87,6 +88,7 @@ public class ArpApiIT {
         }
 
         Response response = checkTemplate(apiToken, templateContent);
+        System.out.println("response: " + response.getBody().asString());
         assertEquals(500, response.getStatusCode());
         response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
 
@@ -154,9 +156,10 @@ public class ArpApiIT {
         assertEquals("OK", status);
 
         Map<String, String> data = JsonPath.from(body).getMap("data");
-        assertEquals(1, data.size());
+        // message and warnings is the 2
+        assertEquals(2, data.size());
         String message = data.get("message");
-        assertEquals("Valid Template", message);
+        assertEquals("Valid Resource", message);
 
         /*
         We used to have the response below, but after adding the override generation this template no longer contains errors,
