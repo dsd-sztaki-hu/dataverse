@@ -820,6 +820,7 @@ public class ArpApi extends AbstractApiBean {
             @PathParam("persistentId") String persistentId,
             String roCrateJson
     ) {
+        Date beginning = new Date();
         Dataset dataset;
         RoCrate preProcessedRoCrate;
         AuthenticatedUser user;
@@ -831,6 +832,7 @@ public class ArpApi extends AbstractApiBean {
                         BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
             }
             preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
+            System.out.println("Time spent preprocess " + (new Date().getTime() - beginning.getTime()) + " ms");
         } catch (IOException | RuntimeException | ArpException e) {
             e.printStackTrace();
             return error(INTERNAL_SERVER_ERROR, e.getMessage());
@@ -855,28 +857,40 @@ public class ArpApi extends AbstractApiBean {
         if (!hasValidTerms) {
             return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
         }
+        Date d = new Date();
         roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
-
+        System.out.println("Importing took " + (new Date().getTime() - d.getTime()) + " ms");
+        System.out.println("Time spent importing " + (new Date().getTime() - beginning.getTime()) + " ms");
         try {
             DataverseRequest req = createDataverseRequest(user);
             DatasetVersion managedVersion;
             Dataset managedDataset;
             if (updateDraft) {
+                d = new Date();
                 var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(newVersion.getDataset(), preProcessedRoCrate);
+                System.out.println("Updating file metadatas took  asd " + (new Date().getTime() - d.getTime()) + " ms");
+                System.out.println("Time spent file metadata " + (new Date().getTime() - beginning.getTime()) + " ms");
                 if (!filesToBeDeleted.isEmpty()) {
                     for (FileMetadata markedForDelete : filesToBeDeleted) {
                         if (markedForDelete.getId() != null) {
                             dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
                         }
                     }
+                    d = new Date();
                     managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted));
+                    System.out.println("Updating dataset version 1 took " + (new Date().getTime() - d.getTime()) + " ms");
+                    System.out.println("Time spent Updating dataset " + (new Date().getTime() - beginning.getTime()) + " ms");
                 } else {
+                    d = new Date();
                     managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req));
+                    System.out.println("Updating dataset version 2 took " + (new Date().getTime() - d.getTime()) + " ms");
+                    System.out.println("Time spent Updating dataset " + (new Date().getTime() - beginning.getTime()) + " ms");
                 }
                 managedVersion = managedDataset.getOrCreateEditVersion();
             } else {
                 var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(dataset, preProcessedRoCrate);
                 managedVersion = execCommand(new CreateDatasetVersionCommand(req, dataset, newVersion));
+                System.out.println("Time spent roCrateImportManager.updateFileMetadatas " + (new Date().getTime() - beginning.getTime()) + " ms");
                 if (!filesToBeDeleted.isEmpty()) {
                     for (FileMetadata markedForDelete : filesToBeDeleted) {
                         if (markedForDelete.getId() != null) {
@@ -884,16 +898,25 @@ public class ArpApi extends AbstractApiBean {
                         }
                     }
                     managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
+                    System.out.println("Time spent execCommand " + (new Date().getTime() - beginning.getTime()) + " ms");
                 }
+                d = new Date();
                 indexService.indexDataset(dataset, true);
+                System.out.println("Indexing took " + (new Date().getTime() - d.getTime()) + " ms");
+                System.out.println("Time spent execCommand " + (new Date().getTime() - beginning.getTime()) + " ms");
             }
 
+            d = new Date();
             roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
+            System.out.println("Post processing took " + (new Date().getTime() - d.getTime()) + " ms");
+            System.out.println("Time spent roCrateImportManager.postProcessRoCrateFromAroma " + (new Date().getTime() - beginning.getTime()) + " ms");
             String roCratePath = roCrateServiceBean.getRoCratePath(managedVersion);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
             JsonObject updatedRoCrate = gson.fromJson(bufferedReader, JsonObject.class);
 
+            System.out.println("Processing took " + (new Date().getTime() - beginning.getTime()) + " ms");
+            System.out.println("Time spent Processing" + (new Date().getTime() - beginning.getTime()) + " ms");
             return ok( JsonUtil.getJsonObject(updatedRoCrate.toString()) );
 
         } catch (WrappedResponse ex) {

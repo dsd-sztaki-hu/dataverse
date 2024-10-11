@@ -376,10 +376,14 @@ public class RoCrateImportManager {
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
     public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws JsonProcessingException, ArpException {
+        Date beginning = new Date();
         RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
         String latestVersionRoCrateFolderPath = getRoCrateFolderForPreProcess(dataset.getLatestVersion());
+        System.out.println("Time spent preProcessRoCrateFromAroma 1:    " + (new Date().getTime() - beginning.getTime()) + " ms");
         RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? roCrateFolderReader.readCrate(latestVersionRoCrateFolderPath) : null;
+        System.out.println("Time spent preProcessRoCrateFromAroma 2:   " + (new Date().getTime() - beginning.getTime()) + " ms");
         RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate);
+        System.out.println("Time spent preProcessRoCrateFromAroma 3: " + (new Date().getTime() - beginning.getTime()) + " ms");
 
         var prepErrors = roCrateImportPrepResult.errors;
         if (!prepErrors.isEmpty()) {
@@ -389,6 +393,7 @@ public class RoCrateImportManager {
         RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
 
         roCrateServiceBean.collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
+        System.out.println("Time spent preProcessRoCrateFromAroma 4: " + (new Date().getTime() - beginning.getTime()) + " ms");
 
         return roCrateToImport;
     }
