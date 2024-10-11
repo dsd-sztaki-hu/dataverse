@@ -1,7 +1,6 @@
 {
-  "cedarParams": {
-    "parentFolderIdForTheTests": "https://repo.arp.orgx/folders/7bd295bc-8387-4e8a-951b-a48e2d73268f",
-    "apiKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
-    "cedarDomain": "arp.orgx"
-  }
+  "folderId": "https://repo.arp.orgx/folders/2b4f02ef-be2e-4c51-8f6b-e15689ae413f",
+  "apiKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
+  "cedarDomain": "arp.orgx",
+  "cedarUUID": "ab2a9696-291f-4705-b5e6-6c262266c506"
 }
