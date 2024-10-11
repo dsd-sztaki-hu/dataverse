@@ -34,7 +34,7 @@ public class ArpApiIT {
 
 
     @BeforeEach
-    public static void setUpClass() {
+    public void setUpClass() {
         RestAssured.baseURI = UtilIT.getRestAssuredBaseUri();
     }
 
@@ -452,8 +452,8 @@ public class ArpApiIT {
 
         String host = System.getProperty("db.serverName") != null ? System.getProperty("db.serverName") : "localhost";
         String port = System.getProperty("db.portNumber") != null ? System.getProperty("db.portNumber") : "5432";
-        String database = System.getProperty("db.databaseName") != null ? System.getProperty("db.databaseName") : "dvndb";
-        String pguser = System.getProperty("db.user") != null ? System.getProperty("db.user") : "dvnapp";
+        String database = System.getProperty("db.databaseName") != null ? System.getProperty("db.databaseName") : "dataverse";
+        String pguser = System.getProperty("db.user") != null ? System.getProperty("db.user") : "dataverse";
         String pgpasswd = System.getProperty("db.password") != null ? System.getProperty("db.password") : "secret";
 
         try {
