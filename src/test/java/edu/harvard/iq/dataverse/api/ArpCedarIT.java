@@ -24,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -36,8 +37,7 @@ import java.util.logging.Logger;
 import static io.restassured.RestAssured.given;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static jakarta.ws.rs.core.Response.Status.OK;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ArpCedarIT {
     
@@ -90,9 +90,13 @@ public class ArpCedarIT {
             cedarParams.cedarDomain = cedarDomain;
             cedarParams.folderId = testFolderId;
             cedarParams.apiKey = apiKey;
+        } catch (NoSuchFileException e) {
+            logger.severe("Before running ArpCedarIT test, create a cedarParams.json file in the src/test/resources/arp folder based on cedarParams.example.json.");
+            e.printStackTrace();
+            fail();
         } catch (Exception e) {
             e.printStackTrace();
-            assertEquals(0,1);
+            fail();
         }
     }
 
