@@ -1,5 +1,7 @@
 package edu.harvard.iq.dataverse.api;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.DataFile;
@@ -69,13 +71,14 @@ public class ArpRoCrateIT
 {
 
     private static final Logger logger = Logger.getLogger(ArpRoCrateIT.class.getCanonicalName());
-    
-    
+
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @BeforeAll
     public static void setUpClass() {
-        
-        
+
+        RestAssured.registerParser("text/plain", io.restassured.parsing.Parser.JSON);
+
         RestAssured.baseURI = UtilIT.getRestAssuredBaseUri();
 
         Response removeIdentifierGenerationStyle = UtilIT.deleteSetting(SettingsServiceBean.Key.IdentifierGenerationStyle);
@@ -107,6 +110,7 @@ public class ArpRoCrateIT
 
     @AfterAll
     public static void afterClass() {
+        RestAssured.unregisterParser("text/plain");
 
         Response removeIdentifierGenerationStyle = UtilIT.deleteSetting(SettingsServiceBean.Key.IdentifierGenerationStyle);
         removeIdentifierGenerationStyle.then().assertThat()
@@ -271,10 +275,38 @@ public class ArpRoCrateIT
                 .body("data.latestVersion.metadataBlocks.citation.fields.find { it.typeName == 'author' }.value[0].authorName.value", equalTo("New, Test User"))
                 .body("data.latestVersion.metadataBlocks.citation.fields.find { it.typeName == 'author' }.value[0].authorAffiliation.value", equalTo("New Affiliation"));
 
+        //
         // Edit a file
+        //
 
+        // Get the file's ID
         Long origFileId = updateResponse.jsonPath().getLong("data.files.find { it.label == '1200px-Pushkin_population_history.svg.png' }.dataFile.id ");
         String origFileName = updateResponse.jsonPath().getString("data.files.find { it.label == '1200px-Pushkin_population_history.svg.png' }.dataFile.filename ");
+
+        // Note: getting the draft (getDataFileMetadataDraft) and published (getDataFileMetadata) metadata are separate calls
+        Response getMetadataResponse = UtilIT.getDataFileMetadataDraft(origFileId, setup.apiToken);
+        getMetadataResponse.prettyPrint();
+        getMetadataResponse.then().assertThat()
+                .statusCode(OK.getStatusCode())
+                .body("label", equalTo("1200px-Pushkin_population_history.svg.png"))
+                .body("description", equalTo(""));
+
+        // Update label and description
+        JsonObject jsonObject = gson.fromJson(getMetadataResponse.body().asString(), JsonObject.class);
+        jsonObject.addProperty("label", "Nice filename.png");
+        jsonObject.addProperty("description", "This is a nice file");
+        Response updateFileMetadataResponse = UtilIT.updateFileMetadata(origFileId.toString(), gson.toJson(jsonObject), setup.apiToken);
+        updateFileMetadataResponse.prettyPrint();
+        updateFileMetadataResponse.then().assertThat()
+                .statusCode(OK.getStatusCode());
+
+        // Verify the changes
+        Response getMetadataResponse2 = UtilIT.getDataFileMetadataDraft(origFileId, setup.apiToken);
+        getMetadataResponse2.prettyPrint();
+        getMetadataResponse2.then().assertThat()
+                .statusCode(OK.getStatusCode())
+                .body("label", equalTo("Nice filename.png"))
+                .body("description", equalTo("This is a nice file"));
 
         cleanupUserDataverseAndDataset(setup);
     }
