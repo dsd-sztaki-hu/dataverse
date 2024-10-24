@@ -1,68 +1,29 @@
 package edu.harvard.iq.dataverse.api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import edu.harvard.iq.dataverse.DataFile;
-import edu.harvard.iq.dataverse.DatasetVersionFilesServiceBean;
-import edu.harvard.iq.dataverse.FileSearchCriteria;
-import edu.harvard.iq.dataverse.authorization.DataverseRole;
-import edu.harvard.iq.dataverse.authorization.groups.impl.builtin.AuthenticatedUsers;
-import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
-import edu.harvard.iq.dataverse.dataaccess.AbstractRemoteOverlayAccessIO;
-import edu.harvard.iq.dataverse.dataaccess.GlobusOverlayAccessIOTest;
-import edu.harvard.iq.dataverse.datavariable.VarGroup;
-import edu.harvard.iq.dataverse.datavariable.VariableMetadata;
-import edu.harvard.iq.dataverse.datavariable.VariableMetadataDDIParser;
+import com.google.gson.*;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
-import edu.harvard.iq.dataverse.util.BundleUtil;
-import edu.harvard.iq.dataverse.util.SystemConfig;
-import edu.harvard.iq.dataverse.util.json.JSONLDUtil;
-import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.parsing.Parser;
 import io.restassured.path.json.JsonPath;
-import io.restassured.path.xml.XmlPath;
 import io.restassured.response.Response;
-import jakarta.ws.rs.core.Response.Status;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hamcrest.CoreMatchers;
+import io.smallrye.common.constraint.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.skyscreamer.jsonassert.JSONAssert;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 import java.util.logging.Logger;
 
-import static edu.harvard.iq.dataverse.DatasetVersion.ARCHIVE_NOTE_MAX_LENGTH;
 import static edu.harvard.iq.dataverse.api.ApiConstants.*;
 import static edu.harvard.iq.dataverse.api.UtilIT.API_TOKEN_HTTP_HEADER;
-import static edu.harvard.iq.dataverse.api.UtilIT.equalToCI;
 import static io.restassured.RestAssured.given;
 import static io.restassured.path.json.JsonPath.with;
 import static jakarta.ws.rs.core.Response.Status.*;
 import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test RoCrate editing an RoCrate-Dataset synchronisation. Based on DatasetsIT.java.
@@ -311,4 +272,164 @@ public class ArpRoCrateIT
         cleanupUserDataverseAndDataset(setup);
     }
 
+
+    @Test
+    public void createDatasetAndEditInAroma() throws IOException
+    {
+        TestSetup setup = createRandomUserDataverseAndDataset();
+    
+        // Upload a zip file to the dataset using SWORD
+        String pathToFile = "scripts/search/data/binary/arp-test-dataset-files.zip";
+        Response uploadResponse = UtilIT.uploadZipFileViaSword(setup.datasetPersistentId, pathToFile, setup.apiToken);
+        uploadResponse.then().assertThat()
+                .statusCode(CREATED.getStatusCode());
+
+        System.out.println("Initial Dataverse JSON");
+        Response datasetResponse = UtilIT.nativeGet(setup.datasetId, setup.apiToken);
+        datasetResponse.prettyPrint();
+
+        System.out.println("Initial Ro-Crate metadata JSON to be comapred with rocrate1.json");
+        Response roCrateResponse = getRoCrate(setup.datasetPersistentId, "DRAFT", setup.apiToken);
+        String roCrateJson = roCrateResponse.prettyPrint();
+
+        // Commpare with snapshot. Ignore ID and date related fields from comparison
+        String rocrate1Json = Files.readString(Paths.get("src/test/resources/arp/rocrate-tests/rocrate1.json"));
+        Assert.assertTrue(ArpJsonStructureComparator.compareJsonStructures(roCrateJson, rocrate1Json));
+
+
+        String originalJson = datasetResponse.getBody().asString();
+        // Create an ArpDatasetMetadataEditor instance
+        ArpDatasetMetadataEditor editor = new ArpDatasetMetadataEditor(originalJson);
+    
+        // Edit the title
+        editor.editFieldLevelMetadata("citation", "title", "Updated Darwin's Finches Study");
+    
+        // Edit the author (complex field)
+        JsonObject newAuthor = new JsonObject();
+        JsonObject authorName = new JsonObject();
+        authorName.addProperty("typeName", "authorName");
+        authorName.addProperty("multiple", false);
+        authorName.addProperty("typeClass", "primitive");
+        authorName.addProperty("value", "Darwin, Charles");
+        newAuthor.add("authorName", authorName);
+    
+        JsonObject authorAffiliation = new JsonObject();
+        authorAffiliation.addProperty("typeName", "authorAffiliation");
+        authorAffiliation.addProperty("multiple", false);
+        authorAffiliation.addProperty("typeClass", "primitive");
+        authorAffiliation.addProperty("value", "HMS Beagle");
+        newAuthor.add("authorAffiliation", authorAffiliation);
+        JsonArray jsonArray = new JsonArray();
+        jsonArray.add(newAuthor);
+        editor.editFieldLevelMetadata("citation", "author", jsonArray);
+    
+        // Get the updated JSON
+        String updatedJson = editor.getCurrentJsonStateForUpdate();
+        System.out.println("updatedJson:\n" + updatedJson);
+        // Use the updated JSON to update the dataset
+        Response updateResponse = updateDatasetMetadataJsonViaNative(setup.datasetPersistentId, updatedJson, setup.apiToken);
+        updateResponse.then().assertThat().statusCode(OK.getStatusCode());
+    
+        // Download and verify the updated RO-Crate metadata JSON
+        System.out.println("Updated Ro-Crate metadata JSON to be comapred with rocrate2.json");
+        Response roCrateResponse2 = getRoCrate(setup.datasetPersistentId, "DRAFT", setup.apiToken);
+        String updatedRoCratejson = roCrateResponse2.prettyPrint();
+        roCrateResponse2.then()
+            .assertThat()
+            .statusCode(OK.getStatusCode())
+            .body("'@graph'.find { it.'@type' == 'Dataset' }.title", equalTo("Updated Darwin's Finches Study"))
+            .body("'@graph'.find { it.'@type' == 'author' }.authorName", equalTo("Darwin, Charles"))
+            .body("'@graph'.find { it.'@type' == 'author' }.authorAffiliation", equalTo("HMS Beagle"));
+
+        String rocrate2Json = Files.readString(Paths.get("src/test/resources/arp/rocrate-tests/rocrate2.json"));
+        //Assert.assertTrue(ArpJsonStructureComparator.compareJsonStructures(updatedRoCratejson, rocrate2Json));
+
+        //
+        // Now edit the dataset via RO-Crate and check if Dataverse JSON is updated
+        //
+
+
+        System.out.println("Updating RO-Crate JSON");
+        JsonObject updatedRoCrate = new JsonParser().parse(updatedRoCratejson).getAsJsonObject();
+        JsonArray graph = updatedRoCrate.getAsJsonArray("@graph");
+
+        // Update the title
+        for (JsonElement element : graph) {
+            JsonObject obj = element.getAsJsonObject();
+            if (obj.has("@type") && obj.get("@type").getAsString().equals("Dataset")) {
+                obj.addProperty("title", "Updated Darwin's Finches Study in AROMA");
+                break;
+            }
+        }
+
+        // Add a new author
+        JsonObject newAuthor2 = new JsonObject();
+        newAuthor2.addProperty("@id", "#hooker-joseph"); // Add an @id for the new author
+        newAuthor2.addProperty("@type", "author");
+        newAuthor2.addProperty("authorName", "Hooker, Joseph");
+        newAuthor2.addProperty("authorAffiliation", "Royal Botanical Gardens, Kew");
+        newAuthor2.addProperty("name", "Hooker, Joseph; (Royal Botanical Gardens, Kew)");
+        graph.add(newAuthor2);
+
+        // Add reference to root dataset
+        JsonObject newAuthor2Ref = new JsonObject();
+        newAuthor2Ref.addProperty("@id", "#hooker-joseph");
+        JsonObject rootDataset = updatedRoCrate.get("@graph").getAsJsonArray().get(0).getAsJsonObject();
+        // At this poiunt we have a single author, so author is an object
+        JsonObject author1 = rootDataset.getAsJsonObject().get("author").getAsJsonObject();
+        // We crate an object and ad the original author as a reference as well as the new author
+        JsonArray authors = new JsonArray();
+        authors.add(author1);
+        authors.add(newAuthor2Ref);
+        rootDataset.getAsJsonObject().add("author", authors);
+
+
+        // Send updated RO-Crate back to Dataverse
+        Response updateRoCrateResponse = updateRoCrate(setup.datasetPersistentId, updatedRoCrate.toString(), setup.apiToken);
+        updateRoCrateResponse.then().assertThat().statusCode(OK.getStatusCode());
+
+        System.out.println("Verifying updates in Dataverse JSON");
+        Response updatedDatasetResponse = UtilIT.nativeGet(setup.datasetId, setup.apiToken);
+        updatedDatasetResponse.prettyPrint();
+
+        // Verify changes in the Dataverse JSON
+        updatedDatasetResponse.then().assertThat()
+                .statusCode(OK.getStatusCode())
+                .body("data.latestVersion.metadataBlocks.citation.fields.find { it.typeName == 'title' }.value", equalTo("Updated Darwin's Finches Study in AROMA"))
+                .body("data.latestVersion.metadataBlocks.citation.fields.find { it.typeName == 'author' }.value.size()", equalTo(2))
+                .body("data.latestVersion.metadataBlocks.citation.fields.find { it.typeName == 'author' }.value.find { it.authorName.value == 'Hooker, Joseph' }.authorAffiliation.value", equalTo("Royal Botanical Gardens, Kew"));
+
+        System.out.println("Verifying updates in RO-Crate JSON");
+        Response updatedRoCrateResponse = getRoCrate(setup.datasetPersistentId, "DRAFT", setup.apiToken);
+        String updatedRoCrateJson = updatedRoCrateResponse.prettyPrint();
+
+        // Verify changes in the RO-Crate JSON
+        updatedRoCrateResponse.then().assertThat()
+                .statusCode(OK.getStatusCode())
+                .body("'@graph'.find { it.'@type' == 'Dataset' }.title", equalTo("Updated Darwin's Finches Study in AROMA"))
+                .body("'@graph'.findAll { it.'@type' == 'author' }.size()", equalTo(2))
+                .body("'@graph'.find { it.'@type' == 'author' && it.authorName == 'Hooker, Joseph' }.authorAffiliation", equalTo("Royal Botanical Gardens, Kew"));
+
+
+//        cleanupUserDataverseAndDataset(setup);
+    }
+
+    public static Response getRoCrate(String persistentId, String version, String apiToken) {
+        String path = String.format("/api/arp/rocrate/%s", persistentId);
+        if (version != null) {
+            path += "?version=" + version;
+        }
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .get(path);
+    }
+
+    public static Response updateRoCrate(String persistentId, String roCrateJson, String apiToken) {
+        String path = String.format("/api/arp/rocrate/%s", persistentId);
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .contentType(ContentType.JSON)
+                .body(roCrateJson)
+                .post(path);
+    }
 }
