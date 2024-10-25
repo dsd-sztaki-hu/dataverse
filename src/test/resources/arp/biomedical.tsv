@@ -2,18 +2,18 @@
 	biomedical		Life Sciences Metadata	https://dataverse.org/schema/biomedical/
 #datasetField	name	title	description	watermark	fieldType	displayOrder	displayFormat	advancedSearchField	allowControlledVocabulary	allowmultiples	facetable	displayoncreate	required	parent	metadatablock_id	termURI
 	studyDesignType	Design Type	Design types that are based on the overall experimental design.		TEXT	0		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyDesignType
-	studyOtherDesignType	Other Design Type	If Other was selected in Design Type, list any other design types that were used in this Dataset.		TEXT	1		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyOtherDesignType
+	studyOtherDesignType	Other Design Type	If Other was selected in Design Type, list any other design types that were used in this Dataset.		TEXT	1		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyOtherDesignType
 	studyFactorType	Factor Type	Factors used in the Dataset.		TEXT	2		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyFactorType
-	studyOtherFactorType	Other Factor Type	If Other was selected in Factor Type, list any other factor types that were used in this Dataset.		TEXT	3		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyOtherFactorType
+	studyOtherFactorType	Other Factor Type	If Other was selected in Factor Type, list any other factor types that were used in this Dataset.		TEXT	3		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyOtherFactorType
 	studyAssayOrganism	Organism	The taxonomic name of the organism used in the Dataset or from which the  starting biological material derives.		TEXT	4		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOrganism
-	studyAssayOtherOrganism	Other Organism	If Other was selected in Organism, list any other organisms that were used in this Dataset. Terms from the NCBI Taxonomy are recommended.		TEXT	5		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherOrganism
+	studyAssayOtherOrganism	Other Organism	If Other was selected in Organism, list any other organisms that were used in this Dataset. Terms from the NCBI Taxonomy are recommended.		TEXT	5		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherOrganism
 	studyAssayMeasurementType	Measurement Type	A term to qualify the endpoint, or what is being measured (e.g. gene expression profiling; protein identification).		TEXT	6		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayMeasurementType
-	studyAssayOtherMeasurmentType	Other Measurement Type	If Other was selected in Measurement Type, list any other measurement types that were used. Terms from NCBO Bioportal are recommended.		TEXT	7		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherMeasurmentType
+	studyAssayOtherMeasurmentType	Other Measurement Type	If Other was selected in Measurement Type, list any other measurement types that were used. Terms from NCBO Bioportal are recommended.		TEXT	7		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherMeasurmentType
 	studyAssayTechnologyType	Technology Type	A term to identify the technology used to perform the measurement (e.g. DNA microarray; mass spectrometry).		TEXT	8		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayTechnologyType
-	studyAssayOtherTechnologyType	Other Technology Type	If Other was selected in Technology Type, list any other technology types that were used in this Dataset.		TEXT	9		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherTechnologyType
+	studyAssayOtherTechnologyType	Other Technology Type	If Other was selected in Technology Type, list any other technology types that were used in this Dataset.		TEXT	9		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherTechnologyType
 	studyAssayPlatform	Technology Platform	The manufacturer and name of the technology platform used in the assay (e.g. Bruker AVANCE).		TEXT	10		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayPlatform
-	studyAssayOtherPlatform	Other Technology Platform	If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.		TEXT	11		true	false	false	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherPlatform
-	studyAssayCellType	Cell Type	The name of the cell line from which the source or sample derives.		TEXT	12		true	true	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayCellType
+	studyAssayOtherPlatform	Other Technology Platform	If Other was selected in Technology Platform, list any other technology platforms that were used in this Dataset.		TEXT	11		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayOtherPlatform
+	studyAssayCellType	Cell Type	The name of the cell line from which the source or sample derives.		TEXT	12		true	false	true	true	false	false		biomedical	https://dataverse.org/schema/biomedical/studyAssayCellType
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder
 	studyDesignType	Case Control		0
 	studyDesignType	Cross Sectional		1
@@ -112,43 +112,43 @@
 	studyAssayTechnologyType	real time PCR		10
 	studyAssayTechnologyType	no technology required		11
 	studyAssayTechnologyType	Other		12
-	studyAssayPlatform	210-MS GC Ion Trap (Varian)		1
-	studyAssayPlatform	220-MS GC Ion Trap (Varian)		2
-	studyAssayPlatform	225-MS GC Ion Trap (Varian)		3
-	studyAssayPlatform	240-MS GC Ion Trap (Varian)		4
-	studyAssayPlatform	300-MS quadrupole GC/MS (Varian)		5
-	studyAssayPlatform	320-MS LC/MS (Varian)		6
-	studyAssayPlatform	325-MS LC/MS (Varian)		7
-	studyAssayPlatform	320-MS GC/MS (Varian)		8
-	studyAssayPlatform	500-MS LC/MS (Varian)		9
-	studyAssayPlatform	800D (Jeol)		10
-	studyAssayPlatform	910-MS TQ-FT (Varian)		11
-	studyAssayPlatform	920-MS TQ-FT (Varian)		12
-	studyAssayPlatform	3100 Mass Detector (Waters)		13
-	studyAssayPlatform	6110 Quadrupole LC/MS (Agilent)		14
-	studyAssayPlatform	6120 Quadrupole LC/MS (Agilent)		15
-	studyAssayPlatform	6130 Quadrupole LC/MS (Agilent)		16
-	studyAssayPlatform	6140 Quadrupole LC/MS (Agilent)		17
-	studyAssayPlatform	6310 Ion Trap LC/MS (Agilent)		18
-	studyAssayPlatform	6320 Ion Trap LC/MS (Agilent)		19
-	studyAssayPlatform	6330 Ion Trap LC/MS (Agilent)		20
-	studyAssayPlatform	6340 Ion Trap LC/MS (Agilent)		21
-	studyAssayPlatform	6410 Triple Quadrupole LC/MS (Agilent)		22
-	studyAssayPlatform	6430 Triple Quadrupole LC/MS (Agilent)		23
-	studyAssayPlatform	6460 Triple Quadrupole LC/MS (Agilent)		24
-	studyAssayPlatform	6490 Triple Quadrupole LC/MS (Agilent)		25
-	studyAssayPlatform	6530 Q-TOF LC/MS (Agilent)		26
-	studyAssayPlatform	6540 Q-TOF LC/MS (Agilent)		27
-	studyAssayPlatform	6210 TOF LC/MS (Agilent)		28
-	studyAssayPlatform	6220 TOF LC/MS (Agilent)		29
-	studyAssayPlatform	6230 TOF LC/MS (Agilent)		30
-	studyAssayPlatform	7000B Triple Quadrupole GC/MS (Agilent)		31
-	studyAssayPlatform	AccuTO DART (Jeol)		32
-	studyAssayPlatform	AccuTOF GC (Jeol)		33
-	studyAssayPlatform	AccuTOF LC (Jeol)		34
-	studyAssayPlatform	ACQUITY SQD (Waters)		35
-	studyAssayPlatform	ACQUITY TQD (Waters)		36
-	studyAssayPlatform	Agilent		0
+	studyAssayPlatform	ACQUITY SQD (Waters)		0
+	studyAssayPlatform	ACQUITY TQD (Waters)		1
+	studyAssayPlatform	Agilent		2
+	studyAssayPlatform	210-MS GC Ion Trap (Varian)		3
+	studyAssayPlatform	220-MS GC Ion Trap (Varian)		4
+	studyAssayPlatform	225-MS GC Ion Trap (Varian)		5
+	studyAssayPlatform	240-MS GC Ion Trap (Varian)		6
+	studyAssayPlatform	300-MS quadrupole GC/MS (Varian)		7
+	studyAssayPlatform	320-MS LC/MS (Varian)		8
+	studyAssayPlatform	325-MS LC/MS (Varian)		9
+	studyAssayPlatform	320-MS GC/MS (Varian)		10
+	studyAssayPlatform	500-MS LC/MS (Varian)		11
+	studyAssayPlatform	800D (Jeol)		12
+	studyAssayPlatform	910-MS TQ-FT (Varian)		13
+	studyAssayPlatform	920-MS TQ-FT (Varian)		14
+	studyAssayPlatform	3100 Mass Detector (Waters)		15
+	studyAssayPlatform	6110 Quadrupole LC/MS (Agilent)		16
+	studyAssayPlatform	6120 Quadrupole LC/MS (Agilent)		17
+	studyAssayPlatform	6130 Quadrupole LC/MS (Agilent)		18
+	studyAssayPlatform	6140 Quadrupole LC/MS (Agilent)		19
+	studyAssayPlatform	6310 Ion Trap LC/MS (Agilent)		20
+	studyAssayPlatform	6320 Ion Trap LC/MS (Agilent)		21
+	studyAssayPlatform	6330 Ion Trap LC/MS (Agilent)		22
+	studyAssayPlatform	6340 Ion Trap LC/MS (Agilent)		23
+	studyAssayPlatform	6410 Triple Quadrupole LC/MS (Agilent)		24
+	studyAssayPlatform	6430 Triple Quadrupole LC/MS (Agilent)		25
+	studyAssayPlatform	6460 Triple Quadrupole LC/MS (Agilent)		26
+	studyAssayPlatform	6490 Triple Quadrupole LC/MS (Agilent)		27
+	studyAssayPlatform	6530 Q-TOF LC/MS (Agilent)		28
+	studyAssayPlatform	6540 Q-TOF LC/MS (Agilent)		29
+	studyAssayPlatform	6210 TOF LC/MS (Agilent)		30
+	studyAssayPlatform	6220 TOF LC/MS (Agilent)		31
+	studyAssayPlatform	6230 TOF LC/MS (Agilent)		32
+	studyAssayPlatform	7000B Triple Quadrupole GC/MS (Agilent)		33
+	studyAssayPlatform	AccuTO DART (Jeol)		34
+	studyAssayPlatform	AccuTOF GC (Jeol)		35
+	studyAssayPlatform	AccuTOF LC (Jeol)		36
 	studyAssayPlatform	Agilent 5975E GC/MSD (Agilent)		37
 	studyAssayPlatform	Agilent 5975T LTM GC/MSD (Agilent)		38
 	studyAssayPlatform	5975C Series GC/MSD (Agilent)		39
