@@ -1128,9 +1128,11 @@ public class RoCrateImportManager {
 
         // Must collect the datafiles this way to only process the ones that belong to the actual dataset version
         List<DataFile> dvDatasetFiles = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getDataFile).collect(Collectors.toList());
+        // ceate a map of the contents of dvDatasetFiles maping the hash as key to the actual DataFile
+        Map<String, DataFile> dvDatasetFilesMap = dvDatasetFiles.stream().collect(Collectors.toMap(DataFile::getChecksumValue, Function.identity()));
         // the root dataset's hasPart is handled differently, it has to be merged separately
         mergeHasParts(roCrate, rootHasPart, rootDataEntityProperties, mapper);
-        rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
+        rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFilesMap, extraMetadata, rootDataEntityProperties, mapper));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
 
@@ -1185,16 +1187,14 @@ public class RoCrateImportManager {
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(roCrateFolderPath + "/" + RO_CRATE_EXTRAS_JSON_NAME), resultJsonNode);
     }
 
-    private boolean postProcessDatasetAndFileEntities(RoCrate roCrate, JsonNode parentEntity, List<DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata, ObjectNode parentObj, ObjectMapper mapper) {
+    private boolean postProcessDatasetAndFileEntities(RoCrate roCrate, JsonNode parentEntity, Map<String, DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata, ObjectNode parentObj, ObjectMapper mapper) {
         String oldId = parentEntity.get("@id").textValue();
         var entity = roCrate.getEntityById(oldId);
         var entityNode = entity.getProperties();
         if (roCrateServiceBean.hasType(entityNode, "File")) {
             String fileHash = entityNode.has("hash") ? entityNode.get("hash").textValue() : "";
-            var dataFileOpt = dvDatasetFiles.stream().filter(f ->
-                            f.getChecksumValue().equals(fileHash))
-                    .findFirst();
-            boolean isVirtualFile = dataFileOpt.isEmpty();
+            var dataFileOpt = Optional.ofNullable(dvDatasetFiles.get(fileHash));
+            boolean isVirtualFile = dataFileOpt == null;
             if (isVirtualFile) {
                 extraMetadata.get("virtualFileAdded").add(entityNode.get("@id").textValue());
             } else {
