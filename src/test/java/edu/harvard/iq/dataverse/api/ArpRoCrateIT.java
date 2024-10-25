@@ -411,7 +411,7 @@ public class ArpRoCrateIT
                 .body("'@graph'.find { it.'@type' == 'author' && it.authorName == 'Hooker, Joseph' }.authorAffiliation", equalTo("Royal Botanical Gardens, Kew"));
 
 
-//        cleanupUserDataverseAndDataset(setup);
+        cleanupUserDataverseAndDataset(setup);
     }
 
     public static Response getRoCrate(String persistentId, String version, String apiToken) {

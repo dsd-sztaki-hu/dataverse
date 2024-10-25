@@ -51,7 +51,7 @@ import static edu.harvard.iq.dataverse.validation.URLValidator.isURLValid;
 public class RoCrateImportManager {
 
     @EJB
-    DatasetFieldServiceBean fieldService;
+    ArpCachingDatasetFieldServiceBean fieldService;
 
     @EJB
     ArpMetadataBlockServiceBean arpMetadataBlockServiceBean;
@@ -67,7 +67,7 @@ public class RoCrateImportManager {
     
     public RoCrateImportManager() {}
     
-    public RoCrateImportManager(DatasetFieldServiceBean fieldService) { this.fieldService = fieldService; }
+    public RoCrateImportManager(ArpCachingDatasetFieldServiceBean fieldService) { this.fieldService = fieldService; }
 
     // Handles the importing of the RO-Crates (mainly sent by AROMA)
     public void importRoCrate(RoCrate roCrate, DatasetVersion updatedVersion) {

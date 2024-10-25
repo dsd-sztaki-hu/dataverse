@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import edu.harvard.iq.dataverse.ControlledVocabularyValue;
 import edu.harvard.iq.dataverse.DatasetFieldType;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
+import edu.harvard.iq.dataverse.mocks.MockArpCachingDatasetFieldSvc;
 import edu.harvard.iq.dataverse.mocks.MockDatasetFieldSvc;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 public class RoCrateImportPrepTest {
     
     private static final Logger logger = Logger.getLogger(RoCrateImportPrepTest.class.getCanonicalName());
-    private static final MockDatasetFieldSvc datasetFieldTypeSvc = new MockDatasetFieldSvc();
+    private static final MockArpCachingDatasetFieldSvc datasetFieldTypeSvc = new MockArpCachingDatasetFieldSvc();
     private static final RoCrateImportManager roCrateImportManager = new RoCrateImportManager(datasetFieldTypeSvc);
 
     @BeforeAll

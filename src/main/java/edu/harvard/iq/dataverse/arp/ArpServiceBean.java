@@ -89,6 +89,9 @@ public class ArpServiceBean implements java.io.Serializable {
     DatasetFieldServiceBean datasetFieldService;
 
     @EJB
+    ArpCachingDatasetFieldServiceBean arpCachingDatasetFieldService;
+
+    @EJB
     DataverseServiceBean dataverseService;
 
     @EJB
@@ -1357,6 +1360,9 @@ public class ArpServiceBean implements java.io.Serializable {
             e.printStackTrace();
             logger.log(Level.SEVERE, "Updating metadatablock "+""+" from CEDAR template failed", e);
             throw new RuntimeException(e);
+        } finally {
+            // Invalidate caches so that new values from DB will be served
+            arpCachingDatasetFieldService.invalidateCaches();
         }
 
         return mdbTsv;
