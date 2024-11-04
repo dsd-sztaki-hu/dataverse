@@ -55,6 +55,17 @@
                 </p>
             </div>
         </div>
+        <div class="form-group">
+            <label jsf:for="arpLicense" class="col-sm-3 control-label">
+                #{bundle['arp.file.dataFilesTab.terms.list.license']} </label>
+            <div class="col-sm-9">
+                <p class="help-block">
+                    <h:outputText
+                            value="#{bundle['arp.file.dataFilesTab.terms.list.license.view.description']}"
+                            escape="false" />
+                </p>
+            </div>
+        </div>
 
         <ui:fragment rendered="#{empty workingVersion.termsOfUseAndAccess.license}">
             <div class="form-group"
