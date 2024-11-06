@@ -178,6 +178,14 @@ public class DatasetPage implements java.io.Serializable {
 
     private static final Logger logger = Logger.getLogger(DatasetPage.class.getCanonicalName());
 
+    public boolean isArpTermsAccepted() {
+        return arpTermsAccepted;
+    }
+
+    public void setArpTermsAccepted(boolean arpTermsAccepted) {
+        this.arpTermsAccepted = arpTermsAccepted;
+    }
+
     public enum EditMode {
 
         CREATE, INFO, FILE, METADATA, LICENSE
@@ -284,6 +292,8 @@ public class DatasetPage implements java.io.Serializable {
     ArpServiceBean arpService;
 
     private String aromaAddress = "";
+    
+    private boolean arpTermsAccepted = false;
 
     private Dataset dataset = new Dataset();
 
@@ -473,6 +483,15 @@ public class DatasetPage implements java.io.Serializable {
                 return hasValidTermsOfAccess;
             }
         }    
+    }
+    
+    public boolean arpIsHasCCLicense() {
+        var license = dataset.getLatestVersion().getTermsOfUseAndAccess().getLicense();
+        if (license != null) {
+            return license.getName().toLowerCase().startsWith("cc");
+        } else {
+            return false;
+        }
     }
     
     private Boolean hasRestrictedFiles = null;

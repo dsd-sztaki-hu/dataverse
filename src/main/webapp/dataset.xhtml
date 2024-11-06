@@ -1828,14 +1828,25 @@
                             <ui:include src="datasetLicenseInfoFragment.xhtml" />
                         </c:if>
                         <ui:fragment  rendered="#{publishDataset}">
+                            <div class="form-group" style="display: flex; align-items: start;" jsf:rendered="#{DatasetPage.arpIsHasCCLicense()}">
+                                <h:selectBooleanCheckbox style="margin-right: 10px; margin-left: 15px;" id="arpTermsCheckbox" value="#{DatasetPage.arpTermsAccepted}">
+                                    <f:ajax render="continueButton" />
+                                </h:selectBooleanCheckbox>
+                                <h:outputText value="#{bundle['arp.dataset.publish.cc.license.accept']}" escape="false" />
+                            </div>
                             <div class="form-group">
                                 <p class="col-sm-12 help-block">#{bundle['dataset.publish.terms.help.tip']}</p>
                             </div>
                         </ui:fragment>
                         <div class="button-block">
-                            <p:commandButton rendered="#{valid}" styleClass="btn btn-default" value="#{bundle.continue}"
-                                             onclick="PF('publishDataset').hide();
-                                                     PF('blockDatasetForm').hide();" action="#{DatasetPage.releaseDataset}" />
+                                <p:commandButton
+                                        id="continueButton"
+                                        rendered="#{valid}"
+                                        styleClass="btn btn-default"
+                                        value="#{bundle.continue}"
+                                        onclick="PF('publishDataset').hide(); PF('blockDatasetForm').hide();"
+                                        action="#{DatasetPage.releaseDataset}"
+                                        disabled="#{!DatasetPage.arpTermsAccepted and DatasetPage.arpIsHasCCLicense()}" />
                             <button class="btn btn-link" onclick="PF('publishDataset').hide();
                                     PF('blockDatasetForm').hide();" type="button">
                                 #{bundle.cancel}
