@@ -926,8 +926,7 @@
                                     </p:commandLink>
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
                                                    rendered="#{empty DatasetPage.workingVersion.fileMetadatas and (!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                               and (empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
