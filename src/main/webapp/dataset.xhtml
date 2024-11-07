@@ -1826,13 +1826,15 @@
                         <c:if test="#{showPublishLink}">
                             <ui:include src="datasetLicenseInfoFragment.xhtml" />
                         </c:if>
-                        <ui:fragment  rendered="#{publishDataset}">
-                            <div class="form-group" style="display: flex; align-items: start;" jsf:rendered="#{DatasetPage.arpIsHasCCLicense()}">
+                        <ui:fragment rendered="#{DatasetPage.arpIsHasCCLicense()}">
+                            <div class="form-group" style="display: flex; align-items: start;">
                                 <h:selectBooleanCheckbox style="margin-right: 10px; margin-left: 15px;" id="arpTermsCheckbox" value="#{DatasetPage.arpTermsAccepted}">
                                     <f:ajax render="continueButton" />
                                 </h:selectBooleanCheckbox>
                                 <h:outputText value="#{bundle['arp.dataset.publish.cc.license.accept']}" escape="false" />
                             </div>
+                        </ui:fragment>
+                        <ui:fragment  rendered="#{publishDataset}">
                             <div class="form-group">
                                 <p class="col-sm-12 help-block">#{bundle['dataset.publish.terms.help.tip']}</p>
                             </div>
