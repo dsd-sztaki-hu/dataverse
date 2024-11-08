@@ -3354,16 +3354,31 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    public void startRoCrateZipDownload() {
+    public void writeGuestbookAndStartRoCrateDownload() {
         this.setSelectedFiles(workingVersion.getFileMetadatas());
+        PrimeFaces.current().executeScript("PF('guestbookAndTermsPopup').hide()");
+        // this should not happen, but still validate the files, if there are any restricted files, we do not allow the download
         boolean validate = validateFilesForDownload(false);
-        if (validate) {
+        if (validate || canDownloadRoCrate()) {
             updateGuestbookResponse(false, false, false);
-            if(!getValidateFilesOutcome().equals("Mixed")){
+            if(!getValidateFilesOutcome().equals("Mixed")){ 
+                guestbookResponse.setEventType(GuestbookResponse.DOWNLOAD);
+                List<String> list = new ArrayList<>(Arrays.asList(guestbookResponse.getSelectedFileIds().split(",")));
+        
+                for (String idAsString : list) {
+                    DataFile df = datafileService.find(Long.valueOf(idAsString));
+                    if (df != null) {
+                        guestbookResponse.setDataFile(df);
+                        fileDownloadService.writeGuestbookResponseRecord(guestbookResponse);
+                    }
+                }
+        
                 var dataset = guestbookResponse.getDataset();
                 var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
                 fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
             }
+        } else {
+            logger.severe("An attempt was made to download an RO-Crate containing restricted files!");
         }
     }
 
@@ -4184,31 +4199,31 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public void cancelCreate() {
-    	//Stop any uploads in progress (so that uploadedFiles doesn't change)
-    	uploadInProgress.setValue(false);
+        //Stop any uploads in progress (so that uploadedFiles doesn't change)
+        uploadInProgress.setValue(false);
 
-    	logger.fine("Cancelling: " + newFiles.size() + " : " + uploadedFiles.size());
+        logger.fine("Cancelling: " + newFiles.size() + " : " + uploadedFiles.size());
 
-    	//Files that have been finished and are now in the lower list on the page
-    	for (DataFile newFile : newFiles.toArray(new DataFile[0])) {
-    		FileUtil.deleteTempFile(newFile, dataset, ingestService);
-    	}
-    	logger.fine("Deleted newFiles");
+        //Files that have been finished and are now in the lower list on the page
+        for (DataFile newFile : newFiles.toArray(new DataFile[0])) {
+            FileUtil.deleteTempFile(newFile, dataset, ingestService);
+        }
+        logger.fine("Deleted newFiles");
 
-    	//Files in the upload process but not yet finished
-    	//ToDo - if files are added to uploadFiles after we access it, those files are not being deleted. With uploadInProgress being set false above, this should be a fairly rare race condition.
-    	for (DataFile newFile : uploadedFiles.toArray(new DataFile[0])) {
-    		FileUtil.deleteTempFile(newFile, dataset, ingestService);
-    	}
-    	logger.fine("Deleted uploadedFiles");
+        //Files in the upload process but not yet finished
+        //ToDo - if files are added to uploadFiles after we access it, those files are not being deleted. With uploadInProgress being set false above, this should be a fairly rare race condition.
+        for (DataFile newFile : uploadedFiles.toArray(new DataFile[0])) {
+            FileUtil.deleteTempFile(newFile, dataset, ingestService);
+        }
+        logger.fine("Deleted uploadedFiles");
 
-    	try {
-    		String alias = dataset.getOwner().getAlias();
-    		logger.info("alias: " + alias);
-    		FacesContext.getCurrentInstance().getExternalContext().redirect("/dataverse.xhtml?alias=" + alias);
-    	} catch (IOException ex) {
-    		logger.info("Failed to issue a redirect to file download url.");
-    	}
+        try {
+            String alias = dataset.getOwner().getAlias();
+            logger.info("alias: " + alias);
+            FacesContext.getCurrentInstance().getExternalContext().redirect("/dataverse.xhtml?alias=" + alias);
+        } catch (IOException ex) {
+            logger.info("Failed to issue a redirect to file download url.");
+        }
     }
 
     private HttpClient getClient() {
@@ -6531,6 +6546,43 @@ public class DatasetPage implements java.io.Serializable {
     ////
     /// ARP specific
     ///
+    
+    private boolean roCrateDownload = false;
+    
+    public boolean isRoCrateDownload() {
+        return roCrateDownload;
+    }
+    
+    public void setRoCrateDownload(boolean roCrateDownload) {
+        this.roCrateDownload = roCrateDownload;
+    }
+    
+    private boolean roCrateMetadataDownload = false;
+    
+    public boolean isRoCrateMetadataDownload() {
+        return roCrateMetadataDownload;
+    }
+    
+    public void setRoCrateMetadataDownload(boolean roCrateMetadataDownload) {
+        this.roCrateMetadataDownload = roCrateMetadataDownload;
+    }
+    
+    private Boolean canDownloadRoCrate = null;
+
+    // The RO-Crate can only be downloaded if all the files are downloadable for the user.
+    public boolean canDownloadRoCrate() {
+        if (canDownloadRoCrate == null) {
+            canDownloadRoCrate = true;
+            for (FileMetadata fmd : workingVersion.getFileMetadatas()) {
+                if (!fileDownloadHelper.canDownloadFile(fmd)) {
+                    canDownloadRoCrate = false;
+                    break;
+                }
+            }
+        }
+        return canDownloadRoCrate;
+    }
+    
     public String getDownloadRoCrateHeader() {
         return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big");
     }
@@ -6538,10 +6590,10 @@ public class DatasetPage implements java.io.Serializable {
     public String getDownloadRoCrateMessage() {
         long zipDownloadLimit = settingsWrapper.getZipDownloadLimit() / (1024*1024);
         var message = zipDownloadLimit > 1024 ? zipDownloadLimit / 1024 + " GB" : zipDownloadLimit + " MB";
-        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
     }
 
-    public void downloadRoCrate() throws Exception {
+    public void downloadRoCrateMetadata() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];

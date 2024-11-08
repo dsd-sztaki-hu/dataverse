@@ -151,7 +151,7 @@
             </label>
             <h:outputText id="fdTermsOfAccess" class="col-sm-6"
                 value="#{MarkupChecker:sanitizeBasicHTML(workingVersion.termsOfUseAndAccess.termsOfAccess)}"
-                escape="false" />
+                escape="false" /> 
         </div>
             <p:fragment rendered="#{guestbookAndTermsPopupRequired and ((termsGuestbookPopupAction != bundle.download) != guestbookPopupRequiredAtDownload)}" id="guestbookUIFragment">
                 <div class="container messagePanel">
@@ -262,7 +262,28 @@
                 </div>
             </p:fragment>
         </div>
-        <div class="button-block" jsf:rendered="#{termsGuestbookPopupAction == bundle.download}">
+        <div class="button-block" jsf:rendered="#{DatasetPage.roCrateMetadataDownload}">
+            <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}" ajax="false"
+                             actionListener="#{DatasetPage.downloadRoCrateMetadata()}"
+                             update="guestbookUIFragment"
+                             onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();">
+                <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
+            </p:commandButton>
+            <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">
+                #{bundle.cancel}
+            </button>
+        </div>
+        <div class="button-block" jsf:rendered="#{roCrateDownload and termsGuestbookPopupAction == bundle.download}">
+            <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}"
+                             actionListener="#{DatasetPage.writeGuestbookAndStartRoCrateDownload()}"
+                             update="guestbookUIFragment">
+                <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
+            </p:commandButton>
+            <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">
+                #{bundle.cancel}
+            </button>
+        </div>
+        <div class="button-block" jsf:rendered="#{not roCrateDownload and termsGuestbookPopupAction == bundle.download}">
         <!--
             The "process" directive below is very important. Without it, the
             setters on the GuestbookResponse object can be called twice leading
