@@ -909,6 +909,13 @@
                                                      action="#{DatasetPage.downloadRoCrate()}"
                                                      ajax="false"
                                     />-->
+                                    <!-- If the RO-Crate is not downloadable, because some files are restricted for the user. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" onclick="PF('roCrateDownloadInvalid').show();"
+                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and !(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
+                                                               and (empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                    </p:commandLink>
                                     <!-- If the RO-Crate is downloadable and contains files, this button will download the RO-Crate with the files. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
                                                    update=":datasetForm:guestbookAndTermsPopup"
@@ -1169,6 +1176,17 @@
                                              oncomplete="PF('guestbookAndTermsPopup').show();" />
                             <button class="btn btn-link" onclick="PF('globusTransferMixed').hide();" type="button">
                                 #{bundle.cancel}
+                            </button>
+                        </div>
+                    </p:dialog>
+                    <p:dialog id="roCrateDownloadInvalid" styleClass="smallPopUp" header="#{bundle['arp.dataset.inValidSelectedFilesForDownload']}" widgetVar="roCrateDownloadInvalid" modal="true">
+                        <p class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"/> #{bundle['arp.dataset.noValidSelectedFilesForDownload']}</p>
+                        <ui:fragment rendered="#{DatasetPage.dataset.fileAccessRequest}">
+                            <p class="help-block">#{bundle['dataset.requestAccessToRestrictedFiles']}</p>
+                        </ui:fragment>
+                        <div class="button-block">
+                            <button class="btn btn-default" onclick="PF('roCrateDownloadInvalid').hide();" type="button">
+                                #{bundle.close}
                             </button>
                         </div>
                     </p:dialog>
