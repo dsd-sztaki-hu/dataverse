@@ -905,41 +905,32 @@
                                    rendered="#{(!DatasetPage.workingVersion.deaccessioned or (DatasetPage.workingVersion.deaccessioned and DatasetPage.canUpdateDataset())) 
                                                and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
                                 <div class="button-block tab-header margin-bottom text-right" jsf:rendered="#{empty DatasetPage.editMode}">
-                                    <!--<p:commandButton value="#{bundle['file.dataFilesTab.metadata.downloadRoCrate']}"
-                                                     action="#{DatasetPage.downloadRoCrate()}"
-                                                     ajax="false"
-                                    />-->
                                     <!-- If the RO-Crate is not downloadable, because some files are restricted for the user. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" onclick="PF('roCrateDownloadInvalid').show();"
-                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and !(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
-                                                               and (empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and empty DatasetPage.editMode and !widgetWrapper.widgetView}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
-                                    <!-- If the RO-Crate is downloadable and contains files, this button will download the RO-Crate with the files. -->
+                                    <!-- If the RO-Crate is downloadable and the popup is required. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
                                                    update=":datasetForm:guestbookAndTermsPopup"
-                                                   rendered="#{DatasetPage.canDownloadRoCrate() and !(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
-                                                               and (empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                                   rendered="#{!DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                         <f:actionListener binding="#{DatasetPage.setTermsGuestbookPopupAction(bundle.download)}"/>
                                     </p:commandLink>
-                                    <!-- If the RO-Crate is too large to download, this button will download the metadata.json and the preview.html file. -->
-                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}"
-                                                   update=":downloadRoCrate,:datasetForm:guestbookAndTermsPopup" oncomplete="PF('downloadRoCrate').show()"
-                                                   rendered="#{DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView
-                                                               and empty DatasetPage.editMode}"
+                                    <!-- If the RO-Crate is downloadable and the popup is not required. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateDownload()}"
+                                                   ajax="false"
+                                                   rendered="#{DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
-                                    <!-- If the RO-Crate does not contain files, this button will download the metadata.json and the preview.html file. -->
+                                    <!-- If the RO-Crate is too large to download. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}"
-                                                   rendered="#{empty DatasetPage.workingVersion.fileMetadatas and 
-                                                   (empty DatasetPage.editMode and !widgetWrapper.widgetView)}"
-                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}"
-                                                   update=":datasetForm:guestbookAndTermsPopup"
-                                                   oncomplete="PF('guestbookAndTermsPopup').show();">
+                                                   update=":downloadRoCrate,:datasetForm:guestbookAndTermsPopup" oncomplete="PF('downloadRoCrate').show()"
+                                                   rendered="#{DatasetPage.canDownloadRoCrate() and DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink

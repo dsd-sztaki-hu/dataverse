@@ -264,19 +264,9 @@
         </div>
         <div class="button-block" jsf:rendered="#{DatasetPage.roCrateMetadataDownload}">
             <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}" ajax="false"
-                             actionListener="#{DatasetPage.downloadRoCrateMetadata()}"
+                             actionListener="#{DatasetPage.startRoCrateDownload()}"
                              update="guestbookUIFragment"
                              onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();">
-                <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
-            </p:commandButton>
-            <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">
-                #{bundle.cancel}
-            </button>
-        </div>
-        <div class="button-block" jsf:rendered="#{roCrateDownload and termsGuestbookPopupAction == bundle.download}">
-            <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}"
-                             actionListener="#{DatasetPage.writeGuestbookAndStartRoCrateDownload()}"
-                             update="guestbookUIFragment">
                 <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
             </p:commandButton>
             <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">

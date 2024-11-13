@@ -3354,34 +3354,6 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    public void writeGuestbookAndStartRoCrateDownload() {
-        this.setSelectedFiles(workingVersion.getFileMetadatas());
-        PrimeFaces.current().executeScript("PF('guestbookAndTermsPopup').hide()");
-        // this should not happen, but still validate the files, if there are any restricted files, we do not allow the download
-        boolean validate = validateFilesForDownload(false);
-        if (validate || canDownloadRoCrate()) {
-            updateGuestbookResponse(false, false, false);
-            if(!getValidateFilesOutcome().equals("Mixed")){ 
-                guestbookResponse.setEventType(GuestbookResponse.DOWNLOAD);
-                List<String> list = new ArrayList<>(Arrays.asList(guestbookResponse.getSelectedFileIds().split(",")));
-        
-                for (String idAsString : list) {
-                    DataFile df = datafileService.find(Long.valueOf(idAsString));
-                    if (df != null) {
-                        guestbookResponse.setDataFile(df);
-                        fileDownloadService.writeGuestbookResponseRecord(guestbookResponse);
-                    }
-                }
-        
-                var dataset = guestbookResponse.getDataset();
-                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
-                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
-            }
-        } else {
-            logger.severe("An attempt was made to download an RO-Crate containing restricted files!");
-        }
-    }
-
     //A string that is used to determine step(s) taken after files are requested for download
     /*
     Values of "Pass"; "FailSize"; "FailEmpty"; "FailRestricted"; "Mixed"; "GuestbookRequired"
@@ -6592,8 +6564,16 @@ public class DatasetPage implements java.io.Serializable {
         var message = zipDownloadLimit > 1024 ? zipDownloadLimit / 1024 + " GB" : zipDownloadLimit + " MB";
         return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
     }
+    
+    public void startRoCrateDownload() throws Exception {
+        if (workingVersion.getFileMetadatas().isEmpty()) {
+            downloadRoCrateMetadata();
+        } else {
+            writeGuestbookAndStartRoCrateDownload();
+        }
+    }
 
-    public void downloadRoCrateMetadata() throws Exception {
+    private void downloadRoCrateMetadata() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
@@ -6608,6 +6588,34 @@ public class DatasetPage implements java.io.Serializable {
         outputStream.close();
 
         facesContext.responseComplete();
+    }
+
+    private void writeGuestbookAndStartRoCrateDownload() {
+        this.setSelectedFiles(workingVersion.getFileMetadatas());
+        PrimeFaces.current().executeScript("PF('guestbookAndTermsPopup').hide()");
+        // this should not happen, but still validate the files, if there are any restricted files, we do not allow the download
+        boolean validate = validateFilesForDownload(false);
+        if (validate || canDownloadRoCrate()) {
+            updateGuestbookResponse(false, false, false);
+            if(!getValidateFilesOutcome().equals("Mixed")){
+                guestbookResponse.setEventType(GuestbookResponse.DOWNLOAD);
+                List<String> list = new ArrayList<>(Arrays.asList(guestbookResponse.getSelectedFileIds().split(",")));
+
+                for (String idAsString : list) {
+                    DataFile df = datafileService.find(Long.valueOf(idAsString));
+                    if (df != null) {
+                        guestbookResponse.setDataFile(df);
+                        fileDownloadService.writeGuestbookResponseRecord(guestbookResponse);
+                    }
+                }
+
+                var dataset = guestbookResponse.getDataset();
+                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
+            }
+        } else {
+            logger.severe("An attempt was made to download an RO-Crate containing restricted files!");
+        }
     }
 
     private static byte[] zipFolder(Path sourceFolderPath) throws Exception {
