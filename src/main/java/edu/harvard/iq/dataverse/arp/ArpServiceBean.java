@@ -1394,7 +1394,7 @@ public class ArpServiceBean implements java.io.Serializable {
 
     public JsonObject getHasPartInput(String language) {
         var hasPartInput = new JsonObject();
-        hasPartInput.addProperty("id", "http://schema.org/hasPart");
+        hasPartInput.addProperty("id", "https://schema.org/hasPart");
         hasPartInput.addProperty("name", "hasPart");
         if (language.equals("hu")) {
             hasPartInput.addProperty("label", "Tartalma");
