@@ -273,7 +273,7 @@
                 #{bundle.cancel}
             </button>
         </div>
-        <div class="button-block" jsf:rendered="#{not roCrateDownload and termsGuestbookPopupAction == bundle.download}">
+        <div class="button-block" jsf:rendered="#{not DatasetPage.roCrateMetadataDownload and termsGuestbookPopupAction == bundle.download}">
         <!--
             The "process" directive below is very important. Without it, the
             setters on the GuestbookResponse object can be called twice leading

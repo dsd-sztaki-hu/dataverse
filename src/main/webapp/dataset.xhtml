@@ -912,7 +912,7 @@
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <!-- If the RO-Crate is downloadable and the popup is required. -->
-                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
                                                    update=":datasetForm:guestbookAndTermsPopup"
                                                    rendered="#{!DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
