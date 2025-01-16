@@ -652,10 +652,17 @@ public class RoCrateImportManager {
                     }
                 } else if (fieldValue.isArray()) {
                     for (var idObj : fieldValue) {
-                        var childId = idObj.get("@id").textValue();
-                        var childEntity = roCrate.getEntityById(childId);
-                        if (childEntity == null) {
-                            preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                        var id = idObj.get("@id");
+                        if (id != null) {
+                            var childId = idObj.get("@id").textValue();
+                            var childEntity = roCrate.getEntityById(childId);
+                            if (childEntity == null) {
+                                preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                            }
+                        }
+                        // This is just an array of strings, like for cedar "checkbox"
+                        else {
+
                         }
                     }
                 }
