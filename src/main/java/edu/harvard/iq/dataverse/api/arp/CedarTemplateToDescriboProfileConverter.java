@@ -194,6 +194,13 @@ public class CedarTemplateToDescriboProfileConverter {
         String help = getLocalizedHelp(templateField);
         describoInput.setHelp(help);
         describoInput.setType(getDescriboType(fieldType));
+        // Special Select styles for checkbox and radio CEDAR types
+        if (fieldType.equals("checkbox")) {
+            describoInput.setStyle("checkbox");
+        }
+        else if (fieldType.equals("radio")) {
+            describoInput.setStyle("radio");
+        }
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         describoInput.setMinValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minValue")).map(JsonElement::getAsInt).orElse(null));
         describoInput.setMaxValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxValue")).map(JsonElement::getAsInt).orElse(null));
@@ -398,6 +405,7 @@ public class CedarTemplateToDescriboProfileConverter {
         private String placeholder;
         private List<String> numberType;
         private List<String> dateFormat;
+        private String style;
 
         public DescriboInput() {
         }
@@ -538,6 +546,16 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setDateFormat(List<String> dateFormat) {
             this.dateFormat = dateFormat;
+        }
+
+        public String getStyle()
+        {
+            return style;
+        }
+
+        public void setStyle(String style)
+        {
+            this.style = style;
         }
     }
 
