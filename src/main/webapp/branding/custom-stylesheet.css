@@ -526,3 +526,7 @@ div.card-preview-icon-block img {
     overflow-x: hidden !important;
     text-overflow: ellipsis;
 }
+
+#content div.popover {
+    background-color: white;
+}
