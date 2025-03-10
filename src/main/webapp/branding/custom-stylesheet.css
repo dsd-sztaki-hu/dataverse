@@ -521,3 +521,8 @@ div.card-preview-icon-block img {
 	max-width: 48px;
     max-height: 48px;
 }
+
+.ui-datatable #manageGuestbooksForm\:responsesGuestbook_data th, .ui-datatable #manageGuestbooksForm\:responsesGuestbook_data td, .ui-datatable #manageGuestbooksForm\:responsesGuestbook_data td, .ui-datatable #manageGuestbooksForm\:responsesGuestbook_data th {
+    overflow-x: hidden !important;
+    text-overflow: ellipsis;
+}
