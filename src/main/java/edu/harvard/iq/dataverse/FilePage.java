@@ -156,6 +156,8 @@ public class FilePage implements java.io.Serializable {
     ArpServiceBean arpService;
 
     private String aromaAddress = "";
+    
+    private boolean aromaTabSelected = false;
 
     public String init() {
 
@@ -539,6 +541,11 @@ public class FilePage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
+        if (this.activeTabIndex == 2 ) {
+            setAromaTabSelected(true);
+        } else {
+            setAromaTabSelected(false);
+        }
         if (this.activeTabIndex == 1 || this.activeTabIndex == 2 ) {
             setFileMetadatasForTab(loadFileMetadataTabList());
         } else {
@@ -1330,5 +1337,13 @@ public class FilePage implements java.io.Serializable {
 
     public Dataset getDataset() {
         return dataset;
+    }
+
+    public boolean isAromaTabSelected() {
+        return aromaTabSelected;
+    }
+
+    public void setAromaTabSelected(boolean aromaTabSelected) {
+        this.aromaTabSelected = aromaTabSelected;
     }
 }

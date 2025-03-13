@@ -998,16 +998,18 @@
                                     <ui:param name="anonymized" value="#{DatasetPage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
-                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
+                            <p:tab id="aromaTab" title="#{bundle['dataset.aromaTab']}"
                                    rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}"
                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
-                                <ui:include src="aroma.xhtml">
-                                    <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
-                                    <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
-                                    <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
-                                    <ui:param name="language" value="#{DatasetPage.language}"/>
-                                    <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
-                                </ui:include>
+                                <c:if test="#{DatasetPage.aromaTabSelected}">
+                                    <ui:include src="aroma.xhtml">
+                                        <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                        <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
+                                        <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
+                                        <ui:param name="language" value="#{DatasetPage.language}"/>
+                                        <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
+                                    </ui:include>
+                                </c:if>
                             </p:tab>
                         </p:tabView>
                     </div>

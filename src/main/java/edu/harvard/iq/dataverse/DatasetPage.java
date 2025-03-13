@@ -186,6 +186,14 @@ public class DatasetPage implements java.io.Serializable {
         this.arpTermsAccepted = arpTermsAccepted;
     }
 
+    public boolean isAromaTabSelected() {
+        return aromaTabSelected;
+    }
+
+    public void setAromaTabSelected(boolean aromaTabSelected) {
+        this.aromaTabSelected = aromaTabSelected;
+    }
+
     public enum EditMode {
 
         CREATE, INFO, FILE, METADATA, LICENSE
@@ -294,6 +302,8 @@ public class DatasetPage implements java.io.Serializable {
     private String aromaAddress = "";
     
     private boolean arpTermsAccepted = false;
+    
+    private boolean aromaTabSelected = false;
 
     private Dataset dataset = new Dataset();
 
@@ -2066,7 +2076,7 @@ public class DatasetPage implements java.io.Serializable {
                 case "versionsTab":
                     selectedTabIndex = 3;
                     break;
-                case "describoTab":
+                case "aromaTab":
                     selectedTabIndex = 4;
                     break;
 
@@ -2704,6 +2714,11 @@ public class DatasetPage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
+        if (this.activeTabIndex == 4) {
+            setAromaTabSelected(true);
+        } else {
+            setAromaTabSelected(false);
+        }
         if (this.activeTabIndex == 3) {
             setVersionTabList(resetVersionTabList());
             setReleasedVersionTabList(resetReleasedVersionTabList());
