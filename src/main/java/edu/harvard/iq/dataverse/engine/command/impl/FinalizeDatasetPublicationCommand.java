@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.DvObject;
 import edu.harvard.iq.dataverse.Embargo;
 import edu.harvard.iq.dataverse.UserNotification;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
+import jakarta.enterprise.inject.spi.CDI;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
@@ -51,8 +52,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCommand<Dataset> {
 
     private static final Logger logger = Logger.getLogger(FinalizeDatasetPublicationCommand.class.getName());
-
-    private final RoCrateExportManager roCrateExportManager = new RoCrateExportManager();
 
     /**
      * mirror field from {@link PublishDatasetCommand} of same name
@@ -296,9 +295,11 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             logger.log(Level.WARNING, "Finalization: exception caught while exporting: "+ex.getMessage(), ex);
             // ... but it is important to only update the export time stamp if the 
             // export was indeed successful.
-        }        
-        
-        roCrateExportManager.finalizeRoCrateForDatasetVersion(dataset.getLatestVersion());
+        }
+
+        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+        RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+        roCrateExportManager.finalizeRoCrateForPublish(dataset.getLatestVersion());
         
         return retVal;
     }
