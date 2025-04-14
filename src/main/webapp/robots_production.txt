@@ -15,6 +15,7 @@ Allow: /dataverse/
 Allow: /sitemap/
 Allow: /sitemap*
 Allow: /sitemap.xml
+Allow: /sitemap_index.xml
 # The following lines are for the facebook, twitter and linkedin preview bots:
 Allow: /api/datasets/:persistentId/thumbnail
 Allow: /javax.faces.resource/images/
