@@ -22,7 +22,6 @@ Allow: /javax.faces.resource/images/
 # Comment out the following TWO lines if you DON'T MIND the bots crawling the search API links on dataverse pages:
 Disallow: /dataverse/*?q
 Disallow: /dataverse/*/search
-Disallow: /
 # Crawl-delay specification *may* be honored by *some* bots. 
 # It is *definitely* ignored by Googlebot (they never promise to 
 # recognize it either - it's never mentioned in their documentation)
