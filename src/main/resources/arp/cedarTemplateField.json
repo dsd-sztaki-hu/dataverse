@@ -77,5 +77,7 @@
   "oslc:modifiedBy": null,
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
-  "$schema": "http://json-schema.org/draft-04/schema#"
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "pav:version": "0.0.1",
+  "bibo:status": "bibo:draft"
 }

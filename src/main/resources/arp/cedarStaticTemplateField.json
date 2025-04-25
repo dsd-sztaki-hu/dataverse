@@ -19,5 +19,7 @@
   "schema:description": "Help Text",
   "additionalProperties": false,
   "schema:name": "",
-  "$schema": "http://json-schema.org/draft-04/schema#"
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "pav:version": "0.0.1",
+  "bibo:status": "bibo:draft"
 }

@@ -1,0 +1,8 @@
+cedar	dtr
+minLength	minLength
+maxLength	maxLength
+regex	pattern
+defaultValue	default
+requiredValue	required
+minValue	minimum
+maxValue	maximum

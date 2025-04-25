@@ -167,11 +167,11 @@ public class ArpApi extends AbstractApiBean {
             errors = arpService.validateCedarResource(resourceJson, true, false);
         } catch (Exception e) {
             e.printStackTrace();
-            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
         if (!(errors.invalidNames.isEmpty() && errors.unprocessableElements.isEmpty() && errors.errors.isEmpty())) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            return Response.status(INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                             .add("status", STATUS_ERROR)
                             .add( "message", errors.toJson() ).build()
@@ -212,11 +212,11 @@ public class ArpApi extends AbstractApiBean {
         try {
             AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
-                return error(Response.Status.FORBIDDEN, "Superusers only.");
+                return error(FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
-            return error(Response.Status.FORBIDDEN, "Superusers only.");
+            return error(FORBIDDEN, "Superusers only.");
         }
 
         String mdbTsv;
@@ -228,7 +228,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (CedarTemplateErrorsException cte) {
             cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            return Response.status(INTERNAL_SERVER_ERROR)
                     .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                             .add("status", STATUS_ERROR)
                             .add( "message", cte.getErrors().toJson() ).build()
@@ -294,11 +294,11 @@ public class ArpApi extends AbstractApiBean {
         try {
             AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
-                return error(Response.Status.FORBIDDEN, "Superusers only.");
+                return error(FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
-            return error(Response.Status.FORBIDDEN, "Superusers only.");
+            return error(FORBIDDEN, "Superusers only.");
         }
 
         String res = null;
@@ -372,11 +372,11 @@ public class ArpApi extends AbstractApiBean {
         try {
             AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
             if (!user.isSuperuser()) {
-                return error(Response.Status.FORBIDDEN, "Superusers only.");
+                return error(FORBIDDEN, "Superusers only.");
             }
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
-            return error(Response.Status.FORBIDDEN, "Superusers only.");
+            return error(FORBIDDEN, "Superusers only.");
         }
 
         try {
@@ -431,7 +431,7 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             Response checkTemplateResponse = checkCedarResourceCall(templateJson);
-            if (!checkTemplateResponse.getStatusInfo().toEnum().equals(Response.Status.OK)) {
+            if (!checkTemplateResponse.getStatusInfo().toEnum().equals(OK)) {
                 String errors = checkTemplateResponse.getEntity().toString();
                 throw new Exception(errors);
             }
@@ -673,14 +673,14 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             Response response = datasetFieldServiceApi.loadDatasetFields(file);
-            if (!response.getStatusInfo().toEnum().equals(Response.Status.OK)) {
+            if (!response.getStatusInfo().toEnum().equals(OK)) {
                 throw new Exception("Failed to load dataset fields");
             }
             metadataBlockName = ((jakarta.json.JsonObject) response.getEntity()).getJsonObject("data").getJsonArray("added").getJsonObject(0).getString("name");
             arpService.updateMetadataBlock(dvIdtf, metadataBlockName);
         } catch (Exception e) {
             e.printStackTrace();
-            return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
     }
@@ -789,7 +789,7 @@ public class ArpApi extends AbstractApiBean {
                 return error(FORBIDDEN, "Authorized users only.");
             } catch (Exception e) {
                 e.printStackTrace();
-                return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+                return error(INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
         }, getRequestUser(crc));
     }
@@ -854,7 +854,7 @@ public class ArpApi extends AbstractApiBean {
         newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
         boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(newVersion.getTermsOfUseAndAccess(), null);
         if (!hasValidTerms) {
-            return error(Response.Status.CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
+            return error(CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
         }
         roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
 
@@ -951,7 +951,7 @@ public class ArpApi extends AbstractApiBean {
 
         if (cedarUrl == null || cedarUrl.isBlank()) {
             logger.severe("/cedarResourceProxy: URL path parameter is missing");
-            return Response.status(Response.Status.BAD_REQUEST).entity("URL parameter is required").build();
+            return Response.status(BAD_REQUEST).entity("URL parameter is required").build();
         }
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -961,7 +961,7 @@ public class ArpApi extends AbstractApiBean {
             URI uri = new URI(cedarUrl);
             if (!uri.getHost().endsWith(subdomain)) {
                 logger.severe("/cedarResourceProxy: Invalid URL: " + uri);
-                return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
+                return Response.status(BAD_REQUEST).entity("Invalid URL").build();
             }
             logger.info("/cedarResourceProxy: proxying URL: " + uri);
 
@@ -1000,7 +1000,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (Exception e) {
             logger.severe("/cedarResourceProxy: " + e.getMessage());
             e.printStackTrace();
-            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
+            return Response.status(BAD_REQUEST).entity("Invalid URL").build();
         } finally {
             executorService.shutdown();
             try {
@@ -1059,5 +1059,44 @@ public class ArpApi extends AbstractApiBean {
 //        }
     }
 
+    /**
+     * Converts a DTR schema to CEDAR format.
+     * 
+     * @param dtrId The DTR resource id
+     * @return The converted CEDAR template
+     */
+    @POST
+    @Path("/convertDtrToCedar/{dtrId: .+}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response convertDtrToCedar(
+            @PathParam("dtrId") String dtrId,
+            @QueryParam("skipUpload") @DefaultValue("false") boolean skipUpload,
+            @QueryParam("folderId") String folderId
+    ) {
+        try {
+            if (folderId == null) {
+                throw new IllegalArgumentException("folderId is required");
+            }
+            var cedarParams = new ExportToCedarParams();
+            cedarParams.cedarDomain = arpConfig.get("arp.cedar.domain");
+            cedarParams.apiKey = arpConfig.get("arp.cedar.proxyApiKey");
+            cedarParams.folderId = folderId;
+            var dtrUrl = arpConfig.get("arp.dtrUrl");
+            var cedarTemplate = arpService.importFromDtrToCedar(dtrUrl, dtrId, cedarParams, skipUpload);
+            
+            if (cedarTemplate == null) {
+                return error(INTERNAL_SERVER_ERROR, "Failed to convert DTR to CEDAR format");
+            }
+            
+            return Response.ok(cedarTemplate).build();
+            
+        } catch (JsonProcessingException e) {
+            logger.log(Level.SEVERE, "Error processing JSON: " + e.getMessage(), e);
+            return error(BAD_REQUEST, "Invalid JSON input");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error converting DTR to CEDAR: " + e.getMessage(), e);
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
 
 }

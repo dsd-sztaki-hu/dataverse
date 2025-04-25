@@ -1,0 +1,11 @@
+property_name	dtr	cedar
+description	description	schema:description
+name	name	schema:name
+prefLabel	Aliases[0]	skos:prefLabel
+expectedUse	ExpectedUse	_arp.dtr.common.expectedUse
+taxonomies	Taxonomies	_arp.dtr.common.taxonomies
+unitOfMeasure	MeasuredUnits[0]	_valueConstraints.unitOfMeasure
+version	versioning.version	pav:version
+previousVersion	versioning.previousVersion	_arp.dtr.common.versioning.previousVersion
+nextVersion	versioning.nextVersion	_arp.dtr.common.versioning.nextVersion
+title	title	skos:prefLabel

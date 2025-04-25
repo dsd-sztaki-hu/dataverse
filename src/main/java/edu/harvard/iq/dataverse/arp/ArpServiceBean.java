@@ -310,7 +310,11 @@ public class ArpServiceBean implements java.io.Serializable {
         }
     }
 
-
+    public String importFromDtrToCedar(String dtrUrl, String dtrId, ExportToCedarParams cedarParams, boolean skipUpload) throws Exception {
+        var converter = new DtrToCedarConverter(dtrUrl, cedarParams.apiKey, cedarParams.folderId, cedarParams.cedarDomain);
+        var cedarResource = converter.convert(dtrId, DtrToCedarConverter.ConversionDirection.DTR_TO_CEDAR, skipUpload);
+        return cedarResource.toPrettyString();
+    }
 
     private String checkOrCreateFolder(String parentFolderId, String folderName, String apiKey, String cedarDomain, HttpClient client) throws Exception {
         String decodedParentFolderId = decodeURLParameter(parentFolderId);
