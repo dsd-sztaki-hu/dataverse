@@ -88,6 +88,16 @@ Builtin users for unit tests:
 curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY
 ```
 
+Use ARP branding
+
+```
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-header.html' http://localhost:8080/api/admin/settings/:HeaderCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-footer.html' http://localhost:8080/api/admin/settings/:FooterCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-stylesheet.css' http://localhost:8080/api/admin/settings/:StyleCustomizationFile
+curl -X PUT -d '/branding/topbanner_arp_002_dark425.png' http://localhost:8080/api/admin/settings/:LogoCustomizationFile
+```
+
+
 # Sync CEDAR and DV metaadatablocks
 
 Sync CEDAR and DV metaadatablocks. Note that we use `arp.orgx` base domain. We can do this, because of the `extra_hosts` defines in [docker-compose-dev.yml](docker-compose-dev.yml)

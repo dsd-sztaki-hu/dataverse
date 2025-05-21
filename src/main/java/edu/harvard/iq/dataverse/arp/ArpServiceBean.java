@@ -947,7 +947,7 @@ public class ArpServiceBean implements java.io.Serializable {
                         && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset");
     }
 
-    public CedarTemplateErrors validateCedarResource(String cedarTemplate, boolean checkOnly) throws Exception {
+    public CedarTemplateErrors validateCedarResource(String cedarTemplate, boolean checkOnly, boolean isExport) throws Exception {
         Map<String, String> propAndTermUriMap = listBlocksWithUri();
 
         // region Static fields from src/main/java/edu/harvard/iq/dataverse/api/Index.java: listOfStaticFields
@@ -980,13 +980,13 @@ public class ArpServiceBean implements java.io.Serializable {
         if (resourceType.equals("TemplateField")) {
             return checkCedarField(cedarResource, listOfStaticFields, mdbId);
         } else if (resourceType.equals("TemplateElement") || resourceType.equals("Template")) {
-            return checkCedarTemplate(cedarResource, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId, checkOnly);
+            return checkCedarTemplate(cedarResource, errors, propAndTermUriMap, "/properties",false, listOfStaticFields, mdbId, checkOnly, isExport);
         } else {
             throw new Exception("Unsupported resource type: " + resourceType);
         }
     }
 
-    public CedarTemplateErrors checkCedarTemplate(JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName, boolean checkOnly) throws Exception {
+    public CedarTemplateErrors checkCedarTemplate(JsonObject cedarTemplateJson, CedarTemplateErrors cedarTemplateErrors, Map<String, String> dvPropTermUriPairs, String parentPath, Boolean lvl2, List<String> listOfStaticFields, String mdbName, boolean checkOnly, boolean isExport) throws Exception {
        List<String> propNames = getStringList(cedarTemplateJson, "_ui.order");
         JsonElement propsAndLabels = getJsonElement(cedarTemplateJson, "_ui.propertyLabels");
         List<String> propLabels = propsAndLabels.getAsJsonObject().entrySet().stream()
@@ -1010,16 +1010,19 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         
         for (String prop : propNames) {
+            JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             var termUri = getStringList(cedarTemplateJson, "properties.@context.properties." + prop + ".enum");
             if (termUri == null || termUri.isEmpty() || termUri.get(0).isBlank()) {
-                cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", getPropertyLabel(propsAndLabels, prop)));
+                // richtext fields are not required to have a term URI, they are just for displaying help text
+                if (!Optional.ofNullable(getJsonElement(actProp, "_ui.inputType")).map(JsonElement::getAsString).orElse("").equals("richtext")) {
+                    cedarTemplateErrors.errors.add(String.format("Term URI for property '%s' is missing", getPropertyLabel(propsAndLabels, prop)));
+                }
             }
             // It turns out that collision of prop names with MDB names doesn't cause a problem so no need to check.
             // ie. we can have an MDB named "journal" and a prop name "journal" as well.
             // if (mdbNames.contains(prop)) {
             //    throw new Exception(String.format("Property: '%s' can not be added, because a MetadataBlock already exists with it's name.", prop));
             // }
-            JsonObject actProp = getJsonObject(cedarTemplateJson, "properties." + prop);
             String newPath = parentPath + "/" + prop;
             String propType;
             if (actProp.has("@type")) {
@@ -1043,10 +1046,14 @@ public class ArpServiceBean implements java.io.Serializable {
             }
             if (propType.equals("TemplateElement") || propType.equals("array")) {
                 if (lvl2) {
-                    cedarTemplateErrors.unprocessableElements.add(newPath);
-                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName, checkOnly);
+                    if (isExport) {
+                        cedarTemplateErrors.unprocessableElements.add(newPath);
+                    } else {
+                        cedarTemplateErrors.warnings.add(newPath);
+                    }
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, false, listOfStaticFields, mdbName, checkOnly, isExport);
                 } else {
-                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName, checkOnly);
+                    checkCedarTemplate(actProp, cedarTemplateErrors, dvPropTermUriPairs, newPath, true, listOfStaticFields, mdbName, checkOnly, isExport);
                 }
             } else {
                 if (!propType.equals("TemplateField") && !propType.equals("StaticTemplateField")) {
@@ -1286,7 +1293,7 @@ public class ArpServiceBean implements java.io.Serializable {
         Set<String> overridePropNames = new HashSet<>();
 
         try {
-            CedarTemplateErrors cedarTemplateErrors = validateCedarResource(templateJson, false);
+            CedarTemplateErrors cedarTemplateErrors = validateCedarResource(templateJson, false, true);
             if (!(cedarTemplateErrors.unprocessableElements.isEmpty() && cedarTemplateErrors.invalidNames.isEmpty() && cedarTemplateErrors.errors.isEmpty())) {
                 throw new CedarTemplateErrorsException(cedarTemplateErrors);
             }
@@ -1402,7 +1409,7 @@ public class ArpServiceBean implements java.io.Serializable {
 
     public JsonObject getHasPartInput(String language) {
         var hasPartInput = new JsonObject();
-        hasPartInput.addProperty("id", "http://schema.org/hasPart");
+        hasPartInput.addProperty("id", "https://schema.org/hasPart");
         hasPartInput.addProperty("name", "hasPart");
         if (language.equals("hu")) {
             hasPartInput.addProperty("label", "Tartalma");

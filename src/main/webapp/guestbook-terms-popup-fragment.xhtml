@@ -55,6 +55,17 @@
                 </p>
             </div>
         </div>
+        <div class="form-group">
+            <label jsf:for="arpLicense" class="col-sm-3 control-label">
+                #{bundle['arp.file.dataFilesTab.terms.list.license']} </label>
+            <div class="col-sm-9">
+                <p class="help-block">
+                    <h:outputText
+                            value="#{bundle['arp.file.dataFilesTab.terms.list.license.view.description']}"
+                            escape="false" />
+                </p>
+            </div>
+        </div>
 
         <ui:fragment rendered="#{empty workingVersion.termsOfUseAndAccess.license}">
             <div class="form-group"
@@ -140,7 +151,7 @@
             </label>
             <h:outputText id="fdTermsOfAccess" class="col-sm-6"
                 value="#{MarkupChecker:sanitizeBasicHTML(workingVersion.termsOfUseAndAccess.termsOfAccess)}"
-                escape="false" />
+                escape="false" /> 
         </div>
             <p:fragment rendered="#{guestbookAndTermsPopupRequired and ((termsGuestbookPopupAction != bundle.download) != guestbookPopupRequiredAtDownload)}" id="guestbookUIFragment">
                 <div class="container messagePanel">
@@ -251,7 +262,18 @@
                 </div>
             </p:fragment>
         </div>
-        <div class="button-block" jsf:rendered="#{termsGuestbookPopupAction == bundle.download}">
+        <div class="button-block" jsf:rendered="#{DatasetPage.roCrateMetadataDownload}">
+            <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}" ajax="false"
+                             actionListener="#{DatasetPage.startRoCrateDownload()}"
+                             update="guestbookUIFragment"
+                             onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();">
+                <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
+            </p:commandButton>
+            <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">
+                #{bundle.cancel}
+            </button>
+        </div>
+        <div class="button-block" jsf:rendered="#{not DatasetPage.roCrateMetadataDownload and termsGuestbookPopupAction == bundle.download}">
         <!--
             The "process" directive below is very important. Without it, the
             setters on the GuestbookResponse object can be called twice leading

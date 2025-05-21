@@ -1,0 +1,409 @@
+{
+  "@context": [
+    "https://w3id.org/ro/crate/1.1/context",
+    {
+      "datasetContactEmail": "https://dataverse.org/schema/citation/datasetContactEmail",
+      "author": "http://purl.org/dc/terms/creator",
+      "authorName": "https://dataverse.org/schema/citation/authorName",
+      "dsDescriptionValue": "https://dataverse.org/schema/citation/dsDescriptionValue",
+      "subject": "http://purl.org/dc/terms/subject",
+      "dsDescription": "https://dataverse.org/schema/citation/dsDescription",
+      "datasetContact": "https://dataverse.org/schema/citation/datasetContact",
+      "title": "http://purl.org/dc/terms/title",
+      "authorAffiliation": "https://dataverse.org/schema/citation/authorAffiliation",
+      "datasetContactName": "https://dataverse.org/schema/citation/datasetContactName"
+    }
+  ],
+  "@graph": [
+    {
+      "@id": "./",
+      "@type": "Dataset",
+      "@arpPid": "doi:10.5072/FK2/6WVZVZ",
+      "license": {
+        "@id": "http://creativecommons.org/publicdomain/zero/1.0"
+      },
+      "datePublished": "2024-10-24T15:43:56.115Z",
+      "author": {
+        "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/author/635"
+      },
+      "datasetContact": {
+        "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/datasetContact/636"
+      },
+      "dsDescription": {
+        "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/dsDescription/637"
+      },
+      "title": "Updated Darwin's Finches Study",
+      "subject": "Medicine, Health and Life Sciences",
+      "conformsTo": [
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/33677b82-7973-3e4c-b09d-b5189e095627"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/aaaaaaaa-bbbb-cccc-dddd-65d43571f306"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/de59422e-b281-42e7-a730-3e9174583818"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/92e5b89e-6300-3972-9540-c1ab5b93f1d9"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/640c3586-5db2-3a81-a681-c008cf7404fe"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/schema/c9cac144-6260-33fe-886e-71a42914ef9f"
+        }
+      ],
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7355"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7361"
+        },
+        {
+          "@id": "dir2/"
+        },
+        {
+          "@id": "dir1/"
+        },
+        {
+          "@id": "dir3/"
+        }
+      ]
+    },
+    {
+      "about": {
+        "@id": "./"
+      },
+      "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+      },
+      "@id": "ro-crate-metadata.json",
+      "@type": "CreativeWork"
+    },
+    {
+      "@arpPid": "",
+      "hash": "7d32cad43f2eaecf5d0be47a4cbcd8ea",
+      "name": "wordpress-charts-2.png",
+      "contentSize": "129309",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir2/dir2.1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7353",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "60753600f072d9c487b4dc2268c0f15d",
+      "name": "chart-pie3.jpg",
+      "contentSize": "20191",
+      "encodingFormat": "image/jpeg",
+      "description": "",
+      "directoryLabel": "dir1/dir1.1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7352",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "222a20275ce032d7ae58aaa6c2658f65",
+      "name": "javascript-charts-graphs-index-data-label.png",
+      "contentSize": "5257",
+      "encodingFormat": "image/png",
+      "description": "",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7355",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "37b2ec0a5af406217672e4be9e456323",
+      "name": "set-elements-chart-infographics-graphs-diagrams-chart-color_90220-326.avif",
+      "contentSize": "80489",
+      "encodingFormat": "application/octet-stream",
+      "description": "",
+      "directoryLabel": "dir1/dir1.2",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7354",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "89419408738857b127f2d066a68a4c2b",
+      "name": "charts_graphs_0.png",
+      "contentSize": "18294",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7360",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "580b10f2b670db15a9410b134064feea",
+      "name": "angular-multi-series-chart.png",
+      "contentSize": "8585",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir3",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7351",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "6a1be7666e9be5038dd29b4e11755187",
+      "name": "clustered-bar-chart.png",
+      "contentSize": "11075",
+      "encodingFormat": "image/png",
+      "description": "",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7361",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "4075cfb3bef088692b5ff5e0ec5be4c4",
+      "name": "img_excel_chart_intro_1.svg",
+      "contentSize": "21951",
+      "encodingFormat": "image/svg+xml",
+      "description": "",
+      "directoryLabel": "dir1/dir1.2/dir1.2.2",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7350",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "de60add0cd17fdbf0229da167a2d38fa",
+      "name": "51bf1af2eab8ea4405000000.webp",
+      "contentSize": "16114",
+      "encodingFormat": "image/webp",
+      "description": "",
+      "directoryLabel": "dir3/dir3.1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7349",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "b5f6d3675c87ec0567ecb96003ffb277",
+      "name": "dotdash_INV_Final_Line_Chart_Jan_2021-01-d2dc4eb9a59c43468e48c03e15501ebe.jpg",
+      "contentSize": "104740",
+      "encodingFormat": "image/jpeg",
+      "description": "",
+      "directoryLabel": "dir3/dir3.2",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7357",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "4f7d42d20fe44cda35717fc8ac40216d",
+      "name": "1200px-Pushkin_population_history.svg.png",
+      "contentSize": "36464",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir1/dir1.2",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7356",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "fb34207f84c8b33f7974642288befdb4",
+      "name": "software_quality-project_management_gantt-f_mobile.png",
+      "contentSize": "11108",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir3/dir3.2/dir3.2.1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7348",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "e757af50345f9823ce2594fce3655ce5",
+      "name": "Writing-B1-Describing-charts-3-low.jpg",
+      "contentSize": "163403",
+      "encodingFormat": "image/jpeg",
+      "description": "",
+      "directoryLabel": "dir1/dir1.2/dir1.2.1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7359",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "c5a35eefb21181b8826a49010af1359d",
+      "name": "pie-chart-example-1.png",
+      "contentSize": "13384",
+      "encodingFormat": "image/png",
+      "description": "",
+      "directoryLabel": "dir2",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7358",
+      "@type": "File"
+    },
+    {
+      "@arpPid": "",
+      "hash": "5aab76a887259ca0a16dd9d9b268f6fa",
+      "name": "types-of-data-visualization-charts.jpg",
+      "contentSize": "95375",
+      "encodingFormat": "image/jpeg",
+      "description": "",
+      "directoryLabel": "dir1",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7347",
+      "@type": "File"
+    },
+    {
+      "name": "dir2",
+      "@id": "dir2/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "dir2/dir2.1/"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7358"
+        }
+      ]
+    },
+    {
+      "name": "dir1",
+      "@id": "dir1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "dir1/dir1.2/"
+        },
+        {
+          "@id": "dir1/dir1.1/"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7360"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7347"
+        }
+      ]
+    },
+    {
+      "name": "dir3",
+      "@id": "dir3/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "dir3/dir3.1/"
+        },
+        {
+          "@id": "dir3/dir3.2/"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7351"
+        }
+      ]
+    },
+    {
+      "dsDescriptionValue": "Darwin's finches (also known as the Galápagos finches) are a group of about fifteen species of passerine birds.",
+      "name": "Darwin's finches (also known as the Galápagos finches) are a group of about fifteen species of passerine birds.",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/dsDescription/637",
+      "@type": "dsDescription"
+    },
+    {
+      "name": "dir3.1",
+      "@id": "dir3/dir3.1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7349"
+        }
+      ]
+    },
+    {
+      "name": "dir3.2",
+      "@id": "dir3/dir3.2/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "dir3/dir3.2/dir3.2.1/"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7357"
+        }
+      ]
+    },
+    {
+      "name": "dir2.1",
+      "@id": "dir2/dir2.1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7353"
+        }
+      ]
+    },
+    {
+      "name": "dir3.2.1",
+      "@id": "dir3/dir3.2/dir3.2.1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7348"
+        }
+      ]
+    },
+    {
+      "name": "dir1.2",
+      "@id": "dir1/dir1.2/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "dir1/dir1.2/dir1.2.2/"
+        },
+        {
+          "@id": "dir1/dir1.2/dir1.2.1/"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7356"
+        },
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7354"
+        }
+      ]
+    },
+    {
+      "name": "dir1.1",
+      "@id": "dir1/dir1.1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7352"
+        }
+      ]
+    },
+    {
+      "name": "dir1.2.1",
+      "@id": "dir1/dir1.2/dir1.2.1/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7359"
+        }
+      ]
+    },
+    {
+      "authorName": "Darwin, Charles",
+      "authorAffiliation": "HMS Beagle",
+      "name": "Darwin, Charles; (HMS Beagle)",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/author/635",
+      "@type": "author"
+    },
+    {
+      "name": "dir1.2.2",
+      "@id": "dir1/dir1.2/dir1.2.2/",
+      "@type": "Dataset",
+      "hasPart": [
+        {
+          "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/file/7350"
+        }
+      ]
+    },
+    {
+      "datasetContactName": "Finch, Fiona",
+      "datasetContactEmail": "finch@mailinator.com",
+      "name": "Finch, Fiona; ",
+      "@id": "https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/6WVZVZ/datasetContact/636",
+      "@type": "datasetContact"
+    }
+  ]
+}

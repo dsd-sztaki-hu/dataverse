@@ -184,6 +184,14 @@ public class DatasetPage implements java.io.Serializable {
 
     private static final Logger logger = Logger.getLogger(DatasetPage.class.getCanonicalName());
 
+    public boolean isArpTermsAccepted() {
+        return arpTermsAccepted;
+    }
+
+    public void setArpTermsAccepted(boolean arpTermsAccepted) {
+        this.arpTermsAccepted = arpTermsAccepted;
+    }
+
     public enum EditMode {
 
         CREATE, INFO, FILE, METADATA, LICENSE
@@ -296,6 +304,8 @@ public class DatasetPage implements java.io.Serializable {
     ArpServiceBean arpService;
 
     private String aromaAddress = "";
+    
+    private boolean arpTermsAccepted = false;
 
     private Dataset dataset = new Dataset();
 
@@ -485,6 +495,15 @@ public class DatasetPage implements java.io.Serializable {
                 return hasValidTermsOfAccess;
             }
         }    
+    }
+    
+    public boolean arpIsHasCCLicense() {
+        var license = dataset.getLatestVersion().getTermsOfUseAndAccess().getLicense();
+        if (license != null) {
+            return license.getName().toLowerCase().startsWith("cc");
+        } else {
+            return false;
+        }
     }
     
     private Boolean hasRestrictedFiles = null;
@@ -3394,19 +3413,6 @@ public class DatasetPage implements java.io.Serializable {
         }
     }
 
-    public void startRoCrateZipDownload() {
-        this.setSelectedFiles(workingVersion.getFileMetadatas());
-        boolean validate = validateFilesForDownload(false, false);
-        if (validate) {
-            updateGuestbookResponse(false, false, false);
-            if(!getValidateFilesOutcome().equals("Mixed")){
-                var dataset = guestbookResponse.getDataset();
-                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
-                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
-            }
-        }
-    }
-
     //A string that is used to determine step(s) taken after files are requested for download
     /*
     Values of "Pass"; "FailSize"; "FailEmpty"; "FailRestricted"; "Mixed"; "GuestbookRequired"
@@ -4245,31 +4251,31 @@ public class DatasetPage implements java.io.Serializable {
     }
 
     public void cancelCreate() {
-    	//Stop any uploads in progress (so that uploadedFiles doesn't change)
-    	uploadInProgress.setValue(false);
+        //Stop any uploads in progress (so that uploadedFiles doesn't change)
+        uploadInProgress.setValue(false);
 
-    	logger.fine("Cancelling: " + newFiles.size() + " : " + uploadedFiles.size());
+        logger.fine("Cancelling: " + newFiles.size() + " : " + uploadedFiles.size());
 
-    	//Files that have been finished and are now in the lower list on the page
-    	for (DataFile newFile : newFiles.toArray(new DataFile[0])) {
-    		FileUtil.deleteTempFile(newFile, dataset, ingestService);
-    	}
-    	logger.fine("Deleted newFiles");
+        //Files that have been finished and are now in the lower list on the page
+        for (DataFile newFile : newFiles.toArray(new DataFile[0])) {
+            FileUtil.deleteTempFile(newFile, dataset, ingestService);
+        }
+        logger.fine("Deleted newFiles");
 
-    	//Files in the upload process but not yet finished
-    	//ToDo - if files are added to uploadFiles after we access it, those files are not being deleted. With uploadInProgress being set false above, this should be a fairly rare race condition.
-    	for (DataFile newFile : uploadedFiles.toArray(new DataFile[0])) {
-    		FileUtil.deleteTempFile(newFile, dataset, ingestService);
-    	}
-    	logger.fine("Deleted uploadedFiles");
+        //Files in the upload process but not yet finished
+        //ToDo - if files are added to uploadFiles after we access it, those files are not being deleted. With uploadInProgress being set false above, this should be a fairly rare race condition.
+        for (DataFile newFile : uploadedFiles.toArray(new DataFile[0])) {
+            FileUtil.deleteTempFile(newFile, dataset, ingestService);
+        }
+        logger.fine("Deleted uploadedFiles");
 
-    	try {
-    		String alias = dataset.getOwner().getAlias();
-    		logger.info("alias: " + alias);
-    		FacesContext.getCurrentInstance().getExternalContext().redirect("/dataverse.xhtml?alias=" + alias);
-    	} catch (IOException ex) {
-    		logger.info("Failed to issue a redirect to file download url.");
-    	}
+        try {
+            String alias = dataset.getOwner().getAlias();
+            logger.info("alias: " + alias);
+            FacesContext.getCurrentInstance().getExternalContext().redirect("/dataverse.xhtml?alias=" + alias);
+        } catch (IOException ex) {
+            logger.info("Failed to issue a redirect to file download url.");
+        }
     }
 
     private HttpClient getClient() {
@@ -6809,6 +6815,43 @@ public class DatasetPage implements java.io.Serializable {
     ////
     /// ARP specific
     ///
+    
+    private boolean roCrateDownload = false;
+    
+    public boolean isRoCrateDownload() {
+        return roCrateDownload;
+    }
+    
+    public void setRoCrateDownload(boolean roCrateDownload) {
+        this.roCrateDownload = roCrateDownload;
+    }
+    
+    private boolean roCrateMetadataDownload = false;
+    
+    public boolean isRoCrateMetadataDownload() {
+        return roCrateMetadataDownload;
+    }
+    
+    public void setRoCrateMetadataDownload(boolean roCrateMetadataDownload) {
+        this.roCrateMetadataDownload = roCrateMetadataDownload;
+    }
+    
+    private Boolean canDownloadRoCrate = null;
+
+    // The RO-Crate can only be downloaded if all the files are downloadable for the user.
+    public boolean canDownloadRoCrate() {
+        if (canDownloadRoCrate == null) {
+            canDownloadRoCrate = true;
+            for (FileMetadata fmd : workingVersion.getFileMetadatas()) {
+                if (!fileDownloadHelper.canDownloadFile(fmd)) {
+                    canDownloadRoCrate = false;
+                    break;
+                }
+            }
+        }
+        return canDownloadRoCrate;
+    }
+    
     public String getDownloadRoCrateHeader() {
         return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big");
     }
@@ -6816,10 +6859,18 @@ public class DatasetPage implements java.io.Serializable {
     public String getDownloadRoCrateMessage() {
         long zipDownloadLimit = settingsWrapper.getZipDownloadLimit() / (1024*1024);
         var message = zipDownloadLimit > 1024 ? zipDownloadLimit / 1024 + " GB" : zipDownloadLimit + " MB";
-        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+        return BundleUtil.getStringFromBundle("arp.dataset.roCrate.too.big.simple", List.of(message, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
+    }
+    
+    public void startRoCrateDownload() throws Exception {
+        if (workingVersion.getFileMetadatas().isEmpty()) {
+            downloadRoCrateMetadata();
+        } else {
+            writeGuestbookAndStartRoCrateDownload();
+        }
     }
 
-    public void downloadRoCrate() throws Exception {
+    private void downloadRoCrateMetadata() throws Exception {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         HttpServletResponse response = (HttpServletResponse) facesContext.getExternalContext().getResponse();
         String dsId = dataset.getIdentifier().split("/")[1];
@@ -6834,6 +6885,34 @@ public class DatasetPage implements java.io.Serializable {
         outputStream.close();
 
         facesContext.responseComplete();
+    }
+
+    private void writeGuestbookAndStartRoCrateDownload() {
+        this.setSelectedFiles(workingVersion.getFileMetadatas());
+        PrimeFaces.current().executeScript("PF('guestbookAndTermsPopup').hide()");
+        // this should not happen, but still validate the files, if there are any restricted files, we do not allow the download
+        boolean validate = validateFilesForDownload(false);
+        if (validate || canDownloadRoCrate()) {
+            updateGuestbookResponse(false, false, false);
+            if(!getValidateFilesOutcome().equals("Mixed")){
+                guestbookResponse.setEventType(GuestbookResponse.DOWNLOAD);
+                List<String> list = new ArrayList<>(Arrays.asList(guestbookResponse.getSelectedFileIds().split(",")));
+
+                for (String idAsString : list) {
+                    DataFile df = datafileService.find(Long.valueOf(idAsString));
+                    if (df != null) {
+                        guestbookResponse.setDataFile(df);
+                        fileDownloadService.writeGuestbookResponseRecord(guestbookResponse);
+                    }
+                }
+
+                var dataset = guestbookResponse.getDataset();
+                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
+            }
+        } else {
+            logger.severe("An attempt was made to download an RO-Crate containing restricted files!");
+        }
     }
 
     private static byte[] zipFolder(Path sourceFolderPath) throws Exception {

@@ -309,6 +309,13 @@ public class RoCrateExportManager {
                                 actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
                             }
                         }
+                        // Update RO-Crate entity name based on new compound value. NOTE: the update is coming from
+                        // Dataverse (API or UI) so the user cannot control the Ro-Crate name property, we have to
+                        // do it automatically.
+                        String entityName = calcRoCrateEntityName(compoundValue, datasetField);
+                        if (entityName != null) {
+                            actEntityToUpdate.addProperty("name", entityName);
+                        }
                         processControlledVocabularyValues(childControlledVocabValues, actEntityToUpdate, childFieldName, mapper);
                     }
                 } else {
@@ -344,6 +351,41 @@ public class RoCrateExportManager {
         // the parent compound id is used to get the correct values upon modifying the RO-Crate with data from AROMA
         contextualEntityBuilder.setId(roCrateServiceBean.createRoIdForCompound(compoundValue));
 
+        String nameFieldValue = calcRoCrateEntityName(compoundValue, parentField);
+        // if we have set any value for nameFieldValue use that
+        if (nameFieldValue != null) {
+            contextualEntityBuilder.addProperty("name", nameFieldValue);
+        }
+
+        //contextualEntity.addProperty("name", "displayNameField");
+        ContextualEntity contextualEntity = contextualEntityBuilder.build();
+        // The "@id" and "name" are always props in a contextualEntity
+        if (contextualEntity.getProperties().size() > 2) {
+            contextualEntity.addType(parentFieldName);
+            // To keep the order of the compound field values synchronised with their corresponding root data entity values
+            // the new compound field values need to be inserted to the same position
+            // in the RO-Crate as their displayPosition in DV, since the order of the values are displayed in AROMA 
+            // based on the order of the values in the RO-Crate
+            if (reorderCompoundValues) {
+                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(
+                        compoundValue.getDisplayOrder(),
+                        mapper.createObjectNode().put("@id", contextualEntity.getId())
+                );
+            } else {
+                roCrate.getRootDataEntity().addIdProperty(parentFieldName, contextualEntity.getId());
+            }
+            roCrate.addContextualEntity(contextualEntity);
+        }
+    }
+
+    public String calcRoCrateEntityName(
+            DatasetFieldCompoundValue compoundValue,
+            DatasetField parentField
+    )
+    {
+        DatasetFieldType parentFieldType = parentField.getDatasetFieldType();
+        DatasetFieldTypeArp dsfArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(parentFieldType);
+
         String nameFieldValue = null;
 
         // If compound value has a "name" field, use its value by default
@@ -370,31 +412,9 @@ public class RoCrateExportManager {
             nameFieldValue = roCrateNameProvider.generateRoCrateName(compoundValue);
         }
 
-        // if we have set any value for nameFieldValue use that
-        if (nameFieldValue != null) {
-            contextualEntityBuilder.addProperty("name", nameFieldValue);
-        }
-
-        //contextualEntity.addProperty("name", "displayNameField");
-        ContextualEntity contextualEntity = contextualEntityBuilder.build();
-        // The "@id" and "name" are always props in a contextualEntity
-        if (contextualEntity.getProperties().size() > 2) {
-            contextualEntity.addType(parentFieldName);
-            // To keep the order of the compound field values synchronised with their corresponding root data entity values
-            // the new compound field values need to be inserted to the same position
-            // in the RO-Crate as their displayPosition in DV, since the order of the values are displayed in AROMA 
-            // based on the order of the values in the RO-Crate
-            if (reorderCompoundValues) {
-                roCrate.getRootDataEntity().getProperties().withArray(parentFieldName).insert(
-                        compoundValue.getDisplayOrder(),
-                        mapper.createObjectNode().put("@id", contextualEntity.getId())
-                );
-            } else {
-                roCrate.getRootDataEntity().addIdProperty(parentFieldName, contextualEntity.getId());
-            }
-            roCrate.addContextualEntity(contextualEntity);
-        }
+        return nameFieldValue;
     }
+
 
     private void buildNewContextualEntity(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, ContextualEntity.ContextualEntityBuilder contextualEntityBuilder, DatasetFieldCompoundValue compoundValue, ObjectMapper mapper, String parentFieldName, String parentFieldUri, boolean isCreation) throws JsonProcessingException {
         for (var childDatasetField : compoundValue.getChildDatasetFields()) {

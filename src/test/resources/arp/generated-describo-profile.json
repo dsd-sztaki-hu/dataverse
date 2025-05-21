@@ -30,7 +30,8 @@
             "Text"
           ],
           "required": true,
-          "multiple": true
+          "multiple": true,
+          "regex": "^((?!\\.)[\\w\\-_.]*[^.])(@\\w+(\\-?\\w+)*)(\\.\\w+(\\-?\\w+)*)*\\.[a-zA-Z]{2,}$"
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/4677c6ef-164d-4ec0-8298-70ec06b211d8",
@@ -38,7 +39,7 @@
           "label": "Date Created_export_test",
           "help": "Date Created Help Text_test",
           "type": [
-            "Date"
+            "DateTime"
           ],
           "required": true,
           "multiple": false
@@ -98,7 +99,10 @@
             "Number"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "numberType": [
+            "Int"
+          ]
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/48c7112a-5dd2-429f-bb13-34e928d5c97d",
@@ -109,7 +113,10 @@
             "Number"
           ],
           "required": true,
-          "multiple": false
+          "multiple": false,
+          "numberType": [
+            "Double"
+          ]
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/a6f6c9b6-1320-40ee-a54f-d41f785ecb30",
