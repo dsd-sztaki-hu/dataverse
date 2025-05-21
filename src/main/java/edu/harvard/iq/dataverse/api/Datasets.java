@@ -807,7 +807,6 @@ public class Datasets extends AbstractApiBean {
 		}, getRequestUser(crc));
 	}
 
-    @GET
     @POST
     @AuthRequired
     @Path("{id}/modifyRegistration")
