@@ -103,13 +103,13 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             try {
                 // This can potentially throw a CommandException, so let's make 
                 // sure we exit cleanly:
-
-            	registerExternalIdentifier(theDataset, ctxt, false);
+                registerExternalIdentifier(theDataset, ctxt, false);
+                registerFilePidsIfNeeded(theDataset, ctxt, false);
             } catch (CommandException comEx) {
-                logger.warning("Failed to reserve the identifier "+theDataset.getGlobalId().asString()+"; notifying the user(s), unlocking the dataset");
-                // Send failure notification to the user: 
+                logger.warning("Failed to reserve the identifier " + theDataset.getGlobalId().asString() + "; notifying the user(s), unlocking the dataset");
+                // Send failure notification to the user:
                 notifyUsersDatasetPublishStatus(ctxt, theDataset, UserNotification.Type.PUBLISHFAILED_PIDREG);
-                // Remove the dataset lock: 
+                // Remove the dataset lock:
                 ctxt.datasets().removeDatasetLocks(theDataset, DatasetLock.Reason.finalizePublication);
                 // re-throw the exception:
                 throw comEx;
@@ -212,7 +212,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
         
 	if (theDataset.getLatestVersion().getVersionState() != RELEASED) {
             // some imported datasets may already be released.
-
+	        theDataset.getLatestVersion().setVersionState(RELEASED);
             if (!datasetExternallyReleased) {
                 publicizeExternalIdentifier(theDataset, ctxt);
                 // Will throw a CommandException, unless successful.
@@ -221,7 +221,6 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
                 // a failure - it will remove any locks, and it will send a
                 // proper notification to the user(s). 
             }
-            theDataset.getLatestVersion().setVersionState(RELEASED);
         }
         
         final Dataset ds = ctxt.em().merge(theDataset);
@@ -398,8 +397,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             // we can't get "dependent" DOIs assigned to files in a dataset
             // with the registered id that is a handle; or even a DOI, but in
             // an authority that's different from what's currently configured.
-            // Additionaly in 4.9.3 we have added a system variable to disable
-            // registering file PIDs on the installation level.
+            // File PIDs may be enabled/disabled per collection.
             boolean registerGlobalIdsForFiles = ctxt.systemConfig().isFilePIDsEnabledForCollection(
                     getDataset().getOwner()) 
                     && pidProvider.canCreatePidsLike(dataset.getGlobalId());
@@ -425,8 +423,8 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
                                                        // pidProvider.
             dataset.setIdentifierRegistered(true);
         } catch (Throwable e) {
-            logger.warning("Failed to register the identifier " + dataset.getGlobalId().asString()
-                    + ", or to register a file in the dataset; notifying the user(s), unlocking the dataset");
+            logger.warning("Failed to publicize the identifier " + dataset.getGlobalId().asString()
+                    + ", or to publicize a file in the dataset; notifying the user(s), unlocking the dataset");
 
             // Send failure notification to the user:
             notifyUsersDatasetPublishStatus(ctxt, dataset, UserNotification.Type.PUBLISHFAILED_PIDREG);
@@ -443,8 +441,9 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             if (dataFile.getPublicationDate() == null) {
                 // this is a new, previously unpublished file, so publish by setting date
                 dataFile.setPublicationDate(updateTime);
-                
-                // check if any prexisting roleassignments have file download and send notifications
+
+                // check if any pre-existing role assignments have file download and send
+                // notifications
                 notifyUsersFileDownload(ctxt, dataFile);
             }
             
