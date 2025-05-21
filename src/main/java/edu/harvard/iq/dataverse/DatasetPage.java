@@ -6891,7 +6891,7 @@ public class DatasetPage implements java.io.Serializable {
         this.setSelectedFiles(workingVersion.getFileMetadatas());
         PrimeFaces.current().executeScript("PF('guestbookAndTermsPopup').hide()");
         // this should not happen, but still validate the files, if there are any restricted files, we do not allow the download
-        boolean validate = validateFilesForDownload(false);
+        boolean validate = validateFilesForDownload(false, false);
         if (validate || canDownloadRoCrate()) {
             updateGuestbookResponse(false, false, false);
             if(!getValidateFilesOutcome().equals("Mixed")){
