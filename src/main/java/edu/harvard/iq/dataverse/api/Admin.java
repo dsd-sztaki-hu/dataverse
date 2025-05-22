@@ -1,7 +1,12 @@
 package edu.harvard.iq.dataverse.api;
 
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.api.arp.ArpInitialSetupParams;
+import edu.harvard.iq.dataverse.api.arp.SetCedarKeyParams;
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
+import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.AuthenticatedUserArp;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
@@ -109,6 +114,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 /**
  * Where the secure, setup API calls live.
@@ -2539,7 +2545,7 @@ public class Admin extends AbstractApiBean {
 	}
 
 	@EJB
-	ArpServiceBean arpService;
+    ArpServiceBean arpService;
 
 	@POST
 	@Path("arp/initialSetup")
