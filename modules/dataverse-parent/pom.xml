@@ -420,17 +420,11 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <!-- pataki@: This started to fail for empty maven .m2:
-             [ERROR] Failed to execute goal on project dataverse: Could not resolve dependencies for project edu.harvard.iq:dataverse:war:6.1: Failed to collect dependencies at edu.ucar:cdm-core:jar:5.5.3: Failed to read artifact descriptor for edu.ucar:cdm-core:jar:5.5.3: Could not transfer artifact edu.ucar:cdm-core:pom:5.5.3 from/to unidata-all (https://artifacts.unidata.ucar.edu/repository/unidata-all/): authorization failed for https://artifacts.unidata.ucar.edu/repository/unidata-all/edu/ucar/cdm-core/5.5.3/cdm-core-5.5.3.pom, status: 403 Forbidden -> [Help 1]
-             it seems that it isn't really necessary, maven central has this
-        -->
-        <!--
         <repository>
             <id>unidata-all</id>
             <name>Unidata All</name>
             <url>https://artifacts.unidata.ucar.edu/repository/unidata-all/</url>
         </repository>
-        -->
         <!-- Uncomment when using snapshot releases from Maven Central -->
         <!--
         <repository>
