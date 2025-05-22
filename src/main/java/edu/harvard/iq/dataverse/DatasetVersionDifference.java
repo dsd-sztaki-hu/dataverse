@@ -47,10 +47,10 @@ public final class DatasetVersionDifference {
     private List<FileMetadata> changedVariableMetadata = new ArrayList<>();
     private List<FileMetadata[]> replacedFiles = new ArrayList<>();
     private List<String[]> changedTermsAccess = new ArrayList<>();
-    private List<Object[]> summaryDataForNote = new ArrayList<>();
-    private List<Object[]> blockDataForNote = new ArrayList<>();
+    private List<SummaryNote> summaryDataForNote = new ArrayList<>();
+    private List<SummaryNote> blockDataForNote = new ArrayList<>();
     private boolean roCrateRelatedChangesOnly;
-
+    
     private List<DifferenceSummaryGroup> differenceSummaryGroups = new ArrayList<>();
 
     public List<DifferenceSummaryGroup> getDifferenceSummaryGroups() {
