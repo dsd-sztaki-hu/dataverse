@@ -57,6 +57,7 @@ services:
         -Ddataverse.pid.fake.label=FakeDOIProvider
         -Ddataverse.pid.fake.authority=10.5072
         -Ddataverse.pid.fake.shoulder=FK2/
+        #-Ddataverse.lang.directory=/dv/lang
         -Ddataverse.files.sztaki.type=s3
         -Ddataverse.files.sztaki.label=SZTAKI
         -Ddataverse.files.sztaki.custom-endpoint-url=http://minio:9000
