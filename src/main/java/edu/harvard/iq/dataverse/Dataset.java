@@ -72,6 +72,8 @@ import java.util.Optional;
                 query = "SELECT o FROM Dataset o WHERE o.creator.id=:creatorId"),
     @NamedQuery(name = "Dataset.findByReleaseUserId",
                 query = "SELECT o FROM Dataset o WHERE o.releaseUser.id=:releaseUserId"),
+    @NamedQuery(name = "Dataset.countAll",
+                query = "SELECT COUNT(ds) FROM Dataset ds")
 })
 
 /*
