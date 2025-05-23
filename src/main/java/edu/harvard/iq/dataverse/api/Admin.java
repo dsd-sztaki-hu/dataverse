@@ -25,7 +25,6 @@ import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.validation.EMailValidator;
 import edu.harvard.iq.dataverse.EjbDataverseEngine;
-import edu.harvard.iq.dataverse.HandlenetServiceBean;
 import edu.harvard.iq.dataverse.Template;
 import edu.harvard.iq.dataverse.TemplateServiceBean;
 import edu.harvard.iq.dataverse.UserServiceBean;
