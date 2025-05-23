@@ -11,8 +11,16 @@
                 <h:outputFormat value="#{DatasetPage.getDownloadRoCrateMessage()}" escape="false"/>
                 <!-- Download | cancel buttons -->
                 <div class="button-block">
-                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
-                                   update="@form" onclick="PF('downloadRoCrate').hide()">
+                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="updateGuestbookDialog()"
+                                   rendered="#{!DatasetPage.workingVersion.draft}"
+                                   onclick="PF('downloadRoCrate').hide()"
+                                   oncomplete="PF('guestbookAndTermsPopup').show()">
+                        #{bundle.ok}
+                    </p:commandLink>
+                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateDownload()}"
+                                   ajax="false"
+                                   rendered="#{DatasetPage.workingVersion.draft}"
+                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                         #{bundle.ok}
                     </p:commandLink>
                     <button class="btn btn-link" onclick="PF('downloadRoCrate').hide()" type="button">

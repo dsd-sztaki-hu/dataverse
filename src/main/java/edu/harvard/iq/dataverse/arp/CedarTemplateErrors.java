@@ -13,6 +13,8 @@ public class CedarTemplateErrors {
     public HashMap<String, DatasetFieldTypeOverride> incompatiblePairs = new HashMap<>();
 
     public ArrayList<String> errors = new ArrayList<>();
+    
+    public ArrayList<String> warnings = new ArrayList<>();
 
     public CedarTemplateErrors() {
     }
@@ -38,6 +40,18 @@ public class CedarTemplateErrors {
             builder.add("errors", jsonArrayBuilder);
         }
 
+
+        return builder.build();
+    }
+    
+    public jakarta.json.JsonObject warningsAsJson() {
+        NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
+
+        if (!warnings.isEmpty()) {
+            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+            warnings.forEach(jsonArrayBuilder::add);
+            builder.add("warnings", jsonArrayBuilder);
+        }
 
         return builder.build();
     }

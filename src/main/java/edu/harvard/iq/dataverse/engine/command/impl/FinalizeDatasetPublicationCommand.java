@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.DvObject;
 import edu.harvard.iq.dataverse.Embargo;
 import edu.harvard.iq.dataverse.UserNotification;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
+import jakarta.enterprise.inject.spi.CDI;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
@@ -33,7 +34,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import edu.harvard.iq.dataverse.batch.util.LoggingUtil;
 import edu.harvard.iq.dataverse.dataaccess.StorageIO;
 import edu.harvard.iq.dataverse.engine.command.Command;
@@ -54,7 +54,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
 
     private static final Logger logger = Logger.getLogger(FinalizeDatasetPublicationCommand.class.getName());
 
-    private final RoCrateExportManager roCrateExportManager = new RoCrateExportManager();
+
 
     /**
      * mirror field from {@link PublishDatasetCommand} of same name
@@ -267,7 +267,7 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             notifyUsersDatasetPublishStatus(ctxt, dataset, UserNotification.Type.PUBLISHEDDS);
         } catch (Exception e) {
             logger.warning("Failure to send dataset published messages for : " + dataset.getId() + " : " + e.getMessage());
-        }
+        }         
         
         //re-indexing dataverses that have additional subjects
         if (!dataversesToIndex.isEmpty()){
@@ -299,8 +299,10 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             // export was indeed successful.
         }
         ctxt.index().asyncIndexDataset(dataset, true);
-        
-        roCrateExportManager.finalizeRoCrateForDatasetVersion(dataset.getLatestVersion());
+
+        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+        RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+        roCrateExportManager.finalizeRoCrateForPublish(dataset.getLatestVersion());
         
         return retVal;
     }

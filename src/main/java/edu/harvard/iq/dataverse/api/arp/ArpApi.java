@@ -164,7 +164,7 @@ public class ArpApi extends AbstractApiBean {
     public Response checkCedarResourceCall(String resourceJson) {
         CedarTemplateErrors errors;
         try {
-            errors = arpService.validateCedarResource(resourceJson, true);
+            errors = arpService.validateCedarResource(resourceJson, true, false);
         } catch (Exception e) {
             e.printStackTrace();
             return error(Response.Status.INTERNAL_SERVER_ERROR, e.getMessage());
@@ -178,7 +178,10 @@ public class ArpApi extends AbstractApiBean {
                     ).type(MediaType.APPLICATION_JSON_TYPE).build();
         }
 
-        return ok("Valid Resource");
+        return ok(NullSafeJsonBuilder.jsonObjectBuilder()
+                .add("message", "Valid Resource")
+                .add("warnings", errors.warningsAsJson())
+                .build());
     }
 
     /**
@@ -220,7 +223,8 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
-
+            String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
+            arpService.updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
         } catch (CedarTemplateErrorsException cte) {
             cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());

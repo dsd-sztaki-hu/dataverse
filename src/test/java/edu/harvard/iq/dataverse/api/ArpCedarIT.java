@@ -24,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -36,8 +37,7 @@ import java.util.logging.Logger;
 import static io.restassured.RestAssured.given;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static jakarta.ws.rs.core.Response.Status.OK;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ArpCedarIT {
     
@@ -51,18 +51,20 @@ public class ArpCedarIT {
     
     private static ExportToCedarParams cedarParams;
     
+    private static String cedarUUID;
+    
     @BeforeEach
-    public static void initCEDAR() {
+    public void initCEDAR() {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String params = Files.readString(Paths.get("src/test/resources/arp/cedarParams.json"));
-            JsonObject originalParams = gson.fromJson(params, JsonObject.class);
-            JsonObject testParams = originalParams.getAsJsonObject("cedarParams");
+            JsonObject testParams = gson.fromJson(params, JsonObject.class);
             String parentIdFromEnv = System.getenv("CEDAR_PARENT_FOLDER_ID_FOR_THE_TESTS");
             String apiKeyFromEnv = System.getenv("CEDAR_API_KEY");
             String domainFromEnv = System.getenv("CEDAR_DOMAIN");
+            String cedarUUIDFromEnv = System.getenv("CEDAR_UUID");
             if (parentIdFromEnv != null) {
-                testParams.addProperty("parentFolderIdForTheTests", parentIdFromEnv);
+                testParams.addProperty("folderId", parentIdFromEnv);
             }
             if (apiKeyFromEnv != null) {
                 testParams.addProperty("apiKey", apiKeyFromEnv);
@@ -70,34 +72,41 @@ public class ArpCedarIT {
             if (domainFromEnv != null) {
                 testParams.addProperty("cedarDomain", domainFromEnv);
             }
+            if (cedarUUIDFromEnv != null) {
+                testParams.addProperty("cedarUUID", cedarUUIDFromEnv);
+            }
             
-            String parentFolderId = testParams.get("parentFolderIdForTheTests").getAsString();
+            String parentFolderId = testParams.get("folderId").getAsString();
             String apiKey = testParams.get("apiKey").getAsString();
             String cedarDomain = testParams.get("cedarDomain").getAsString();
+            cedarUUID = testParams.get("cedarUUID").getAsString();
             
             //In case the test folder is present before running the tests, remove it
             checkAndDeleteTestFolderIfExists(httpClient, parentFolderId, apiKey, cedarDomain);
             
             String testFolderId = createFolder(parentFolderId, cedarDomain, apiKey, httpClient);
             testParams.addProperty("folderId", testFolderId);
-            originalParams.add("cedarParams", testParams);
             cedarParams = new ExportToCedarParams();
             cedarParams.cedarDomain = cedarDomain;
             cedarParams.folderId = testFolderId;
             cedarParams.apiKey = apiKey;
+        } catch (NoSuchFileException e) {
+            logger.severe("Before running ArpCedarIT test, create a cedarParams.json file in the src/test/resources/arp folder based on cedarParams.example.json.");
+            e.printStackTrace();
+            fail();
         } catch (Exception e) {
             e.printStackTrace();
-            assertEquals(0,1);
+            fail();
         }
     }
 
     @BeforeEach
-    public static void setUpClass() {
+    public void setUpClass() {
         RestAssured.baseURI = UtilIT.getRestAssuredBaseUri();
     }
     
     @AfterEach
-    public static void removeTestDataFromCEDAR() throws Exception {
+    public void removeTestDataFromCEDAR() throws Exception {
         String encodedFolderId = URLEncoder.encode(cedarParams.folderId, StandardCharsets.UTF_8);
         deleteFolderAndContents(encodedFolderId, cedarParams.apiKey, cedarParams.cedarDomain);
     }
@@ -107,7 +116,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("1", "Citation Metadata", "src/test/resources/arp/citation.json", httpClient, apiToken);    
+            exportAndCheckTemplate("citation", "Citation Metadata", "src/test/resources/arp/citation.json", httpClient, apiToken);    
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -119,7 +128,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("2", "Geospatial Metadata", "src/test/resources/arp/geospatial.json", httpClient, apiToken);
+            exportAndCheckTemplate("geospatial", "Geospatial Metadata", "src/test/resources/arp/geospatial.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -131,7 +140,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("3", "Social Science and Humanities Metadata", "src/test/resources/arp/socialscience.json", httpClient, apiToken);
+            exportAndCheckTemplate("socialscience", "Social Science and Humanities Metadata", "src/test/resources/arp/socialscience.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -143,7 +152,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("4", "Astronomy and Astrophysics Metadata", "src/test/resources/arp/astrophysics.json", httpClient, apiToken);
+            exportAndCheckTemplate("astrophysics", "Astronomy and Astrophysics Metadata", "src/test/resources/arp/astrophysics.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -155,7 +164,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("5", "Life Sciences Metadata", "src/test/resources/arp/biomedical.json", httpClient, apiToken);
+            exportAndCheckTemplate("biomedical", "Life Sciences Metadata", "src/test/resources/arp/biomedical.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -167,7 +176,7 @@ public class ArpCedarIT {
         try {
             HttpClient httpClient = getUnsafeHttpClient();
             String apiToken = createRandomSuperUser();
-            exportAndCheckTemplate("6", "Journal Metadata", "src/test/resources/arp/journal.json", httpClient, apiToken);
+            exportAndCheckTemplate("journal", "Journal Metadata", "src/test/resources/arp/journal.json", httpClient, apiToken);
         } catch (Exception e) {
             e.printStackTrace();
             assertEquals(0,1);
@@ -175,7 +184,7 @@ public class ArpCedarIT {
     }
     
     private static void exportAndCheckTemplate(String mdbIdtf, String templateName, String templatePath, HttpClient httpClient, String apiToken) {
-        Response exportMdbResponse = exportMdb(apiToken, mdbIdtf, cedarParams);
+        Response exportMdbResponse = exportMdb(apiToken, mdbIdtf, gson.toJson(cedarParams));
         assertEquals(200, exportMdbResponse.getStatusCode());
         exportMdbResponse.then().assertThat().statusCode(OK.getStatusCode());
         
@@ -220,9 +229,10 @@ public class ArpCedarIT {
         ));
     }
 
-    static Response exportMdb(String apiToken, String mdbIdtf, ExportToCedarParams body) {
+    static Response exportMdb(String apiToken, String mdbIdtf, String body) {
         return given()
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .queryParam("uuid", cedarUUID)
                 .body(body)
                 .contentType("application/json; charset=utf-8")
                 .post("/api/arp/exportMdbToCedar/" + mdbIdtf);
@@ -391,11 +401,14 @@ public class ArpCedarIT {
     }
 
     public String createRandomSuperUser() {
-        Response createSuperuser = UtilIT.createRandomUser();
-        String superuserUsername = UtilIT.getUsernameFromResponse(createSuperuser);
-        String superuserApiToken = UtilIT.getApiTokenFromResponse(createSuperuser);
-        Response superuser = UtilIT.makeSuperUser(superuserUsername);
-        return superuserApiToken;
+        Response createUser = UtilIT.createRandomUser();
+        createUser.prettyPrint();
+        assertEquals(200, createUser.getStatusCode());
+        String username = UtilIT.getUsernameFromResponse(createUser);
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+        Response makeSuperUser = UtilIT.makeSuperUser(username);
+        assertEquals(200, makeSuperUser.getStatusCode());
+        return apiToken;
     }
     
 }

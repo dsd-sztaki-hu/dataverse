@@ -65,6 +65,16 @@ Enable CORS with "Access-Control-Allow-Origin: "*":
 curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowCors
 ```
 
+# FAKE PID
+
+```
+curl http://localhost:8080/api/admin/settings/:Protocol -X PUT -d doi
+curl http://localhost:8080/api/admin/settings/:DoiProvider -X PUT -d FAKE
+curl http://localhost:8080/api/admin/settings/:Shoulder -X PUT -d FK2/
+curl http://localhost:8080/api/admin/settings/:Authority -X PUT -d 10.5072
+```
+
+
 # Enable file pid
 
 Be default the file PIDs are not enabled. It has to be enabled globally (:FilePIDsEnabled) and then also AllowEnablingFilePIDsPerCollection to that we can set it on the Root dataverse as well:
@@ -79,6 +89,37 @@ curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowEnablingFil
 curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost:8080/api/dataverses/root/attribute/filePIDsEnabled?value=true"
 ```
 
+# W3id setting
+
+```
+curl -X PUT -d https://w3id.org/arp/dev http://localhost:8080/api/admin/settings/arp.w3id.base
+```
+
+# Terminology url
+
+```
+curl -X PUT -d https://terminology.cedardev.dsd.sztaki.hu//bioportal/ontologies/%s/classes/%s/descendants?pageSize=500 http://localhost:8080/api/admin/settings/terminology.url.template
+```
+
+# Aroma
+
+```
+curl -X PUT -d 0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff  http://localhost:8080/api/admin/settings/arp.cedar.proxyApiKey
+
+curl -X PUT -d arp.orgx  http://localhost:8080/api/admin/settings/arp.cedar.domain
+```
+
+# Cedar
+
+```
+curl -X POST \
+  http://localhost:8080/api/admin/arp/setCedarKey \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "userIdentifier": "dataverseAdmin",
+    "cedarKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff"
+  }'
+```
 
 # Other development settings
 
@@ -87,6 +128,16 @@ Builtin users for unit tests:
 ```
 curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY
 ```
+
+Use ARP branding
+
+```
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-header.html' http://localhost:8080/api/admin/settings/:HeaderCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-footer.html' http://localhost:8080/api/admin/settings/:FooterCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-stylesheet.css' http://localhost:8080/api/admin/settings/:StyleCustomizationFile
+curl -X PUT -d '/branding/topbanner_arp_002_dark425.png' http://localhost:8080/api/admin/settings/:LogoCustomizationFile
+```
+
 
 # Sync CEDAR and DV metaadatablocks
 
@@ -130,3 +181,59 @@ curl -X GET -H "Content-Type: application/json" -H "Authorization: Basic $(echo 
 - https://dataverse-guide--9959.org.readthedocs.build/en/9959/container/dev-usage.html#ide-triggered-re-deployments
 - Import [watchers.xml](scripts%2Fintellij%2Fwatchers.xml) file watcher to have xhtml, js, etc files automatically updated in the container
     - See discussion here: https://dataverse.zulipchat.com/#narrow/stream/375812-containers/topic/faster.20redeploy/near/415973553
+
+
+
+# All in one:
+
+```
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowCors
+curl http://localhost:8080/api/admin/settings/:Protocol -X PUT -d doi
+curl http://localhost:8080/api/admin/settings/:Shoulder -X PUT -d FK2/
+curl http://localhost:8080/api/admin/settings/:Authority -X PUT -d 10.5072
+curl http://localhost:8080/api/admin/settings/:DoiProvider -X PUT -d FAKE
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:FilePIDsEnabled
+curl -X PUT -d 'true' http://localhost:8080/api/admin/settings/:AllowEnablingFilePIDsPerCollection
+curl -X PUT -H "X-Dataverse-key:$API_TOKEN" "http://localhost:8080/api/dataverses/root/attribute/filePIDsEnabled?value=true"
+curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY
+curl -X PUT -d https://w3id.org/arp/dev http://localhost:8080/api/admin/settings/arp.w3id.base
+curl -X PUT -d https://terminology.arp.orgx/bioportal/ontologies/%s/classes/%s/descendants?pageSize=500 http://localhost:8080/api/admin/settings/terminology.url.template
+curl -X PUT -d 0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff  http://localhost:8080/api/admin/settings/arp.cedar.proxyApiKey
+curl -X PUT -d arp.orgx  http://localhost:8080/api/admin/settings/arp.cedar.domain
+curl -X POST \
+  http://localhost:8080/api/admin/arp/setCedarKey \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "userIdentifier": "dataverseAdmin",
+    "cedarKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff"
+  }'
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-header.html' http://localhost:8080/api/admin/settings/:HeaderCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-footer.html' http://localhost:8080/api/admin/settings/:FooterCustomizationFile
+curl -X PUT -d '/opt/payara/deployments/dataverse/branding/custom-stylesheet.css' http://localhost:8080/api/admin/settings/:StyleCustomizationFile
+curl -X PUT -d '/branding/topbanner_arp_002_dark425.png' http://localhost:8080/api/admin/settings/:LogoCustomizationFile
+
+#
+# SET YOUR folderId!
+#
+curl -X POST 'http://localhost:8080/api/admin/arp/syncMdbsWithCedar' \
+-H 'Content-Type: application/json' \
+-d '{
+  "mdbParams": [
+    {"name": "citation"},
+    {"name": "geospatial", "namespaceUri": "https://dataverse.org/schema/geospatial/"},
+    {"name": "socialscience", "namespaceUri": "https://dataverse.org/schema/socialscience/"},
+    {"name": "biomedical", "namespaceUri": "https://dataverse.org/schema/biomedical/"},
+    {"name": "astrophysics", "namespaceUri": "https://dataverse.org/schema/astrophysics/"},
+    {
+      "name": "journal",
+      "namespaceUri": "https://dataverse.org/schema/journal/",
+      "cedarUuid": "aaaaaaaa-bbbb-cccc-dddd-65d43571f306"
+    }
+  ],
+  "cedarParams": {
+    "cedarDomain": "arp.orgx",
+    "apiKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
+    "folderId": "https:%2F%2Frepo.arp.orgx%2Ffolders%2Fadaa5a7c-1f07-4ef8-a6e7-513f5f596ff0"
+  }
+}'
+```

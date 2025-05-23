@@ -914,29 +914,31 @@
                                    rendered="#{(!DatasetPage.workingVersion.deaccessioned or (DatasetPage.workingVersion.deaccessioned and DatasetPage.canUpdateDataset())) 
                                                and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}">
                                 <div class="button-block tab-header margin-bottom text-right" jsf:rendered="#{empty DatasetPage.editMode}">
-                                    <!--<p:commandButton value="#{bundle['file.dataFilesTab.metadata.downloadRoCrate']}"
-                                                     action="#{DatasetPage.downloadRoCrate()}"
-                                                     ajax="false"
-                                    />-->
-                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateZipDownload()}" update="@form"
-                                                   rendered="#{!(empty DatasetPage.workingVersion.fileMetadatas) and !DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                    <!-- If the RO-Crate is not downloadable, because some files are restricted for the user. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" onclick="PF('roCrateDownloadInvalid').show();"
+                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and empty DatasetPage.editMode and !widgetWrapper.widgetView}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
-                                    <p:commandLink styleClass="btn btn-default btn-access"
-                                                   update=":downloadRoCrate" oncomplete="PF('downloadRoCrate').show()"
-                                                   rendered="#{DatasetPage.tooLargeToDownloadArchival and (!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                    <!-- If the RO-Crate is downloadable and the popup is required. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
+                                                   update=":datasetForm:guestbookAndTermsPopup"
+                                                   rendered="#{!DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
+                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                        #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
+                                        <f:actionListener binding="#{DatasetPage.setTermsGuestbookPopupAction(bundle.download)}"/>
+                                    </p:commandLink>
+                                    <!-- If the RO-Crate is downloadable and the popup is not required. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateDownload()}"
+                                                   ajax="false"
+                                                   rendered="#{DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
-                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.downloadRoCrate()}" ajax="false"
-                                                   rendered="#{empty DatasetPage.workingVersion.fileMetadatas and (!widgetWrapper.widgetView
-                                                               and (DatasetPage.sessionUserAuthenticated
-                                                               and empty DatasetPage.editMode and !widgetWrapper.widgetView))}"
+                                    <!-- If the RO-Crate is too large to download. -->
+                                    <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}"
+                                                   update=":downloadRoCrate,:datasetForm:guestbookAndTermsPopup" oncomplete="PF('downloadRoCrate').show()"
+                                                   rendered="#{DatasetPage.canDownloadRoCrate() and DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
                                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
@@ -1005,16 +1007,18 @@
                                     <ui:param name="anonymized" value="#{DatasetPage.anonymizedAccess}"/>
                                 </ui:include>
                             </p:tab>
-                            <p:tab id="describoTab" title="#{bundle['dataset.describoTab']}"
+                            <p:tab id="aromaTab" title="#{bundle['dataset.aromaTab']}"
                                    rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}"
                                    disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
-                                <ui:include src="aroma.xhtml">
-                                    <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
-                                    <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
-                                    <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
-                                    <ui:param name="language" value="#{DatasetPage.language}"/>
-                                    <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
-                                </ui:include>
+                                <c:if test="#{DatasetPage.aromaTabSelected}">
+                                    <ui:include src="aroma.xhtml">
+                                        <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                        <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
+                                        <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
+                                        <ui:param name="language" value="#{DatasetPage.language}"/>
+                                        <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
+                                    </ui:include>
+                                </c:if>
                             </p:tab>
                         </p:tabView>
                     </div>
@@ -1187,6 +1191,17 @@
                                              oncomplete="PF('guestbookAndTermsPopup').show();" />
                             <button class="btn btn-link" onclick="PF('globusTransferMixed').hide();" type="button">
                                 #{bundle.cancel}
+                            </button>
+                        </div>
+                    </p:dialog>
+                    <p:dialog id="roCrateDownloadInvalid" styleClass="smallPopUp" header="#{bundle['arp.dataset.inValidSelectedFilesForDownload']}" widgetVar="roCrateDownloadInvalid" modal="true">
+                        <p class="text-danger"><span class="glyphicon glyphicon-exclamation-sign"/> #{bundle['arp.dataset.noValidSelectedFilesForDownload']}</p>
+                        <ui:fragment rendered="#{DatasetPage.dataset.fileAccessRequest}">
+                            <p class="help-block">#{bundle['dataset.requestAccessToRestrictedFiles']}</p>
+                        </ui:fragment>
+                        <div class="button-block">
+                            <button class="btn btn-default" onclick="PF('roCrateDownloadInvalid').hide();" type="button">
+                                #{bundle.close}
                             </button>
                         </div>
                     </p:dialog>
@@ -1633,6 +1648,7 @@
                             </button>
                         </div>
                     </p:dialog>
+                    <p:remoteCommand name="updateGuestbookDialog" update=":datasetForm:guestbookAndTermsPopup" /> 
                     <!-- END: Request Access Sign Up/Log In Button -->
                     <p:dialog id="guestbookAndTermsPopup" styleClass="largePopUp" header="#{bundle['file.downloadDialog.header']}" widgetVar="guestbookAndTermsPopup" modal="true">
                         <o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
@@ -1649,6 +1665,7 @@
                             <ui:param name="termsGuestbookPopupAction" value="#{DatasetPage.termsGuestbookPopupAction}"/>
                             <ui:param name="guestbookPopupRequiredAtDownload" value="#{DatasetPage.guestbookPopupRequiredAtDownload}"/>
                             <ui:param name="isGlobusTransfer" value="#{DatasetPage.globusTransferRequested}"/>
+                            <ui:param name="roCrateDownload" value="#{DatasetPage.roCrateDownload}"/>
                         </ui:include>
                     </p:dialog>
                     <!-- Preview Guestbook -->
@@ -1854,15 +1871,28 @@
                         <c:if test="#{showPublishLink}">
                             <ui:include src="datasetLicenseInfoFragment.xhtml" />
                         </c:if>
+                        <ui:fragment rendered="#{DatasetPage.arpIsHasCCLicense()}">
+                            <div class="form-group" style="display: flex; align-items: start;">
+                                <h:selectBooleanCheckbox style="margin-right: 10px; margin-left: 15px;" id="arpTermsCheckbox" value="#{DatasetPage.arpTermsAccepted}">
+                                    <f:ajax render="continueButton" />
+                                </h:selectBooleanCheckbox>
+                                <h:outputText value="#{bundle['arp.dataset.publish.cc.license.accept']}" escape="false" />
+                            </div>
+                        </ui:fragment>
                         <ui:fragment  rendered="#{publishDataset}">
                             <div class="form-group">
                                 <p class="col-sm-12 help-block">#{bundle['dataset.publish.terms.help.tip']}</p>
                             </div>
                         </ui:fragment>
                         <div class="button-block">
-                            <p:commandButton rendered="#{valid}" styleClass="btn btn-default" value="#{bundle.continue}" 
-                                             onclick="PF('publishDataset').hide();
-                                                     PF('blockDatasetForm').hide();" action="#{DatasetPage.releaseDataset}" />
+                                <p:commandButton
+                                        id="continueButton"
+                                        rendered="#{valid}"
+                                        styleClass="btn btn-default"
+                                        value="#{bundle.continue}"
+                                        onclick="PF('publishDataset').hide(); PF('blockDatasetForm').hide();"
+                                        action="#{DatasetPage.releaseDataset}"
+                                        disabled="#{!DatasetPage.arpTermsAccepted and DatasetPage.arpIsHasCCLicense()}" />
                             <button class="btn btn-link" onclick="PF('publishDataset').hide();
                                     PF('blockDatasetForm').hide();" type="button">
                                 #{bundle.cancel}

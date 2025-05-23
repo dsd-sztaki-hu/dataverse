@@ -41,7 +41,7 @@
                         src="#{DatasetUtil:getLicenseIcon(workingVersion)}"
                         title="#{DatasetUtil:getLicenseDescription(workingVersion)}"
                         style="display: none" onload="this.style.display='inline'" />
-                    <a 
+                    <a
                         href="#{DatasetUtil:getLicenseURI(workingVersion)}"
                         title="#{DatasetUtil:getLicenseDescription(workingVersion)}"
                         target="_blank">#{DatasetUtil:getLicenseName(workingVersion)}
@@ -55,12 +55,23 @@
                 </p>
             </div>
         </div>
+        <div class="form-group">
+            <label jsf:for="arpLicense" class="col-sm-3 control-label">
+                #{bundle['arp.file.dataFilesTab.terms.list.license']} </label>
+            <div class="col-sm-9">
+                <p class="help-block">
+                    <h:outputText
+                            value="#{bundle['arp.file.dataFilesTab.terms.list.license.view.description']}"
+                            escape="false" />
+                </p>
+            </div>
+        </div>
 
         <ui:fragment rendered="#{empty workingVersion.termsOfUseAndAccess.license}">
             <div class="form-group"
                 jsf:rendered="#{!empty workingVersion.termsOfUseAndAccess.termsOfUse}">
                 <label jsf:for="fdTermsOfuse" class="col-sm-3 control-label">
-                    #{bundle['file.dataFilesTab.terms.list.termsOfUse.termsOfUse']} 
+                    #{bundle['file.dataFilesTab.terms.list.termsOfUse.termsOfUse']}
                 </label>
                 <h:outputText id="fdTermsOfUse" class="col-sm-6"
                     value="#{MarkupChecker:sanitizeBasicHTML(workingVersion.termsOfUseAndAccess.termsOfUse)}"
@@ -134,15 +145,15 @@
             </div>
         </ui:fragment>
         <div class="form-group"
-            jsf:rendered="#{!empty workingVersion.termsOfUseAndAccess.termsOfAccess and hasRestrictedFile}">
+            jsf:rendered="#{!empty workingVersion.termsOfUseAndAccess.termsOfAccess and (hasRestrictedFile or !empty fileDownloadHelper.filesForRequestAccess)}">
             <label jsf:for="fdTermsOfAccess" class="col-sm-3 control-label">
                 #{bundle['file.dataFilesTab.terms.list.termsOfAccess.termsOfsAccess']}
             </label>
             <h:outputText id="fdTermsOfAccess" class="col-sm-6"
                 value="#{MarkupChecker:sanitizeBasicHTML(workingVersion.termsOfUseAndAccess.termsOfAccess)}"
-                escape="false" />
+                escape="false" /> 
         </div>
-            <p:fragment rendered="#{guestbookAndTermsPopupRequired and ((termsGuestbookPopupAction != bundle.download) != guestbookPopupRequiredAtDownload)}" id="guestbookUIFragment">
+            <p:fragment rendered="#{guestbookAndTermsPopupRequired and guestbookPopupRequired}" id="guestbookUIFragment">
                 <div class="container messagePanel">
                     <iqbs:messages collapsible="true" />
                 </div>
@@ -179,7 +190,7 @@
                                      styleClass="form-control" value="#{guestbookResponse.email}"
                                      requiredMessage="#{bundle['requiredField']}"
                                      >
-                        </p:inputText>  
+                        </p:inputText>
                         <p:message id="emailMessages" for="guestbookuser_email" display="text"/>
                     </div>
                 </div>
@@ -251,7 +262,18 @@
                 </div>
             </p:fragment>
         </div>
-        <div class="button-block" jsf:rendered="#{termsGuestbookPopupAction == bundle.download}">
+        <div class="button-block" jsf:rendered="#{DatasetPage.roCrateMetadataDownload}">
+            <p:commandButton styleClass="btn btn-default" value="#{bundle.acceptTerms}" ajax="false"
+                             actionListener="#{DatasetPage.startRoCrateDownload()}"
+                             update="guestbookUIFragment"
+                             onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();">
+                <f:param name="DO_GB_VALIDATION_#{popupContext}" value="true"/>
+            </p:commandButton>
+            <button class="btn btn-link" onclick="PF('guestbookAndTermsPopup').hide();PF('blockDatasetForm').hide();" type="button">
+                #{bundle.cancel}
+            </button>
+        </div>
+        <div class="button-block" jsf:rendered="#{not DatasetPage.roCrateMetadataDownload and termsGuestbookPopupAction == bundle.download}">
         <!--
             The "process" directive below is very important. Without it, the
             setters on the GuestbookResponse object can be called twice leading

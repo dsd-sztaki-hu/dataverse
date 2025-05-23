@@ -300,7 +300,7 @@ services:
       - "127.0.0.1:4566:4566"
     environment:
       - DEBUG=${DEBUG-}
-      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_HOST=${DOCKER_HOST-unix:///var/run/docker.sock}
       - HOSTNAME_EXTERNAL=localstack
     networks:
       - dataverse
