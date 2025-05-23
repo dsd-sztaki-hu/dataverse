@@ -130,7 +130,7 @@
         leading wildcard queries. -->
     <field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>    
     <field name="name" type="text_en" indexed="true" stored="true"/>
-
+    
     <field name="definitionPointDocId" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="definitionPointDvObjectId" type="string" stored="true" indexed="true" multiValued="false"/>
     <field name="discoverableBy" type="string" stored="true" indexed="true" multiValued="true"/>
@@ -230,6 +230,8 @@
     <!-- incomplete datasets issue 8822 -->
     <field name="datasetValid" type="boolean" stored="true" indexed="true" multiValued="false"/>
 
+    <field name="license" type="string" stored="true" indexed="true" multiValued="false"/>
+    
     <!--
         METADATA SCHEMA FIELDS
         Now following: any fields generated from the metadata schemas loaded into Dataverse.
@@ -327,7 +329,7 @@
     <field name="keywordVocabularyURI" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="kindOfData" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="language" type="text_en" multiValued="true" stored="true" indexed="true"/>
-    <field name="northLongitude" type="text_en" multiValued="true" stored="true" indexed="true"/>
+    <field name="northLatitude" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="notesText" type="text_en" multiValued="false" stored="true" indexed="true"/>
     <field name="originOfSources" type="text_en" multiValued="false" stored="true" indexed="true"/>
     <field name="otherDataAppraisal" type="text_en" multiValued="false" stored="true" indexed="true"/>
@@ -370,7 +372,7 @@
     <field name="software" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="softwareName" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="softwareVersion" type="text_en" multiValued="true" stored="true" indexed="true"/>
-    <field name="southLongitude" type="text_en" multiValued="true" stored="true" indexed="true"/>
+    <field name="southLatitude" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="state" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="studyAssayCellType" type="text_en" multiValued="true" stored="true" indexed="true"/>
     <field name="studyAssayMeasurementType" type="text_en" multiValued="true" stored="true" indexed="true"/>
@@ -467,7 +469,7 @@
     <!-- <copyField source="*_i" dest="_text_" maxChars="3000"/> -->
     
     <copyField source="datasetValid" dest="_text_" maxChars="3000"/>
-
+    
     <!--
         METADATA SCHEMA FIELDS
         Now following: copyFields to copy the contents of the metadata fields above to a
@@ -566,7 +568,7 @@
     <copyField source="keywordVocabularyURI" dest="_text_" maxChars="3000"/>
     <copyField source="kindOfData" dest="_text_" maxChars="3000"/>
     <copyField source="language" dest="_text_" maxChars="3000"/>
-    <copyField source="northLongitude" dest="_text_" maxChars="3000"/>
+    <copyField source="northLatitude" dest="_text_" maxChars="3000"/>
     <copyField source="notesText" dest="_text_" maxChars="3000"/>
     <copyField source="originOfSources" dest="_text_" maxChars="3000"/>
     <copyField source="otherDataAppraisal" dest="_text_" maxChars="3000"/>
@@ -609,7 +611,7 @@
     <copyField source="software" dest="_text_" maxChars="3000"/>
     <copyField source="softwareName" dest="_text_" maxChars="3000"/>
     <copyField source="softwareVersion" dest="_text_" maxChars="3000"/>
-    <copyField source="southLongitude" dest="_text_" maxChars="3000"/>
+    <copyField source="southLatitude" dest="_text_" maxChars="3000"/>
     <copyField source="state" dest="_text_" maxChars="3000"/>
     <copyField source="studyAssayCellType" dest="_text_" maxChars="3000"/>
     <copyField source="studyAssayMeasurementType" dest="_text_" maxChars="3000"/>
@@ -670,13 +672,13 @@
     <dynamicField name="*_dts" type="pdates"   indexed="true"  stored="true"/>
     <dynamicField name="*_t"   type="text_general" indexed="true" stored="true" multiValued="false"/>
     <dynamicField name="*_txt" type="text_general" indexed="true" stored="true"/>
-
+    
     <dynamicField name="random_*" type="random"/>
     <dynamicField name="ignored_*" type="ignored"/>
 
     <!-- Type used for data-driven schema, to add a string copy for each text field -->
     <dynamicField name="*_str" type="strings" stored="false" docValues="true" indexed="false" useDocValuesAsStored="false" />
-
+    
     <dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
     <dynamicField name="*_srpt"  type="location_rpt" indexed="true" stored="true"/>
     
@@ -777,7 +779,7 @@
     <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
     <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
     <fieldType name="random" class="solr.RandomSortField" indexed="true"/>
-
+    
     <!-- since fields of this type are by default not stored or indexed,
        any data added to them will be ignored outright.  -->
     <fieldType name="ignored" stored="false" indexed="false" multiValued="true" class="solr.StrField" />
@@ -807,14 +809,14 @@
     
     <!--Binary data type. The data should be sent/retrieved in as Base64 encoded Strings -->
     <fieldType name="binary" class="solr.BinaryField"/>
-
+    
     <!--
     RankFields can be used to store scoring factors to improve document ranking. They should be used
     in combination with RankQParserPlugin.
     (experimental)
     -->
     <fieldType name="rank" class="solr.RankField"/>
-
+    
     <!-- solr.TextField allows the specification of custom text analyzers
          specified as a tokenizer and a list of token filters. Different
          analyzers may be specified for indexing and querying.
@@ -866,7 +868,7 @@
         <filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
-
+    
     <!-- SortableTextField generaly functions exactly like TextField,
         except that it supports, and by default uses, docValues for sorting (or faceting)
         on the first 1024 characters of the original field values (which is configurable).

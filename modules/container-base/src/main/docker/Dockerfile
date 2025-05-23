@@ -22,7 +22,7 @@
 #
 
 # Make the Java base image and version configurable (useful for trying newer Java versions and flavors)
-ARG JAVA_IMAGE="eclipse-temurin:11-jre"
+ARG JAVA_IMAGE="eclipse-temurin:17-jre"
 FROM $JAVA_IMAGE
 
 # Default payara ports to expose
@@ -45,19 +45,10 @@ ENV PAYARA_DIR="${HOME_DIR}/appserver" \
     ADMIN_USER="admin" \
     ADMIN_PASSWORD="admin" \
     DOMAIN_NAME="domain1" \
-    # This is the public default as per https://docs.payara.fish/community/docs/Technical%20Documentation/Payara%20Server%20Documentation/Security%20Guide/Administering%20System%20Security.html#to-change-the-master-password
-    # Can be changed at runtime via this env var
-    DOMAIN_PASSWORD="changeit" \
-    PAYARA_ARGS="" \
-    LINUX_USER="payara" \
-    LINUX_GROUP="payara" \
-    # This is a public default and can be changed at runtime using this env var
-    LINUX_PASSWORD="payara"
+    PAYARA_ARGS=""
 ENV PATH="${PATH}:${PAYARA_DIR}/bin:${SCRIPT_DIR}" \
     DOMAIN_DIR="${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}" \
     DEPLOY_PROPS="" \
-    PREBOOT_COMMANDS="${CONFIG_DIR}/pre-boot-commands.asadmin" \
-    POSTBOOT_COMMANDS="${CONFIG_DIR}/post-boot-commands.asadmin" \
     JVM_ARGS="" \
     MEM_MAX_RAM_PERCENTAGE="70.0" \
     MEM_XSS="512k" \
@@ -72,7 +63,8 @@ ENV PATH="${PATH}:${PAYARA_DIR}/bin:${SCRIPT_DIR}" \
     JVM_DUMPS_ARG="-XX:+HeapDumpOnOutOfMemoryError" \
     ENABLE_JMX=0 \
     ENABLE_JDWP=0 \
-    ENABLE_RELOAD=0
+    ENABLE_RELOAD=0 \
+    SKIP_DEPLOY=0
 
 ### PART 1: SYSTEM ###
 ARG UID=1000
@@ -86,18 +78,16 @@ RUN <<EOF
     # Create pathes
     mkdir -p "${HOME_DIR}" "${PAYARA_DIR}" "${DEPLOY_DIR}" "${CONFIG_DIR}" "${SCRIPT_DIR}"
     mkdir -p "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
-    # Remove the default user if present (do not fail build if not, introduced by Ubuntu 24.04)
-    userdel --force --remove ubuntu || true
-    groupdel -f ubuntu || true # for some reason, groupdel on Ubuntu 22.04 does not like --force
     # Create user
-    groupadd --gid "${GID}" "${LINUX_GROUP}"
-    useradd --system --uid "${UID}" --no-create-home --shell /bin/false --home "${HOME_DIR}" --gid "${LINUX_GROUP}" "${LINUX_USER}"
-    echo "${LINUX_USER}:$LINUX_PASSWORD" | chpasswd
+    addgroup --gid ${GID} payara
+    adduser --system --uid ${UID} --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup payara payara
+    echo payara:payara | chpasswd
     # Set permissions
     # Note: Following OpenShift best practices for arbitrary user id support:
     #       https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#use-uid_create-images
-    chown -R "${LINUX_USER}:0" "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
+    chown -R payara:0 "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
     chmod -R g=u "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
+
 EOF
 
 ARG JATTACH_VERSION="v2.1"
@@ -146,8 +136,6 @@ RUN <<EOF
     echo "AS_ADMIN_PASSWORD=" > /tmp/password-change-file.txt
     echo "AS_ADMIN_NEWPASSWORD=${ADMIN_PASSWORD}" >> /tmp/password-change-file.txt
     echo "AS_ADMIN_PASSWORD=${ADMIN_PASSWORD}" >> ${PASSWORD_FILE}
-    echo "$PASSWORD_FILE 1: PASSWORD_FILE"
-    cat $PASSWORD_FILE
     asadmin --user=${ADMIN_USER} --passwordfile=/tmp/password-change-file.txt change-admin-password --domain_name=${DOMAIN_NAME}
     # Start domain for configuration
     ${ASADMIN} start-domain ${DOMAIN_NAME}
@@ -168,7 +156,7 @@ RUN <<EOF
     ${ASADMIN} create-jvm-options "-XX\:MaxHeapFreeRatio=\${ENV=MEM_MAX_HEAP_FREE_RATIO}"
     ${ASADMIN} create-jvm-options "-XX\:HeapDumpPath=\${ENV=DUMPS_DIR}"
     # Set logging to console only for containers
-    ${ASADMIN} set-log-attributes com.sun.enterprise.server.logging.GFFileHandler.logtoFile=false \
+    ${ASADMIN} set-log-attributes com.sun.enterprise.server.logging.GFFileHandler.logtoFile=false
 
     ### PRODUCTION READINESS
     ${ASADMIN} create-jvm-options '-XX\:+UseG1GC'
@@ -201,7 +189,7 @@ RUN <<EOF
     # Misc settings
     ${ASADMIN} create-system-properties fish.payara.classloading.delegate="false"
     ${ASADMIN} create-system-properties jersey.config.client.readTimeout="300000"
-    ${ASADMIN} create-system-properties jersey.config.client.connectTimeout="300000" \
+    ${ASADMIN} create-system-properties jersey.config.client.connectTimeout="300000"
 
     ### DATAVERSE APPLICATION SPECIFICS
     # Configure the MicroProfile directory config source to point to /secrets
@@ -216,7 +204,7 @@ RUN <<EOF
     ${ASADMIN} set server-config.network-config.protocols.protocol.http-listener-1.http.comet-support-enabled=true
     ${ASADMIN} create-system-properties javax.xml.parsers.SAXParserFactory=com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl
     # Always disable phoning home...
-    ${ASADMIN} disable-phone-home \
+    ${ASADMIN} disable-phone-home
 
     ### CLEANUP
     # Stop domain
@@ -230,10 +218,14 @@ RUN <<EOF
         "/tmp/password-change-file.txt" \
         "${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}/osgi-cache" \
         "${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}/logs"
-
-    echo "$PASSWORD_FILE 2: PASSWORD_FILE"
-    cat $PASSWORD_FILE
 EOF
+
+USER root
+# Prepare domaindir to be writeable when running on OpenShift (arbitrary UIDs)
+# https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#use-uid_create-images
+RUN true && \
+    chgrp -R 0 "${DOMAIN_DIR}" && \
+    chmod -R g=u "${DOMAIN_DIR}"
 
 # Set the entrypoint to tini (as a process supervisor)
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
