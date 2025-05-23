@@ -1120,8 +1120,8 @@ public class FileUtil implements java.io.Serializable  {
             logger.fine("Download popup required because of guestbook.");
             return true;
         }
-        logger.fine("Download popup is not required.");
-        return false;
+        logger.fine("Download popup is required, because the ARP license must be accepted if the dataset is not in Draft version.");
+        return true;
     }
     
     public static boolean isRequestAccessPopupRequired(DatasetVersion datasetVersion) {
@@ -1213,8 +1213,8 @@ public class FileUtil implements java.io.Serializable  {
     public static boolean isTermsPopupRequired(DatasetVersion datasetVersion) {
         Boolean answer = popupDueToStateOrTerms(datasetVersion);
         if(answer == null) {
-            logger.fine("TermsPopup is not required.");
-            return false;
+            logger.fine("TermsPopup is required, because the ARP license must be accepted if the dataset is not in Draft version.");
+            return true;
         }
         return answer;
     }

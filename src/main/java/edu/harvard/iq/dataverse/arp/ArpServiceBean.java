@@ -22,6 +22,8 @@ import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrlServiceBean;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import jakarta.ejb.TransactionAttribute;
+import jakarta.ejb.TransactionAttributeType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -598,7 +600,7 @@ public class ArpServiceBean implements java.io.Serializable {
         }
     }
 
-    private String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
+    public String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
         String externalVocabUrl = null;
         String terminologyTemplate = arpConfig.get("terminology.url.template");
         JsonObject externalVocabProps = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints.branches[0]");
@@ -610,7 +612,7 @@ public class ArpServiceBean implements java.io.Serializable {
         return externalVocabUrl;
     }
 
-    private List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
+    public List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
         List<String > externalVocabStrings = new ArrayList<>();
         //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
         // HttpClient client = HttpClient.newHttpClient();
@@ -714,7 +716,7 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
     // This function is copied from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi but modified to process String lists
-    public void loadDatasetFields(List<String> lines, String templateName, String templateJson) throws Exception {
+    public MetadataBlock loadDatasetFields(List<String> lines, String templateName, String templateJson) throws Exception {
         ActionLogRecord alr = new ActionLogRecord(ActionLogRecord.ActionType.Admin, "loadDatasetFields");
         alr.setInfo( templateName );
         String splitBy = "\t";
@@ -813,10 +815,17 @@ public class ArpServiceBean implements java.io.Serializable {
 
                         default:
                             throw new IOException("No #header defined in file.");
-
                     }
                 }
             }
+            
+            MetadataBlock metadataBlock = metadataBlockService.findByName(templateName);
+            if (metadataBlock == null) {
+                throw new Exception("Failed to create or retrieve metadata block: " + templateName);
+            }
+
+            return metadataBlock;
+            
         } finally {
             actionLogSvc.log(alr);
         }
@@ -1286,6 +1295,54 @@ public class ArpServiceBean implements java.io.Serializable {
         return metadataBlockSvc.findByName(idtf);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void updateMetadataBlockInNewTransaction(String dvIdtf, String metadataBlockName) throws Exception {
+        // Initial delay in milliseconds
+        int delay = 1000;
+        // Maximum number of retries
+        int maxRetries = 5;
+        Exception lastException = null;
+        
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                // Wait before checking - exponential backoff
+                Thread.sleep(delay);
+                
+                // This runs in a new transaction, after previous ones are committed
+                MetadataBlock verifiedMdb = metadataBlockService.findByName(metadataBlockName);
+                if (verifiedMdb == null) {
+                    logger.warning("Attempt " + (attempt+1) + ": Metadata block not found yet. Retrying in " + delay + "ms...");
+                    delay *= 2; // Exponential backoff
+                    continue;
+                }
+                
+                if (verifiedMdb.getDatasetFieldTypes() == null || verifiedMdb.getDatasetFieldTypes().isEmpty()) {
+                    logger.warning("Attempt " + (attempt+1) + ": Dataset field types not found yet. Retrying in " + delay + "ms...");
+                    delay *= 2; // Exponential backoff
+                    continue;
+                }
+                
+                // If we got here, verification succeeded
+                logger.info("Successfully verified metadata block and dataset field types on attempt " + (attempt+1));
+                
+                // Update the metadata block
+                updateMetadataBlock(dvIdtf, metadataBlockName);
+                return; // Success - exit the method
+                
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for database operations to complete", ie);
+            } catch (Exception e) {
+                lastException = e;
+                logger.warning("Attempt " + (attempt+1) + " failed: " + e.getMessage());
+                delay *= 2; // Exponential backoff
+            }
+        }
+        
+        // If we get here, all retries failed
+        throw new RuntimeException("Failed to update metadata block after " + maxRetries + " attempts", lastException);
+    }
+
     public String createOrUpdateMdbFromCedarTemplate(String dvIdtf, String templateJson, boolean skipUpload) throws JsonProcessingException, CedarTemplateErrorsException
     {
         String mdbTsv;
@@ -1307,10 +1364,11 @@ public class ArpServiceBean implements java.io.Serializable {
             mdbTsv = convertTemplateToDvMdb(templateJson, overridePropNames);
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
-                loadDatasetFields(lines, metadataBlockName, templateJson);
-                // at this point the new mdb is already in the db
+                // Load dataset fields
+                MetadataBlock newMdb = loadDatasetFields(lines, metadataBlockName, templateJson);
+                
+                // Process any incompatible pairs if needed
                 if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
-                    MetadataBlock newMdb = metadataBlockService.findByName(metadataBlockName);
                     cedarTemplateErrors.incompatiblePairs.values().forEach(override -> override.setMetadataBlock(newMdb));
                     arpMetadataBlockServiceBean.save(new ArrayList<>(cedarTemplateErrors.incompatiblePairs.values()));
                 }
@@ -1501,5 +1559,3 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
 }
-
-

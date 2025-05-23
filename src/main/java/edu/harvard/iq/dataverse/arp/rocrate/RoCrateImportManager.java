@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
@@ -33,10 +35,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,7 +55,8 @@ import static edu.harvard.iq.dataverse.validation.URLValidator.isURLValid;
 @Stateless
 @Named
 public class RoCrateImportManager {
-
+    private static final Logger logger = Logger.getLogger(RoCrateImportManager.class.getCanonicalName());
+    
     @EJB
     DatasetFieldServiceBean fieldService;
 
@@ -61,9 +68,16 @@ public class RoCrateImportManager {
     
     @EJB
     RoCrateServiceBean roCrateServiceBean;
+    
+    @EJB
+    ArpServiceBean arpService;
 
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat", "directoryLabel", "description", "identifier", "@arpPid", "hash");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
+
+    private final Cache<String, List<String>> cvvCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.of(15, ChronoUnit.MINUTES))
+            .build();
     
     public RoCrateImportManager() {}
     
@@ -615,20 +629,13 @@ public class RoCrateImportManager {
                 if (!fieldByName.isAllowMultiples() && fieldValue.isArray() && fieldValue.size() > 1) {
                     preProcessResult.errors.add("The field '" + fieldName + "' does not allow multiple values, but got: " + fieldValue);
                 }
-                var fieldType = fieldByName.getFieldType();
+                
                 if (!roCrateContext.has(fieldName)) {
                     roCrateContextUpdater.addValuePairToContext(fieldName, fieldByName.getUri());
                 }
                 // check value types based on the datasetFieldType
                 if (fieldByName.isPrimitive()) {
-                    ArrayList<String> controlledVocabularyValues = new ArrayList<>();
-                    if (fieldByName.isAllowControlledVocabulary()) {
-                        /*fieldByName.getChildDatasetFieldTypes().stream()
-                                .map(DatasetFieldType::getControlledVocabularyValues)
-                                .forEach(cvvList -> cvvList.forEach(cvv -> controlledVocabularyValues.add(cvv.getStrValue())));*/
-                        fieldByName.getControlledVocabularyValues().forEach(cvv -> controlledVocabularyValues.add(cvv.getStrValue()));
-                    }
-                    prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, fieldValue, parentId, controlledVocabularyValues, false, preProcessResult);
+                    prepareAndValidatePrimitiveField(roCrate, fieldByName, fieldName, fieldValue, parentId, false, preProcessResult);
                 } else if (fieldByName.isCompound()) {
                     if (lvl2) {
                         preProcessResult.errors.add("Compound values are not allowed at this level! Invalid compound value: '" + fieldName + "'.");
@@ -652,10 +659,17 @@ public class RoCrateImportManager {
                     }
                 } else if (fieldValue.isArray()) {
                     for (var idObj : fieldValue) {
-                        var childId = idObj.get("@id").textValue();
-                        var childEntity = roCrate.getEntityById(childId);
-                        if (childEntity == null) {
-                            preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                        var id = idObj.get("@id");
+                        if (id != null) {
+                            var childId = idObj.get("@id").textValue();
+                            var childEntity = roCrate.getEntityById(childId);
+                            if (childEntity == null) {
+                                preProcessResult.errors.add("No child entity found for the parent entity with id: '" + childId + "'");
+                            }
+                        }
+                        // This is just an array of strings, like for cedar "checkbox"
+                        else {
+
                         }
                     }
                 }
@@ -798,10 +812,37 @@ public class RoCrateImportManager {
 
         return parsedFloatArray;
     }
+    
+    private List<String> collectControlledVocabularyValues(DatasetFieldType datasetFieldType) {
+        DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+        String externalVocabUrl = arpService.getExternalVocabValuesUrl(cedarFieldTemplate);
+        if (externalVocabUrl != null) {
+            try {
+                var cachedCvvs = cvvCache.getIfPresent(externalVocabUrl);
+                if (cachedCvvs != null) {
+                    return cachedCvvs;
+                } else {
+                    var externalVocabValues = arpService.collectExternalVocabStrings(externalVocabUrl);
+                    cvvCache.put(externalVocabUrl, externalVocabValues);
+                    return externalVocabValues;
+                }
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Failed collecting external vocabulary values for field: " + cedarFieldTemplate.get("schema:name").getAsString() + " with error: " + ex.getMessage(), ex);
+                return new ArrayList<>();
+            }
+        } else {
+            ArrayList<String> controlledVocabularyValues = new ArrayList<>();
+            datasetFieldType.getControlledVocabularyValues().forEach(cvv -> controlledVocabularyValues.add(cvv.getStrValue()));
+            return controlledVocabularyValues;
+        }
+    }
 
     // check if the primitive field contains appropriate value(s), based on the fieldType definitions below:
     // https://guides.dataverse.org/en/latest/admin/metadatacustomization.html?highlight=metadata#fieldtype-definitions
-    private void prepareAndValidatePrimitiveField(RoCrate roCrate, DatasetFieldType.FieldType fieldType, String fieldName, JsonNode fieldValue, String parentId, ArrayList<String> controlledVocabularyValues, boolean lvl2, RoCrateImportPrepResult preProcessResult) {
+    private void prepareAndValidatePrimitiveField(RoCrate roCrate, DatasetFieldType datasetFieldType, String fieldName, JsonNode fieldValue, String parentId, boolean lvl2, RoCrateImportPrepResult preProcessResult) {
+        var fieldType = datasetFieldType.getFieldType();
+        boolean hasControlledVocabularyValues = datasetFieldType.isAllowControlledVocabulary();
         if (fieldValue.isArray()) {
             if (lvl2) {
                 preProcessResult.errors.add("The field '" + fieldName + "' can not have Arrays as values, but got: " + fieldValue);
@@ -826,12 +867,13 @@ public class RoCrateImportManager {
                 default -> {
                     // If fieldValue is an array and does not need parsing, validate each element
                     for (JsonNode element : fieldValue) {
-                        prepareAndValidatePrimitiveField(roCrate, fieldType, fieldName, element, parentId, controlledVocabularyValues, true, preProcessResult);
+                        prepareAndValidatePrimitiveField(roCrate, datasetFieldType, fieldName, element, parentId, true, preProcessResult);
                     }
                 }
             }
         } else {
-            if (!controlledVocabularyValues.isEmpty()) {
+            if (hasControlledVocabularyValues) {
+                var controlledVocabularyValues = collectControlledVocabularyValues(datasetFieldType);
                 if (!controlledVocabularyValues.contains(fieldValue.textValue())) {
                     preProcessResult.errors.add("Invalid controlled vocabulary value: '" + fieldValue + "' for field: '" + fieldName + "'.");
                 }

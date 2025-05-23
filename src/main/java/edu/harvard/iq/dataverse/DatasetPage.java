@@ -193,6 +193,14 @@ public class DatasetPage implements java.io.Serializable {
         this.arpTermsAccepted = arpTermsAccepted;
     }
 
+    public boolean isAromaTabSelected() {
+        return aromaTabSelected;
+    }
+
+    public void setAromaTabSelected(boolean aromaTabSelected) {
+        this.aromaTabSelected = aromaTabSelected;
+    }
+
     public enum EditMode {
 
         CREATE, INFO, FILE, METADATA, LICENSE
@@ -307,6 +315,8 @@ public class DatasetPage implements java.io.Serializable {
     private String aromaAddress = "";
     
     private boolean arpTermsAccepted = false;
+    
+    private boolean aromaTabSelected = false;
 
     private Dataset dataset = new Dataset();
 
@@ -2123,7 +2133,7 @@ public class DatasetPage implements java.io.Serializable {
                 case "versionsTab":
                     selectedTabIndex = 3;
                     break;
-                case "describoTab":
+                case "aromaTab":
                     selectedTabIndex = 4;
                     break;
 
@@ -2774,6 +2784,11 @@ public class DatasetPage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
+        if (this.activeTabIndex == 4) {
+            setAromaTabSelected(true);
+        } else {
+            setAromaTabSelected(false);
+        }
         if (this.activeTabIndex == 3) {
             setVersionTabList(resetVersionTabList());
             setReleasedVersionTabList(resetReleasedVersionTabList());
@@ -3422,6 +3437,19 @@ public class DatasetPage implements java.io.Serializable {
             updateGuestbookResponse(guestbookRequired, downloadOriginal, false);
             if(!guestbookRequired && !getValidateFilesOutcome().equals("Mixed")){
                 startMultipleFileDownload();
+            }
+        }
+    }
+
+    public void startRoCrateZipDownload() {
+        this.setSelectedFiles(workingVersion.getFileMetadatas());
+        boolean validate = validateFilesForDownload(false, false);
+        if (validate) {
+            updateGuestbookResponse(false, false, false);
+            if(!getValidateFilesOutcome().equals("Mixed")){
+                var dataset = guestbookResponse.getDataset();
+                var datasetPersistentId = dataset.getProtocol() + ":" + dataset.getAuthority() + "/" + dataset.getIdentifier();
+                fileDownloadService.downloadRoCrate(guestbookResponse.getSelectedFileIds(), datasetPersistentId, workingVersion.getFriendlyVersionNumber());
             }
         }
     }
@@ -6570,15 +6598,10 @@ public class DatasetPage implements java.io.Serializable {
         return true;
     }
 
-    public Retention getSelectionRetention() {
-        return selectionRetention;
-    }
-
     public void setSelectionRetention(Retention selectionRetention) {
         this.selectionRetention = selectionRetention;
     }
-
-
+    
     private Retention selectionRetention = new Retention();
 
     public boolean isValidRetentionSelection() {

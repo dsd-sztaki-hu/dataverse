@@ -20,6 +20,12 @@ public class CedarTemplateToDescriboProfileConverter {
     private ArpServiceBean arpService;
 
 
+    Map<String, List<String>> cedarDescriboFieldTypes;
+
+    Map<String, List<String>> cedarDescriboNumberTypes;
+
+    Map<String, List<String>> cedarDescriboDateTypes;
+
     public CedarTemplateToDescriboProfileConverter(String language, ArpServiceBean arpService) {
         if (language == null) {
             this.language = "en";
@@ -28,6 +34,40 @@ public class CedarTemplateToDescriboProfileConverter {
             this.language = language;
         }
         this.arpService = arpService;
+
+        // it is more than 10, so we have cannot use just Map.of
+        cedarDescriboFieldTypes = new HashMap<>(Map.of(
+                "textfield", List.of("Text"),
+                "temporal", List.of("Date"),
+                "numeric", List.of("Number"),
+                "richtext", List.of("TextArea"),
+                "textarea", List.of("TextArea"),
+                "link", List.of("URL"),
+                "list", List.of("Select"),
+                "radio", List.of("Select"),
+                "phone-number", List.of("Text"),
+                "email", List.of("Text"))
+        );
+
+        // Not really ideal, but we can oly map it to a Select as the checkbox is actually a single or multiselect
+        // construct in CEDAR (and not a Boolean check as in AROMA). To have the smake kidn of UI as in CEDAR, we
+        // should add new input type to Describo. For now, we can only support Select, which is also the mapping for
+        // the CEDAR "list" type.
+        cedarDescriboFieldTypes.put("checkbox", List.of("Select"));
+
+        cedarDescriboNumberTypes = Map.of(
+                "xsd:decimal", List.of("Any"),
+                "xsd:long", List.of("Long"),
+                "xsd:int", List.of("Int"),
+                "xsd:double", List.of("Double"),
+                "xsd:float", List.of("Float")
+        );
+
+        cedarDescriboDateTypes = Map.of(
+                "xsd:dateTime", List.of("DateTime"),
+                "xsd:date", List.of("Date"),
+                "xsd:time", List.of("Time")
+        );
     }
 
     // TODO: Pass override/inherit values for the classes, maybe store the profile in a seperated file
@@ -154,6 +194,13 @@ public class CedarTemplateToDescriboProfileConverter {
         String help = getLocalizedHelp(templateField);
         describoInput.setHelp(help);
         describoInput.setType(getDescriboType(fieldType));
+        // Special Select styles for checkbox and radio CEDAR types
+        if (fieldType.equals("checkbox")) {
+            describoInput.setStyle("checkbox");
+        }
+        else if (fieldType.equals("radio")) {
+            describoInput.setStyle("radio");
+        }
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         describoInput.setMinValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.minValue")).map(JsonElement::getAsInt).orElse(null));
         describoInput.setMaxValue(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.maxValue")).map(JsonElement::getAsInt).orElse(null));
@@ -164,7 +211,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setMultiple(allowMultiple);
 
         List<String> literalValues;
-        if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio"))) {
+        if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio") || fieldType.equals("checkbox"))) {
             if (externalVocab != null) {
                 literalValues = arpService.getExternalVocabValues(templateField);
                 if (!literalValues.isEmpty()) {
@@ -280,33 +327,6 @@ public class CedarTemplateToDescriboProfileConverter {
         
     }
 
-    Map<String, List<String>> cedarDescriboFieldTypes = Map.of(
-            "textfield", List.of("Text"),
-            "temporal", List.of("Date"),
-            "numeric", List.of("Number"),
-            "richtext", List.of("TextArea"),
-            "textarea", List.of("TextArea"),
-            "link", List.of("URL"),
-            "list", List.of("Select"),
-            "radio", List.of("Select"),
-            "phone-number", List.of("Text"),
-            "email", List.of("Text")
-    );
-
-    Map<String, List<String>> cedarDescriboNumberTypes = Map.of(
-            "xsd:decimal", List.of("Any"),
-            "xsd:long", List.of("Long"),
-            "xsd:int", List.of("Int"),
-            "xsd:double", List.of("Double"),
-            "xsd:float", List.of("Float")
-    );
-
-    Map<String, List<String>> cedarDescriboDateTypes = Map.of(
-            "xsd:dateTime", List.of("DateTime"),
-            "xsd:date", List.of("Date"),
-            "xsd:time", List.of("Time")
-    );
-
     public List<String> getDescriboType(JsonObject templateField) {
 
         List<String> dataverseFieldType = null;
@@ -385,6 +405,7 @@ public class CedarTemplateToDescriboProfileConverter {
         private String placeholder;
         private List<String> numberType;
         private List<String> dateFormat;
+        private String style;
 
         public DescriboInput() {
         }
@@ -525,6 +546,16 @@ public class CedarTemplateToDescriboProfileConverter {
 
         public void setDateFormat(List<String> dateFormat) {
             this.dateFormat = dateFormat;
+        }
+
+        public String getStyle()
+        {
+            return style;
+        }
+
+        public void setStyle(String style)
+        {
+            this.style = style;
         }
     }
 
