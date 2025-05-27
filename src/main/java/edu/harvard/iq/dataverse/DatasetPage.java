@@ -2714,11 +2714,10 @@ public class DatasetPage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
-        if (this.activeTabIndex == 4) {
-            setAromaTabSelected(true);
-        } else {
-            setAromaTabSelected(false);
-        }
+        
+        // Handle aroma tab selection without hard-coding the tab index
+        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
+        
         if (this.activeTabIndex == 3) {
             setVersionTabList(resetVersionTabList());
             setReleasedVersionTabList(resetReleasedVersionTabList());
