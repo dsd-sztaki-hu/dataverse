@@ -982,6 +982,15 @@ public class ArpServiceBean implements java.io.Serializable {
             return errors;
         }
         
+        // Check if the schema:identifier is already in use before importing the template into Dataverse
+        if (isExport) {
+            var id = cedarResource.get("@id").getAsString();
+            if (arpMetadataBlockServiceBean.isDuplicateSchemaIdentifier(idNode.getAsString(), id)) {
+                errors.errors.add("The schema:identifier is already in use! Please choose a different schema:identifier.");
+                return errors;
+            }
+        }
+        
         String mdbId = idNode.getAsString();
         var resourceType = cedarResource.get("@type").getAsString();
         resourceType = resourceType.substring(resourceType.lastIndexOf("/") + 1);
