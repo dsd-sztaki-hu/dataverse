@@ -973,7 +973,7 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         //endregion
 
-        // Check whether resource has an identifier. TODO: we should make sure it is unique
+        // Check whether resource has an identifier.
         var errors = new CedarTemplateErrors();
         var cedarResource = new GsonBuilder().setPrettyPrinting().create().fromJson(cedarTemplate, JsonObject.class);
         var idNode = cedarResource.get("schema:identifier");
