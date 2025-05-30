@@ -1027,12 +1027,6 @@ public class EditDatafilesPage implements java.io.Serializable {
         //
         if (fileReplacePageHelper.runSaveReplacementFile_Phase2()) {
             JsfHelper.addSuccessMessage(getBundleString("file.message.replaceSuccess"));
-            try {
-                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
-            } catch (Exception e) {
-                e.printStackTrace();
-                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
-            }
             // It worked!!!  Go to page of new file!!
             if (Referrer.FILE == referrer) {
                 return returnToFileLandingPageAfterReplace(fileReplacePageHelper.getFirstNewlyAddedFile());
@@ -1275,12 +1269,6 @@ public class EditDatafilesPage implements java.io.Serializable {
         // queue the data ingest jobs for asynchronous execution:
         if (mode == FileEditMode.UPLOAD) {
             ingestService.startIngestJobsForDataset(dataset, (AuthenticatedUser) session.getUser());
-            try {
-                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
-            } catch (Exception e) {
-                e.printStackTrace();
-                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
-            }
         }
 
         if (FileEditMode.EDIT == mode && Referrer.FILE == referrer && fileMetadatas.size() > 0) {
@@ -1296,15 +1284,6 @@ public class EditDatafilesPage implements java.io.Serializable {
             }
             versionString = "DRAFT";
             return returnToFileLandingPage();
-        }
-        
-        if (FileEditMode.EDIT == mode && Referrer.DATASET == referrer) {
-            try {
-                roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
-            } catch (Exception e) {
-                e.printStackTrace();
-                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
-            }
         }
 
         logger.fine("Redirecting to the dataset page, from the edit/upload page.");
