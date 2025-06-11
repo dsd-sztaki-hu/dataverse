@@ -692,6 +692,7 @@ public class ArpApi extends AbstractApiBean {
     public Response getRoCrate(
             @Context ContainerRequestContext crc,
             @QueryParam("version") String version,
+            @QueryParam("forceReload") @DefaultValue("false") boolean forceReload,
             @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
@@ -753,8 +754,10 @@ public class ArpApi extends AbstractApiBean {
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
-                if (needToRegenerate(roCrateJson)) {
+                // or a superuser is requesting a force reload.
+                if (needToRegenerate(roCrateJson) || shouldForceReload) {
                     roCrateExportManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
                         roCrateExportManager.saveRoCrateDraftVersion(opened);
