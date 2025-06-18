@@ -1174,8 +1174,6 @@ public class RoCrateImportManager {
 
         // Must collect the datafiles this way to only process the ones that belong to the actual dataset version
         List<DataFile> dvDatasetFiles = dataset.getLatestVersion().getFileMetadatas().stream().map(FileMetadata::getDataFile).collect(Collectors.toList());
-        // the root dataset's hasPart is handled differently, it has to be merged separately
-        mergeHasParts(roCrate, rootHasPart, rootDataEntityProperties, mapper);
         rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
@@ -1253,20 +1251,11 @@ public class RoCrateImportManager {
             return isVirtualFile;
         } else {
             boolean isVirtual;
-            // Make it end with "/" to conform to Describo, which requires Dataset id-s to end in '/'
-            // although this is just a SHOULD not a MUST by the spec.
-            String newId  = roCrateServiceBean.createRoIdForDataset(entityNode.get("name").textValue(), parentObj);
-            boolean gotNewId = !newId.equals(oldId);
-            if (gotNewId) {
-                ((ObjectNode) parentEntity).put("@id", newId);
-                entityNode.put("@id", newId);
-            }
             JsonNode hasPart = entityNode.get("hasPart");
             if (hasPart != null && !hasPart.isEmpty()) {
                 if (hasPart.isObject()) {
                     isVirtual = postProcessDatasetAndFileEntities(roCrate, hasPart, dvDatasetFiles, extraMetadata, entityNode, mapper);
                 } else {
-                    mergeHasParts(roCrate, hasPart, entityNode, mapper);
                     ArrayList<Boolean> isVirtualResults = new ArrayList<>();
                     for (var arrayVal : hasPart) {
                         isVirtualResults.add(postProcessDatasetAndFileEntities(roCrate, arrayVal, dvDatasetFiles, extraMetadata, entityNode, mapper));
