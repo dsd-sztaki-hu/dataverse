@@ -254,7 +254,7 @@ public class CedarTemplateToDescriboProfileConverter {
         }
         
         if (Objects.equals(fieldType, "textfield")) {
-            Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.dateFormat"))
+            Optional.ofNullable(getJsonElement(templateField, "_arp.aroma.dateFormat"))
                     .map(JsonElement::getAsString)
                     .ifPresent(dateFormat -> describoInput.setDateFormat(List.of(dateFormat)));
         }
