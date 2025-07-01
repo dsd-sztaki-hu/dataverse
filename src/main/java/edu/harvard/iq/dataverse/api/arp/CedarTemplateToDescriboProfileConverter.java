@@ -172,17 +172,8 @@ public class CedarTemplateToDescriboProfileConverter {
     public void processTemplateField(JsonObject templateField, boolean allowMultiple, String inputId, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
         DescriboInput describoInput = new DescriboInput();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
-
-        if (JsonHelper.hasJsonElement(templateField, "_valueConstraints.branches")
-                && JsonHelper.getJsonArray(templateField, "_valueConstraints.branches").isEmpty()) {
-            logger.warning("Invalid OntoPortal based values defined in field. Expecting terms in _valueConstraints.branches[0]:  "+templateField.toString());
-        }
-
-        String path = "_valueConstraints.branches[0]";
-        JsonObject externalVocab = JsonHelper.hasJsonElement(templateField, path)
-                ? JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]")
-                : null;
-        if (externalVocab != null) {
+        boolean externalVocab = arpService.hasExternalValues(templateField);
+        if (externalVocab) {
             fieldType = "list";
         }
 
@@ -212,7 +203,7 @@ public class CedarTemplateToDescriboProfileConverter {
 
         List<String> literalValues;
         if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio") || fieldType.equals("checkbox"))) {
-            if (externalVocab != null) {
+            if (externalVocab) {
                 literalValues = arpService.getExternalVocabValues(templateField);
                 if (!literalValues.isEmpty()) {
                     describoInput.setValues(literalValues);
