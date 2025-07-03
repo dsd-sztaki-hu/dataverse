@@ -100,18 +100,24 @@ public class CedarTemplateToDescriboProfileConverter {
         JsonObject classes = describoProfile.getAsJsonObject("classes");
 
         for (var input : profValues.inputs) {
-            String className = input.getKey();
-            if (!classes.has(className)) {
-                classes.add(className, gson.fromJson(classTemplate, JsonObject.class));
-            }
-            var classJson = classes.getAsJsonObject(className);
-            classJson.getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
-
-            var classLoc = profValues.classLocalizations.get(className);
-            if (classLoc != null) {
-                // This is our custom localisation at class level
-                classJson.addProperty("label", classLoc.label);
-                classJson.addProperty("help", classLoc.help);
+            boolean isDeprecated = input.getValue().isDeprecated();
+            if (!isDeprecated) {
+                boolean allChildrenAreDeprecated = areAllChildrenDeprecated(input, profValues.inputs);
+                if (!allChildrenAreDeprecated) {
+                    String className = input.getKey();
+                    if (!classes.has(className)) {
+                        classes.add(className, gson.fromJson(classTemplate, JsonObject.class));
+                    }
+                    var classJson = classes.getAsJsonObject(className);
+                    classJson.getAsJsonArray("inputs").add(gson.toJsonTree(input.getValue()));
+    
+                    var classLoc = profValues.classLocalizations.get(className);
+                    if (classLoc != null) {
+                        // This is our custom localisation at class level
+                        classJson.addProperty("label", classLoc.label);
+                        classJson.addProperty("help", classLoc.help);
+                    }
+                }
             }
         }
 
@@ -121,11 +127,24 @@ public class CedarTemplateToDescriboProfileConverter {
         profValues.classLocalizations.entrySet().forEach(e -> localisation.addProperty(e.getKey(), e.getValue().label));
 
         JsonArray enabledClasses = new JsonArray();
-        profValues.inputs.stream().map(Pair::getKey).collect(Collectors.toSet()).forEach(enabledClasses::add);
+        profValues.inputs.stream()
+                .filter(pair -> !pair.getValue().isDeprecated())
+                .map(pair -> pair.getKey())
+                .collect(Collectors.toSet())
+                .forEach(enabledClasses::add);
         
         describoProfile.add("enabledClasses", enabledClasses);
 
         return gson.toJson(describoProfile);
+    }
+    
+    public boolean areAllChildrenDeprecated(Pair<String, DescriboInput> input, List<Pair<String, DescriboInput>> inputs) {
+        if (input.getKey().equals("Dataset")) {
+            var typeName = input.getValue().getName();
+            return inputs.stream().filter(pair -> pair.getKey().equals(typeName)).allMatch(pair -> pair.getValue().isDeprecated());
+        } else {
+            return false;
+        }
     }
 
     public ProcessedDescriboProfileValues processTemplate(JsonObject cedarTemplate, ProcessedDescriboProfileValues processedDescriboProfileValues, String parentName) {
@@ -200,6 +219,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setRegex(Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.regex")).map(JsonElement::getAsString).orElse(null));
         describoInput.setPlaceholder(Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.watermark")).map(JsonElement::getAsString).orElse(null));
         describoInput.setMultiple(allowMultiple);
+        describoInput.setDeprecated(arpService.isDeprecatedField(templateField));
 
         List<String> literalValues;
         if (fieldType != null && (fieldType.equals("list") || fieldType.equals("radio") || fieldType.equals("checkbox"))) {
@@ -274,6 +294,7 @@ public class CedarTemplateToDescriboProfileConverter {
         describoInput.setRequired(Optional.ofNullable(getJsonElement(templateElement, "_valueConstraints.requiredValue")).map(JsonElement::getAsBoolean).orElse(false));
         boolean allowsMultiple = allowMultiple || templateElement.keySet().contains("minItems") || templateElement.keySet().contains("maxItems");
         describoInput.setMultiple(allowsMultiple);
+        describoInput.setDeprecated(arpService.isDeprecatedField(templateElement));
 
         processedDescriboProfileValues.classLocalizations.put(elementNameReplaced, new ClassLocalization(label, help));
         processedDescriboProfileValues.inputs.add(Pair.of(parentName, describoInput));
@@ -397,8 +418,17 @@ public class CedarTemplateToDescriboProfileConverter {
         private List<String> numberType;
         private List<String> dateFormat;
         private String style;
+        private boolean deprecated;
 
         public DescriboInput() {
+        }
+        
+        public boolean isDeprecated() {
+            return deprecated;
+        }
+        
+        public void setDeprecated(boolean deprecated) {
+            this.deprecated = deprecated;
         }
 
         public String getId() {

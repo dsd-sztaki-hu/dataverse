@@ -59,6 +59,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -764,6 +765,35 @@ public class ArpServiceBean implements java.io.Serializable {
         return externalVocabStrings;
     }
 
+    // If we have performance issues with this method, the "deprecated" property could be added to the 
+    // DatasetFieldTypeArp props, and set during the import from CEDAR in createOrUpdateMdbFromCedarTemplate
+    // DatasetVersions should be considered in all cases if we want to allow deprecated fields in specific versions
+    public boolean isDeprecatedField(DatasetFieldType datasetFieldType) {
+        DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+        return isDeprecatedField(cedarFieldTemplate);
+    }
+    
+    public boolean isDeprecatedField(JsonObject cedarFieldTemplate) {
+        var deprecatedField = getJsonElement(cedarFieldTemplate, "_arp.dataverse.deprecated");
+        return deprecatedField != null && !deprecatedField.isJsonNull() && deprecatedField.getAsBoolean();
+    }
+
+    // Removes deprecated children from the datasetField and returns true if all children are deprecated
+    public boolean areAllChildrenDeprecated(DatasetField datasetField) {
+        AtomicBoolean deprecatedChildrenWasRemoved = new AtomicBoolean(false);
+        AtomicBoolean allChildrenAreDeprecated = new AtomicBoolean(false);
+        datasetField.getDatasetFieldCompoundValues().forEach(cv -> {
+            if (cv.getChildDatasetFields().removeIf(childField -> isDeprecatedField(childField.getDatasetFieldType()))) {
+                deprecatedChildrenWasRemoved.set(true);
+            }
+            if (deprecatedChildrenWasRemoved.get()) {
+                allChildrenAreDeprecated.set(allChildrenAreDeprecated.get() || cv.getChildDatasetFields().isEmpty());
+            }
+        });
+        return allChildrenAreDeprecated.get();
+    }
+    
     public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) throws ArpException {
         DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
         List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
