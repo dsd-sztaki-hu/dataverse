@@ -477,11 +477,18 @@ public class DatasetVersionUI implements Serializable {
             List<DatasetField> datasetFieldsForEdit = new ArrayList<>();
             for (DatasetField dsf : datasetVersion.getDatasetFields()) {
                 if (dsf.getDatasetFieldType().getMetadataBlock().equals(mdb)) {
-                    datasetFieldsForEdit.add(dsf);
+                    var isDeprecated = arpServiceBean.isDeprecatedField(dsf.getDatasetFieldType());
+                    boolean allChildrenAreDeprecated = false;
+                    if (!isDeprecated) {
+                        allChildrenAreDeprecated = arpServiceBean.areAllChildrenDeprecated(dsf);
+                        if (!allChildrenAreDeprecated) {
+                            datasetFieldsForEdit.add(dsf);
+                        }
+                    }
                     if (dsf.isRequired()) {
                         mdb.setHasRequired(true);
                     }
-                    if (!dsf.isEmptyForDisplay()) {
+                    if (!dsf.isEmptyForDisplay() && !isDeprecated && !allChildrenAreDeprecated) {
                         mdb.setEmpty(false);
                         datasetFieldsForView.add(dsf);
                     }

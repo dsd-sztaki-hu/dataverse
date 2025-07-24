@@ -677,18 +677,15 @@ public class FilePage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
-        if (this.activeTabIndex == 2 ) {
-            setAromaTabSelected(true);
-        } else {
-            setAromaTabSelected(false);
-        }
         if (this.activeTabIndex == 1 || this.activeTabIndex == 2 ) {
             setFileMetadatasForTab(loadFileMetadataTabList());
         } else {
             setFileMetadatasForTab( new ArrayList<>());         
         }
+
+        // Handle aroma tab selection without hard-coding the tab index
+        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
     }
-    
     
     private List<FileMetadata> loadFileMetadataTabList() {
         List<DataFile> allfiles = allRelatedFiles();
