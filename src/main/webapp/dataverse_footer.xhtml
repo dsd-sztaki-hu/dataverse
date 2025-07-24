@@ -29,7 +29,7 @@
                     </div>
 					<div class="col-sm-2 small text-right" jsf:rendered="#{!widgetView}">
                         <p>
-                            <ui:fragment rendered="#{!empty settingsWrapper.get(':FooterMiddleContent')}"><h:outputText value="#{systemConfig.footerMiddleContent}" escape="false"/></ui:fragment>
+                            <ui:fragment rendered="#{!empty settingsWrapper.get(':FooterMiddleContent')}"><h:outputText value="#{settingsWrapper.get(':FooterMiddleContent')}" escape="false"/></ui:fragment>
                         </p>
                     </div>
                     <div class="col-xs-7 small" jsf:rendered="#{widgetView}">
