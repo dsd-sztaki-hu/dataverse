@@ -62,10 +62,15 @@ import java.util.stream.Collectors;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
 import jakarta.faces.application.FacesMessage;
+import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
+import jakarta.faces.validator.ValidatorException;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import jakarta.validation.ConstraintViolation;
 
 import org.omnifaces.util.Faces;
@@ -700,18 +705,16 @@ public class FilePage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
-        if (this.activeTabIndex == 2 ) {
-            setAromaTabSelected(true);
-        } else {
-            setAromaTabSelected(false);
-        }
         if (this.activeTabIndex == 1 || this.activeTabIndex == 2 ) {
             setFileMetadatasForTab(fileMetadataVersionsHelper.loadFileVersionList(new DataverseRequest(session.getUser(), Faces.getRequest()), fileMetadata));
         } else {
             setFileMetadatasForTab( new ArrayList<>());         
         }
-    }
 
+        // Handle aroma tab selection without hard-coding the tab index
+        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
+    }
+    
     public List<FileMetadata> getFileMetadatasForTab() {
         return fileMetadatasForTab;
     }

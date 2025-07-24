@@ -28,17 +28,23 @@ public class PreviewGenerator {
 
     private static final Logger logger = Logger.getLogger(ArpConfig.class.getCanonicalName());
 
-// This is a solution for the following edge case: a dataset is open in AROMA and the Dataverse is restarted. Then if
-// we try to edit and save the dataset in AROMA the preview generation will fail because  ArpConfig.instance is not
-// initialized until any Dataverse UI operation is initiated. This should however not really happen in real life so
-// no need for this forced ArpConfig initialization. And this is also quite fragile because the EJB name is bound to
-// the current dataverse varsion (java:global/dataverse-5.13) and sowith every DV update we also have to take care
-// to update this._
-//
-static {
-    ArpConfig.ensureStaticInstance();
-}
+    // This is a solution for the following edge case: a dataset is open in AROMA and the Dataverse is restarted. Then if
+    // we try to edit and save the dataset in AROMA the preview generation will fail because  ArpConfig.instance is not
+    // initialized until any Dataverse UI operation is initiated. This should however not really happen in real life so
+    // no need for this forced ArpConfig initialization. And this is also quite fragile because the EJB name is bound to
+    // the current dataverse varsion (java:global/dataverse-5.13) and sowith every DV update we also have to take care
+    // to update this._
+    //
+    static {
+        ArpConfig.ensureStaticInstance();
+    }
 
+    // There is no need to check if the rocrate preview generator is available, 
+    // we use our hosted generator, if it is not available we can not generate the preview
+    public static boolean isRochtmlAvailable() {
+        return true;
+    }
+    
     /**
      * The method that from the location of the crate generates the html file.
      *

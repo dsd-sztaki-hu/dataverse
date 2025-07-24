@@ -2795,11 +2795,10 @@ public class DatasetPage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
-        if (this.activeTabIndex == 4) {
-            setAromaTabSelected(true);
-        } else {
-            setAromaTabSelected(false);
-        }
+        
+        // Handle aroma tab selection without hard-coding the tab index
+        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
+        
         if (this.activeTabIndex == 3) {
             setVersionTabList(resetVersionTabList());
             setReleasedVersionTabList(resetReleasedVersionTabList());
@@ -4264,15 +4263,14 @@ public class DatasetPage implements java.io.Serializable {
             }
         }
 
-        try {
-            // This happens only upon importing a new RO-CRATE from a .zip
-            if (Objects.equals(editMode, EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
-                roCrateExportManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
+        if (Objects.equals(editMode, EditMode.CREATE) && roCrateUploadService.getRoCrateJsonString() != null) {
+            try {
+                // This happens only upon importing a new RO-CRATE from a .zip
+                    roCrateExportManager.saveUploadedRoCrate(datasetService.find(dataset.getId()), roCrateUploadService.getRoCrateJsonString());
+            } catch (Exception e) {
+                e.printStackTrace();
+                JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
             }
-            roCrateExportManager.createOrUpdateRoCrate(datasetService.find(dataset.getId()).getLatestVersion());
-        } catch (Exception e) {
-            e.printStackTrace();
-            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
         }
 
         editMode = null;

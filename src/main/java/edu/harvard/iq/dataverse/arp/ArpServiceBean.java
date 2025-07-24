@@ -59,6 +59,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -394,7 +395,7 @@ public class ArpServiceBean implements java.io.Serializable {
         if (templateExistsResponse.statusCode() == 200) {
             // TODO! Need to handle existing element vs newly created
             // Update the template with the uploaded elements, to have their real @id
-            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
+            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client, false);
             elements.forEach(element -> {
                 ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
                 ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
@@ -441,7 +442,7 @@ public class ArpServiceBean implements java.io.Serializable {
         else if (templateExistsResponse.statusCode() == 404) {
             // TODO! Need to handle existing element vs newly created
             // Update the template with the uploaded elements, to have their real @id
-            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client);
+            List<JsonNode> elements = exportElements(cedarTemplate, cedarParams, templateFolderId, client, false);
             elements.forEach(element -> {
                 ObjectNode properties = (ObjectNode) cedarTemplate.get("properties");
                 ObjectNode prop = (ObjectNode) properties.get(element.get("schema:name").textValue());
@@ -470,8 +471,47 @@ public class ArpServiceBean implements java.io.Serializable {
         // Anything else is an error
         throw new Exception("An error occurred during uploading the template: " + cedarTemplate.get("schema:name").textValue()+": "+templateExistsResponse.body());
     }
+    
+    public List<JsonNode> extractTemplateElements(JsonNode cedarResource, ExportToCedarParams cedarParams) throws Exception {
+        //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
+        // HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = getUnsafeHttpClient();
+        return exportElements(cedarResource, cedarParams, cedarParams.folderId, client, false);
+    }
 
-    private List<JsonNode> exportElements(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client) throws Exception {
+    public List<JsonNode> extractTemplateFields(JsonNode cedarResource, ExportToCedarParams cedarParams) throws Exception {
+        //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
+        // HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = getUnsafeHttpClient();
+        return exportFields(cedarResource, cedarParams, client);
+    }
+
+    // Extracts the resources from the given CEDAR template, TemplateElements and TemplateFields 
+    public List<JsonNode> extractResources(JsonNode cedarResource, ExportToCedarParams cedarParams) throws Exception {
+        //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
+        // HttpClient client = HttpClient.newHttpClient();
+        HttpClient client = getUnsafeHttpClient();
+        return exportElements(cedarResource, cedarParams, cedarParams.folderId, client, true);
+    }
+    
+    public ExportToCedarParams getExtractParams(JsonNode extractParams) throws Exception {
+        ExportToCedarParams extractToCedarParams = new ExportToCedarParams();
+        JsonNode cedarParams = extractParams.get("cedarParams");
+
+        if (cedarParams.has("apiKey") && !cedarParams.get("apiKey").isNull()) {
+            extractToCedarParams.apiKey = cedarParams.get("apiKey").textValue();
+        }
+
+        if (cedarParams.has("folderId") && !cedarParams.get("folderId").isNull()) {
+            extractToCedarParams.folderId = cedarParams.get("folderId").textValue();
+        }
+
+        extractToCedarParams.cedarDomain = arpConfig.get("arp.cedar.domain");
+        
+        return extractToCedarParams;
+    }
+
+    private List<JsonNode> exportElements(JsonNode cedarTemplate, ExportToCedarParams cedarParams, String templateFolderId, HttpClient client, boolean extractFields) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
         String apiKey = cedarParams.apiKey;
         String cedarDomain = cedarParams.cedarDomain;
@@ -530,6 +570,11 @@ public class ArpServiceBean implements java.io.Serializable {
                         // the right null marks that no need for a GET after this request
                         templateElementsRequests.add(new ImmutablePair<>(httpRequest, null));
                     }
+                    
+                    if (extractFields) {
+                        // Extract the fields from the element
+                        exportFields(prop, cedarParams, client);
+                    }
 
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage());
@@ -562,8 +607,119 @@ public class ArpServiceBean implements java.io.Serializable {
 
                         }))
                 .map(CompletableFuture::join)
-                .collect(Collectors.toList());
+                .toList();
         
+        return responses.stream().map(response -> {
+            try {
+                return mapper.readTree(response.body());
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
+
+    }
+
+    private List<JsonNode> exportFields(JsonNode cedarTemplate, ExportToCedarParams cedarParams, HttpClient client) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String apiKey = cedarParams.apiKey;
+        String cedarDomain = cedarParams.cedarDomain;
+        String templateFolderId = cedarParams.folderId;
+        String fieldsFolderId = checkOrCreateFolder(templateFolderId, "fields", apiKey, cedarDomain, client);
+        String encodedFolderId = URLEncoder.encode(fieldsFolderId, StandardCharsets.UTF_8);
+        List<Pair<HttpRequest, HttpRequest>> templateFieldsRequests = new ArrayList<>();
+
+        cedarTemplate.get("properties").forEach(prop -> {
+            if ((prop.has("@type") && prop.get("@type").textValue().equals("https://schema.metadatacenter.org/core/TemplateField")) ||
+                    (prop.has("items") && (prop.get("items").has("@type") && prop.get("items").get("@type").textValue().equals("https://schema.metadatacenter.org/core/TemplateField")))) {
+                try {
+                    var cedarUuid = prop.has("@id")
+                            ? prop.get("@id").textValue()
+                            : null;
+                    if (prop.has("items")) {
+                        prop = prop.get("items");
+                        cedarUuid = prop.get("@id").textValue();
+                    }
+                    // If cedarUuid is already an URL use it as-is, otherwise generate one based in @id being a uuid
+                    String cedarId = cedarUuid.startsWith("http")  ? cedarUuid : "https://repo." + cedarDomain + "/template-fields/" + cedarUuid;
+                    String cedarIdEncoded = URLEncoder.encode(cedarId, StandardCharsets.UTF_8);
+                    String resUrl = "https://resource." + cedarDomain + "/template-fields/"+cedarIdEncoded;
+
+                    // Replace the UUID with the actual cedar URL format ID
+                    ((ObjectNode)prop).put("@id",cedarId);
+                    
+                    // Add initial pav:version if not present
+                    if (!prop.has("pav:version")) {
+                        ((ObjectNode)prop).put("pav:version", "0.0.1");
+                    }
+                    
+                    // Add draft status if not present
+                    if (!prop.has("bibo:status")) {
+                        ((ObjectNode)prop).put("bibo:status", "bibo:draft");
+                    }
+                    HttpRequest getElementRequest = HttpRequest.newBuilder()
+                            .uri(new URI(resUrl))
+                            .headers("Authorization", "apiKey " + cedarParams.apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                            .GET()
+                            .build();
+                    HttpResponse<String> elementExistsResponse = client.send(getElementRequest, ofString());
+
+                    // if element exists, just update
+                    if (elementExistsResponse.statusCode() == 200) {
+                        String json = new ObjectMapper().writeValueAsString(prop);
+                        HttpRequest httpRequest = HttpRequest.newBuilder()
+                                .uri(new URI(resUrl))
+                                .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                                .build();
+
+                        // The right is the GET request to get the Element after update
+                        templateFieldsRequests.add(new ImmutablePair<>(httpRequest, getElementRequest));
+
+                    } else {
+                        String urlWithFolder = resUrl+"?folder_id=" + encodedFolderId;
+                        String json = new ObjectMapper().writeValueAsString(prop);
+                        HttpRequest httpRequest = HttpRequest.newBuilder()
+                                .uri(new URI(urlWithFolder))
+                                .headers("Authorization", "apiKey " + apiKey, "Content-Type", "application/json", "Accept", "application/json")
+                                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                                .build();
+                        // the right null marks that no need for a GET after this request
+                        templateFieldsRequests.add(new ImmutablePair<>(httpRequest, null));
+                    }
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+        });
+
+        List<HttpResponse<String>> responses = templateFieldsRequests.stream()
+                .map(requestAndCrateFlag -> client.sendAsync(requestAndCrateFlag.getLeft(), ofString())
+                        .thenApply(response -> {
+                            if (response.statusCode() != 201 && response.statusCode() != 200) {
+                                throw new RuntimeException("An error occured during uploading the template fields for resource '" + cedarTemplate.get("schema:name").textValue()+"': "+response.body());
+                            }
+
+                            // If request was for creating the elem, we are done, the response contains the element JSON
+                            if (requestAndCrateFlag.getRight() == null) {
+                                return response;
+                            }
+                            // GET the contents again and return that for further processing
+                            try {
+                                HttpResponse<String> updatedResult = client.send(requestAndCrateFlag.getRight(), ofString());
+                                if (response.statusCode() != 200) {
+                                    throw new RuntimeException("An error occured during uploading the template fields for resource '" + cedarTemplate.get("schema:name").textValue()+"': "+updatedResult.body());
+                                }
+                                return updatedResult;
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                throw new RuntimeException("An error occured during uploading the template fields for resource '" + cedarTemplate.get("schema:name").textValue()+"': "+ex.getMessage());
+                            }
+
+                        }))
+                .map(CompletableFuture::join)
+                .toList();
+
         return responses.stream().map(response -> {
             try {
                 return mapper.readTree(response.body());
@@ -589,57 +745,220 @@ public class ArpServiceBean implements java.io.Serializable {
                 .build();
     }
 
-    public List<String> getExternalVocabValues(JsonObject cedarFieldTemplate)
-    {
-        String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+    public List<String> getExternalVocabValues(JsonObject cedarFieldTemplate) {
+        List<String> externalVocabUrls = getExternalVocabValuesUrls(cedarFieldTemplate);
+        List<String> externalVocabStrings = new ArrayList<>();
+        
         try {
-            return collectExternalVocabStrings(externalVocabUrl);
-        }catch (Exception ex) {
+            externalVocabStrings = collectExternalVocabStrings(externalVocabUrls, cedarFieldTemplate);
+        } catch (Exception ex) {
             logger.log(Level.SEVERE, "Failed collecting external vocabulary values for field: " + cedarFieldTemplate.get("schema:name").getAsString() + " with error: " + ex.getMessage(), ex);
-            return new ArrayList<>();
         }
+        
+        return externalVocabStrings;
     }
 
-    public String getExternalVocabValuesUrl(JsonObject cedarTemplateField) {
-        String externalVocabUrl = null;
-        String terminologyTemplate = arpConfig.get("terminology.url.template");
-        JsonObject externalVocabProps = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints.branches[0]") : JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints.branches[0]");
-        if (externalVocabProps != null) {
-            String encodedUri = URLEncoder.encode(externalVocabProps.get("uri").getAsString(), StandardCharsets.UTF_8);
-            externalVocabUrl = String.format(terminologyTemplate, externalVocabProps.get("acronym").getAsString(), encodedUri);
+    public List<String> getPrefLabelsFromClasses(JsonObject cedarTemplateField) {
+        List<String> prefLabels = new ArrayList<>();
+        JsonObject valueConstraints = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? 
+                JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints") : 
+                JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints");
+        
+        if (valueConstraints != null) {
+            JsonArray classes = valueConstraints.getAsJsonArray("classes");
+            if (classes != null) {
+                for (JsonElement classElement : classes) {
+                    JsonObject classObject = classElement.getAsJsonObject();
+                    if (classObject.has("prefLabel")) {
+                        prefLabels.add(classObject.get("prefLabel").getAsString());
+                    }
+                }
+            }
         }
-
-        return externalVocabUrl;
+        
+        return prefLabels;
     }
 
-    public List<String> collectExternalVocabStrings(String externalVocabUrl) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
-        List<String > externalVocabStrings = new ArrayList<>();
+    public List<String> getExternalVocabValuesUrls(JsonObject cedarTemplateField) {
+        List<String> externalVocabUrls = new ArrayList<>();
+        JsonObject valueConstraints = cedarTemplateField.has("items") && cedarTemplateField.has("type") ? 
+                JsonHelper.getJsonObject(cedarTemplateField, "items._valueConstraints") : 
+                JsonHelper.getJsonObject(cedarTemplateField, "_valueConstraints");
+        if (valueConstraints != null) {
+            JsonArray branches = valueConstraints.getAsJsonArray("branches");
+            if (branches != null) {
+                String branchesTemplate = arpConfig.get("terminology.url.branches");
+                for (JsonElement branchElement : branches) {
+                    JsonObject branch = branchElement.getAsJsonObject();
+                    String encodedUri = URLEncoder.encode(branch.get("uri").getAsString(), StandardCharsets.UTF_8);
+                    externalVocabUrls.add(String.format(branchesTemplate, branch.get("acronym").getAsString(), encodedUri));
+                }
+            }
+            JsonArray valueSets = valueConstraints.getAsJsonArray("valueSets");
+            if (valueSets != null) {
+                String valueSetsTemplate = arpConfig.get("terminology.url.valueSets");
+                for (JsonElement valueSetElement : valueSets) {
+                    JsonObject valueSet = valueSetElement.getAsJsonObject();
+                    String encodedUri = URLEncoder.encode(valueSet.get("uri").getAsString(), StandardCharsets.UTF_8);
+                    externalVocabUrls.add(String.format(valueSetsTemplate, valueSet.get("vsCollection").getAsString(), encodedUri, valueSet.get("numTerms").getAsString()));
+                }
+            }
+            JsonArray ontologies = valueConstraints.getAsJsonArray("ontologies");
+            if (ontologies != null) {
+                String ontologiesTemplate = arpConfig.get("terminology.url.ontologies");
+                for (JsonElement ontologyElement : ontologies) {
+                    JsonObject ontologyObject = ontologyElement.getAsJsonObject();
+                    String encodedUri = URLEncoder.encode(ontologyObject.get("uri").getAsString(), StandardCharsets.UTF_8);
+                    externalVocabUrls.add(String.format(ontologiesTemplate, ontologyObject.get("acronym").getAsString(), encodedUri));
+                }
+            }
+        }
+
+        return externalVocabUrls;
+    }
+
+    /**
+     * Fetches external vocabulary values from a single URL with pagination support.
+     * Follows the nextPage field in the response to get all vocabulary values.
+     * 
+     * @param url The URL to fetch vocabulary values from
+     * @param client The HTTP client to use
+     * @param cedarApiKey The CEDAR API key for authentication
+     * @return List of vocabulary labels from all pages
+     */
+    private List<String> fetchExternalVocabValuesFromUrl(String url, HttpClient client, String cedarApiKey) {
+        List<String> allLabels = new ArrayList<>();
+        String currentUrl = url;
+        
+        try {
+            while (currentUrl != null && !currentUrl.trim().isEmpty()) {
+                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .uri(new URI(currentUrl));
+        
+                // Add authorization header if API key is available
+                if (cedarApiKey != null && !cedarApiKey.trim().isEmpty()) {
+                    requestBuilder.header("Authorization", "apiKey " + cedarApiKey);
+                } else {
+                    logger.log(Level.WARNING, "No API key found for CEDAR proxy. Please check the arp.cedar.proxyApiKey configuration.");
+                }
+        
+                HttpRequest getExternalVocabValues = requestBuilder.build();
+                String externalVocabValues = client.send(getExternalVocabValues, ofString()).body();
+                JsonNode externalVocabValuesJson = new ObjectMapper().readTree(externalVocabValues);
+                
+                // Extract the collection of vocabulary values
+                JsonNode externalVocabValuesCollection = externalVocabValuesJson.has("collection") ? 
+                    externalVocabValuesJson.get("collection") : externalVocabValuesJson;
+                
+                // Extract labels from current page
+                externalVocabValuesCollection.forEach(value -> {
+                    if (value.has("prefLabel")) {
+                        allLabels.add(value.get("prefLabel").textValue());
+                    }
+                });
+                
+                // Check for next page and construct the next URL
+                currentUrl = null;
+                if (externalVocabValuesJson.has("nextPage")) {
+                    JsonNode nextPageNode = externalVocabValuesJson.get("nextPage");
+                    if (!nextPageNode.isNull() && !nextPageNode.asText().trim().isEmpty()) {
+                        // Takes too much time to load more than 2000 values
+                        if (nextPageNode.asDouble() > 4) {
+                            break;
+                        }
+                        // Replace the existing page parameter with the next page number
+                        String nextPageValue = nextPageNode.asText();
+                        if (url.contains("page=")) {
+                            // Replace existing page parameter
+                            currentUrl = url.replaceAll("page=\\d+", "page=" + nextPageValue);
+                        } else {
+                            // Add page parameter if it doesn't exist
+                            if (url.contains("?")) {
+                                currentUrl = url + "&page=" + nextPageValue;
+                            } else {
+                                currentUrl = url + "?page=" + nextPageValue;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to fetch external vocabulary from URL: " + url, e);
+        }
+        
+        return allLabels;
+    }
+
+    public List<String> collectExternalVocabStrings(List<String> externalVocabUrls, JsonObject cedarTemplateField) throws URISyntaxException, IOException, InterruptedException, NoSuchAlgorithmException, KeyManagementException {
+        List<String> externalVocabStrings = new ArrayList<>();
         //TODO: uncomment the line below and delete the UnsafeHttpClient, that is for testing purposes only, until we have working CEDAR certs
         // HttpClient client = HttpClient.newHttpClient();
         HttpClient client = getUnsafeHttpClient();
-        HttpRequest getExternalVocabValues = HttpRequest.newBuilder()
-                .uri(new URI(externalVocabUrl))
-                .build();
-        String externalVocabValues = client.send(getExternalVocabValues, ofString()).body();
-        JsonNode externalVocabValuesCollection = new ObjectMapper().readTree(externalVocabValues).get("collection");
-        externalVocabValuesCollection.forEach(value -> {
-            externalVocabStrings.add(value.get("prefLabel").textValue());
+        // Get the CEDAR proxy API key from configuration
+        String cedarApiKey = arpConfig.get("arp.cedar.proxyApiKey");
+        
+        // Create a list of CompletableFuture for parallel processing
+        List<CompletableFuture<List<String>>> futures = externalVocabUrls.stream()
+            .map(url -> CompletableFuture.supplyAsync(() -> {
+                return fetchExternalVocabValuesFromUrl(url, client, cedarApiKey);
+            }))
+            .toList();
+        
+        // Wait for all futures to complete and combine results
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        futures.forEach(future -> {
+            try {
+                externalVocabStrings.addAll(future.get());
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Failed to process external vocabulary results", e);
+            }
         });
-        
+
+        List<String> directVocabValues = getPrefLabelsFromClasses(cedarTemplateField);
+        externalVocabStrings.addAll(directVocabValues);
+
         return externalVocabStrings;
-        
     }
 
+    // If we have performance issues with this method, the "deprecated" property could be added to the 
+    // DatasetFieldTypeArp props, and set during the import from CEDAR in createOrUpdateMdbFromCedarTemplate
+    // DatasetVersions should be considered in all cases if we want to allow deprecated fields in specific versions
+    public boolean isDeprecatedField(DatasetFieldType datasetFieldType) {
+        DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
+        JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
+        return isDeprecatedField(cedarFieldTemplate);
+    }
+    
+    public boolean isDeprecatedField(JsonObject cedarFieldTemplate) {
+        var deprecatedField = getJsonElement(cedarFieldTemplate, "_arp.dataverse.deprecated");
+        return deprecatedField != null && !deprecatedField.isJsonNull() && deprecatedField.getAsBoolean();
+    }
+
+    // Removes deprecated children from the datasetField and returns true if all children are deprecated
+    public boolean areAllChildrenDeprecated(DatasetField datasetField) {
+        AtomicBoolean deprecatedChildrenWasRemoved = new AtomicBoolean(false);
+        AtomicBoolean allChildrenAreDeprecated = new AtomicBoolean(false);
+        datasetField.getDatasetFieldCompoundValues().forEach(cv -> {
+            if (cv.getChildDatasetFields().removeIf(childField -> isDeprecatedField(childField.getDatasetFieldType()))) {
+                deprecatedChildrenWasRemoved.set(true);
+            }
+            if (deprecatedChildrenWasRemoved.get()) {
+                allChildrenAreDeprecated.set(allChildrenAreDeprecated.get() || cv.getChildDatasetFields().isEmpty());
+            }
+        });
+        return allChildrenAreDeprecated.get();
+    }
+    
     public List<ControlledVocabularyValue> collectExternalVocabValues(DatasetFieldType datasetFieldType) throws ArpException {
         DatasetFieldTypeArp datasetFieldTypeArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(datasetFieldType);
         List<ControlledVocabularyValue> externalVocabValues = new ArrayList<>();
         try {
             JsonObject cedarFieldTemplate = new Gson().fromJson(datasetFieldTypeArp.getCedarDefinition(), JsonObject.class);
-            String externalVocabUrl = getExternalVocabValuesUrl(cedarFieldTemplate);
+            List<String> externalVocabUrls = getExternalVocabValuesUrls(cedarFieldTemplate);
             int i = 0;
             var controlledVocabValues = controlledVocabularyValueService.findByDatasetFieldTypeId(datasetFieldType.getId());
-            if (externalVocabUrl != null) {
-                for (var externalString : collectExternalVocabStrings(externalVocabUrl)) {
+            if (externalVocabUrls != null) {
+                for (var externalString : collectExternalVocabStrings(externalVocabUrls, cedarFieldTemplate)) {
                     //At this point we presume there are no duplicated values in the lists, even if there are duplicated values
                     //only their index will be the same, but DV can handle this
                     var controlledVocabValue = controlledVocabValues.stream().filter(cvv -> cvv.getStrValue().equals(externalString)).findFirst();
@@ -693,7 +1012,7 @@ public class ArpServiceBean implements java.io.Serializable {
         String conversionResult;
         
         try {
-            CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
+            CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter(this);
             conversionResult = cedarTemplateToDvMdbConverter.processCedarTemplate(cedarTemplate, overridePropNames);
         } catch (Exception exception) {
             throw new Exception("An error occurred during converting the template", exception);
@@ -803,7 +1122,7 @@ public class ArpServiceBean implements java.io.Serializable {
                             var override = arpMetadataBlockServiceBean.findOverrideByOriginal(dsf);
                             dsfArp.setOverride(override);
                             JsonElement cedarDef = cedarFieldJsonDefs.get(fieldName).getAsJsonObject().has("items") ? cedarFieldJsonDefs.get(fieldName).getAsJsonObject().get("items") : cedarFieldJsonDefs.get(fieldName);
-                            dsfArp.setHasExternalValues(JsonHelper.getJsonObject(cedarDef, "_valueConstraints.branches[0]") != null);
+                            dsfArp.setHasExternalValues(hasExternalValues(cedarDef.getAsJsonObject()));
                             dsfArp = arpMetadataBlockServiceBean.save(dsfArp);
                             break;
 
@@ -973,13 +1292,22 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         //endregion
 
-        // Check whether resource has an identifier. TODO: we should make sure it is unique
+        // Check whether resource has an identifier.
         var errors = new CedarTemplateErrors();
         var cedarResource = new GsonBuilder().setPrettyPrinting().create().fromJson(cedarTemplate, JsonObject.class);
         var idNode = cedarResource.get("schema:identifier");
         if (idNode == null) {
             errors.errors.add("Identifier missing");
             return errors;
+        }
+        
+        // Check if the schema:identifier is already in use before importing the template into Dataverse
+        if (isExport) {
+            var id = cedarResource.get("@id").getAsString();
+            if (arpMetadataBlockServiceBean.isDuplicateSchemaIdentifier(idNode.getAsString(), id)) {
+                errors.errors.add("The schema:identifier is already in use! Please choose a different schema:identifier.");
+                return errors;
+            }
         }
         
         String mdbId = idNode.getAsString();
@@ -1556,6 +1884,17 @@ public class ArpServiceBean implements java.io.Serializable {
             return apiToken.getTokenString();
         }
         return null;
+    }
+    
+    public boolean hasExternalValues(JsonObject cedarFieldTemplate) {
+        return JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.branches")
+                && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.branches").isEmpty()
+                || JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.valueSets")
+                && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.valueSets").isEmpty()
+                || JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.classes")
+                && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.classes").isEmpty()
+                || JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.ontologies")
+                && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.ontologies").isEmpty();
     }
 
 }
