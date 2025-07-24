@@ -915,14 +915,6 @@ public class Datasets extends AbstractApiBean {
                 }
                 Dataset managedDataset = execCommand(new UpdateDatasetVersionCommand(ds, req));
                 managedVersion = managedDataset.getOrCreateEditVersion();
-
-                // Update RO-Crate when dataset is edited via the native API
-                try {
-                    roCrateExportManager.createOrUpdateRoCrate(managedVersion);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError") +" Details: " + e.getMessage());
-                }
             } else {
                 boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(incomingVersion.getTermsOfUseAndAccess(), null);
                 if (!hasValidTerms) {

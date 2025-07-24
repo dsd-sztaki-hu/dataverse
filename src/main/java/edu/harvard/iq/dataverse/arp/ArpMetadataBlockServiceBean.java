@@ -10,6 +10,7 @@ import jakarta.persistence.*;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import com.google.gson.JsonParser;
 
 /**
  * Handles DatasetFieldTypeOverride records.
@@ -118,6 +119,39 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
 
     public void delete(MetadataBlockArp metadataBlockArp) {
         em.remove(metadataBlockArp);
+    }
+
+    /**
+     * Checks if there is a MetadataBlockArp with the same schema:identifier but different @id
+     * @param schemaIdentifier The schema:identifier to check
+     * @param id The @id to compare against
+     * @return true if a duplicate is found, false otherwise
+     */
+    public boolean isDuplicateSchemaIdentifier(String schemaIdentifier, String id) {
+        try {
+            // Get all MetadataBlockArp records
+            var query = em.createQuery("SELECT mdbArp FROM MetadataBlockArp mdbArp", MetadataBlockArp.class);
+            var results = query.getResultList();
+            
+            // Parse each result's cedarDefinition to check schema:identifier and @id
+            for (var mdbArp : results) {
+                var cedarDef = mdbArp.getCedarDefinition();
+                if (cedarDef != null) {
+                    var jsonObject = JsonParser.parseString(cedarDef).getAsJsonObject();
+                    var existingIdentifier = jsonObject.get("schema:identifier");
+                    if (existingIdentifier != null && existingIdentifier.getAsString().equals(schemaIdentifier)) {
+                        var existingId = jsonObject.get("@id");
+                        if (existingId != null && !existingId.getAsString().equals(id)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            logger.warning("Error checking for duplicate schema:identifier: " + e.getMessage());
+            return false;
+        }
     }
 
 }

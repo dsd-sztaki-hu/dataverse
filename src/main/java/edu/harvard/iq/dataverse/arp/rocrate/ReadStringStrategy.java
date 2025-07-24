@@ -1,26 +1,16 @@
-package edu.kit.datamanager.ro_crate.reader;
+package edu.harvard.iq.dataverse.arp.rocrate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.kit.datamanager.ro_crate.objectmapper.MyObjectMapper;
+import edu.kit.datamanager.ro_crate.reader.GenericReaderStrategy;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
-// Note: this class have been copied from the original ro_crate project and updated to parse an RO-Crate object
-// from a string (instead of saving that string with the FolderWriter and re-read its content with the FolderReader)
-// maybe we should ask for this functionality or create a pr
-
-/**
- * A class for reading a crate from a String.
- *
- * @author Norbert Finta.
- * @version 1
- */
-public class StringReader implements ReaderStrategy {
-
+public class ReadStringStrategy implements GenericReaderStrategy<String> {
     @Override
     public ObjectNode readMetadataJson(String roCrateJsonString) {
         ObjectMapper objectMapper = MyObjectMapper.getMapper();
@@ -35,6 +25,7 @@ public class StringReader implements ReaderStrategy {
 
     @Override
     public File readContent(String location) {
-        throw new NotImplementedException();
+        return new File(location);
     }
 }
+

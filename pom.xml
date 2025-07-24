@@ -31,7 +31,7 @@
         <jhove.version>1.20.1</jhove.version>
         <poi.version>5.2.1</poi.version>
         <tika.version>2.4.1</tika.version>
-        <jackson.verion>2.12.6</jackson.verion>
+        <jackson.version>2.12.6</jackson.version>
         <netcdf.version>5.5.3</netcdf.version>
         
         <openapi.infoTitle>Dataverse API</openapi.infoTitle>
@@ -82,8 +82,7 @@
         <dependency>
             <groupId>edu.kit.datamanager</groupId>
             <artifactId>ro-crate-java</artifactId>
-            <version>1.1.0-rc.1</version>
-            <!--            <version>2.0.0-rc3</version>-->
+            <version>2.1.0-rc3</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->
@@ -96,7 +95,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-csv</artifactId>
-            <version>${jackson.verion}</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- This dependency ensures the lib is on the classpath. That way, anything coming from
@@ -170,15 +169,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.verion}</version>
-            <scope>provided</scope>
+            <version>${jackson.version}</version>
         </dependency>
         <!-- Should be refactored and moved to transitive section above once on Java EE 8 (makes WAR smaller) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.verion}</version>
-            <scope>provided</scope>
+            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <!-- There are later versions of this lib available at jitpack.io,
