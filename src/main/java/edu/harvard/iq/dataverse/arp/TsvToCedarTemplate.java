@@ -200,7 +200,7 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         * */
         String termUri = datasetField.getTermURI();
         String nameSpaceUri = dataverseMetadataBlock.getBlockURI().endsWith("/") ? dataverseMetadataBlock.getBlockURI() : dataverseMetadataBlock.getBlockURI() + "/";
-        String uri = !termUri.isBlank() ? termUri : nameSpaceUri + datasetField.getName() ;
+        String uri = nameSpaceUri + datasetField.getName() ;
         enumArray.add(uri);
         enumObj.add("enum", enumArray);
         JsonHelper.getJsonElement(parentObj,"properties.@context.properties").getAsJsonObject().add(propName, enumObj);

@@ -327,6 +327,166 @@ public class ArpApi extends AbstractApiBean {
     }
 
     /**
+     * Extracts TemplateElements from a CEDAR Template and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Template
+     * @return
+     */
+    @POST
+    @Path("/extractTemplateElements")
+    @Consumes("application/json")
+    @AuthRequired
+    public Response extractTemplateElements(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedElements;
+        var mapper = new ObjectMapper();
+        String extractedElementsJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = new ObjectMapper().readTree(requestBody);
+
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedElements = arpService.extractTemplateElements(cedarResource, exportToCedarParams);
+            extractedElementsJson = mapper.writeValueAsString(extractedElements);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedElementsJson).build();
+    }
+
+    /**
+     * Extracts TemplateFields from a CEDAR Resource and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Resource
+     * @return
+     */
+    @POST
+    @Path("/extractTemplateFields")
+    @Consumes("application/json")
+    @AuthRequired
+    public Response extractTemplateFields(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedFields;
+        var mapper = new ObjectMapper();
+        String extractedFieldsJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = new ObjectMapper().readTree(requestBody);
+            
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+            
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedFields = arpService.extractTemplateFields(cedarResource, exportToCedarParams);
+            extractedFieldsJson = mapper.writeValueAsString(extractedFields);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedFieldsJson).build();
+    }
+
+    /**
+     * Extracts TemplateFields and TemplateElements from a CEDAR Resource and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Resource
+     * @return
+     */
+    @POST
+    @Path("/extractResources")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @AuthRequired
+    public Response extractResources(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedResources;
+        var mapper = new ObjectMapper();
+        String extractedResourcesJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = mapper.readTree(requestBody);
+
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedResources = arpService.extractResources(cedarResource, exportToCedarParams);
+            extractedResourcesJson = mapper.writeValueAsString(extractedResources);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedResourcesJson).build();
+    }
+    
+    /**
      * Converts a MetadataBlock TSV to a CEDAR template and returns it.
      *
      * Requires no authentication.
@@ -692,6 +852,7 @@ public class ArpApi extends AbstractApiBean {
     public Response getRoCrate(
             @Context ContainerRequestContext crc,
             @QueryParam("version") String version,
+            @QueryParam("forceReload") @DefaultValue("false") boolean forceReload,
             @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
@@ -753,8 +914,10 @@ public class ArpApi extends AbstractApiBean {
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
-                if (needToRegenerate(roCrateJson)) {
+                // or a superuser is requesting a force reload.
+                if (needToRegenerate(roCrateJson) || shouldForceReload) {
                     roCrateExportManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
                         roCrateExportManager.saveRoCrateDraftVersion(opened);
