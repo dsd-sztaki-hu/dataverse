@@ -16,7 +16,7 @@ public class CedarTemplateToDvMdbConverterTest {
     
     @Test
     public void testCitationModifiedArpValuesForAuthorName() throws IOException {
-        cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter();
+        cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter(null);
         String originalSchema = Files.readString(Paths.get("src/test/resources/arp/citation.json"));
         String originalTsv = Files.readString(Paths.get("src/test/resources/arp/citation.tsv"));
         String generatedMdbTsv = cedarTemplateToDvMdbConverter.processCedarTemplate(originalSchema, new HashSet<>());
