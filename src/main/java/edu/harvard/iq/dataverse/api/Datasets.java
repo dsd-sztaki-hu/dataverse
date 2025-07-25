@@ -112,13 +112,6 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 
-import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-import com.amazonaws.services.s3.model.PartETag;
-import edu.harvard.iq.dataverse.settings.JvmSettings;
-
 import java.lang.reflect.InvocationTargetException;
 
 // ARP specific

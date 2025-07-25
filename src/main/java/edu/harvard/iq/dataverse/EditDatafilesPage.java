@@ -73,7 +73,6 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonReader;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.httpclient.methods.GetMethod;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;

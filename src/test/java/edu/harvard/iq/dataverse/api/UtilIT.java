@@ -7,12 +7,10 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
 import java.io.*;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
-import jakarta.json.Json;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObject;
+
+import jakarta.json.*;
 
 import static edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder.jsonObjectBuilder;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
@@ -25,20 +23,19 @@ import java.util.logging.Level;
 import edu.harvard.iq.dataverse.api.datadeposit.SwordConfigurationImpl;
 import io.restassured.path.xml.XmlPath;
 import edu.harvard.iq.dataverse.mydata.MyDataFilterParams;
+import jakarta.ws.rs.core.HttpHeaders;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import io.restassured.specification.RequestSpecification;
-import java.util.List;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.request.GetRequest;
 import edu.harvard.iq.dataverse.util.FileUtil;
-import java.util.Base64;
 import org.apache.commons.io.IOUtils;
 import java.nio.file.Path;
-import java.util.ArrayList;
+
 import org.apache.commons.lang3.math.NumberUtils;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
