@@ -14,34 +14,6 @@
     <ui:insert name="metadata" />
     <h:head>
         <o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
-        <script>
-          // Passing this to cookieconsent-config.js
-          var localeCode = "#{dataverseSession.localeCode}";
-        </script>
-        <script type="module" src="#{resource['arp/cookieconsent-config.js']}?version=#{settingsWrapper.appVersion}"></script>
-        <!-- Google tag (gtag.js)
-            Note: must use  text/plain for cookie consent to work properly
-            https://cookieconsent.orestbida.com/advanced/manage-scripts.html
-        -->
-        <script
-                type="text/plain"
-                async="true"
-                src="https://www.googletagmanager.com/gtag/js?id=G-3FPX68ZSES"
-                data-category="analytics"
-                data-service="Google Analytics"
-        ></script>
-        <script
-                type="text/plain"
-                data-category="analytics"
-                data-service="Google Analytics"
-        >
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-
-          gtag('config', 'G-3FPX68ZSES');
-        </script>
-	<o:importFunctions type="edu.harvard.iq.dataverse.util.MarkupChecker" />
         <f:facet name="first">
             <o:resourceInclude path="/CustomizationFilesServlet?customFileType=analytics" />
             <title><h:outputText value="#{pageTitle}"/></title>

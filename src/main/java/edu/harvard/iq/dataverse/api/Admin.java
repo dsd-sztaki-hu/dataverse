@@ -9,8 +9,13 @@ import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.AuthenticatedUserArp;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.util.StringUtil;
+import edu.harvard.iq.dataverse.util.cache.CacheFactoryBean;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.harvard.iq.dataverse.validation.EMailValidator;
+import edu.harvard.iq.dataverse.EjbDataverseEngine;
+import edu.harvard.iq.dataverse.Template;
+import edu.harvard.iq.dataverse.TemplateServiceBean;
+import edu.harvard.iq.dataverse.UserServiceBean;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.api.dto.RoleDTO;
 import edu.harvard.iq.dataverse.authorization.AuthenticatedUserDisplayInfo;
@@ -54,7 +59,8 @@ import static edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder.jsonObjectB
 import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -70,6 +76,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 import org.apache.commons.io.IOUtils;
 
+import java.util.List;
 import edu.harvard.iq.dataverse.authorization.AuthTestDataServiceBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationProvidersRegistrationServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
@@ -106,7 +113,9 @@ import java.io.OutputStream;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.rolesToJson;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.toJsonArray;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import jakarta.inject.Inject;
 import jakarta.json.JsonArray;
 import jakarta.persistence.Query;
@@ -115,6 +124,7 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.StreamingOutput;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 /**
  * Where the secure, setup API calls live.
@@ -165,6 +175,8 @@ public class Admin extends AbstractApiBean {
     BannerMessageServiceBean bannerMessageService;
     @EJB
     TemplateServiceBean templateService;
+    @EJB
+    CacheFactoryBean cacheFactory;
 
     // Make the session available
     @Inject
@@ -2833,5 +2845,23 @@ public class Admin extends AbstractApiBean {
         jsonObjectBuilder.add("failures", jsonFailuresArrayBuilder);
 
         return ok(jsonObjectBuilder);
+    }
+
+    @GET
+    @AuthRequired
+    @Path("/rateLimitStats")
+    @Produces("text/csv")
+    public Response rateLimitStats(@Context ContainerRequestContext crc,
+                                   @QueryParam("deltaMinutesFilter") Long deltaMinutesFilter) {
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse wr) {
+            return wr.getResponse();
+        }
+        String csvData = cacheFactory.getStats(CacheFactoryBean.RATE_LIMIT_CACHE, deltaMinutesFilter != null ? String.valueOf(deltaMinutesFilter) : null);
+        return Response.ok(csvData).header("Content-Disposition", "attachment; filename=\"data.csv\"").build();
     }
 }
