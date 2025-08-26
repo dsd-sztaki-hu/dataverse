@@ -7,7 +7,7 @@ import pprint, argparse, subprocess
 import requests
 from stat import *
 from config import (ConfigSectionMap)
-from database import (query_database, get_last_timestamp, record_datafile_status, get_datafile_status, create_database_connection)
+from database import (get_records_for_query, sql_update)
 from storage import (open_dataverse_file)
 import shutil
 import yaml
@@ -18,7 +18,6 @@ from var_dump import var_dump
 from icecream import ic
 from rich.console import Console
 from rich.table import Table
-
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara6")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
@@ -567,23 +566,6 @@ def calculateStorageDict():
 		storageDict[x['name']]["id"]=x["id"]
 	return storageDict
 
-def get_records_for_query(query):
-	ic(query)
-	dataverse_db_connection = create_database_connection()
-	cursor = dataverse_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-	cursor.execute(query)
-#	columns = list(cursor.description)
-	records = cursor.fetchall()
-	dataverse_db_connection.close()
-	return records
-
-def sql_update(query, params):
-	print("updating database: "+(query%params))
-	dataverse_db_connection = create_database_connection()
-	cursor = dataverse_db_connection.cursor()
-	cursor.execute(query, params)
-	dataverse_db_connection.commit() 
-	dataverse_db_connection.close()
 
 def get_filepaths(idlist=None,separatePaths=True):
 	storages=getStorageDict()
