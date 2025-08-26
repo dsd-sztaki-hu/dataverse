@@ -1230,7 +1230,21 @@ public class RoCrateImportManager {
             // the "@type" and the "@id" can not be modified in AROMA, prevent any
             // modifications sent by API calls
         });
-
+        
+        // find and remove all the remaining files from DV, that were already removed from the RO-Crate
+        fileMetadataHashesAndIds.forEach(fileHashAndId -> {
+            var fmd = dataset.getFiles().stream()
+                    .filter(dataFile -> (dataFile.getChecksumValue() + "-"
+                            + String.valueOf(dataFile.getId())
+                            .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1))
+                            .equals(fileHashAndId))
+                    .findFirst().get().getFileMetadata();
+            
+            if (fmd != null) {
+                filesToBeDeleted.add(fmd);
+            }
+        });
+        
         return filesToBeDeleted;
     }
 
