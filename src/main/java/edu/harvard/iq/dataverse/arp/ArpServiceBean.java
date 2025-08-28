@@ -66,6 +66,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getJsonObject;
@@ -1880,5 +1882,18 @@ public class ArpServiceBean implements java.io.Serializable {
                 || JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.ontologies")
                 && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.ontologies").isEmpty();
     }
+
+    public String extractFileFromZip(ByteArrayInputStream processedZipStream, String fileName) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(processedZipStream)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().contains(fileName)) {
+                    return new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        return null; // file not found
+    }
+
 
 }

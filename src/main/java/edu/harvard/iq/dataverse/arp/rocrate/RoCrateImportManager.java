@@ -439,7 +439,7 @@ public class RoCrateImportManager {
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
     public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws IOException, ArpException {
-        String latestVersionRoCrateFolderPath = getRoCrateFolderForPreProcess(dataset.getLatestVersion());
+        String latestVersionRoCrateFolderPath = dataset.getId() != null ? getRoCrateFolderForPreProcess(dataset.getLatestVersion()) : null;
         RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? 
                 new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(latestVersionRoCrateFolderPath) :
                 null;
@@ -1196,39 +1196,42 @@ public class RoCrateImportManager {
             String fileEntityId = fileEntity.get("@id").textValue();
             String fileEntityHashAndId = fileEntity.get("hash").textValue() + "-"
                     + fileEntityId.substring(fileEntityId.lastIndexOf("/") + 1);
-            var fmd = dataset.getFiles().stream()
+            var optionalFmd = dataset.getFiles().stream()
                     .filter(dataFile -> (dataFile.getChecksumValue() + "-"
                             + String.valueOf(dataFile.getId())
                                     .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1))
                             .equals(fileEntityHashAndId))
-                    .findFirst().get().getFileMetadata();
-            fmd.setLabel(fileEntity.get("name").textValue());
-            String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
-            fmd.setDirectoryLabel(dirLabel);
-            String description = fileEntity.has("description") ? fileEntity.get("description").textValue() : "";
-            fmd.setDescription(description);
+                    .findFirst();
+            if (optionalFmd.isPresent()) {
+                var fmd = optionalFmd.get().getFileMetadata();
+                fmd.setLabel(fileEntity.get("name").textValue());
+                String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
+                fmd.setDirectoryLabel(dirLabel);
+                String description = fileEntity.has("description") ? fileEntity.get("description").textValue() : "";
+                fmd.setDescription(description);
 
-            List<String> tags = new ArrayList<>();
-            JsonNode roCrateTags = fileEntity.get("tags");
-            if (roCrateTags != null) {
-                if (roCrateTags.isArray()) {
-                    roCrateTags.forEach(tag -> tags.add(tag.textValue()));
-                } else {
-                    tags.add(roCrateTags.textValue());
+                List<String> tags = new ArrayList<>();
+                JsonNode roCrateTags = fileEntity.get("tags");
+                if (roCrateTags != null) {
+                    if (roCrateTags.isArray()) {
+                        roCrateTags.forEach(tag -> tags.add(tag.textValue()));
+                    } else {
+                        tags.add(roCrateTags.textValue());
+                    }
+                    fmd.setCategoriesByName(tags);
                 }
-                fmd.setCategoriesByName(tags);
-            }
-            if (!fileMetadataHashesAndIds.removeIf(fmdHash -> fmdHash.equals(fileEntityHashAndId))) {
-                // collect the fmd for files that were deleted in AROMA
-                filesToBeDeleted.add(fmd);
-                // the hash can not be modified in AROMA, so any modified hash should be removed
-                // from the RO-Crate as well,
-                // since the modification was done by editing the RO-Crate directly
-                roCrate.deleteEntityById(fileEntity.get("@id").textValue());
-            }
+                if (!fileMetadataHashesAndIds.removeIf(fmdHash -> fmdHash.equals(fileEntityHashAndId))) {
+                    // collect the fmd for files that were deleted in AROMA
+                    filesToBeDeleted.add(fmd);
+                    // the hash can not be modified in AROMA, so any modified hash should be removed
+                    // from the RO-Crate as well,
+                    // since the modification was done by editing the RO-Crate directly
+                    roCrate.deleteEntityById(fileEntity.get("@id").textValue());
+                }
 
-            // the "@type" and the "@id" can not be modified in AROMA, prevent any
-            // modifications sent by API calls
+                // the "@type" and the "@id" can not be modified in AROMA, prevent any
+                // modifications sent by API calls
+            }
         });
         
         // find and remove all the remaining files from DV, that were already removed from the RO-Crate
@@ -1342,6 +1345,13 @@ public class RoCrateImportManager {
                 }
             } // else it's a string property, there's nothing to update
         });
+
+        // In case of a newly uploaded RO-Crate, if the crate was created outside of DV, the '@arpPid' needs to be added
+        // after the ds from the RO-Crate is created
+        if (!rootDataEntityProperties.has("@arpPid")) {
+            String arpPid = dataset.getGlobalId() != null ? dataset.getGlobalId().toString() : "";
+            rootDataEntityProperties.put("@arpPid", arpPid);
+        }
 
         // Must collect the datafiles this way to only process the ones that belong to
         // the actual dataset version
