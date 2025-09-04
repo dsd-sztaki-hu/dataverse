@@ -81,7 +81,7 @@ public class SignedUrlAuthMechanism implements AuthMechanism {
             logger.fine("X-Forwarded-Proto is: " + forwardedProto);
 
             if (forwardedProto != null && !forwardedProto.isEmpty()) {
-                if ("https".equalsIgnoreCase(forwardedProto) && signedUrl.startsWith("http:")) {
+                if ("https".equalsIgnoreCase(forwardedProto) && signedUrl.toLowerCase().startsWith("http:")) {
                     signedUrl = "https" + signedUrl.substring(4);
                 }
             }
