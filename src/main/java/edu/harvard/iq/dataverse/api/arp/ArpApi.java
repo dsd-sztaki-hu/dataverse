@@ -9,10 +9,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.arp.*;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateUploadServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
@@ -864,6 +861,42 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
     }
 
+    @POST
+    @Path("/validateRoCrate")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @AuthRequired
+    public Response validateRoCrate(
+            @Context ContainerRequestContext crc,
+            String roCrateJson)
+    {
+        AuthenticatedUser user;
+        try {
+            user = getRequestAuthenticatedUserOrDie(crc);
+            RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null);
+
+            var prepErrors = roCrateImportPrepResult.errors;
+            if (!prepErrors.isEmpty()) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity( NullSafeJsonBuilder.jsonObjectBuilder()
+                                .add("status", STATUS_ERROR)
+                                .add( "message", roCrateImportPrepResult.getErrorsJson() ).build()
+                        ).type(MediaType.APPLICATION_JSON_TYPE).build();
+            } else {
+                return ok(NullSafeJsonBuilder.jsonObjectBuilder()
+                        .add("message", "OK - RO-Crate is valid")
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+        catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        }
+    }
+    
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")

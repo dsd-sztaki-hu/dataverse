@@ -1,6 +1,5 @@
 package edu.harvard.iq.dataverse.arp.rocrate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -11,7 +10,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.*;
-import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.*;
 import edu.harvard.iq.dataverse.util.JsfHelper;
@@ -21,8 +19,6 @@ import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.CrateReader;
-import edu.kit.datamanager.ro_crate.writer.CrateWriter;
-import edu.kit.datamanager.ro_crate.writer.WriteFolderStrategy;
 import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
@@ -70,6 +66,9 @@ public class RoCrateImportManager {
 
     @EJB
     ArpServiceBean arpService;
+    
+    @EJB
+    DataverseServiceBean dataverseServiceBean;
 
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat",
             "directoryLabel", "description", "identifier", "@arpPid", "hash");
@@ -501,28 +500,53 @@ public class RoCrateImportManager {
         RoCrateImportPrepResult preProcessResult = new RoCrateImportPrepResult();
         ObjectMapper mapper = new ObjectMapper();
         CrateReader<String> roCrateStringReader = new CrateReader<>(new ReadStringStrategy());
-        JsonNode rootNode = null;
+        JsonNode roCrateJson = null;
         try {
-            rootNode = mapper.readTree(roCrateJsonString);
+            var citationMdb = dataverseServiceBean.findMDBByName("citation");
+            // Check if the required fields are present in the roCrate. 
+            // The children of the compound fields are checked later
+            ArrayList<String> requiredFieldsForCreation = new ArrayList<>();
+            citationMdb.getDatasetFieldTypes().stream().filter(
+                            dft -> dft.isDisplayOnCreate() && dft.isRequired() && !dft.isHasParent())
+                    .map(DatasetFieldType::getName)
+                    .forEach(requiredFieldsForCreation::add);
+            
+            roCrateJson = mapper.readTree(roCrateJsonString);
 
-            JsonNode roCrateEntities = rootNode.withArray("@graph");
+            JsonNode graph = roCrateJson.get("@graph");
+            if (graph == null || !graph.isArray()) {
+                preProcessResult.errors.add("Missing or invalid '@graph'");
+                // Nothing to do, the roCrateJsonString is invalid
+                return preProcessResult;
+            }
+            
+            JsonNode context = roCrateJson.get("@context");
+            if (context == null || !context.isArray() || !context.get(1).isObject()) {
+                preProcessResult.errors.add("Missing or invalid '@context'");
+                context = null;
+            }
+            
             // collect all entity id-s with types, to make sure every RO-Crate entity is processed.
             // before converting to actual RO-Crate, check whether the roCrateJsonString contains duplicated id-s
             // also remove the "reverse" properties, since the RO-Crate lib can not handle those yet
-            HashMap<String, String> roCrateEntityIdsAndTypes = preCheckEntities(roCrateEntities, preProcessResult);
+            HashMap<String, String> roCrateEntityIdsAndTypes = preCheckEntities(graph, context, preProcessResult);
+            // At this point, if the preProcessResult contains errors, the roCrateJsonString is invalid can not be processed
+            // eg. missing or duplicated "@id" or invalid property name etc.
             if (!preProcessResult.errors.isEmpty()) {
                 return preProcessResult;
             }
             
-            normalizeArrayContent(roCrateEntities);
+            normalizeArrayContent(graph);
     
-            RoCrate preProcessedRoCrate = roCrateStringReader.readCrate(rootNode.toPrettyString());
+            RoCrate preProcessedRoCrate = roCrateStringReader.readCrate(roCrateJson.toPrettyString());
             RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
             var roCrateContext = new ObjectMapper().readTree(preProcessedRoCrate.getJsonMetadata()).get("@context").get(1);
             String rootDataEntityId = preProcessedRoCrate.getRootDataEntity().getId();
     
-            preProcessedRoCrate.getRootDataEntity().getProperties().fields().forEachRemaining(field ->
-                    prepareAndValidateField(field, rootDataEntityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
+            preProcessedRoCrate.getRootDataEntity().getProperties().fields().forEachRemaining(field -> {
+                requiredFieldsForCreation.remove(field.getKey());
+                prepareAndValidateField(field, rootDataEntityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false);
+                }
             );
     
             // remove the id of the rootDataset and the jsonDescriptor, the other id-s will be removed during processing the entities
@@ -567,10 +591,16 @@ public class RoCrateImportManager {
                     }
                 }
     
-                // remaining values must contain errors
-                if (!roCrateEntityIdsAndTypes.isEmpty()) {
-                    preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
-                }
+                // Allow dangling nodes
+//                if (!roCrateEntityIdsAndTypes.isEmpty()) {
+//                    preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
+//                }
+            }
+            
+            if (!requiredFieldsForCreation.isEmpty()) {
+                requiredFieldsForCreation.forEach(fieldName -> {
+                    preProcessResult.errors.add("The field '" + fieldName + "' is required for creating a new dataset and is missing from the root node");
+                });
             }
     
             preProcessResult.setRoCrate(preProcessedRoCrate);
@@ -637,6 +667,11 @@ public class RoCrateImportManager {
             Map<String, ObjectNode> latestRoCrateFileIdsAndHashes, HashMap<String, String> roCrateEntityIdsAndTypes,
             RoCrateImportPrepResult preProcessResult, HashSet<String> circularReferenceIds, JsonNode roCrateContext,
             RoCrate.RoCrateBuilder roCrateContextUpdater) {
+        var optionalEntity = preProcessedRoCrate.getEntityById(entityId);
+        if (optionalEntity == null) {
+            preProcessResult.errors.add("Could not find data entity with id: " + entityId);
+            return;
+        }
         var entity = preProcessedRoCrate.getEntityById(entityId).getProperties();
         var entityType = roCrateServiceBean.getTypeAsString(entity);
         roCrateEntityIdsAndTypes.remove(entityId);
@@ -734,11 +769,11 @@ public class RoCrateImportManager {
                     if (fieldValue.isArray()) {
                         for (JsonNode element : fieldValue) {
                             validateCompoundField(roCrate, roCrateContext, roCrateContextUpdater, fieldName, element,
-                                    roCrateEntityIdsAndTypes, preProcessResult);
+                                    roCrateEntityIdsAndTypes, preProcessResult, fieldByName);
                         }
                     } else {
                         validateCompoundField(roCrate, roCrateContext, roCrateContextUpdater, fieldName, fieldValue,
-                                roCrateEntityIdsAndTypes, preProcessResult);
+                                roCrateEntityIdsAndTypes, preProcessResult, fieldByName);
                     }
                 }
             } else {
@@ -776,7 +811,7 @@ public class RoCrateImportManager {
     // Validate a given Compound Field and its children
     private void validateCompoundField(RoCrate roCrate, JsonNode roCrateContext,
             RoCrate.RoCrateBuilder roCrateContextUpdater, String fieldName, JsonNode idObj,
-            HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult) {
+            HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, DatasetFieldType dft) {
         if (!idObj.has("@id")) {
             preProcessResult.errors
                     .add("The parent obj with DatasetFieldType: " + fieldName + " must contain a '@id' reference'");
@@ -798,12 +833,27 @@ public class RoCrateImportManager {
             return;
         }
 
+        var requiredFieldNames = new ArrayList<String>();
+        dft.getChildDatasetFieldTypes().stream()
+                .filter(DatasetFieldType::isRequired)
+                .map(DatasetFieldType::getName)
+                .forEach(requiredFieldNames::add);
+
         if (entityProperties.has("conformsTo")) {
             validateConformsTo(entityProperties.get("conformsTo"), entityId, preProcessResult);
         }
 
-        entityProperties.fields().forEachRemaining(field -> prepareAndValidateField(field, entityId, roCrate,
-                roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true));
+        entityProperties.fields().forEachRemaining(field -> {
+            requiredFieldNames.remove(field.getKey());
+            prepareAndValidateField(field, entityId, roCrate,
+                    roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true);
+        });
+        
+        if (!requiredFieldNames.isEmpty()) {
+            requiredFieldNames.forEach(name -> {
+                preProcessResult.errors.add("The field '" + name + "' is required for creating a new dataset and is missing in node with id: " + entityId);
+            });
+        }
     }
 
     // check if a conformsToObj is valid
@@ -864,7 +914,7 @@ public class RoCrateImportManager {
             if (url.isTextual()) {
                 parsedUrl = url.textValue();
             } else if (url.isObject()) {
-                parsedUrl = roCrate.getEntityById(url.get("@id").textValue()).getProperty("name").textValue();
+                parsedUrl = roCrate.getEntityById(url.get("@id").textValue()).getProperty("@id").textValue();
             } else {
                 parsedUrl = "";
             }
@@ -1018,7 +1068,10 @@ public class RoCrateImportManager {
                     }
                     case TEXT -> {
                         // Validate that the value is a string and any text other than newlines
-                        if (!fieldValue.isTextual() || fieldValue.textValue().matches(".*\\n.*")) {
+                        if (!fieldValue.isTextual()) {
+                            preProcessResult.errors.add(
+                                    "The provided value should be a string for " + fieldName + " with 'text' type.");
+                        } else if (fieldValue.textValue().matches(".*\\n.*")) {
                             preProcessResult.errors.add("Newlines are not allowed for field: " + fieldName);
                         }
                     }
@@ -1031,14 +1084,16 @@ public class RoCrateImportManager {
                     }
                     case URL -> {
                         // Validate and parse URL
-                        String url;
+                        String url = "";
                         if (fieldValue.isTextual()) {
                             url = fieldValue.textValue();
                         } else if (fieldValue.isObject()) {
-                            url = roCrate.getEntityById(fieldValue.get("@id").textValue()).getProperty("name")
-                                    .textValue();
-                        } else {
-                            url = "";
+                            var optionalUrl = roCrate.getEntityById(fieldValue.get("@id").textValue());
+                            if (optionalUrl != null) {
+                                url = optionalUrl.getProperty("@id").textValue();
+                            } else {
+                                preProcessResult.errors.add("Could not find child entity with id: " + fieldValue.get("@id").textValue());
+                            }
                         }
                         if (!isURLValid(url)) {
                             preProcessResult.errors
@@ -1057,7 +1112,11 @@ public class RoCrateImportManager {
                                 var intVal = Integer.parseInt(fieldValue.asText());
                                 var entity = parentId.equals("./") ? roCrate.getRootDataEntity()
                                         : roCrate.getEntityById(parentId);
-                                entity.getProperties().put(fieldName, intVal);
+                                if (entity != null) {
+                                    entity.getProperties().put(fieldName, intVal);
+                                } else {
+                                    preProcessResult.errors.add("Could not find entity with id: " + fieldValue.get("@id").textValue());
+                                }
                             } catch (Exception e) {
                                 preProcessResult.errors
                                         .add("The provided value is not a valid integer for field: " + fieldName);
@@ -1071,7 +1130,11 @@ public class RoCrateImportManager {
                                 var floatVal = Float.parseFloat(fieldValue.asText());
                                 var entity = parentId.equals("./") ? roCrate.getRootDataEntity()
                                         : roCrate.getEntityById(parentId);
-                                entity.getProperties().put(fieldName, floatVal);
+                                if (entity != null) {
+                                    entity.getProperties().put(fieldName, floatVal);
+                                } else {
+                                    preProcessResult.errors.add("Could not find entity with id: " + fieldValue.get("@id").textValue());
+                                }
                             } catch (Exception e) {
                                 preProcessResult.errors
                                         .add("The provided value is not a valid floating-point number for field: "
@@ -1116,13 +1179,22 @@ public class RoCrateImportManager {
     // id-s and type-s must be pre-checked and
     // "reverse" properties must be removed (since the RO-Crate lib doesn't support
     // those yet)
-    private HashMap<String, String> preCheckEntities(JsonNode entities, RoCrateImportPrepResult preProcessResult) {
+    // Also, the rootNode and CreativeWork node must be present
+    // Syntax of property names must be checked
+    // Context for the proprties must be present
+    private HashMap<String, String> preCheckEntities(JsonNode entities, JsonNode context, RoCrateImportPrepResult preProcessResult) {
         HashMap<String, String> encounteredIdsWithTypes = new HashMap<>();
+        AtomicBoolean rootNodeFound = new AtomicBoolean(false);
+        AtomicBoolean creativeWorkFound = new AtomicBoolean(false);
+        JsonNode roCrateContext = context == null ? null : context.get(1);
 
         entities.forEach(entity -> {
             if (entity.has("@id")) {
                 String entityType = null;
                 String entityId = entity.get("@id").textValue();
+                if (!rootNodeFound.get() && entityId.equals("./")) {
+                    rootNodeFound.set(true);
+                }
                 if (!encounteredIdsWithTypes.containsKey(entityId)) {
                     if (!entity.has("@type")) {
                         if (entityId == null) {
@@ -1133,6 +1205,9 @@ public class RoCrateImportManager {
                         }
                     } else {
                         entityType = roCrateServiceBean.getTypeAsString(entity);
+                        if (!creativeWorkFound.get() && entityType.equals("CreativeWork")) {
+                            creativeWorkFound.set(true);
+                        }
                     }
                     encounteredIdsWithTypes.put(entityId, entityType);
                 } else {
@@ -1143,9 +1218,44 @@ public class RoCrateImportManager {
                 preProcessResult.errors.add("Missing '@id' for entity: " + entity);
             }
             ((ObjectNode) entity).remove("@reverse");
+            checkSyntaxAndContextProperties(entity, roCrateContext, preProcessResult);
         });
+        
+        if (!rootNodeFound.get()) {
+            preProcessResult.errors.add("Missing rootNode with '@id': './'");
+        }
+        
+        if (!creativeWorkFound.get()) {
+            preProcessResult.errors.add("Missing or invalid '@type' for node: 'CreativeWork'");
+        }
 
         return encounteredIdsWithTypes;
+    }
+    
+    // Check that every property name is valid, meaning that it starts with "@" or is a letter
+    // Also check that the context contains an URI for the property
+    private void checkSyntaxAndContextProperties(JsonNode jsonNode, JsonNode roCrateContext, RoCrateImportPrepResult preProcessResult) {
+        if (jsonNode.isObject()) {
+            jsonNode.fields().forEachRemaining(field -> {
+                // Check property name validity
+                if (!(field.getKey().startsWith("@") || Character.isLetter(field.getKey().charAt(0)))) {
+                    preProcessResult.errors.add("Invalid property name '" + field.getKey() + "' for entity: " + field.getValue());
+                }
+                if (roCrateContext != null && !field.getKey().startsWith("@")) {
+                    var propsToIgnore = List.of("conformsTo", "name", "about");
+                    // Check that the property is present in the context
+                    if (!roCrateContext.has(field.getKey()) && !propsToIgnore.contains(field.getKey())) {
+                        var err = "Missing context URI for property '" + field.getKey();
+                        preProcessResult.errors.add(err);
+                    }
+                }
+                if (field.getValue().isObject() || field.getValue().isArray()) {
+                    checkSyntaxAndContextProperties(field.getValue(), roCrateContext, preProcessResult);
+                }
+            });
+        } else if (jsonNode.isArray()) {
+            jsonNode.forEach(element -> checkSyntaxAndContextProperties(element, roCrateContext, preProcessResult));
+        }
     }
 
     // This function always returns the path of a "draft" RO-CRATE
