@@ -10,7 +10,7 @@ api_token = ConfigSectionMap("Dataverse")['apitoken']
 
 def ls(s):
 	if not s['sizeinbytes']: s['sizeinbytes']=0
-	print(f"Alias: {s['alias']:<20}    Id: {s['id']:8d}    Quota: {s['allocation']/1000000:10.0f}M    Size: {s['sizeinbytes']/1000000:10.0f}M")
+	print(f"Alias: {s['alias']:<20}    Id: {s['id']:8d}    Quota: {s['allocation']/1000000:10.0f}M    Size: {s['sizeinbytes']/1000000:10.0f}M    Free: {(s['allocation']-s['sizeinbytes'])*100/s['allocation']:4.0f}%")
 
 def verify(s):
 	resp=requests.get(f"http://localhost:8080/api/dataverses/{s['alias']}/storagesize",headers={"X-Dataverse-key":api_token}).json()
