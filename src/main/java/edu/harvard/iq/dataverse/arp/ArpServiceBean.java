@@ -1895,5 +1895,8 @@ public class ArpServiceBean implements java.io.Serializable {
         return null; // file not found
     }
 
+    public JsonObject getFileClassEn() {
+        return fileClassEn;
+    }
 
 }

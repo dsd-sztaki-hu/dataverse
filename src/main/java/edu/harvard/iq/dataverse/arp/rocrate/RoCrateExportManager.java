@@ -9,6 +9,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
@@ -72,6 +73,9 @@ public class RoCrateExportManager {
 
     @EJB
     ArpConfig arpConfig;
+    
+    @EJB
+    ArpServiceBean arpServiceBean;
 
     //TODO: what should we do with the "name" property of the contextualEntities? 
     // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
@@ -88,9 +92,11 @@ public class RoCrateExportManager {
         // Make sure license and datePublished is set
         var props = rootDataEntity.getProperties();
         props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(version)));
+        roCrateContextUpdater.addValuePairToContext("license", "https://schema.org/license");
 
         String formattedDate = getDatePublishedForRoCrate(version);
         props.put("datePublished", formattedDate);
+        roCrateContextUpdater.addValuePairToContext("datePublished", "https://schema.org/datePublished");
 
         rootDataEntity.setProperties(props);
 
@@ -611,6 +617,20 @@ public class RoCrateExportManager {
             }
         });
 
+        if (!datasetFiles.isEmpty()) {
+            RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
+            roCrateContextUpdater.addValuePairToContext("hasPart", "https://schema.org/hasPart");
+            var fileClassEn = arpServiceBean.getFileClassEn();
+            if (fileClassEn != null) {
+                fileClassEn.getAsJsonArray("inputs").forEach(
+                        input -> roCrateContextUpdater.addValuePairToContext(
+                                input.getAsJsonObject().get("name").getAsString(),
+                                input.getAsJsonObject().get("id").getAsString()
+                        )
+                );
+            }
+        }
+        
         // Add the new files to the RO-CRATE as well
         for (FileMetadata df : datasetFiles) {
             ArrayList<String> folderNames = df.getDirectoryLabel() != null ? new ArrayList<>(Arrays.asList(df.getDirectoryLabel().split("/"))) : new ArrayList<>();
