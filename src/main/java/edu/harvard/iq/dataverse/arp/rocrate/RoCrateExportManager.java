@@ -118,7 +118,7 @@ public class RoCrateExportManager {
         }
 
         // MDB-s can only be get via the Dataset and its Dataverse, so we need to pass version.getDataset()
-        collectConformsToIds(version.getDataset(), rootDataEntity);
+        roCrateServiceBean.collectConformsToIds(version.getDataset(), rootDataEntity);
     }
 
     public void createOrUpdateRoCrate(DatasetVersion version) throws Exception {
@@ -460,45 +460,6 @@ public class RoCrateExportManager {
                 }
                 parentEntity.addProperty(fieldName, strValuesNode);
             }
-        }
-    }
-
-    private void collectConformsToIds(Dataset dataset, RootDataEntity rootDataEntity)
-    {
-        collectConformsToIds(rootDataEntity, dataset, new ObjectMapper());
-    }
-
-    private void collectConformsToIds(RootDataEntity rootDataEntity, Dataset dataset, ObjectMapper mapper) {
-        var conformsToArray = mapper.createArrayNode();
-        var conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
-
-        Set<String> existingConformsToIds = new HashSet<>();
-        if (rootDataEntity.getProperties().has("conformsTo")) {
-            JsonNode conformsToNode = rootDataEntity.getProperties().get("conformsTo");
-            // conformsTo maybe an array or an object
-            if (conformsToNode.isArray()) {
-                conformsToNode.elements().forEachRemaining(jsonNode -> {
-                    existingConformsToIds.add(((ObjectNode)jsonNode).get("@id").textValue());
-                    conformsToArray.add(jsonNode);
-                });
-            }
-            else {
-                existingConformsToIds.add(((ObjectNode)conformsToNode).get("@id").textValue());
-                conformsToArray.add(conformsToNode);
-            }
-        }
-
-        // Add those ID-s that are not already in conformsToArray
-        conformsToIdsFromMdbs.forEach(id -> {
-            if (!existingConformsToIds.contains(id)) {
-                conformsToArray.add(mapper.createObjectNode().put("@id", id));
-            }
-        });
-
-        if (rootDataEntity.getProperties().has("conformsTo")) {
-            rootDataEntity.getProperties().set("conformsTo", conformsToArray);
-        } else {
-            rootDataEntity.addProperty("conformsTo", conformsToArray);
         }
     }
 
