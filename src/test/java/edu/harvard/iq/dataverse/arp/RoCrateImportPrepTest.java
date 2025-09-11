@@ -51,8 +51,8 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
-        Assertions.assertTrue(processResult.errors.isEmpty());
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        Assertions.assertTrue(processResult.getErrors().isEmpty());
     }
     
     /*
@@ -123,9 +123,9 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
-        processResult.errors.forEach(logger::info);
-        Assertions.assertTrue(processResult.errors.isEmpty());
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        logger.info(processResult.toJson().toString());
+        Assertions.assertTrue(processResult.getErrors().isEmpty());
     }
 
     /*
@@ -148,9 +148,9 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
-        processResult.errors.forEach(logger::info);
-        Assertions.assertFalse(processResult.errors.isEmpty());
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        logger.info(processResult.toJson().toString());
+        Assertions.assertFalse(processResult.getErrors().isEmpty());
     }
 
     /*
@@ -192,16 +192,16 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
-        processResult.errors.forEach(logger::info);
-        Assertions.assertFalse(processResult.errors.isEmpty());
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        logger.info(processResult.toJson().toString());
+        Assertions.assertFalse(processResult.getErrors().isEmpty());
         // The child node for the producer was removed (field does not exist in dv)
-        Assertions.assertTrue(processResult.errors.contains("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108'"));
+        Assertions.assertTrue(processResult.getErrors().containsKey("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/108'"));
         // The child node for the dsDescription was removed (field exists in dv)
-        Assertions.assertTrue(processResult.errors.contains("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99'"));
+        Assertions.assertTrue(processResult.getErrors().containsKey("No child entity found for the parent entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/dsDescription/99'"));
         // The parent node for the dsDescription was removed (field exists in dv), 
         // The producer node has no parent entity (field does not exist in dv)
-        Assertions.assertTrue(processResult.errors.contains("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: [https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98, https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104]"));
+        Assertions.assertTrue(processResult.getErrors().containsKey("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: [https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98, https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/producer/104]"));
     }
 
     /*
@@ -233,13 +233,13 @@ public class RoCrateImportPrepTest {
             logger.warning(e.getMessage());
             Assertions.assertEquals(0, 1);
         }
-        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString);
-        processResult.errors.forEach(logger::info);
-        Assertions.assertFalse(processResult.errors.isEmpty());
-        Assertions.assertTrue(processResult.errors.contains("Missing '@id' for entity: {\"datasetContactName\":\"Admin, Dataverse\",\"datasetContactAffiliation\":\"Dataverse.org\",\"datasetContactEmail\":\"finta@sztaki.hu\",\"name\":\"Admin, Dataverse; (Dataverse.org); \"}"));
-        Assertions.assertTrue(processResult.errors.contains("The entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98' does not have a '@type'."));
-        Assertions.assertTrue(processResult.errors.contains("Missing '@id' for entity: {\"dsDescriptionValue\":\"Descr_1\",\"name\":\"Descr_1\",\"@type\":\"dsDescription\"}"));
-        Assertions.assertTrue(processResult.errors.contains("The RO-Crate contains the following '@id' multiple times: https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"));
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        logger.info(processResult.toJson().toString());
+        Assertions.assertFalse(processResult.getErrors().isEmpty());
+        Assertions.assertTrue(processResult.getErrors().containsKey("Missing '@id' for entity: {\"datasetContactName\":\"Admin, Dataverse\",\"datasetContactAffiliation\":\"Dataverse.org\",\"datasetContactEmail\":\"finta@sztaki.hu\",\"name\":\"Admin, Dataverse; (Dataverse.org); \"}"));
+        Assertions.assertTrue(processResult.getErrors().containsKey("The entity with id: 'https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98' does not have a '@type'."));
+        Assertions.assertTrue(processResult.getErrors().containsKey("Missing '@id' for entity: {\"dsDescriptionValue\":\"Descr_1\",\"name\":\"Descr_1\",\"@type\":\"dsDescription\"}"));
+        Assertions.assertTrue(processResult.getErrors().containsKey("The RO-Crate contains the following '@id' multiple times: https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98"));
         
     }
 

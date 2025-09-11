@@ -868,19 +868,20 @@ public class ArpApi extends AbstractApiBean {
     @AuthRequired
     public Response validateRoCrate(
             @Context ContainerRequestContext crc,
+            @QueryParam("strict") @DefaultValue("false") boolean isStrict,
             String roCrateJson)
     {
         AuthenticatedUser user;
         try {
             user = getRequestAuthenticatedUserOrDie(crc);
-            RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null);
+            RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
 
-            var prepErrors = roCrateImportPrepResult.errors;
-            if (!prepErrors.isEmpty()) {
+            var hasIssues = !roCrateImportPrepResult.getErrors().isEmpty() || !roCrateImportPrepResult.getWarnings().isEmpty();
+            if (hasIssues) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                         .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                                 .add("status", STATUS_ERROR)
-                                .add( "message", roCrateImportPrepResult.getErrorsJson() ).build()
+                                .add( "message", roCrateImportPrepResult.toJson() ).build()
                         ).type(MediaType.APPLICATION_JSON_TYPE).build();
             } else {
                 return ok(NullSafeJsonBuilder.jsonObjectBuilder()
@@ -1046,7 +1047,7 @@ public class ArpApi extends AbstractApiBean {
                 throw new RuntimeException(
                         BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
             }
-            preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
+            preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson, true);
         } catch (IOException | RuntimeException | ArpException e) {
             e.printStackTrace();
             return error(INTERNAL_SERVER_ERROR, e.getMessage());
@@ -1197,7 +1198,7 @@ public class ArpApi extends AbstractApiBean {
                 dataset.setVersions(List.of(newVersion));
             }
 
-            RoCrate preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJsonString);
+            RoCrate preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJsonString, true);
 
             DatasetVersion managedVersion;
             if (alreadyPresentDs) {
