@@ -962,6 +962,9 @@ public class RoCrateExportManager {
         }
         var file = fileEntityBuilder.build();
         roCrate.addDataEntity(file);
+        if (!toHasPart) {
+            roCrate.getRootDataEntity().removeFromHasPart(file.getId());
+        }
 
         return fileId;
     }
