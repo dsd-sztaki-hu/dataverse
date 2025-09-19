@@ -991,7 +991,7 @@ public class ArpApi extends AbstractApiBean {
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
                 } else {
                     // the editable version of the requested latest version
-                    BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateFolder(dataset)));
+                    BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateJson(dataset)));
                     JsonObject draftRoCrateJson = gson.fromJson(br, JsonObject.class);
                     resp = Response.ok(draftRoCrateJson.toString());
                 }

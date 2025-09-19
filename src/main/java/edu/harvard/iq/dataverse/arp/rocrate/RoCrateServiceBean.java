@@ -72,7 +72,8 @@ public class RoCrateServiceBean {
     }
 
     public boolean isVirtualFile(ObjectNode file) {
-        return !file.has("@arpPid");
+        String pattern = ".*/([A-Za-z0-9]+)/file/([0-9]+)$";
+        return !file.get("@id").textValue().matches(pattern);
     }
 
     public String getTypeAsString(JsonNode jsonNode) {
@@ -143,9 +144,14 @@ public class RoCrateServiceBean {
         return String.join(File.separator, getRoCrateFolder(version), arpConfig.get("arp.rocrate.html.preview.name"));
     }
 
-    public String getDraftRoCrateFolder(Dataset dataset) {
+    public String getDraftRoCrateJson(Dataset dataset) {
         String localDir = StorageUtils.getLocalRoCrateDir(dataset);
         return String.join(File.separator, localDir, "ro-crate-metadata", ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    public String getDraftRoCrateFolder(Dataset dataset) {
+        String localDir = StorageUtils.getLocalRoCrateDir(dataset);
+        return String.join(File.separator, localDir, "ro-crate-metadata");
     }
 
     public String getRoCrateParentFolder(Dataset dataset) {

@@ -19,8 +19,6 @@ import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.Readers;
-import edu.kit.datamanager.ro_crate.writer.CrateWriter;
-import edu.kit.datamanager.ro_crate.writer.WriteFolderStrategy;
 import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
@@ -166,7 +164,7 @@ public class RoCrateExportManager {
             var releasedPath = roCrateServiceBean.getRoCratePath(released);
             if (!Files.exists(Paths.get(releasedPath))) {
                 logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
-                saveRoCrateVersion(dataset, releasedVersion);
+                saveRoCrateVersion(dataset, releasedVersion, false);
             }
         }
 
@@ -544,17 +542,15 @@ public class RoCrateExportManager {
     }
 
     public String getDatePublishedForRoCrate(DatasetVersion version) {
-        // Take either release, lst update or current time. For published version it must be always the released date
+        // Take either release, publication or lst update. For published version it must be always the released date
         Date publishedDate = null;
         DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         if (version.getReleaseTime() != null) {
             publishedDate = version.getReleaseTime();
-        }
-//        else if (version.getLastUpdateTime() != null) {
-//            publishedDate = version.getLastUpdateTime();
-//        }
-        else {
-            publishedDate = new Date();
+        } else if (version.getDataset().getPublicationDate() != null) {
+            publishedDate = version.getDataset().getPublicationDate();
+        } else {
+            publishedDate = version.getLastUpdateTime();
         }
         ZonedDateTime zonedDateTime = publishedDate.toInstant().atZone(ZoneId.systemDefault());
         OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
@@ -1012,15 +1008,23 @@ public class RoCrateExportManager {
     // different then the actual releaseDate at the end.
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
-        saveRoCrateVersion(dataset, versionNumber);
+        saveRoCrateVersion(dataset, versionNumber, isUpdate);
 //        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
 //        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
 
-    public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException {
+    public void saveRoCrateVersion(Dataset dataset, String versionNumber, boolean isUpdate) throws IOException {
         String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion());
-        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+        String destFolderPath;
+        String versionSuffix = "_v" + versionNumber;
+        if (isUpdate && roCrateFolderPath.endsWith(versionSuffix)) {
+            destFolderPath = roCrateFolderPath;
+            roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+        } else {
+            destFolderPath = roCrateFolderPath + versionSuffix;
+        }
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(destFolderPath));
     }
 
     public void saveRoCrateDraftVersion(DatasetVersion version) throws IOException {
@@ -1090,9 +1094,16 @@ public class RoCrateExportManager {
     */
     public void finalizeRoCrateForDatasetVersion(DatasetVersion datasetVersion) {
         RoCrate ro = null;
+        String roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
         try {
+            if (!Files.exists(Paths.get(roCratePath))) {
+                createOrUpdateRoCrate(datasetVersion);
+//                if (datasetVersion.getDataset().getLatestVersion().isPublished()) {
+//                    saveRoCrateDraftVersion(datasetVersion);
+//                }
+            }
             ro = Readers.newFolderReader().readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
@@ -1100,6 +1111,7 @@ public class RoCrateExportManager {
 
         removeDatasetContactEmail(roCrateWithPreview);
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
+        updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
 
         try {
             Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
@@ -1108,10 +1120,32 @@ public class RoCrateExportManager {
             throw new RuntimeException(e);
         }
     }
+    
+    public void updateDatePublishedInDraftRoCrate(Dataset dataset) {
+        RoCrate roCrate;
+        try {
+            roCrate = Readers.newFolderReader().readCrate(roCrateServiceBean.getDraftRoCrateFolder(dataset));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
+        String roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+
+        updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(dataset.getLatestVersion()));
+
+        try {
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public void finalizeRoCrateForPublish(DatasetVersion datasetVersion) {
         // Finalize as usual
-        finalizeRoCrateForDatasetVersion(datasetVersion);
+        if (!datasetVersion.isDraft()) {
+            finalizeRoCrateForDatasetVersion(datasetVersion);
+        }
 
         // If we have local access to the KG (as in case of a demo install) ingest the published
         // dataset right away for instant findability
