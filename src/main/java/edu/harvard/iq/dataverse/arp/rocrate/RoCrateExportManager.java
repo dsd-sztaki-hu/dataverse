@@ -613,9 +613,10 @@ public class RoCrateExportManager {
             }
         });
 
-        if (!datasetFiles.isEmpty()) {
+        if (!roCrateFileEntities.isEmpty() || !datasetFiles.isEmpty()) {
             RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
             roCrateContextUpdater.addValuePairToContext("hasPart", "https://schema.org/hasPart");
+            roCrateContextUpdater.addValuePairToContext("directoryLabel", "https://dataverse.org/schema/file/directoryLabel");
             var fileClassEn = arpServiceBean.getFileClassEn();
             if (fileClassEn != null) {
                 fileClassEn.getAsJsonArray("inputs").forEach(
