@@ -277,7 +277,7 @@ public class RoCrateImportManager {
                                 var linkedObj = contextualEntityHashMap.get(fieldValue.get("@id").textValue())
                                         .getProperties();
                                 if (roCrateServiceBean.hasType(linkedObj, "URL")) {
-                                    childDatasetField.setSingleValue(linkedObj.get("name").textValue());
+                                    childDatasetField.setSingleValue(linkedObj.get("@id").textValue());
                                 }
                             } else {
                                 String valueToSet;
@@ -323,7 +323,16 @@ public class RoCrateImportManager {
                     if (e.isTextual()) {
                         newValue = e.textValue();
                     } else if (e.isObject()) {
-                        newValue = roCrate.getEntityById(e.get("@id").textValue()).getProperty("name").textValue();
+                        var entity = roCrate.getEntityById(fieldValue.get("@id").textValue());
+                        if (entity != null) {
+                            if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                                newValue = entity.getProperty("@id").textValue();
+                            } else {
+                                newValue = entity.getProperty("name").textValue();
+                            }
+                        } else {
+                            newValue = null;
+                        }
                     } else {
                         newValue = e.asText();
                     }
@@ -341,7 +350,16 @@ public class RoCrateImportManager {
                 if (fieldValue.isTextual()) {
                     newValue = fieldValue.textValue();
                 } else if (fieldValue.isObject()) {
-                    newValue = roCrate.getEntityById(fieldValue.get("@id").textValue()).getProperty("name").textValue();
+                    var entity = roCrate.getEntityById(fieldValue.get("@id").textValue());
+                    if (entity != null) {
+                        if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                            newValue = entity.getProperty("@id").textValue();
+                        } else {
+                            newValue = entity.getProperty("name").textValue();
+                        }
+                    } else {
+                        newValue = null;
+                    }
                 } else {
                     newValue = fieldValue.asText();
                 }
@@ -352,7 +370,11 @@ public class RoCrateImportManager {
             if (fieldValue.isObject()) {
                 var entity = roCrate.getEntityById(fieldValue.get("@id").textValue());
                 if (entity != null) {
-                    value = entity.getProperty("name").textValue();
+                    if (datasetFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                        value = entity.getProperty("@id").textValue();
+                    } else {
+                        value = entity.getProperty("name").textValue();
+                    }
                 } else {
                     // TODO: check this later, because the entity being null should mean that it was
                     // removed from the RO-CRATE in AROMA
@@ -1095,9 +1117,9 @@ public class RoCrateImportManager {
                         }
                         if (!isURLValid(url)) {
                             preProcessResult.addError(parentId, fieldName, "If not empty, the field must contain a valid URL for field");
-                        } else {
+                        } /*else {
                             updatePropertyInEntity(roCrate, parentId, fieldName, new TextNode(url));
-                        }
+                        }*/
                     }
                     // numbers have to be in string format otherwise the
                     // edu.kit.datamanager.ro_crate.reader.RoCrateReader.moveRootEntitiesFromGraphToCrate

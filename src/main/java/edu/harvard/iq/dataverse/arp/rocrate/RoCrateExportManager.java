@@ -17,6 +17,7 @@ import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.payload.RoCratePayload;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.Readers;
 import edu.kit.datamanager.ro_crate.writer.Writers;
@@ -74,9 +75,7 @@ public class RoCrateExportManager {
     
     @EJB
     ArpServiceBean arpServiceBean;
-
-    //TODO: what should we do with the "name" property of the contextualEntities? 
-    // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
+    
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
@@ -102,6 +101,10 @@ public class RoCrateExportManager {
         if (!isCreation) {
             removeDeletedEntities(roCrate, version, datasetFields, datasetFieldTypeMap);
         }
+        
+        // Need to collect and remove the URL entities that were modified in DV
+        // Can not remove them during the fieldType processing because of the concurrentmodificationexceptions
+        var urlEntityIdsToRemove = new ArrayList<String>();
 
         // Update the RO-Crate with the values from DV
         for (var datasetField : datasetFields) {
@@ -115,11 +118,14 @@ public class RoCrateExportManager {
 
             // Update the contextual entities with the new compound values
             if (fieldType.isCompound()) {
-                processCompoundFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+                processCompoundFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlEntityIdsToRemove);
             } else {
-                processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+                processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlEntityIdsToRemove);
             }
         }
+        
+        // Remove the URL entities that are no longer used
+        urlEntityIdsToRemove.forEach(roCrate::deleteEntityById);
 
         // MDB-s can only be get via the Dataset and its Dataverse, so we need to pass version.getDataset()
         roCrateServiceBean.collectConformsToIds(version.getDataset(), rootDataEntity);
@@ -170,7 +176,10 @@ public class RoCrateExportManager {
 
     }
 
-    private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                           RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, 
+                                           String fieldUri, ObjectMapper mapper, boolean isCreation,
+                                           ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         List<DatasetFieldValue> fieldValues = datasetField.getDatasetFieldValues();
         List<ControlledVocabularyValue> controlledVocabValues = datasetField.getControlledVocabularyValues();
         var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
@@ -183,6 +192,8 @@ public class RoCrateExportManager {
                     String urlString = fieldValues.get(0).getValue();
                     var alreadyPresentUrlEntity = roCrate.getEntityById(urlString);
                     if (alreadyPresentUrlEntity == null) {
+                        // save the old id that will be removed
+                        urlIdsToRemove.add(rootDataEntity.getIdProperty(fieldName));
                         addUrlContextualEntity(roCrate, urlString);
                         var idObj = mapper.createObjectNode();
                         idObj.put("@id", urlString);
@@ -194,15 +205,25 @@ public class RoCrateExportManager {
             } else {
                 ArrayNode valuesNode = mapper.createArrayNode();
                 if (datasetField.getDatasetFieldType().getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                    ArrayList<String> existingUrls = new ArrayList<>();
+                    var parentObj = rootDataEntity.getProperty(fieldName);
+                    if (parentObj.isArray()) {
+                        parentObj.elements().forEachRemaining(idObj -> existingUrls.add(idObj.get("@id").textValue()));
+                    } else {
+                        existingUrls.add(parentObj.get("@id").textValue());
+                    }
                     for (var fieldValue : fieldValues) {
-                        var alreadyPresentUrlEntity = roCrate.getEntityById(fieldValue.getValue());
-                        if (alreadyPresentUrlEntity == null) {
+                        var urlString = fieldValue.getValue();
+                        if (!existingUrls.contains(urlString)) {
                             addUrlContextualEntity(roCrate, fieldValue.getValue());
+                        } else {
+                            existingUrls.remove(urlString);
                         }
                         var idObj = mapper.createObjectNode();
                         idObj.put("@id", fieldValue.getValue());
                         valuesNode.add(idObj);
                     }
+                    urlIdsToRemove.addAll(existingUrls);
                 } else {
                     for (var fieldValue : fieldValues) {
                         valuesNode.add(fieldValue.getValue());
@@ -221,8 +242,11 @@ public class RoCrateExportManager {
         urlEntity.setId(url);
         roCrate.addContextualEntity(urlEntity.build());
     }
-
-    private void processCompoundFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    
+    private void processCompoundFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                          RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, 
+                                          String fieldUri, ObjectMapper mapper, boolean isCreation, 
+                                          ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         List<DatasetFieldCompoundValue> compoundValues = datasetField.getDatasetFieldCompoundValues();
         Set<ContextualEntity> contextualEntities = roCrate.getAllContextualEntities();
 
@@ -258,11 +282,16 @@ public class RoCrateExportManager {
                 }
             }
 
-            processCompoundValues(roCrate, roCrateContextUpdater, compoundValues, contextualEntities, entityToUpdate, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+            processCompoundValues(roCrate, roCrateContextUpdater, compoundValues, contextualEntities, entityToUpdate, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlIdsToRemove);
         }
     }
 
-    private void processCompoundValues(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, List<DatasetFieldCompoundValue> compoundValues, Set<ContextualEntity> contextualEntities, JsonNode entityToUpdate, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    private void processCompoundValues(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                       List<DatasetFieldCompoundValue> compoundValues, 
+                                       Set<ContextualEntity> contextualEntities, 
+                                       JsonNode entityToUpdate, RootDataEntity rootDataEntity, 
+                                       DatasetField datasetField, String fieldName, String fieldUri, 
+                                       ObjectMapper mapper, boolean isCreation, ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         // The entityToUpdate value has to be updated after every modification, in case its value is changed in the RO-Crate,
         // eg: from object to array
         for (var compoundValue : compoundValues) {
@@ -312,9 +341,38 @@ public class RoCrateExportManager {
                             roCrateContextUpdater.addValuePairToContext(childFieldName, childFieldUri);
                         }
                         if (!childFieldValues.isEmpty()) {
-                            for (var childFieldValue : childFieldValues) {
-                                actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
+                            // Save the "old" urls from the RO-Crate, so when the values are updated
+                            // which means, the new ids from DV are added to the RO-Crate
+                            // and the original values are overridden, we can later remove the corresponding entities
+                            // with the replaced id-s (urls)
+                            ArrayList<String> existingUrls = new ArrayList<>();
+                            if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                                var parentObj = actEntityToUpdate.getProperty(childFieldName);
+                                if (parentObj.isArray()) {
+                                    parentObj.elements().forEachRemaining(idObj -> existingUrls.add(idObj.get("@id").textValue()));
+                                } else {
+                                    existingUrls.add(parentObj.get("@id").textValue());
+                                }
                             }
+                            for (var childFieldValue : childFieldValues) {
+                                if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                                    var urlString = childFieldValue.getValue();
+                                    if (!existingUrls.contains(urlString)) {
+                                        addUrlContextualEntity(roCrate, urlString);
+                                        var idObj = mapper.createObjectNode();
+                                        idObj.put("@id", urlString);
+                                        actEntityToUpdate.addProperty(childFieldName, idObj);
+                                    } else {
+                                        existingUrls.remove(urlString);
+                                    }
+                                } else {
+                                    actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
+                                }
+                            }
+                            // We need to remove the entities with the old id-s (urls),
+                            // since in DV there is no more data saved to a URL than its value, which is a string
+                            // so we have to find the corresponding URL entity by its id and remove it from the crate
+                            urlIdsToRemove.addAll(existingUrls);
                         }
                         // Update RO-Crate entity name based on new compound value. NOTE: the update is coming from
                         // Dataverse (API or UI) so the user cannot control the Ro-Crate name property, we have to
@@ -440,7 +498,15 @@ public class RoCrateExportManager {
                 }
                 if (!childFieldValues.isEmpty()) {
                     for (var childFieldValue : childFieldValues) {
-                        contextualEntityBuilder.addProperty(childFieldName, childFieldValue.getValue());
+                        if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                            var urlString = childFieldValue.getValue();
+                            addUrlContextualEntity(roCrate, urlString);
+                            var idObj = mapper.createObjectNode();
+                            idObj.put("@id", urlString);
+                            contextualEntityBuilder.addProperty(childFieldName, idObj);
+                        } else {
+                            contextualEntityBuilder.addProperty(childFieldName, childFieldValue.getValue());
+                        }
                     }
                 }
                 if (!childControlledVocabValues.isEmpty()) {
