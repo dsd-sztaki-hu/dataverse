@@ -1251,6 +1251,7 @@ public class ArpApi extends AbstractApiBean {
             uploadedCrate = mapper.readTree(bufferedReader);
             
         } catch (WrappedResponse | ArpException | IOException | SolrServerException e) {
+            e.printStackTrace();
             throw new ArpException("An error occurred during processing the uploaded RO-Crate: " + roCrateJsonString +
                     "Details: " + e.getMessage());
         }
