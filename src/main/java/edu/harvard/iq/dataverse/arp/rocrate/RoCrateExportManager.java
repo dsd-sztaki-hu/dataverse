@@ -193,7 +193,15 @@ public class RoCrateExportManager {
                     var alreadyPresentUrlEntity = roCrate.getEntityById(urlString);
                     if (alreadyPresentUrlEntity == null) {
                         // save the old id that will be removed
-                        urlIdsToRemove.add(rootDataEntity.getIdProperty(fieldName));
+                        var prop = rootDataEntity.getProperty(fieldName);
+                        if (prop != null) {
+                            // have to handle the "old" string values too
+                            if (prop.isTextual()) {
+                                urlIdsToRemove.add(prop.textValue());
+                            } else {
+                                urlIdsToRemove.add(prop.get("@id").textValue());
+                            }
+                        }
                         addUrlContextualEntity(roCrate, urlString);
                         var idObj = mapper.createObjectNode();
                         idObj.put("@id", urlString);
@@ -207,10 +215,22 @@ public class RoCrateExportManager {
                 if (datasetField.getDatasetFieldType().getFieldType().equals(DatasetFieldType.FieldType.URL)) {
                     ArrayList<String> existingUrls = new ArrayList<>();
                     var parentObj = rootDataEntity.getProperty(fieldName);
-                    if (parentObj.isArray()) {
-                        parentObj.elements().forEachRemaining(idObj -> existingUrls.add(idObj.get("@id").textValue()));
-                    } else {
-                        existingUrls.add(parentObj.get("@id").textValue());
+                    if (parentObj != null) {
+                        if (parentObj.isArray()) {
+                            parentObj.elements().forEachRemaining(idObj -> {
+                                if (idObj.isTextual()) {
+                                    existingUrls.add(idObj.textValue());
+                                } else {
+                                    existingUrls.add(idObj.get("@id").textValue());
+                                }
+                            });
+                        } else {
+                            if (parentObj.isTextual()) {
+                                existingUrls.add(parentObj.textValue());
+                            } else {
+                                existingUrls.add(parentObj.get("@id").textValue());
+                            }
+                        }
                     }
                     for (var fieldValue : fieldValues) {
                         var urlString = fieldValue.getValue();
@@ -348,12 +368,27 @@ public class RoCrateExportManager {
                             ArrayList<String> existingUrls = new ArrayList<>();
                             if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
                                 var parentObj = actEntityToUpdate.getProperty(childFieldName);
-                                if (parentObj.isArray()) {
-                                    parentObj.elements().forEachRemaining(idObj -> existingUrls.add(idObj.get("@id").textValue()));
-                                } else {
-                                    existingUrls.add(parentObj.get("@id").textValue());
+                                if (parentObj != null) {
+                                    if (parentObj.isArray()) {
+                                        parentObj.elements().forEachRemaining(idObj -> {
+                                            // Handle the "old" string values too
+                                            if (idObj.isTextual()) {
+                                                existingUrls.add(idObj.textValue());
+                                            } else {
+                                                existingUrls.add(idObj.get("@id").textValue());
+                                            }
+                                        });
+                                    } else {
+                                        if (parentObj.isTextual()) {
+                                            existingUrls.add(parentObj.textValue());
+                                        } else {
+                                            existingUrls.add(parentObj.get("@id").textValue());
+                                        }
+                                    }
                                 }
                             }
+                            // TODO: for now DV wont allow multiple URLs for compound fields
+                            // later if that is fixed, the process should be fixed as it works for the primitive field types
                             for (var childFieldValue : childFieldValues) {
                                 if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
                                     var urlString = childFieldValue.getValue();

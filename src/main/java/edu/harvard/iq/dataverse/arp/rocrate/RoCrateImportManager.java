@@ -931,7 +931,8 @@ public class RoCrateImportManager {
         return parsedDateArray;
     }
 
-    private ArrayNode parseUrlArray(String fieldName, JsonNode urlArray, RoCrate roCrate,
+    // Process the URL values, in case the URL is saved as a simple string, generate proper URL object instead
+    private void parseUrlArray(String fieldName, JsonNode urlArray, RoCrate roCrate,
             RoCrateImportPrepResult preProcessResult, String entityId) {
         var mapper = new ObjectMapper();
         var parsedUrlArray = mapper.createArrayNode();
@@ -947,11 +948,15 @@ public class RoCrateImportManager {
             if (!isURLValid(parsedUrl)) {
                 preProcessResult.addError(entityId, fieldName, "If not empty, the field must contain a valid URL value");
             } else {
-                parsedUrlArray.add(parsedUrl);
+                if (url.isTextual()) {
+                    addUrlContextualEntity(roCrate, parsedUrl);
+                    var idObj = mapper.createObjectNode();
+                    idObj.put("@id", parsedUrl);
+                    parsedUrlArray.add(idObj);
+                }
             }
         });
-
-        return parsedUrlArray;
+        updatePropertyInEntity(roCrate, entityId, fieldName, parsedUrlArray);
     }
 
     private ArrayNode parseIntArray(String fieldName, JsonNode intArray, RoCrateImportPrepResult preProcessResult, String entityId) {
@@ -1039,8 +1044,7 @@ public class RoCrateImportManager {
                     updatePropertyInEntity(roCrate, parentId, fieldName, parsedDateArray);
                 }
                 case URL -> {
-                    var parsedUrlArray = parseUrlArray(fieldName, fieldValue, roCrate, preProcessResult, parentId);
-                    updatePropertyInEntity(roCrate, parentId, fieldName, parsedUrlArray);
+                    parseUrlArray(fieldName, fieldValue, roCrate, preProcessResult, parentId);
                 }
                 case INT -> {
                     var parsedIntArray = parseIntArray(fieldName, fieldValue, preProcessResult, parentId);
@@ -1117,9 +1121,15 @@ public class RoCrateImportManager {
                         }
                         if (!isURLValid(url)) {
                             preProcessResult.addError(parentId, fieldName, "If not empty, the field must contain a valid URL for field");
-                        } /*else {
-                            updatePropertyInEntity(roCrate, parentId, fieldName, new TextNode(url));
-                        }*/
+                        } else {
+                            // create a proper URL entity from the string
+                            if (fieldValue.isTextual()) {
+                                var mapper = new ObjectMapper();
+                                var idObj = mapper.createObjectNode();
+                                idObj.put("@id", url);
+                                addValidUrlEntity(roCrate, parentId, fieldName, url, idObj);
+                            }
+                        }
                     }
                     // numbers have to be in string format otherwise the
                     // edu.kit.datamanager.ro_crate.reader.RoCrateReader.moveRootEntitiesFromGraphToCrate
@@ -1163,6 +1173,19 @@ public class RoCrateImportManager {
                 }
             }
         }
+    }
+    
+    private void addValidUrlEntity(RoCrate roCrate, String entityId, String fieldName, String urlString, JsonNode newValue) {
+        updatePropertyInEntity(roCrate, entityId, fieldName, newValue);
+        addUrlContextualEntity(roCrate, urlString);
+    }
+
+    private void addUrlContextualEntity(RoCrate roCrate, String url) {
+        var urlEntity = new ContextualEntity.ContextualEntityBuilder();
+        urlEntity.addProperty("@type", "URL");
+        urlEntity.addProperty("name", url);
+        urlEntity.setId(url);
+        roCrate.addContextualEntity(urlEntity.build());
     }
 
     private void updatePropertyInEntity(RoCrate roCrate, String entityId, String fieldName, JsonNode newValue) {
