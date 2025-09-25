@@ -1242,7 +1242,7 @@ public class RoCrateImportManager {
                     }
                 }
                 if (roCrateContext != null && !field.getKey().startsWith("@")) {
-                    var propsToIgnore = List.of("conformsTo", "name", "about");
+                    var propsToIgnore = List.of("conformsTo", "name", "about", "hasPart");
                     // Check that the property is present in the context
                     if (!roCrateContext.has(field.getKey()) && !propsToIgnore.contains(field.getKey())) {
                         if (hasId) {
