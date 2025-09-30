@@ -14,14 +14,17 @@ import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
+import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.ApiToken;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
+import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrlServiceBean;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.FileUtil;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import org.apache.commons.lang3.StringUtils;
@@ -110,6 +113,9 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     PrivateUrlServiceBean privateUrlService;
+
+    @EJB
+    PermissionServiceBean  permissionService;
 
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
@@ -1897,6 +1903,55 @@ public class ArpServiceBean implements java.io.Serializable {
 
     public JsonObject getFileClassEn() {
         return fileClassEn;
+    }
+    
+    // This function works like the on in the FileDownloadHelper, but without caching and without JSF scope requirement
+    public boolean canDownloadFile(FileMetadata fileMetadata, DataverseRequest request) {
+        if (fileMetadata == null){
+            return false;
+        }
+
+        if ((fileMetadata.getId() == null) || (fileMetadata.getDataFile().getId() == null)){
+            return false;
+        }
+
+        boolean isRestrictedFile = fileMetadata.isRestricted() || fileMetadata.getDataFile().isRestricted();
+        if (fileMetadata.getDatasetVersion().isDeaccessioned()) {
+            return this.doesSessionUserHavePermission(Permission.EditDataset, fileMetadata, request.getUser());
+        }
+
+        if (!isRestrictedFile && !FileUtil.isActivelyEmbargoed(fileMetadata)){
+            return true;
+        }
+
+        // See if the DataverseRequest, which contains IP Groups, has permission to download the file.
+        if (permissionService.requestOn(request, fileMetadata.getDataFile()).has(Permission.DownloadFile)) {
+            logger.fine("The DataverseRequest (User plus IP address) has access to download the file.");
+            return true;
+        }
+
+        return false;
+    }
+    
+    // This function works like the on in the FileDownloadHelper, but without caching and without JSF scope requirement
+    public boolean doesSessionUserHavePermission(Permission permissionToCheck, FileMetadata fileMetadata, User user){
+        if (permissionToCheck == null){
+            return false;
+        }
+
+        DvObject objectToCheck = null;
+
+        if (permissionToCheck.equals(Permission.EditDataset)){
+            objectToCheck = fileMetadata.getDatasetVersion().getDataset();
+        } else if (permissionToCheck.equals(Permission.DownloadFile)){
+            objectToCheck = fileMetadata.getDataFile();
+        }
+
+        if (objectToCheck == null){
+            return false;
+        }
+
+        return permissionService.userOn(user, objectToCheck).has(permissionToCheck);
     }
 
 }
