@@ -930,7 +930,7 @@ public class ArpApi extends AbstractApiBean {
             // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
             // For a guest it must be a published version for an author it is either the opened version or DRAFT.
             DatasetVersion opened = null;
-            if (version != null) {
+            if (version != null && !version.equals("DRAFT")) {
                 var optionalVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
                 if (optionalVersion.isPresent()) {
                     opened = optionalVersion.get();

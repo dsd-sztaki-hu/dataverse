@@ -1989,6 +1989,7 @@ public class Access extends AbstractApiBean {
     @Path("datafiles/rocrate/{datasetIdft : .+}")
     @GET
     @Produces({"application/zip"})
+    @AuthRequired
     public Response downloadRoCrateZip(
             @Context ContainerRequestContext crc,
             @QueryParam("version") String version,
@@ -1998,14 +1999,14 @@ public class Access extends AbstractApiBean {
             @Context HttpServletResponse response
     ) throws WebApplicationException, WrappedResponse {
         var dataset = datasetService.findByGlobalId(datasetIdft);
-
-        DataverseRequest req = createDataverseRequest(getRequestUser(crc));
+        var user = getRequestUser(crc);
+        DataverseRequest req = createDataverseRequest(user);
         DatasetVersion requestedVersion;
-        if (version != null) {
+        if (version != null && !version.equals("DRAFT")) {
             var optionalVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
             if (optionalVersion.isPresent()) {
                 requestedVersion = optionalVersion.get();
-                if (!requestedVersion.isPublished()) {
+                if (!requestedVersion.isPublished() && (!user.isAuthenticated() || !permissionService.userOn(user, dataset).has(Permission.EditDataset))) {
                     return error(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.");
                 }
             } else {
