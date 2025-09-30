@@ -716,28 +716,22 @@ public class ArpApi extends AbstractApiBean {
             // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
             // For a guest it must be a published version for an author it is either the opened version or DRAFT.
             DatasetVersion opened = null;
-            if (version != null && (authenticatedUser != null || privateUrlUser)) {
-                if (version.equals("DRAFT") && authenticatedUser != null && !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
-                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
+            if (version != null) {
+                var optionalVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
+                if (optionalVersion.isPresent()) {
+                    opened = optionalVersion.get();
+                    if (!opened.isPublished() && (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset))) {
+                        if (!privateUrlUser) {
+                            return error(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.");
+                        }
+                    }
                 } else {
-                    var openedVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
-                    if (openedVersion.isPresent()) {
-                        opened = openedVersion.get();
-                    }   
+                    return error(FORBIDDEN, "The requested RO-Crate version is not available.");
                 }
-            }
-
-            // If the opened is not found at this point that can be because the version == null or a wrong version was requested
-            // that means the last published version is accessible for a guest and the latest version for a privateUrlUser
-            if (opened == null) {
-                if (privateUrlUser) {
-                    opened = dataset.getLatestVersion();
-                } else {
-                    opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
-                }
-                // At this point if the opened is still null, there must have been something fishy going on with the url
+            } else {
+                opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
                 if (opened == null) {
-                    throw new WrappedResponse(error(FORBIDDEN, "Insufficient permission."));
+                    return error(FORBIDDEN, "Insufficient permission.");
                 }
             }
             

@@ -7,15 +7,21 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -137,6 +143,19 @@ public class RoCrateServiceBean {
 
     public String getRoCratePath(DatasetVersion version) {
         return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+    }
+    
+    public List<String> collectConformsTo(DatasetVersion version) throws IOException {
+        ArrayList<String> urls = new ArrayList<>();
+        String roCrateFolderPath = getRoCrateFolder(version);
+        Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
+        JsonNode conformsTo = crate.getRootDataEntity().getProperty("conformsTo");
+        if (conformsTo.isObject()) {
+            urls.add(conformsTo.get("@id").textValue());
+        } else {
+            conformsTo.forEach(idObj -> urls.add(idObj.get("@id").textValue()));
+        }
+        return urls;
     }
 
     public String getRoCrateHtmlPreviewPath(DatasetVersion version) {

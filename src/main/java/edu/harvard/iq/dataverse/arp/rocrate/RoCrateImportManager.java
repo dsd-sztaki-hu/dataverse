@@ -20,11 +20,10 @@ import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
-import edu.kit.datamanager.ro_crate.reader.FolderReader;
-import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
-import edu.kit.datamanager.ro_crate.reader.StringReader;
-import edu.kit.datamanager.ro_crate.writer.FolderWriter;
-import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
+import edu.kit.datamanager.ro_crate.reader.CrateReader;
+import edu.kit.datamanager.ro_crate.writer.CrateWriter;
+import edu.kit.datamanager.ro_crate.writer.WriteFolderStrategy;
+import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
@@ -389,10 +388,11 @@ public class RoCrateImportManager {
     }
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
-    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws JsonProcessingException, ArpException {
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport) throws IOException, ArpException {
         String latestVersionRoCrateFolderPath = getRoCrateFolderForPreProcess(dataset.getLatestVersion());
-        RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? roCrateFolderReader.readCrate(latestVersionRoCrateFolderPath) : null;
+        RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? 
+                new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(latestVersionRoCrateFolderPath) :
+                null;
         RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate);
 
         var prepErrors = roCrateImportPrepResult.errors;
@@ -407,7 +407,7 @@ public class RoCrateImportManager {
         return roCrateToImport;
     }
 
-    public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString) throws JsonProcessingException {
+    public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString) {
         return prepareRoCrateForDataverseImport(roCrateJsonString, null);
     }
     
@@ -441,80 +441,89 @@ public class RoCrateImportManager {
 
     // Prepare a given RO-Crate JSON String to be imported into Dataverse
     // This includes validation by the schema (mdbs) and removing unprocessable fields
-    public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString, RoCrate latestRoCrate) throws JsonProcessingException {
+    public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString, RoCrate latestRoCrate) {
         RoCrateImportPrepResult preProcessResult = new RoCrateImportPrepResult();
         ObjectMapper mapper = new ObjectMapper();
-        RoCrateReader roCrateStringReader = new RoCrateReader(new StringReader());
-        JsonNode rootNode = mapper.readTree(roCrateJsonString);
+        CrateReader<String> roCrateStringReader = new CrateReader<>(new ReadStringStrategy());
+        JsonNode rootNode = null;
+        try {
+            rootNode = mapper.readTree(roCrateJsonString);
 
-        JsonNode roCrateEntities = rootNode.withArray("@graph");
-        // collect all entity id-s with types, to make sure every RO-Crate entity is processed.
-        // before converting to actual RO-Crate, check whether the roCrateJsonString contains duplicated id-s
-        // also remove the "reverse" properties, since the RO-Crate lib can not handle those yet
-        HashMap<String, String> roCrateEntityIdsAndTypes = preCheckEntities(roCrateEntities, preProcessResult);
-        if (!preProcessResult.errors.isEmpty()) {
-            return preProcessResult;
-        }
-        
-        normalizeArrayContent(roCrateEntities);
-
-        RoCrate preProcessedRoCrate = roCrateStringReader.parseCrate(rootNode.toPrettyString());
-        RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
-        var roCrateContext = new ObjectMapper().readTree(preProcessedRoCrate.getJsonMetadata()).get("@context").get(1);
-        String rootDataEntityId = preProcessedRoCrate.getRootDataEntity().getId();
-
-        preProcessedRoCrate.getRootDataEntity().getProperties().fields().forEachRemaining(field ->
-                prepareAndValidateField(field, rootDataEntityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
-        );
-
-        // remove the id of the rootDataset and the jsonDescriptor, the other id-s will be removed during processing the entities
-        roCrateEntityIdsAndTypes.remove(rootDataEntityId);
-        roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getJsonDescriptor().getId());
-        // the license obj coming from AROMA is not really an id object, and its URL value is stored as a string in dv
-        // remove this type of "id"-s too
-        roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "URL".equals(entry.getValue()));
-
-        // process the dataset and file entities
-        // check id and hash pairs for files, these can not be modified
-        validateDatasetAndFileEntities(preProcessedRoCrate, latestRoCrate, roCrateEntityIdsAndTypes, preProcessResult, roCrateContext, roCrateContextUpdater);
-
-        // make sure all ids are processed
-        if (!roCrateEntityIdsAndTypes.isEmpty()) {
-            // remove the compound values that are not part of dv, and their types could not be validated
-            Iterator<Map.Entry<String , String>> iterator = roCrateEntityIdsAndTypes.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<String, String> entry = iterator.next();
-                var fieldByName = fieldService.findByName(entry.getValue());
-                // if fieldByName is null that means the field not exists in dv
-                if (fieldByName == null) {
-                    // if the Root RO-Crate has any entity containing the id, the id can be removed
-                    if (containsId(preProcessedRoCrate.getRootDataEntity().getProperties(), entry.getKey())) {
-                        iterator.remove();
-                    } else {
-                        // check if any file entity contains the id
-                        AtomicBoolean idAlreadyRemoved = new AtomicBoolean(false);
-                        preProcessedRoCrate.getAllDataEntities().forEach(entity -> {
-                            if (idAlreadyRemoved.get()) {
-                                return;
-                            }
-                            if (containsId(entity.getProperties(), entry.getKey())) {
-                                iterator.remove();
-                                idAlreadyRemoved.set(true);
-                            }
-                        });
+            JsonNode roCrateEntities = rootNode.withArray("@graph");
+            // collect all entity id-s with types, to make sure every RO-Crate entity is processed.
+            // before converting to actual RO-Crate, check whether the roCrateJsonString contains duplicated id-s
+            // also remove the "reverse" properties, since the RO-Crate lib can not handle those yet
+            HashMap<String, String> roCrateEntityIdsAndTypes = preCheckEntities(roCrateEntities, preProcessResult);
+            if (!preProcessResult.errors.isEmpty()) {
+                return preProcessResult;
+            }
+            
+            normalizeArrayContent(roCrateEntities);
+    
+            RoCrate preProcessedRoCrate = roCrateStringReader.readCrate(rootNode.toPrettyString());
+            RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(preProcessedRoCrate);
+            var roCrateContext = new ObjectMapper().readTree(preProcessedRoCrate.getJsonMetadata()).get("@context").get(1);
+            String rootDataEntityId = preProcessedRoCrate.getRootDataEntity().getId();
+    
+            preProcessedRoCrate.getRootDataEntity().getProperties().fields().forEachRemaining(field ->
+                    prepareAndValidateField(field, rootDataEntityId, preProcessedRoCrate, roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false)
+            );
+    
+            // remove the id of the rootDataset and the jsonDescriptor, the other id-s will be removed during processing the entities
+            roCrateEntityIdsAndTypes.remove(rootDataEntityId);
+            roCrateEntityIdsAndTypes.remove(preProcessedRoCrate.getJsonDescriptor().getId());
+            // the license obj coming from AROMA is not really an id object, and its URL value is stored as a string in dv
+            // remove this type of "id"-s too
+            roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "URL".equals(entry.getValue()));
+            roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "SoftwareApplication".equals(entry.getValue()));
+            roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "CreateAction".equals(entry.getValue()));
+            roCrateEntityIdsAndTypes.entrySet().removeIf(entry -> "UpdateAction".equals(entry.getValue()));
+                    
+            // process the dataset and file entities
+            // check id and hash pairs for files, these can not be modified
+            validateDatasetAndFileEntities(preProcessedRoCrate, latestRoCrate, roCrateEntityIdsAndTypes, preProcessResult, roCrateContext, roCrateContextUpdater);
+    
+            // make sure all ids are processed
+            if (!roCrateEntityIdsAndTypes.isEmpty()) {
+                // remove the compound values that are not part of dv, and their types could not be validated
+                Iterator<Map.Entry<String , String>> iterator = roCrateEntityIdsAndTypes.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Map.Entry<String, String> entry = iterator.next();
+                    var fieldByName = fieldService.findByName(entry.getValue());
+                    // if fieldByName is null that means the field not exists in dv
+                    if (fieldByName == null) {
+                        // if the Root RO-Crate has any entity containing the id, the id can be removed
+                        if (containsId(preProcessedRoCrate.getRootDataEntity().getProperties(), entry.getKey())) {
+                            iterator.remove();
+                        } else {
+                            // check if any file entity contains the id
+                            AtomicBoolean idAlreadyRemoved = new AtomicBoolean(false);
+                            preProcessedRoCrate.getAllDataEntities().forEach(entity -> {
+                                if (idAlreadyRemoved.get()) {
+                                    return;
+                                }
+                                if (containsId(entity.getProperties(), entry.getKey())) {
+                                    iterator.remove();
+                                    idAlreadyRemoved.set(true);
+                                }
+                            });
+                        }
                     }
                 }
+    
+                // remaining values must contain errors
+                if (!roCrateEntityIdsAndTypes.isEmpty()) {
+                    preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
+                }
             }
-
-            // remaining values must contain errors
-            if (!roCrateEntityIdsAndTypes.isEmpty()) {
-                preProcessResult.errors.add("Entities with the following '@id'-s could not be validated, check their relations in the RO-Crate: " + roCrateEntityIdsAndTypes.keySet());
-            }
+    
+            preProcessResult.setRoCrate(preProcessedRoCrate);
+    
+            return preProcessResult;
+        } catch (IOException e) {
+            logger.severe("Error processing ro-crate string: " + e.getMessage());
+            throw new RuntimeException(e);
         }
-
-        preProcessResult.setRoCrate(preProcessedRoCrate);
-
-        return preProcessResult;
     }
 
     private boolean containsId(JsonNode node, String id) {
@@ -1170,9 +1179,7 @@ public class RoCrateImportManager {
         rootHasPart.forEach(ds -> postProcessDatasetAndFileEntities(roCrate, ds, dvDatasetFiles, extraMetadata, rootDataEntityProperties, mapper));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
-
-        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
         writeOutRoCrateExtras(extraMetadata, roCrateServiceBean.getRoCrateParentFolder(dataset));
     }
 
