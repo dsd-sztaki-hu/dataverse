@@ -3718,4 +3718,11 @@ public class UtilIT {
                 .post("/api/datasets/" + datasetId + "/requestGlobusDownload");
     }
 
+    public static Response getDataverseMetadataLanguage(String alias, String apiToken) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .get("/api/dataverses/"
+                        + alias
+                        + "/metadataLanguage");
+    }
 }
