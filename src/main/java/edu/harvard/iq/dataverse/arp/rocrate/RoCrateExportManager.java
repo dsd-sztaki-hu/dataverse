@@ -673,18 +673,22 @@ public class RoCrateExportManager {
 
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            if (roCrateServiceBean.isVirtualFile(fe)) {
-                return;
-            }
+            
             String dataFileId = roCrateServiceBean.getDataFileIdFromRoId(fe.get("@id").textValue());
             Optional<FileMetadata> datasetFile;
-            if (importMapping == null) {
-                datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
-            } else {
+            // importMapping data is only available during RO-Crate .zip uploads
+            if (importMapping != null && !importMapping.isEmpty()) {
                 datasetFile = datasetFiles.stream().filter(fileMetadata ->
-                        Objects.equals(fileMetadata.getDataFile().getStorageIdentifier().split("://")[1], importMapping.get(fe.get("@id").textValue()))
+                        Objects.equals(fileMetadata.getDataFile().getStorageIdentifier(), importMapping.get(fe.get("@id").textValue()))
                 ).findFirst();
+            } else {
+                if (roCrateServiceBean.isVirtualFile(fe)) {
+                    return;
+                } else {
+                    datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
+                }
             }
+
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
                 if (importMapping != null) {

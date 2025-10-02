@@ -4,6 +4,7 @@ package edu.harvard.iq.dataverse.api.arp;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
@@ -24,7 +25,9 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.file.CreateDataFileResult;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
+import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -1297,9 +1300,13 @@ public class ArpApi extends AbstractApiBean {
             Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
             CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
             List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true);
-            var cmd2 = new UpdateDatasetVersionCommand(version.getDataset(), req);
-            commandEngine.submit(cmd2);
-            return ok( JsonUtil.getJsonObject(uploadedRoCrate.toPrettyString()) );
+            roCrateUploadServiceBean.setRoCrateGraph((ArrayNode) uploadedRoCrate.get("@graph"));
+            roCrateUploadServiceBean.createImportMapping(filesAdded);
+            var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
+            var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);
+            String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(updatedDataset.getLatestVersion());
+            Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
+            return ok( JsonUtil.getJsonObject(crate.getJsonMetadata()) );
             
         } catch (ArpException | CommandException e) {
             e.printStackTrace();
