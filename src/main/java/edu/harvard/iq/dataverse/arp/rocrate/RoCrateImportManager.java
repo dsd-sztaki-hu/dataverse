@@ -545,14 +545,14 @@ public class RoCrateImportManager {
 
             JsonNode graph = roCrateJson.get("@graph");
             if (graph == null || !graph.isArray()) {
-                preProcessResult.addGeneralError("roCrate", "Missing or invalid '@graph'");
+                preProcessResult.addError("RO-Crate", "@graph", "Missing or invalid '@graph'", "Ensure that a valid '@graph' entity is present in the RO-Crate.");
                 // Nothing to do, the roCrateJsonString is invalid
                 return preProcessResult;
             }
             
             JsonNode context = roCrateJson.get("@context");
             if (context == null || !context.isArray() || !context.get(1).isObject()) {
-                preProcessResult.addGeneralError("roCrate", "Missing or invalid '@context'");
+                preProcessResult.addError("RO-Crate", "@context", "Missing or invalid '@context'", "Ensure that a valid '@context' entity is present in the RO-Crate.");
                 context = null;
             }
             
@@ -629,7 +629,7 @@ public class RoCrateImportManager {
             
             if (!requiredFieldsForCreation.isEmpty()) {
                 requiredFieldsForCreation.forEach(fieldName -> {
-                    preProcessResult.addError("./", fieldName,"Missing required field");
+                    preProcessResult.collectIssue("./", fieldName,"Missing required field", "Add the missing '" + fieldName + "' field to the entity.");
                 });
             }
     
@@ -699,14 +699,15 @@ public class RoCrateImportManager {
             RoCrate.RoCrateBuilder roCrateContextUpdater) {
         var optionalEntity = preProcessedRoCrate.getEntityById(entityId);
         if (optionalEntity == null) {
-            preProcessResult.addGeneralError("dataEntity","Could not find data entity with id: " + entityId);
+            preProcessResult.addError(entityId,"Could not find data entity with id: " + entityId, 
+                    "Ensure that an entity with id '" + entityId + "' exists, or update the parent to reference a valid data entity.");
             return;
         }
         var entity = preProcessedRoCrate.getEntityById(entityId).getProperties();
         var entityType = roCrateServiceBean.getTypeAsString(entity);
         roCrateEntityIdsAndTypes.remove(entityId);
         if (!entityType.equals("File") && !entityType.equals("Dataset")) {
-            preProcessResult.addError(entityId, "@type","Invalid type: '" + entityType + "'");
+            preProcessResult.addError(entityId, "@type","Invalid  @type: '" + entityType + "'", "The '@type' should be 'File' or 'Dataset'");
         }
         entity.fields().forEachRemaining(field -> prepareAndValidateField(field, entityId, preProcessedRoCrate,
                 roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false));
@@ -714,7 +715,7 @@ public class RoCrateImportManager {
             var invalidFileProps = validateFileEntityProps(entity);
             if (!invalidFileProps.isEmpty()) {
                 invalidFileProps.forEach(prop ->
-                    preProcessResult.addError(entityId, prop,  "Invalid property")        
+                    preProcessResult.addError(entityId, prop,  "Invalid property", "Modify or remove the invalid property.")        
                 );
             }
             // compare the file ids and hashes with the values from the previous version of
@@ -729,7 +730,7 @@ public class RoCrateImportManager {
                     var fileHashAndId = entity.get("hash").textValue() + "-"
                             + entityId.substring(entityId.lastIndexOf("/") + 1);
                     if (latestRoCrateFileIdsAndHashes.containsKey(entity.get("hash").textValue())) {
-                        preProcessResult.addError(entityId, "@id", "Corrupted '@id'");
+                        preProcessResult.addError(entityId, "@id", "Corrupted '@id'", "Provide a valid '@id' value for the entity.");
                     }
                 } else {
                     if (!entity.has("hash") && !originalFileEntity.getProperties().has("hash")) {
@@ -738,7 +739,8 @@ public class RoCrateImportManager {
                     }
                     var fileHash = entity.get("hash").textValue();
                     if (!originalFileEntity.getProperty("hash").textValue().equals(fileHash)) {
-                        preProcessResult.addError(entityId, "hash", "Corrupted hash");
+                        preProcessResult.addError(entityId, "hash", "Corrupted hash",
+                                "Recalculate the file hash and update the 'hash' field with the correct value.");
                     }
                 }
             }
@@ -746,13 +748,14 @@ public class RoCrateImportManager {
             var invalidDatasetProps = validateDatasetEntityProps(entity);
             if (!invalidDatasetProps.isEmpty()) {
                 invalidDatasetProps.forEach(prop -> 
-                    preProcessResult.addError(entityId, prop, "Invalid property")    
+                    preProcessResult.addError(entityId, prop, "Invalid property", "Modify or remove the invalid property.")    
                 );
             }
             if (entity.has("hasPart")) {
                 var dsHasPart = entity.get("hasPart");
                 if (!circularReferenceIds.add(entityId)) {
-                    preProcessResult.addError(entityId, "@id", "Circular reference in: " + circularReferenceIds);
+                    preProcessResult.addError(entityId, "@id", "Circular reference in: " + circularReferenceIds,
+                            "Ensure that '@id' values do not form a cycle. Consider removing or reassigning one of: " + circularReferenceIds);
                 }
                 if (dsHasPart.isArray()) {
                     for (var idObj : dsHasPart) {
@@ -780,7 +783,8 @@ public class RoCrateImportManager {
             // field already exists in dv
             if (fieldByName != null) {
                 if (!fieldByName.isAllowMultiples() && fieldValue.isArray() && fieldValue.size() > 1) {
-                    preProcessResult.addError(parentId, fieldName,  "The field does not allow multiple values, but got: " + fieldValue);
+                    preProcessResult.addError(parentId, fieldName,  "The field does not allow multiple values, but got: " + fieldValue,
+                            "Provide only a single value for '" + fieldName + "', e.g. pick one from: " + fieldValue);
                 }
 
                 if (!roCrateContext.has(fieldName)) {
@@ -792,7 +796,8 @@ public class RoCrateImportManager {
                             preProcessResult);
                 } else if (fieldByName.isCompound()) {
                     if (lvl2) {
-                        preProcessResult.addError(parentId, fieldName,  "Compound values are not allowed at this level");
+                        preProcessResult.addError(parentId, fieldName,  "Compound values are not allowed at this level",
+                                "Replace the compound value with primitive value(s).");
                     }
                     if (fieldValue.isArray()) {
                         for (JsonNode element : fieldValue) {
@@ -811,7 +816,9 @@ public class RoCrateImportManager {
                     var childId = fieldValue.get("@id").textValue();
                     var childEntity = roCrate.getEntityById(childId);
                     if (childEntity == null) {
-                        preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: '" + childId + "'");
+                        preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: '" + childId + "'",
+                                "Ensure that an entity with id '" + childId + "' exists, or update the parent to reference a valid child entity."
+                        );
                     }
                 } else if (fieldValue.isArray()) {
                     for (var idObj : fieldValue) {
@@ -820,7 +827,9 @@ public class RoCrateImportManager {
                             var childId = idObj.get("@id").textValue();
                             var childEntity = roCrate.getEntityById(childId);
                             if (childEntity == null) {
-                                preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: '" + childId + "'");
+                                preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: '" + childId + "'",
+                                        "Ensure that an entity with id '" + childId + "' exists, or update the parent to reference a valid child entity."
+                                );
                             }
                         }
                         // This is just an array of strings, like for cedar "checkbox"
@@ -840,7 +849,7 @@ public class RoCrateImportManager {
             HashMap<String, String> roCrateEntityIdsAndTypes, RoCrateImportPrepResult preProcessResult, 
            DatasetFieldType dft, String parentId) {
         if (!idObj.has("@id")) {
-            preProcessResult.addError(parentId, fieldName, "Missing '@id' reference'");
+            preProcessResult.addError(parentId, fieldName, "Missing '@id' reference'", "Provide a valid '@id' property for the entity.");
             return;
         }
 
@@ -848,13 +857,15 @@ public class RoCrateImportManager {
         roCrateEntityIdsAndTypes.remove(entityId);
         var entity = roCrate.getEntityById(entityId);
         if (entity == null) {
-            preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: " + entityId);
+            preProcessResult.addError(parentId, fieldName, "No child entity found for the parent entity with id: " + entityId,
+                    "Ensure that an entity with id '" + entityId + "' exists, or update the parent to reference a valid child entity."
+            );
             return;
         }
         var entityProperties = entity.getProperties();
 
         if (!entityProperties.has("@type") || !roCrateServiceBean.getTypeAsString(entityProperties).equals(fieldName)) {
-            preProcessResult.addError(entityId, "@type", "Invalid type! The correct type would be: " + fieldName);
+            preProcessResult.addError(entityId, "@type", "Invalid type", "The correct type would be: " + fieldName);
             return;
         }
 
@@ -876,7 +887,7 @@ public class RoCrateImportManager {
         
         if (!requiredFieldNames.isEmpty()) {
             requiredFieldNames.forEach(name -> {
-                preProcessResult.collectIssue(entityId, name, "Missing required field");
+                preProcessResult.collectIssue(entityId, name, "Missing required field","Add the missing '" + name + "' field to the entity.");
             });
         }
     }
@@ -887,11 +898,11 @@ public class RoCrateImportManager {
         String errorMessageFormat = "Entity with id: '%s' contains invalid conformsTo %s.";
 
         if (!conformsToObj.has("@id") || conformsToObj.size() > 1) {
-            preProcessResult.collectIssue(entityId, "conformsTo", "Invalid conformsTo property");
+            preProcessResult.collectIssue(entityId, "conformsTo", "Invalid conformsTo property", "Remove or modify the invalid property from the conformsTo entity.");
         } else {
             String conformsToUrl = conformsToObj.get("@id").textValue();
             if (!isURLValid(conformsToUrl)) {
-                preProcessResult.collectIssue(entityId, "conformsTo", "Invalid conformsTo URL");
+                preProcessResult.collectIssue(entityId, "conformsTo", "Invalid conformsTo URL", "Provide a valid URL for the conformsTo entity as the '@id' property.");
                 
             }
         }
@@ -921,7 +932,9 @@ public class RoCrateImportManager {
                                     .parse(date.textValue()));
                     parsedDateArray.add(parsedDate);
                 } catch (ParseException e) {
-                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid date value");
+                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid date value",
+                            "Ensure the field contains a valid date in ISO 8601 format (e.g., '2025-10-03' or '2025-10-03T14:30:00Z')."
+                    );
                 }
             } else {
                 parsedDateArray.add(date);
@@ -946,7 +959,8 @@ public class RoCrateImportManager {
                 parsedUrl = "";
             }
             if (!isURLValid(parsedUrl)) {
-                preProcessResult.addError(entityId, fieldName, "If not empty, the field must contain a valid URL value");
+                preProcessResult.addError(entityId, fieldName, "If not empty, the field must contain a valid URL value",
+                        "Provide a valid URL (e.g., starting with 'http://' or 'https://'), or leave the field empty.");
             } else {
                 if (url.isTextual()) {
                     addUrlContextualEntity(roCrate, parsedUrl);
@@ -968,7 +982,8 @@ public class RoCrateImportManager {
                     var parsedInt = Integer.parseInt(intNumber.asText());
                     parsedIntArray.add(parsedInt);
                 } catch (Exception e) {
-                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid integer value");
+                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid integer value",
+                            "Provide a valid integer value (e.g., 0, 42, -7) for this field.");
                 }
             } else {
                 parsedIntArray.add(intNumber);
@@ -987,7 +1002,8 @@ public class RoCrateImportManager {
                     var parsedFloat = Float.parseFloat(floatNumber.asText());
                     parsedFloatArray.add(parsedFloat);
                 } catch (Exception e) {
-                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid floating point value");
+                    preProcessResult.addError(entityId, fieldName, "The provided value is not a valid floating point value",
+                            "Provide a valid decimal number (e.g., 3.14, -0.5, 42.0) for this field.");
                 }
             } else {
                 parsedFloatArray.add(floatNumber);
@@ -1036,7 +1052,8 @@ public class RoCrateImportManager {
         boolean hasControlledVocabularyValues = datasetFieldType.isAllowControlledVocabulary();
         if (fieldValue.isArray()) {
             if (lvl2) {
-                preProcessResult.addError(parentId, fieldName, "The field can not have Arrays as values, but got: " + fieldValue);
+                preProcessResult.addError(parentId, fieldName, "The field can not have Arrays as values, but got: " + fieldValue,
+                        "Provide a single value for '" + fieldName + "' instead of an array.");
             }
             switch (fieldType) {
                 case DATE -> {
@@ -1066,12 +1083,14 @@ public class RoCrateImportManager {
             if (hasControlledVocabularyValues) {
                 var controlledVocabularyValues = collectControlledVocabularyValues(datasetFieldType);
                 if (!controlledVocabularyValues.contains(fieldValue.textValue())) {
-                    preProcessResult.addError(parentId, fieldName, "Invalid controlled vocabulary value: '" + fieldValue);
+                    preProcessResult.addError(parentId, fieldName, "Invalid controlled vocabulary value: '" + fieldValue,
+                            "Use a valid value from the controlled vocabulary for '" + fieldName + "'.");
                 }
             } else {
                 switch (fieldType) {
                     case NONE ->
-                        preProcessResult.addError(parentId, fieldName, "The field can not have fieldType 'none'");
+                        preProcessResult.addError(parentId, fieldName, "The field can not have fieldType 'none'",
+                                "Provide a valid field type for '" + fieldName + "' instead of 'none'.");
                     case DATE -> {
                         // Validate and parse date format (YYYY-MM-DD, YYYY-MM, or YYYY are accepted)
                         if (!fieldValue.isTextual() ||
@@ -1082,28 +1101,33 @@ public class RoCrateImportManager {
                                                 .parse(fieldValue.textValue()));
                                 updatePropertyInEntity(roCrate, parentId, fieldName, new TextNode(parsedDate));
                             } catch (ParseException e) {
-                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid date");
+                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid date",
+                                        "Ensure the field contains a valid date in ISO 8601 format (e.g., '2025-10-03' or '2025-10-03T14:30:00Z').");
                             }
                         }
                     }
                     case EMAIL -> {
                         // Validate email format
                         if (!fieldValue.isTextual() || !isEmailValid(fieldValue.textValue())) {
-                            preProcessResult.addError(parentId, fieldName, "The provided value is not a valid email address");
+                            preProcessResult.addError(parentId, fieldName, "The provided value is not a valid email address",
+                                    "Provide a valid email address in the format 'user@example.com'.");
                         }
                     }
                     case TEXT -> {
                         // Validate that the value is a string and any text other than newlines
                         if (!fieldValue.isTextual()) {
-                            preProcessResult.addError(parentId, fieldName, "The provided value must be a string");
+                            preProcessResult.addError(parentId, fieldName, "The provided value must be a string",
+                                    "Provide a valid text (string) value for '" + fieldName + "'.");
                         } else if (fieldValue.textValue().matches(".*\\n.*")) {
-                            preProcessResult.addError(parentId, fieldName, "Newlines are not allowed");
+                            preProcessResult.addError(parentId, fieldName, "Newlines are not allowed",
+                                    "Remove any newline characters from the value for '" + fieldName + "'; use a single line of text.");
                         }
                     }
                     case TEXTBOX -> {
                         // Validate that the value is a string
                         if (!fieldValue.isTextual()) {
-                            preProcessResult.addError(parentId, fieldName, "The provided value must be a string");
+                            preProcessResult.addError(parentId, fieldName, "The provided value must be a string",
+                                    "Provide a valid text (string) value for '" + fieldName + "'.");
                         }
                     }
                     case URL -> {
@@ -1116,11 +1140,15 @@ public class RoCrateImportManager {
                             if (optionalUrl != null) {
                                 url = optionalUrl.getProperty("@id").textValue();
                             } else {
-                                preProcessResult.addError(parentId, fieldName, "Could not find child entity with id: " + fieldValue.get("@id").textValue());
+                                preProcessResult.addError(parentId, fieldName, "Could not find child entity with id: " + fieldValue.get("@id").textValue(),
+                                        "Ensure that an entity with id '" + fieldValue.get("@id").textValue() + "' exists, or update the parent to reference a valid child entity."
+                                );
                             }
                         }
                         if (!isURLValid(url)) {
-                            preProcessResult.addError(parentId, fieldName, "If not empty, the field must contain a valid URL for field");
+                            preProcessResult.addError(parentId, fieldName, "If not empty, the field must contain a valid URL for field",
+                                    "Provide a valid URL (e.g., starting with 'http://' or 'https://'), or leave the field empty."
+                            );
                         } else {
                             // create a proper URL entity from the string
                             if (fieldValue.isTextual()) {
@@ -1144,10 +1172,14 @@ public class RoCrateImportManager {
                                 if (entity != null) {
                                     entity.getProperties().put(fieldName, intVal);
                                 } else {
-                                    preProcessResult.addError(parentId, fieldName, "Could not find entity with id: " + fieldValue.get("@id").textValue());
+                                    preProcessResult.addError(parentId, fieldName, "Could not find entity with id: " + fieldValue.get("@id").textValue(),
+                                            "Ensure that an entity with id '" + fieldValue.get("@id").textValue() + "' exists, or update the parent to reference a valid child entity."
+                                    );
                                 }
                             } catch (Exception e) {
-                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid integer");
+                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid integer",
+                                        "Provide a valid integer value (e.g., 0, 42, -7) for this field."
+                                );
                             }
                         }
                     }
@@ -1161,15 +1193,19 @@ public class RoCrateImportManager {
                                 if (entity != null) {
                                     entity.getProperties().put(fieldName, floatVal);
                                 } else {
-                                    preProcessResult.addError(parentId, fieldName, "Could not find entity with id: " + fieldValue.get("@id").textValue());
+                                    preProcessResult.addError(parentId, fieldName, "Could not find entity with id: " + fieldValue.get("@id").textValue(),
+                                            "Ensure that an entity with id '" + fieldValue.get("@id").textValue() + "' exists, or update the parent to reference a valid child entity."
+                                    );
                                 }
                             } catch (Exception e) {
-                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid floating-point number");
+                                preProcessResult.addError(parentId, fieldName, "The provided value is not a valid floating-point number",
+                                        "Provide a valid decimal number (e.g., 3.14, -0.5, 42.0) for this field."
+                                );
                             }
                         }
                     }
                     default ->
-                        preProcessResult.addError(parentId, "@type", "Invalid fieldType");
+                        preProcessResult.addError(parentId, "@type", "Invalid fieldType", "Provide a supported '@type' property.");
                 }
             }
         }
@@ -1240,9 +1276,9 @@ public class RoCrateImportManager {
                 if (!encounteredIdsWithTypes.containsKey(entityId)) {
                     if (!entity.has("@type")) {
                         if (entityId == null) {
-                            preProcessResult.addGeneralError("entity", "Missing '@type' for entity: " + entity.toPrettyString());
+                            preProcessResult.addError("entity_without_valid_id", "Missing '@type' for entity: " + entity.toPrettyString(), "Provide a supported '@type' property.");
                         } else {
-                            preProcessResult.addError(entityId,"@type","The entity with id: '" + entityId + "' does not have a '@type'.");
+                            preProcessResult.addError(entityId,"@type","The entity with id: '" + entityId + "' does not have a '@type'.", "Provide a supported '@type' property.");
                         }
                     } else {
                         entityType = roCrateServiceBean.getTypeAsString(entity);
@@ -1252,21 +1288,21 @@ public class RoCrateImportManager {
                     }
                     encounteredIdsWithTypes.put(entityId, entityType);
                 } else {
-                    preProcessResult.addGeneralError("entity","The RO-Crate contains the following '@id' multiple times: " + entityId);
+                    preProcessResult.addError(entityId,"@id", "The RO-Crate contains the following '@id' multiple times: " + entityId, "Modify or remove the duplicated '@id'-s.");
                 }
             } else {
-                preProcessResult.addGeneralError("entity","Missing '@id' for entity: " + entity.toPrettyString());
+                preProcessResult.addError("RO-Crate", "@id","Missing '@id' for entity: " + entity.toPrettyString(), "Provide a valid '@id' value for the entity.");
             }
             ((ObjectNode) entity).remove("@reverse");
             checkSyntaxAndContextProperties(entity, roCrateContext, preProcessResult);
         });
         
         if (!rootNodeFound.get()) {
-            preProcessResult.addGeneralError("roCrate","Missing rootNode with '@id': './'");
+            preProcessResult.addError("RO-Crate", "@id", "Missing rootNode with '@id': './'", "Add a valid rootNode with '@id': './' to the RO-Crate.");
         }
         
         if (!creativeWorkFound.get()) {
-            preProcessResult.addGeneralError("entity","Missing or invalid '@type' for node: 'CreativeWork'");
+            preProcessResult.addError("RO-Crate", "@type","Missing or invalid '@type' for node: 'CreativeWork'", "Ensure that a valid 'CreativeWork' is present in the RO-Crate");
         }
 
         return encounteredIdsWithTypes;
@@ -1281,9 +1317,11 @@ public class RoCrateImportManager {
                 // Check property name validity
                 if (!(field.getKey().startsWith("@") || Character.isLetter(field.getKey().charAt(0)))) {
                     if (hasId) {
-                        preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Invalid property name");
+                        preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Invalid property name",
+                                "Ensure the property name '" + field.getKey() + "' is valid according to the schema");
                     } else {
-                        preProcessResult.addGeneralError(field.getKey(), "Invalid property name in entity: " + field.getValue());
+                        preProcessResult.addError("entity_without_valid_id", "Invalid property name in entity: " + field.getValue(),
+                                "Ensure the property name '" + field.getKey() + "' is valid according to the schema");
                     }
                 }
                 if (roCrateContext != null && !field.getKey().startsWith("@")) {
@@ -1291,9 +1329,11 @@ public class RoCrateImportManager {
                     // Check that the property is present in the context
                     if (!roCrateContext.has(field.getKey()) && !propsToIgnore.contains(field.getKey())) {
                         if (hasId) {
-                            preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Missing context URI");
+                            preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Missing @context URI",
+                                    "Add the corresponding URI for '" + field.getKey() + "' to @context.");
                         } else {
-                            preProcessResult.addGeneralError(field.getKey(), "Missing context URI");
+                            preProcessResult.addError("entity_without_valid_id", field.getKey(), "Missing @context URI",
+                                    "Add the corresponding URI for '" + field.getKey() + "' to @context.");
                         }
                     }
                 }

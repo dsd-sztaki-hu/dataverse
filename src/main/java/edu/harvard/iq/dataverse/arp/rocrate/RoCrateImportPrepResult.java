@@ -7,11 +7,10 @@ import java.util.*;
 
 public class RoCrateImportPrepResult {
     private RoCrate roCrate;
-    
-    private final Map<String, Map<String, Set<String>>> warnings;
-    private final Map<String, Map<String, Set<String>>> errors;
+
+    private final Map<String, Map<String, Set<IssueDetail>>> warnings;
+    private final Map<String, Map<String, Set<IssueDetail>>> errors;
     private final boolean isStrict;
-    
 
     public RoCrateImportPrepResult(boolean isStrict) {
         this.warnings = new HashMap<>();
@@ -26,69 +25,85 @@ public class RoCrateImportPrepResult {
     public void setRoCrate(RoCrate roCrate) {
         this.roCrate = roCrate;
     }
-    
-    public Map<String, Map<String, Set<String>>> getWarnings() {
+
+    public Map<String, Map<String, Set<IssueDetail>>> getWarnings() {
         return warnings;
     }
-    
-    public Map<String, Map<String, Set<String>>> getErrors() {
+
+    public Map<String, Map<String, Set<IssueDetail>>> getErrors() {
         return errors;
     }
 
     public void addWarning(String id, String fieldName, String message) {
+        addWarning(id, fieldName, message, null);
+    }
+
+    public void addWarning(String id, String fieldName, String message, String suggestion) {
         warnings
                 .computeIfAbsent(id, k -> new HashMap<>())
-                .computeIfAbsent(fieldName, k -> new LinkedHashSet<>()) // preserves insertion order
-                .add(message);
+                .computeIfAbsent(fieldName, k -> new LinkedHashSet<>())
+                .add(new IssueDetail(fieldName, message, suggestion));
     }
 
     public void addError(String id, String fieldName, String message) {
+        addError(id, fieldName, message, null);
+    }
+
+    public void addError(String id, String fieldName, String message, String suggestion) {
         errors
                 .computeIfAbsent(id, k -> new HashMap<>())
                 .computeIfAbsent(fieldName, k -> new LinkedHashSet<>())
-                .add(message);
-    }
-    
-    public void addGeneralError(String type, String message) {
-        addError("general_ro_crate_errors", type, message);
+                .add(new IssueDetail(fieldName, message, suggestion));
     }
 
     public JsonObject toJson() {
         NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
         builder.add("strict", isStrict);
-        builder.add("warnings", buildIssuesJson(warnings));
-        builder.add("errors", buildIssuesJson(errors));
+        builder.add("warnings", buildIssuesJson(warnings, "warning"));
+        builder.add("errors", buildIssuesJson(errors, "error"));
         return builder.build();
     }
 
-    private JsonObject buildIssuesJson(Map<String, Map<String, Set<String>>> issues) {
-        JsonObjectBuilder root = Json.createObjectBuilder();
-        for (Map.Entry<String, Map<String, Set<String>>> entry : issues.entrySet()) {
+    private JsonArray buildIssuesJson(Map<String, Map<String, Set<IssueDetail>>> issues, String prefix) {
+        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+
+        for (Map.Entry<String, Map<String, Set<IssueDetail>>> entry : issues.entrySet()) {
             String id = entry.getKey();
-            JsonObjectBuilder fieldsBuilder = Json.createObjectBuilder();
+            JsonArrayBuilder fieldIssuesArray = Json.createArrayBuilder();
 
-            for (Map.Entry<String, Set<String>> fieldEntry : entry.getValue().entrySet()) {
-                String fieldName = fieldEntry.getKey();
-                Set<String> messages = fieldEntry.getValue();
-
-                if (messages.size() == 1) {
-                    fieldsBuilder.add(fieldName, messages.iterator().next());
-                } else {
-                    JsonArrayBuilder arr = Json.createArrayBuilder();
-                    messages.forEach(arr::add);
-                    fieldsBuilder.add(fieldName, arr);
+            for (Set<IssueDetail> issueDetails : entry.getValue().values()) {
+                for (IssueDetail detail : issueDetails) {
+                    JsonObjectBuilder issueJson = Json.createObjectBuilder()
+                            .add(prefix + "Field", detail.fieldName())
+                            .add(prefix + "Message", detail.message());
+                    if (detail.suggestion() != null) {
+                        issueJson.add(prefix + "Suggestion", detail.suggestion());
+                    }
+                    fieldIssuesArray.add(issueJson);
                 }
             }
-            root.add(id, fieldsBuilder);
+
+            JsonObjectBuilder entityJson = Json.createObjectBuilder()
+                    .add(prefix + "Entity", id)
+                    .add(prefix + "s", fieldIssuesArray);
+
+            arrayBuilder.add(entityJson);
         }
-        return root.build();
+
+        return arrayBuilder.build();
     }
-    
+
     public void collectIssue(String id, String fieldName, String message) {
+        collectIssue(id, fieldName, message, null);
+    }
+
+    public void collectIssue(String id, String fieldName, String message, String suggestion) {
         if (isStrict) {
-            addError(id, fieldName, message);
+            addError(id, fieldName, message, suggestion);
         } else {
-            addWarning(id, fieldName, message);
+            addWarning(id, fieldName, message, suggestion);
         }
     }
+
+    public record IssueDetail(String fieldName, String message, String suggestion) {}
 }
