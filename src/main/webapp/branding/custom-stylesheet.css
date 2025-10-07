@@ -530,3 +530,17 @@ div.card-preview-icon-block img {
 #content div.popover {
     background-color: white;
 }
+
+#dvfooter {
+    padding-top: 30px;
+}
+
+.footerstamp {
+	margin-top: -10px;
+}
+
+@media (max-width: 767px) {
+	.footerstamp {
+		margin-top: 0px;
+	}
+}
