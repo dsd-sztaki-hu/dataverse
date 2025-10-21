@@ -242,8 +242,10 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
-            String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
-            arpService.updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
+            if (!skipUpload) {
+                String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
+                arpService.updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
+            }
         } catch (CedarTemplateErrorsException cte) {
             cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());

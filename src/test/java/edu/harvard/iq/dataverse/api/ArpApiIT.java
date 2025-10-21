@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -89,17 +90,16 @@ public class ArpApiIT {
 
         Response response = checkTemplate(apiToken, templateContent);
         System.out.println("response: " + response.getBody().asString());
-        assertEquals(500, response.getStatusCode());
-        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(200, response.getStatusCode());
 
         String body = response.getBody().asString();
         String status = JsonPath.from(body).getString("status");
-        assertEquals("ERROR", status);
+        assertEquals("OK", status);
 
-        Map<String, List<String>> data = JsonPath.from(body).getMap("message");
-        assertEquals(1, data.size());
-        String message = data.get("unprocessableElements").get(0);
-        assertEquals("/properties/lvl_1_element_test/lvl_2_element_test", message);
+        Map<String, List<String>> data = JsonPath.from(body).getMap("data");
+        assertEquals(2, data.size());
+        String warning = data.get("warnings").get(0);
+        assertEquals("/properties/lvl_1_element_test/lvl_2_element_test", warning);
     }
 
     @Test
