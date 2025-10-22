@@ -387,6 +387,238 @@ public class ArpApiIT {
         checkGeneratedTsv("journal", "src/test/resources/arp/journal.tsv");
     }
 
+    @Test
+    public void validateRoCrate_NoError() {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        byte[] roCrateContent = null;
+        try {
+            roCrateContent = Files.readAllBytes(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadata.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        Response response = validateRoCrate(apiToken, roCrateContent, true);
+        assertEquals(200, response.getStatusCode());
+        response.then().assertThat().statusCode(OK.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("OK", status);
+        
+        Map<String, String> data = JsonPath.from(body).getMap("data");
+        assertEquals(1, data.size());
+        String message = data.get("message");
+        assertEquals("OK - RO-Crate is valid", message);
+    }
+
+    @Test
+    public void validateRoCrate_MissingContext() {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        byte[] roCrateContent = null;
+        try {
+            roCrateContent = Files.readAllBytes(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadat-missing-context.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        Response response = validateRoCrate(apiToken, roCrateContent, true);
+        assertEquals(500, response.getStatusCode());
+        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("ERROR", status);
+
+        Map<String, Object> message = JsonPath.from(body).getMap("message");
+        assertEquals(true, message.get("strict"));
+        
+        List<String> warnings = JsonPath.from(body).getList("message.warnings");
+        assertEquals(0, warnings.size());
+        
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        assertEquals(2, errors.size());
+        
+        // Check first error for license field
+        Map<String, Object> firstError = errors.get(0);
+        assertEquals("./", firstError.get("errorEntity"));
+        
+        List<Map<String, String>> firstErrorDetails = (List<Map<String, String>>) firstError.get("errors");
+        assertEquals(1, firstErrorDetails.size());
+        assertEquals("license", firstErrorDetails.get(0).get("errorField"));
+        assertEquals("Missing @context URI", firstErrorDetails.get(0).get("errorMessage"));
+        assertEquals("Add the corresponding URI for 'license' to @context.", firstErrorDetails.get(0).get("errorSuggestion"));
+        
+        // Check second error for datasetContactEmail field
+        Map<String, Object> secondError = errors.get(1);
+        assertEquals("https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/datasetContact/766", secondError.get("errorEntity"));
+        
+        List<Map<String, String>> secondErrorDetails = (List<Map<String, String>>) secondError.get("errors");
+        assertEquals(1, secondErrorDetails.size());
+        assertEquals("datasetContactEmail", secondErrorDetails.get(0).get("errorField"));
+        assertEquals("Missing @context URI", secondErrorDetails.get(0).get("errorMessage"));
+        assertEquals("Add the corresponding URI for 'datasetContactEmail' to @context.", secondErrorDetails.get(0).get("errorSuggestion"));
+    }
+
+    @Test
+    public void validateRoCrate_MissingEntities() {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        byte[] roCrateContent = null;
+        try {
+            roCrateContent = Files.readAllBytes(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadat-missing-entities.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        Response response = validateRoCrate(apiToken, roCrateContent, true);
+        assertEquals(500, response.getStatusCode());
+        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("ERROR", status);
+
+        Map<String, Object> message = JsonPath.from(body).getMap("message");
+        assertEquals(true, message.get("strict"));
+
+        List<String> warnings = JsonPath.from(body).getList("message.warnings");
+        assertEquals(0, warnings.size());
+
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        assertEquals(2, errors.size());
+
+        // Check first error for license field
+        Map<String, Object> firstError = errors.get(0);
+        assertEquals("./", firstError.get("errorEntity"));
+
+        List<Map<String, String>> firstErrorDetails = (List<Map<String, String>>) firstError.get("errors");
+        assertEquals(1, firstErrorDetails.size());
+        assertEquals("author", firstErrorDetails.get(0).get("errorField"));
+        assertEquals("No child entity found for the parent entity with id: https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/author/765", firstErrorDetails.get(0).get("errorMessage"));
+        assertEquals("Ensure that an entity with id 'https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/author/765' exists, or update the parent to reference a valid child entity.", firstErrorDetails.get(0).get("errorSuggestion"));
+
+        // Check second error for datasetContactEmail field
+        Map<String, Object> secondError = errors.get(1);
+        assertEquals("https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/file/609", secondError.get("errorEntity"));
+
+        List<Map<String, String>> secondErrorDetails = (List<Map<String, String>>) secondError.get("errors");
+        assertEquals(1, secondErrorDetails.size());
+        assertEquals("Could not find data entity with id: https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/file/609", secondErrorDetails.get(0).get("errorField"));
+        assertEquals("Ensure that an entity with id 'https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/file/609' exists, or update the parent to reference a valid data entity.", secondErrorDetails.get(0).get("errorMessage"));
+    }
+
+    @Test
+    public void validateRoCrate_MissingRequiredFieldNotStrict() {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        byte[] roCrateContent = null;
+        try {
+            roCrateContent = Files.readAllBytes(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadat-missing-required-fields.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        Response response = validateRoCrate(apiToken, roCrateContent, false);
+        assertEquals(500, response.getStatusCode());
+        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("ERROR", status);
+
+        Map<String, Object> message = JsonPath.from(body).getMap("message");
+        assertEquals(false, message.get("strict"));
+        
+        List<Map<String, Object>> warnings = JsonPath.from(body).getList("message.warnings");
+        assertEquals(2, warnings.size());
+        
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        assertEquals(0, errors.size());
+        
+        // Check first warning for subject field
+        Map<String, Object> firstWarning = warnings.get(0);
+        assertEquals("./", firstWarning.get("warningEntity"));
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> firstWarningDetails = (List<Map<String, String>>) firstWarning.get("warnings");
+        assertEquals(1, firstWarningDetails.size());
+        assertEquals("subject", firstWarningDetails.get(0).get("warningField"));
+        assertEquals("Missing required field", firstWarningDetails.get(0).get("warningMessage"));
+        assertEquals("Add the missing 'subject' field to the entity.", firstWarningDetails.get(0).get("warningSuggestion"));
+        
+        // Check second warning for authorName field
+        Map<String, Object> secondWarning = warnings.get(1);
+        assertEquals("https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/author/765", secondWarning.get("warningEntity"));
+        
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> secondWarningDetails = (List<Map<String, String>>) secondWarning.get("warnings");
+        assertEquals(1, secondWarningDetails.size());
+        assertEquals("authorName", secondWarningDetails.get(0).get("warningField"));
+        assertEquals("Missing required field", secondWarningDetails.get(0).get("warningMessage"));
+        assertEquals("Add the missing 'authorName' field to the entity.", secondWarningDetails.get(0).get("warningSuggestion"));
+    }
+
+    @Test
+    public void validateRoCrate_MissingRequiredFieldStrict() {
+        Response createUser = UtilIT.createRandomUser();
+        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
+
+        byte[] roCrateContent = null;
+        try {
+            roCrateContent = Files.readAllBytes(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadat-missing-required-fields.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            assertEquals(0,1);
+        }
+
+        Response response = validateRoCrate(apiToken, roCrateContent, true);
+        assertEquals(500, response.getStatusCode());
+        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+
+        String body = response.getBody().asString();
+        String status = JsonPath.from(body).getString("status");
+        assertEquals("ERROR", status);
+
+        Map<String, Object> message = JsonPath.from(body).getMap("message");
+        assertEquals(true, message.get("strict"));
+
+        List<Map<String, Object>> warnings = JsonPath.from(body).getList("message.warnings");
+        assertEquals(0, warnings.size());
+
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        assertEquals(2, errors.size());
+
+        // Check first error for subject field
+        Map<String, Object> firstError = errors.get(0);
+        assertEquals("./", firstError.get("errorEntity"));
+
+        List<Map<String, String>> firstErrorDetails = (List<Map<String, String>>) firstError.get("errors");
+        assertEquals(1, firstErrorDetails.size());
+        assertEquals("subject", firstErrorDetails.get(0).get("errorField"));
+        assertEquals("Missing required field", firstErrorDetails.get(0).get("errorMessage"));
+        assertEquals("Add the missing 'subject' field to the entity.", firstErrorDetails.get(0).get("errorSuggestion"));
+
+        // Check second error for authorName field
+        Map<String, Object> secondError = errors.get(1);
+        assertEquals("https://w3id.org/arp/localdev/ro-id/doi:10.5072/FK2/ZBUBH7/author/765", secondError.get("errorEntity"));
+
+        List<Map<String, String>> secondErrorDetails = (List<Map<String, String>>) secondError.get("errors");
+        assertEquals(1, secondErrorDetails.size());
+        assertEquals("authorName", secondErrorDetails.get(0).get("errorField"));
+        assertEquals("Missing required field", secondErrorDetails.get(0).get("errorMessage"));
+        assertEquals("Add the missing 'authorName' field to the entity.", secondErrorDetails.get(0).get("errorSuggestion"));
+    }
+
     static Response checkTemplate(String apiToken, byte[] body) {
         return given()
                 .header(API_TOKEN_HTTP_HEADER, apiToken)
@@ -501,5 +733,13 @@ public class ArpApiIT {
         connection.commit();
         stmt.close();
         connection.close();
+    }
+
+    static Response validateRoCrate(String apiToken, byte[] body, boolean strict) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .contentType("application/json; charset=utf-8")
+                .body(body)
+                .post("/api/arp/validateRoCrate?strict=" + strict);
     }
 }
