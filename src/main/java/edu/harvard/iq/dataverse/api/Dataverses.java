@@ -46,6 +46,7 @@ import edu.harvard.iq.dataverse.engine.command.impl.DeleteDataverseCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.DeleteDataverseLinkingDataverseCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.DeleteExplicitGroupCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetSchemaCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.GetDataverseMetadataLanguageCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetCollectionQuotaCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.GetCollectionStorageUseCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.UpdateMetadataBlockFacetRootCommand;
