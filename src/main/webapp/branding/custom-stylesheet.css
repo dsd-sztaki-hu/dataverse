@@ -544,3 +544,14 @@ div.card-preview-icon-block img {
 		margin-top: 0px;
 	}
 }
+
+#dataverseUserForm\:dataRelatedToMeView\:mutedNotifications {
+    margin-top: 15px;
+    border-top: 1px solid lightgrey;
+
+}
+
+label[for="mutedNotifications"] {
+    margin-top: 15px;
+    border-top: 1px solid lightgrey;
+}
