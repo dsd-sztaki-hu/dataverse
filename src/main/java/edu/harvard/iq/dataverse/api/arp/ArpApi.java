@@ -870,15 +870,11 @@ public class ArpApi extends AbstractApiBean {
     @Path("/validateRoCrate")
     @Consumes("application/json")
     @Produces("application/json")
-    @AuthRequired
     public Response validateRoCrate(
-            @Context ContainerRequestContext crc,
             @QueryParam("strict") @DefaultValue("false") boolean isStrict,
             String roCrateJson)
     {
-        AuthenticatedUser user;
         try {
-            user = getRequestAuthenticatedUserOrDie(crc);
             RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
 
             var hasIssues = !roCrateImportPrepResult.getErrors().isEmpty() || !roCrateImportPrepResult.getWarnings().isEmpty();
@@ -896,10 +892,6 @@ public class ArpApi extends AbstractApiBean {
         } catch (RuntimeException e) {
             e.printStackTrace();
             return error(INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-        catch (WrappedResponse ex) {
-            ex.printStackTrace();
-            return error(FORBIDDEN, "Authorized users only.");
         }
     }
     
