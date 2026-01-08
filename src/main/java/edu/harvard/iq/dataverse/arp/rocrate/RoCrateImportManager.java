@@ -1337,7 +1337,7 @@ public class RoCrateImportManager {
                 rootDataEntityProperties, mapper));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
-        Writers.newFolderWriter().save(roCrate, roCrateFolderPath);
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
         writeOutRoCrateExtras(extraMetadata, roCrateServiceBean.getRoCrateParentFolder(dataset));
     }
 

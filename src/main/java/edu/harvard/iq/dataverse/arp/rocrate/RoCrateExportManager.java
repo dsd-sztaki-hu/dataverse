@@ -147,7 +147,7 @@ public class RoCrateExportManager {
         // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
         // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
         // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
-        Writers.newFolderWriter().save(roCrate, roCrateFolderPath);
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
         // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
         // addUploadedFileMetadata would do nothing.
         roCrateUploadServiceBean.reset();
@@ -962,6 +962,9 @@ public class RoCrateExportManager {
         }
         var file = fileEntityBuilder.build();
         roCrate.addDataEntity(file);
+        if (!toHasPart) {
+            roCrate.getRootDataEntity().removeFromHasPart(file.getId());
+        }
 
         return fileId;
     }
@@ -1051,7 +1054,7 @@ public class RoCrateExportManager {
                 .readCrate(roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
         RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), null);
-        Writers.newFolderWriter().save(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
     }
 
     public void updateRoCrateFileMetadataAfterIngest(List<Long> fileIds) throws IOException {
@@ -1068,7 +1071,7 @@ public class RoCrateExportManager {
                     .readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
             RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             updateFileMetadataAfterIngest(roCrate, datasetVersion);
-            Writers.newFolderWriter().save(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
             
         }
     }
@@ -1118,7 +1121,7 @@ public class RoCrateExportManager {
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
 
         try {
-            Writers.newFolderWriter().save(roCrateWithPreview, roCrateFolderPath);
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
             
         } catch (IOException e) {
             throw new RuntimeException(e);
