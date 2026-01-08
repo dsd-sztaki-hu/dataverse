@@ -15,7 +15,9 @@ package edu.harvard.iq.dataverse.util;
  */
 
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
+import jakarta.enterprise.inject.spi.CDI;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
@@ -87,6 +89,28 @@ public class SignpostingResources {
                 + workingDatasetVersion.getVersionNumber() + "." + workingDatasetVersion.getMinorVersionNumber()
                 + "/linkset?persistentId=" + ds.getProtocol() + ":" + ds.getAuthority() + "/" + ds.getIdentifier() + "> ; rel=\"linkset\";type=\"application/linkset+json\"";
         valueList.add(linkset);
+
+        String profiles = "";
+        try {
+            // We are not in a managed bean so RoCrateServiceBean cannot be injected directly, need to lookup
+            RoCrateServiceBean roCrateServiceBean = CDI.current().select(RoCrateServiceBean.class).get();
+            profiles = String.join(" ", roCrateServiceBean.collectConformsTo(workingDatasetVersion));
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
+
+        String roCrateJson = "<" + systemConfig.getDataverseSiteUrl() + "/api/arp/rocrate/"
+                + ds.getProtocol() + ":" + ds.getAuthority() + "/" + ds.getIdentifier() + "?version=" +
+                workingDatasetVersion.getVersionNumber() + "." + workingDatasetVersion.getMinorVersionNumber() + 
+                ">;rel=\"item\"" + ";type=\"application/ld+json\"; profile=\"" + profiles + "\"";
+        valueList.add(roCrateJson);
+
+        String roCrateZip = "<" + systemConfig.getDataverseSiteUrl() + "/api/access/datafiles/rocrate/"
+                + ds.getProtocol() + ":" + ds.getAuthority() + "/" + ds.getIdentifier() + "?version=" +
+                workingDatasetVersion.getVersionNumber() + "." + workingDatasetVersion.getMinorVersionNumber() +
+                ">;rel=\"item\"" + ";type=\"application/zip\"; profile=\"" + profiles + "\"";
+        valueList.add(roCrateZip);
         logger.fine(String.format("valueList is: %s", valueList));
 
         return String.join(", ", valueList);

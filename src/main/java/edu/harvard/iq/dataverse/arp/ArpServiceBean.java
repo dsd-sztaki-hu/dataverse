@@ -14,14 +14,17 @@ import edu.harvard.iq.dataverse.api.DatasetFieldServiceApi;
 import edu.harvard.iq.dataverse.api.arp.*;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
+import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.ApiToken;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
+import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrlServiceBean;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.FileUtil;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import org.apache.commons.lang3.StringUtils;
@@ -66,6 +69,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.getJsonObject;
@@ -108,6 +113,9 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     PrivateUrlServiceBean privateUrlService;
+
+    @EJB
+    PermissionServiceBean  permissionService;
 
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     private EntityManager em;
@@ -1304,8 +1312,9 @@ public class ArpServiceBean implements java.io.Serializable {
         // Check if the schema:identifier is already in use before importing the template into Dataverse
         if (isExport) {
             var id = cedarResource.get("@id").getAsString();
-            if (arpMetadataBlockServiceBean.isDuplicateSchemaIdentifier(idNode.getAsString(), id)) {
-                errors.errors.add("The schema:identifier is already in use! Please choose a different schema:identifier.");
+            var providedVersion = cedarResource.has("pav:version") ? cedarResource.get("pav:version").getAsString() : null;
+            if (arpMetadataBlockServiceBean.isDuplicateSchemaIdentifier(idNode.getAsString(), id, providedVersion)) {
+                errors.errors.add("Resources with the same schema:identifier must have a version greater than or equal to the existing version. Please update the version of the resource to be imported.");
                 return errors;
             }
         }
@@ -1895,6 +1904,71 @@ public class ArpServiceBean implements java.io.Serializable {
                 && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.classes").isEmpty()
                 || JsonHelper.hasJsonElement(cedarFieldTemplate, "_valueConstraints.ontologies")
                 && !JsonHelper.getJsonArray(cedarFieldTemplate, "_valueConstraints.ontologies").isEmpty();
+    }
+
+    public String extractFileFromZip(ByteArrayInputStream processedZipStream, String fileName) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(processedZipStream)) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().contains(fileName)) {
+                    return new String(zis.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        return null; // file not found
+    }
+
+    public JsonObject getFileClassEn() {
+        return fileClassEn;
+    }
+
+    // This function works like the on in the FileDownloadHelper, but without caching and without JSF scope requirement
+    public boolean canDownloadFile(FileMetadata fileMetadata, DataverseRequest request) {
+        if (fileMetadata == null){
+            return false;
+        }
+
+        if ((fileMetadata.getId() == null) || (fileMetadata.getDataFile().getId() == null)){
+            return false;
+        }
+
+        boolean isRestrictedFile = fileMetadata.isRestricted() || fileMetadata.getDataFile().isRestricted();
+        if (fileMetadata.getDatasetVersion().isDeaccessioned()) {
+            return this.doesSessionUserHavePermission(Permission.EditDataset, fileMetadata, request.getUser());
+        }
+
+        if (!isRestrictedFile && !FileUtil.isActivelyEmbargoed(fileMetadata)){
+            return true;
+        }
+
+        // See if the DataverseRequest, which contains IP Groups, has permission to download the file.
+        if (permissionService.requestOn(request, fileMetadata.getDataFile()).has(Permission.DownloadFile)) {
+            logger.fine("The DataverseRequest (User plus IP address) has access to download the file.");
+            return true;
+        }
+
+        return false;
+    }
+
+    // This function works like the on in the FileDownloadHelper, but without caching and without JSF scope requirement
+    public boolean doesSessionUserHavePermission(Permission permissionToCheck, FileMetadata fileMetadata, User user){
+        if (permissionToCheck == null){
+            return false;
+        }
+
+        DvObject objectToCheck = null;
+
+        if (permissionToCheck.equals(Permission.EditDataset)){
+            objectToCheck = fileMetadata.getDatasetVersion().getDataset();
+        } else if (permissionToCheck.equals(Permission.DownloadFile)){
+            objectToCheck = fileMetadata.getDataFile();
+        }
+
+        if (objectToCheck == null){
+            return false;
+        }
+
+        return permissionService.userOn(user, objectToCheck).has(permissionToCheck);
     }
 
 }

@@ -63,8 +63,7 @@
       "dataSources",
       "originOfSources",
       "characteristicOfSources",
-      "accessToSources",
-      "hunTitle"
+      "accessToSources"
     ],
     "propertyLabels": {
       "title": "title",
@@ -101,15 +100,14 @@
       "dataSources": "dataSources",
       "originOfSources": "originOfSources",
       "characteristicOfSources": "characteristicOfSources",
-      "accessToSources": "accessToSources",
-      "hunTitle": "hunTitle"
+      "accessToSources": "accessToSources"
     },
     "propertyDescriptions": {
       "title": "The main title of the Dataset",
       "subtitle": "A secondary title that amplifies or states certain limitations on the main title",
       "alternativeTitle": "Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title",
       "alternativeURL": "Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage",
-      "otherId": "Another unique identifier for the Dataset (e.g. producer\u0027s or another repository\u0027s identifier)",
+      "otherId": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
       "author": "The entity, e.g. a person or organization, that created the Dataset",
       "datasetContact": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
       "dsDescription": "A summary describing the purpose, nature, and scope of the Dataset",
@@ -118,12 +116,12 @@
       "topicClassification": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
       "publication": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
       "notesText": "Additional information about the Dataset",
-      "language": "A language that the Dataset\u0027s files is written in",
+      "language": "A language that the Dataset's files is written in",
       "producer": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
       "productionDate": "The date when the data were produced (not distributed, published, or archived)",
       "productionPlace": "The location where the data and any related materials were produced or collected",
       "contributor": "The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset",
-      "grantNumber": "Information about the Dataset\u0027s financial support",
+      "grantNumber": "Information about the Dataset's financial support",
       "distributor": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
       "distributionDate": "The date when the Dataset was made available for distribution/presentation",
       "depositor": "The entity, such as a person or organization, that deposited the Dataset in the repository",
@@ -134,13 +132,12 @@
       "series": "Information about the dataset series to which the Dataset belong",
       "software": "Information about the software used to generate the Dataset",
       "relatedMaterial": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
-      "relatedDatasets": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset\u0027s subject",
+      "relatedDatasets": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
       "otherReferences": "Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset",
       "dataSources": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
       "originOfSources": "For historical sources, the origin and any rules followed in establishing them as sources",
       "characteristicOfSources": "Characteristics not already noted elsewhere",
-      "accessToSources": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
-      "hunTitle": "Help Text"
+      "accessToSources": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access"
     }
   },
   "properties": {
@@ -301,7 +298,7 @@
         },
         "title": {
           "enum": [
-            "http://purl.org/dc/terms/title"
+            "https://dataverse.org/schema/citation/title"
           ]
         },
         "subtitle": {
@@ -311,12 +308,12 @@
         },
         "alternativeTitle": {
           "enum": [
-            "http://purl.org/dc/terms/alternative"
+            "https://dataverse.org/schema/citation/alternativeTitle"
           ]
         },
         "alternativeURL": {
           "enum": [
-            "https://schema.org/distribution"
+            "https://dataverse.org/schema/citation/alternativeURL"
           ]
         },
         "otherId": {
@@ -326,7 +323,7 @@
         },
         "author": {
           "enum": [
-            "http://purl.org/dc/terms/creator"
+            "https://dataverse.org/schema/citation/author"
           ]
         },
         "datasetContact": {
@@ -341,7 +338,7 @@
         },
         "subject": {
           "enum": [
-            "http://purl.org/dc/terms/subject"
+            "https://dataverse.org/schema/citation/subject"
           ]
         },
         "keyword": {
@@ -356,7 +353,7 @@
         },
         "publication": {
           "enum": [
-            "http://purl.org/dc/terms/isReferencedBy"
+            "https://dataverse.org/schema/citation/publication"
           ]
         },
         "notesText": {
@@ -366,7 +363,7 @@
         },
         "language": {
           "enum": [
-            "http://purl.org/dc/terms/language"
+            "https://dataverse.org/schema/citation/language"
           ]
         },
         "producer": {
@@ -386,12 +383,12 @@
         },
         "contributor": {
           "enum": [
-            "http://purl.org/dc/terms/contributor"
+            "https://dataverse.org/schema/citation/contributor"
           ]
         },
         "grantNumber": {
           "enum": [
-            "https://schema.org/sponsor"
+            "https://dataverse.org/schema/citation/grantNumber"
           ]
         },
         "distributor": {
@@ -411,12 +408,12 @@
         },
         "dateOfDeposit": {
           "enum": [
-            "http://purl.org/dc/terms/dateSubmitted"
+            "https://dataverse.org/schema/citation/dateOfDeposit"
           ]
         },
         "timePeriodCovered": {
           "enum": [
-            "https://schema.org/temporalCoverage"
+            "https://dataverse.org/schema/citation/timePeriodCovered"
           ]
         },
         "dateOfCollection": {
@@ -426,7 +423,7 @@
         },
         "kindOfData": {
           "enum": [
-            "http://rdf-vocabulary.ddialliance.org/discovery#kindOfData"
+            "https://dataverse.org/schema/citation/kindOfData"
           ]
         },
         "series": {
@@ -436,7 +433,7 @@
         },
         "software": {
           "enum": [
-            "https://www.w3.org/TR/prov-o/#wasGeneratedBy"
+            "https://dataverse.org/schema/citation/software"
           ]
         },
         "relatedMaterial": {
@@ -446,17 +443,17 @@
         },
         "relatedDatasets": {
           "enum": [
-            "http://purl.org/dc/terms/relation"
+            "https://dataverse.org/schema/citation/relatedDatasets"
           ]
         },
         "otherReferences": {
           "enum": [
-            "http://purl.org/dc/terms/references"
+            "https://dataverse.org/schema/citation/otherReferences"
           ]
         },
         "dataSources": {
           "enum": [
-            "https://www.w3.org/TR/prov-o/#wasDerivedFrom"
+            "https://dataverse.org/schema/citation/dataSources"
           ]
         },
         "originOfSources": {
@@ -472,11 +469,6 @@
         "accessToSources": {
           "enum": [
             "https://dataverse.org/schema/citation/accessToSources"
-          ]
-        },
-        "hunTitle": {
-          "enum": [
-            "https://dataverse.org/schema/citation/hunTitle"
           ]
         }
       },
@@ -660,18 +652,18 @@
       ],
       "schema:name": "title",
       "schema:description": "The main title of the Dataset",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "f52a5066-934d-33d0-ad93-a24e1d39f3ea",
       "title": "title element schema",
       "description": "title element schema generated by the ARP",
-      "hunDescription": "Az adatcsomag teljes címe",
+      "hunDescription": "The main title of the Dataset",
       "skos:prefLabel": "Title",
-      "hunLabel": "Cím",
+      "hunLabel": "Title",
       "_arp": {
         "dataverse": {
           "advancedSearchField": true,
@@ -758,18 +750,18 @@
       ],
       "schema:name": "subtitle",
       "schema:description": "A secondary title that amplifies or states certain limitations on the main title",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "bebee635-8eeb-3503-862a-601ebc386082",
       "title": "subtitle element schema",
       "description": "subtitle element schema generated by the ARP",
-      "hunDescription": "Másodlagos cím, a főcím megerősítésére vagy kiegészítésére.",
+      "hunDescription": "A secondary title that amplifies or states certain limitations on the main title",
       "skos:prefLabel": "Subtitle",
-      "hunLabel": "Alcím",
+      "hunLabel": "Subtitle",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -856,18 +848,18 @@
       ],
       "schema:name": "alternativeTitle",
       "schema:description": "Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "f5d4147d-a11e-3fc6-afa6-6dfcfe15c24d",
       "title": "alternativeTitle element schema",
       "description": "alternativeTitle element schema generated by the ARP",
-      "hunDescription": "Cím, amellyel általában hivatkoznak a projektre, vagy a cím rövidítése",
+      "hunDescription": "Either 1) a title commonly used to refer to the Dataset or 2) an abbreviation of the main title",
       "skos:prefLabel": "Alternative Title",
-      "hunLabel": "Alternatív cím",
+      "hunLabel": "Alternative Title",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -951,22 +943,22 @@
       },
       "schema:name": "alternativeURL",
       "schema:description": "Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "0e029779-fd5d-3d12-9f6c-0c0c3ea22665",
       "title": "alternativeURL element schema",
       "description": "alternativeURL element schema generated by the ARP",
-      "hunDescription": "URL, amelyen az adatcsomag megtekinthető. Például személyes weboldal, vagy a projekt weboldala.",
+      "hunDescription": "Another URL where one can view or access the data in the Dataset, e.g. a project or personal webpage",
       "skos:prefLabel": "Alternative URL",
-      "hunLabel": "Alternatív URL",
+      "hunLabel": "Alternative URL",
       "_arp": {
         "dataverse": {
           "watermark": "https://",
-          "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\"\u003e#VALUE\u003c/a\u003e",
+          "displayFormat": "<a href=\"#VALUE\" target=\"_blank\">#VALUE</a>",
           "advancedSearchField": false,
           "facetable": false,
           "displayoncreate": false
@@ -1135,18 +1127,18 @@
             ],
             "schema:name": "otherIdAgency",
             "schema:description": "The name of the agency that generated the other identifier",
-            "pav:createdOn": "2024-10-11T16:44:23Z",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:23Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "53c9c3df-c25c-389f-85b1-1684fc7a5a89",
             "title": "otherIdAgency element schema",
             "description": "otherIdAgency element schema generated by the ARP",
-            "hunDescription": "Az azonosítót létrehozó szervezet neve.",
+            "hunDescription": "The name of the agency that generated the other identifier",
             "skos:prefLabel": "Agency",
-            "hunLabel": "Szervezet",
+            "hunLabel": "Agency",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -1234,18 +1226,18 @@
             ],
             "schema:name": "otherIdValue",
             "schema:description": "Another identifier uniquely identifies the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:23Z",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:23Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "862dd312-848f-35d5-a4b4-41f4f238c7a7",
             "title": "otherIdValue element schema",
             "description": "otherIdValue element schema generated by the ARP",
-            "hunDescription": "A külső azonosító értéke.",
+            "hunDescription": "Another identifier uniquely identifies the Dataset",
             "skos:prefLabel": "Identifier",
-            "hunLabel": "Azonosító",
+            "hunLabel": "Identifier",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -1258,16 +1250,16 @@
           }
         },
         "schema:name": "otherId",
-        "schema:description": "Another unique identifier for the Dataset (e.g. producer\u0027s or another repository\u0027s identifier)",
+        "schema:description": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
         "required": [
           "@context",
           "@id",
           "otherIdAgency",
           "otherIdValue"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -1277,9 +1269,9 @@
         "title": "otherId element schema",
         "description": "otherId element schema generated by the ARP",
         "schema:identifier": "otherId",
-        "hunDescription": "Külső egyedi azonosító, amely azonosítja az adatcsomagot (Például a készítő, vagy más repozitórium által hozzárendelt szám).",
+        "hunDescription": "Another unique identifier for the Dataset (e.g. producer's or another repository's identifier)",
         "skos:prefLabel": "Other Identifier",
-        "hunLabel": "Külső azonosító",
+        "hunLabel": "Other Identifier",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -1341,8 +1333,8 @@
             "authorIdentifier": "authorIdentifier"
           },
           "propertyDescriptions": {
-            "authorName": "The name of the author, such as the person\u0027s name or the name of an organization",
-            "authorAffiliation": "The name of the entity affiliated with the author, e.g. an organization\u0027s name",
+            "authorName": "The name of the author, such as the person's name or the name of an organization",
+            "authorAffiliation": "The name of the entity affiliated with the author, e.g. an organization's name",
             "authorIdentifierScheme": "The type of identifier that uniquely identifies the author (e.g. ORCID, ISNI)",
             "authorIdentifier": "Uniquely identifies the author when paired with an identifier type"
           }
@@ -1363,12 +1355,12 @@
               },
               "authorIdentifierScheme": {
                 "enum": [
-                  "http://purl.org/spar/datacite/AgentIdentifierScheme"
+                  "https://dataverse.org/schema/citation/authorIdentifierScheme"
                 ]
               },
               "authorIdentifier": {
                 "enum": [
-                  "http://purl.org/spar/datacite/AgentIdentifier"
+                  "https://dataverse.org/schema/citation/authorIdentifier"
                 ]
               }
             },
@@ -1472,19 +1464,19 @@
               "@value"
             ],
             "schema:name": "authorName",
-            "schema:description": "The name of the author, such as the person\u0027s name or the name of an organization",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the author, such as the person's name or the name of an organization",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "dbde41fe-60b2-332c-92cc-a76cea8d8795",
             "title": "authorName element schema",
             "description": "authorName element schema generated by the ARP",
-            "hunDescription": "A szerző család- és utóneve, vagy a szervezet neve.",
+            "hunDescription": "The name of the author, such as the person's name or the name of an organization",
             "skos:prefLabel": "Name",
-            "hunLabel": "Név",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "watermark": "1) Family Name, Given Name or 2) Organization XYZ",
@@ -1572,19 +1564,19 @@
               "@value"
             ],
             "schema:name": "authorAffiliation",
-            "schema:description": "The name of the entity affiliated with the author, e.g. an organization\u0027s name",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the entity affiliated with the author, e.g. an organization's name",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "108cbc23-9c2a-360b-a6a2-ef8934b29fe8",
             "title": "authorAffiliation element schema",
             "description": "authorAffiliation element schema generated by the ARP",
-            "hunDescription": "A szervezet neve, amelyhez a szerző kapcsolódik",
+            "hunDescription": "The name of the entity affiliated with the author, e.g. an organization's name",
             "skos:prefLabel": "Affiliation",
-            "hunLabel": "Intézmény",
+            "hunLabel": "Affiliation",
             "_arp": {
               "dataverse": {
                 "watermark": "Organization XYZ",
@@ -1700,18 +1692,18 @@
             ],
             "schema:name": "authorIdentifierScheme",
             "schema:description": "The type of identifier that uniquely identifies the author (e.g. ORCID, ISNI)",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "976d7b3e-78fc-3bc7-a1c4-71c158dcb885",
             "title": "authorIdentifierScheme element schema",
             "description": "authorIdentifierScheme element schema generated by the ARP",
-            "hunDescription": "A szerzőazonosító neve (ORCID, ISNI).",
+            "hunDescription": "The type of identifier that uniquely identifies the author (e.g. ORCID, ISNI)",
             "skos:prefLabel": "Identifier Type",
-            "hunLabel": "Azonosító típusa",
+            "hunLabel": "Identifier Type",
             "_arp": {
               "dataverse": {
                 "displayFormat": "- #VALUE:",
@@ -1799,18 +1791,18 @@
             ],
             "schema:name": "authorIdentifier",
             "schema:description": "Uniquely identifies the author when paired with an identifier type",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:57Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:57Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "6a473b75-d891-34e3-8e78-45011c557569",
             "title": "authorIdentifier element schema",
             "description": "authorIdentifier element schema generated by the ARP",
-            "hunDescription": "A szerzőazonosító értéke.",
+            "hunDescription": "Uniquely identifies the author when paired with an identifier type",
             "skos:prefLabel": "Identifier",
-            "hunLabel": "Azonosító",
+            "hunLabel": "Identifier",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -1832,9 +1824,9 @@
           "authorIdentifierScheme",
           "authorIdentifier"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -1844,9 +1836,9 @@
         "title": "author element schema",
         "description": "author element schema generated by the ARP",
         "schema:identifier": "author",
-        "hunDescription": "A projekt készítéséért felelős személyek, szervezetek.",
+        "hunDescription": "The entity, e.g. a person or organization, that created the Dataset",
         "skos:prefLabel": "Author",
-        "hunLabel": "Szerző",
+        "hunLabel": "Author",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -1905,9 +1897,9 @@
             "datasetContactEmail": "datasetContactEmail"
           },
           "propertyDescriptions": {
-            "datasetContactName": "The name of the point of contact, e.g. the person\u0027s name or the name of an organization",
-            "datasetContactAffiliation": "The name of the entity affiliated with the point of contact, e.g. an organization\u0027s name",
-            "datasetContactEmail": "The point of contact\u0027s email address"
+            "datasetContactName": "The name of the point of contact, e.g. the person's name or the name of an organization",
+            "datasetContactAffiliation": "The name of the entity affiliated with the point of contact, e.g. an organization's name",
+            "datasetContactEmail": "The point of contact's email address"
           }
         },
         "properties": {
@@ -2030,19 +2022,19 @@
               "@value"
             ],
             "schema:name": "datasetContactName",
-            "schema:description": "The name of the point of contact, e.g. the person\u0027s name or the name of an organization",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the point of contact, e.g. the person's name or the name of an organization",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "d75b2fd5-8276-32bd-a9e9-f178bac301bd",
             "title": "datasetContactName element schema",
             "description": "datasetContactName element schema generated by the ARP",
-            "hunDescription": "A kapcsolattartó családi- és utóneve, vagy a kapcsolattartó szervezet neve.",
+            "hunDescription": "The name of the point of contact, e.g. the person's name or the name of an organization",
             "skos:prefLabel": "Name",
-            "hunLabel": "Név",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "watermark": "1) FamilyName, GivenName or 2) Organization",
@@ -2130,19 +2122,19 @@
               "@value"
             ],
             "schema:name": "datasetContactAffiliation",
-            "schema:description": "The name of the entity affiliated with the point of contact, e.g. an organization\u0027s name",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the entity affiliated with the point of contact, e.g. an organization's name",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "e86de96a-366f-3f40-820d-f8c8af80da6e",
             "title": "datasetContactAffiliation element schema",
             "description": "datasetContactAffiliation element schema generated by the ARP",
-            "hunDescription": "A szervezet neve, amelyhez a kapcsolattartó közhető.",
+            "hunDescription": "The name of the entity affiliated with the point of contact, e.g. an organization's name",
             "skos:prefLabel": "Affiliation",
-            "hunLabel": "Intézmény",
+            "hunLabel": "Affiliation",
             "_arp": {
               "dataverse": {
                 "watermark": "Organization XYZ",
@@ -2230,17 +2222,17 @@
               "@value"
             ],
             "schema:name": "datasetContactEmail",
-            "schema:description": "The point of contact\u0027s email address",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The point of contact's email address",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "cd6ea49e-d6f1-339b-91b3-8429209b02bf",
             "title": "datasetContactEmail element schema",
             "description": "datasetContactEmail element schema generated by the ARP",
-            "hunDescription": "A kapcsolattartó email címe. Nem jelenik meg az adatlapon.",
+            "hunDescription": "The point of contact's email address",
             "skos:prefLabel": "E-mail",
             "hunLabel": "E-mail",
             "_arp": {
@@ -2264,9 +2256,9 @@
           "datasetContactAffiliation",
           "datasetContactEmail"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -2276,9 +2268,9 @@
         "title": "datasetContact element schema",
         "description": "datasetContact element schema generated by the ARP",
         "schema:identifier": "datasetContact",
-        "hunDescription": "Kapcsolat.",
+        "hunDescription": "The entity, e.g. a person or organization, that users of the Dataset can contact with questions",
         "skos:prefLabel": "Point of Contact",
-        "hunLabel": "Kapcsolat",
+        "hunLabel": "Point of Contact",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -2455,18 +2447,18 @@
             ],
             "schema:name": "dsDescriptionValue",
             "schema:description": "A summary describing the purpose, nature, and scope of the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "4097921a-35c4-3dbf-b5b7-a24b69011b0d",
             "title": "dsDescriptionValue element schema",
             "description": "dsDescriptionValue element schema generated by the ARP",
-            "hunDescription": "Az adatcsomag céljának, természetének és területének összegzése.",
+            "hunDescription": "A summary describing the purpose, nature, and scope of the Dataset",
             "skos:prefLabel": "Text",
-            "hunLabel": "Szöveg",
+            "hunLabel": "Text",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -2556,18 +2548,18 @@
             ],
             "schema:name": "dsDescriptionDate",
             "schema:description": "The date when the description was added to the Dataset. If the Dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "2339acd8-2ed4-31fd-9f20-32ded0372c41",
             "title": "dsDescriptionDate element schema",
             "description": "dsDescriptionDate element schema generated by the ARP",
-            "hunDescription": "Abban az esetben, ha az adatcsomaghoz több leírás tartozik (pl. a készítő és a repozitórium is hozzáadott egyet-egyet), a dátum segít megkülönböztetni a leírásokat. A mező formátuma követi az ISO szabványt: ÉÉÉÉ-HH-NN.",
+            "hunDescription": "The date when the description was added to the Dataset. If the Dataset contains more than one description, e.g. the data producer supplied one description and the data repository supplied another, this date is used to distinguish between the descriptions",
             "skos:prefLabel": "Date",
-            "hunLabel": "Dátum",
+            "hunLabel": "Date",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -2588,9 +2580,9 @@
           "dsDescriptionValue",
           "dsDescriptionDate"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -2600,9 +2592,9 @@
         "title": "dsDescription element schema",
         "description": "dsDescription element schema generated by the ARP",
         "schema:identifier": "dsDescription",
-        "hunDescription": "Az adatcsomag céljának, természetének és területének összegzése.",
+        "hunDescription": "A summary describing the purpose, nature, and scope of the Dataset",
         "skos:prefLabel": "Description",
-        "hunLabel": "Leírás",
+        "hunLabel": "Description",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -2740,18 +2732,18 @@
       ],
       "schema:name": "subject",
       "schema:description": "The area of study relevant to the Dataset",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "992cdc8d-2545-39ed-857e-78330d277838",
       "title": "subject element schema",
       "description": "subject element schema generated by the ARP",
-      "hunDescription": "Tartományt leíró tárgy. Kategóriák, amelyek kapcsolódnak az adatcsomaghoz.",
+      "hunDescription": "The area of study relevant to the Dataset",
       "skos:prefLabel": "Subject",
-      "hunLabel": "Tárgy",
+      "hunLabel": "Subject",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -2808,7 +2800,7 @@
           "propertyDescriptions": {
             "keywordValue": "A key term that describes important aspects of the Dataset",
             "keywordVocabulary": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
-            "keywordVocabularyURI": "The URL where one can access information about the term\u0027s controlled vocabulary"
+            "keywordVocabularyURI": "The URL where one can access information about the term's controlled vocabulary"
           }
         },
         "properties": {
@@ -2932,18 +2924,18 @@
             ],
             "schema:name": "keywordValue",
             "schema:description": "A key term that describes important aspects of the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "29a1757b-6be4-3b8e-a1a8-4d83b3371616",
             "title": "keywordValue element schema",
             "description": "keywordValue element schema generated by the ARP",
-            "hunDescription": "Kulcskifejezések, amelyek az adatcsomag fontosabb aspektusait írják le. Kulcsszóindexek építésére, osztályzási és visszakeresési célra használhatók. Szókészlet felhasználható. A szókészlet paraméter használható a szókészlet megadására, mint LCSH, MeSH, vagy egyebek. A szókészlet URL paraméterben megadható a szókészlet elérési útja.",
+            "hunDescription": "A key term that describes important aspects of the Dataset",
             "skos:prefLabel": "Term",
-            "hunLabel": "Érték",
+            "hunLabel": "Term",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -3031,18 +3023,18 @@
             ],
             "schema:name": "keywordVocabulary",
             "schema:description": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "142a817a-d77b-3294-9c49-6997eb022810",
             "title": "keywordVocabulary element schema",
             "description": "keywordVocabulary element schema generated by the ARP",
-            "hunDescription": "A használt kulcsszó készlet megadására, mint LCSH, MeSH, vagy egyebek.",
+            "hunDescription": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
             "skos:prefLabel": "Controlled Vocabulary Name",
-            "hunLabel": "Szókészlet",
+            "hunLabel": "Controlled Vocabulary Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "(#VALUE)",
@@ -3124,23 +3116,23 @@
               }
             },
             "schema:name": "keywordVocabularyURI",
-            "schema:description": "The URL where one can access information about the term\u0027s controlled vocabulary",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The URL where one can access information about the term's controlled vocabulary",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "d68c6c9e-20a5-35d9-ae9a-c98c970b37b8",
             "title": "keywordVocabularyURI element schema",
             "description": "keywordVocabularyURI element schema generated by the ARP",
-            "hunDescription": "A szókészlet elérési útját adja meg.",
+            "hunDescription": "The URL where one can access information about the term's controlled vocabulary",
             "skos:prefLabel": "Controlled Vocabulary URL",
-            "hunLabel": "Szókészlet URL-je",
+            "hunLabel": "Controlled Vocabulary URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\" rel\u003d\"noopener\"\u003e#VALUE\u003c/a\u003e",
+                "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": true
@@ -3158,9 +3150,9 @@
           "keywordVocabulary",
           "keywordVocabularyURI"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -3170,9 +3162,9 @@
         "title": "keyword element schema",
         "description": "keyword element schema generated by the ARP",
         "schema:identifier": "keyword",
-        "hunDescription": "Kulcskifejezések, amelyek az adatcsomag legfontosabb jellemzőire utalnak.",
+        "hunDescription": "A key term that describes an important aspect of the Dataset and information about any controlled vocabulary used",
         "skos:prefLabel": "Keyword",
-        "hunLabel": "Kulcsszó",
+        "hunLabel": "Keyword",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -3233,7 +3225,7 @@
           "propertyDescriptions": {
             "topicClassValue": "A topic or subject term",
             "topicClassVocab": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
-            "topicClassVocabURI": "The URL where one can access information about the term\u0027s controlled vocabulary"
+            "topicClassVocabURI": "The URL where one can access information about the term's controlled vocabulary"
           }
         },
         "properties": {
@@ -3357,18 +3349,18 @@
             ],
             "schema:name": "topicClassValue",
             "schema:description": "A topic or subject term",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "71495987-974d-3224-a718-cd90837f9c41",
             "title": "topicClassValue element schema",
             "description": "topicClassValue element schema generated by the ARP",
-            "hunDescription": "Téma vagy tématerület megnevezése.",
+            "hunDescription": "A topic or subject term",
             "skos:prefLabel": "Term",
-            "hunLabel": "Érték",
+            "hunLabel": "Term",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -3456,18 +3448,18 @@
             ],
             "schema:name": "topicClassVocab",
             "schema:description": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "d82c9a71-1959-3ecd-af6c-39efb0c67c66",
             "title": "topicClassVocab element schema",
             "description": "topicClassVocab element schema generated by the ARP",
-            "hunDescription": "A használt kulcsszó készlet megadására, mint LCSH, MeSH, vagy egyebek.",
+            "hunDescription": "The controlled vocabulary used for the keyword term (e.g. LCSH, MeSH)",
             "skos:prefLabel": "Controlled Vocabulary Name",
-            "hunLabel": "Szókészlet",
+            "hunLabel": "Controlled Vocabulary Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "(#VALUE)",
@@ -3549,23 +3541,23 @@
               }
             },
             "schema:name": "topicClassVocabURI",
-            "schema:description": "The URL where one can access information about the term\u0027s controlled vocabulary",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The URL where one can access information about the term's controlled vocabulary",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "c2916b2b-eb5c-3831-9e40-89ea80c07704",
             "title": "topicClassVocabURI element schema",
             "description": "topicClassVocabURI element schema generated by the ARP",
-            "hunDescription": "A szókészlet elérési útját adja meg.",
+            "hunDescription": "The URL where one can access information about the term's controlled vocabulary",
             "skos:prefLabel": "Controlled Vocabulary URL",
-            "hunLabel": "Szókészlet URL-je",
+            "hunLabel": "Controlled Vocabulary URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\" rel\u003d\"noopener\"\u003e#VALUE\u003c/a\u003e",
+                "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -3583,9 +3575,9 @@
           "topicClassVocab",
           "topicClassVocabURI"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -3595,9 +3587,9 @@
         "title": "topicClassification element schema",
         "description": "topicClassification element schema generated by the ARP",
         "schema:identifier": "topicClassification",
-        "hunDescription": "Az osztályzás mező jelöli azokat a széleskörű, fontos témákat vagy tématerületeket, melyeket az adatcsomag lefed. A Kongresszusi Könyvtár tárgyi kifejezései itt használhatók.",
+        "hunDescription": "Indicates a broad, important topic or subject that the Dataset covers and information about any controlled vocabulary used",
         "skos:prefLabel": "Topic Classification",
-        "hunLabel": "Téma besorolás",
+        "hunLabel": "Topic Classification",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -3670,22 +3662,22 @@
             "properties": {
               "publicationCitation": {
                 "enum": [
-                  "http://purl.org/dc/terms/bibliographicCitation"
+                  "https://dataverse.org/schema/citation/publicationCitation"
                 ]
               },
               "publicationIDType": {
                 "enum": [
-                  "http://purl.org/spar/datacite/ResourceIdentifierScheme"
+                  "https://dataverse.org/schema/citation/publicationIDType"
                 ]
               },
               "publicationIDNumber": {
                 "enum": [
-                  "http://purl.org/spar/datacite/ResourceIdentifier"
+                  "https://dataverse.org/schema/citation/publicationIDNumber"
                 ]
               },
               "publicationURL": {
                 "enum": [
-                  "https://schema.org/distribution"
+                  "https://dataverse.org/schema/citation/publicationURL"
                 ]
               }
             },
@@ -3790,18 +3782,18 @@
             ],
             "schema:name": "publicationCitation",
             "schema:description": "The full bibliographic citation for the related publication",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "376c5e5a-4012-362e-91a4-08ec182cefe5",
             "title": "publicationCitation element schema",
             "description": "publicationCitation element schema generated by the ARP",
-            "hunDescription": "A teljes bibliográfiai idézet ehhez a közleményhez.",
+            "hunDescription": "The full bibliographic citation for the related publication",
             "skos:prefLabel": "Citation",
-            "hunLabel": "Idézés kapcsolat",
+            "hunLabel": "Citation",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -3949,18 +3941,18 @@
             ],
             "schema:name": "publicationIDType",
             "schema:description": "The type of identifier that uniquely identifies a related publication",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "8da107cb-7fec-3119-b8a8-987b65cfab4a",
             "title": "publicationIDType element schema",
             "description": "publicationIDType element schema generated by the ARP",
-            "hunDescription": "A közleményhez tartozó digitális azonosító típusa. (pl. DOI)",
+            "hunDescription": "The type of identifier that uniquely identifies a related publication",
             "skos:prefLabel": "Identifier Type",
-            "hunLabel": "Azonosító típusa",
+            "hunLabel": "Identifier Type",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE: ",
@@ -4048,18 +4040,18 @@
             ],
             "schema:name": "publicationIDNumber",
             "schema:description": "The identifier for a related publication",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "5c1ee371-8117-3e37-bd07-474799f9add9",
             "title": "publicationIDNumber element schema",
             "description": "publicationIDNumber element schema generated by the ARP",
-            "hunDescription": "A közleményhez tartozó digitális azonosító értéke.",
+            "hunDescription": "The identifier for a related publication",
             "skos:prefLabel": "Identifier",
-            "hunLabel": "Azonosító értéke",
+            "hunLabel": "Identifier",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -4142,22 +4134,22 @@
             },
             "schema:name": "publicationURL",
             "schema:description": "The URL form of the identifier entered in the Identifier field, e.g. the DOI URL if a DOI was entered in the Identifier field. Used to display what was entered in the ID Type and ID Number fields as a link. If what was entered in the Identifier field has no URL form, the URL of the publication webpage is used, e.g. a journal article webpage",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "81c38bfd-4842-3ec8-9114-4183c985b680",
             "title": "publicationURL element schema",
             "description": "publicationURL element schema generated by the ARP",
-            "hunDescription": "Hivatkozás a közlemény weboldalára (pl. folyóiratcikk oldala, archive rekord vagy egyéb).",
+            "hunDescription": "The URL form of the identifier entered in the Identifier field, e.g. the DOI URL if a DOI was entered in the Identifier field. Used to display what was entered in the ID Type and ID Number fields as a link. If what was entered in the Identifier field has no URL form, the URL of the publication webpage is used, e.g. a journal article webpage",
             "skos:prefLabel": "URL",
             "hunLabel": "URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\" rel\u003d\"noopener\"\u003e#VALUE\u003c/a\u003e",
+                "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -4176,9 +4168,9 @@
           "publicationIDNumber",
           "publicationURL"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -4188,9 +4180,9 @@
         "title": "publication element schema",
         "description": "publication element schema generated by the ARP",
         "schema:identifier": "publication",
-        "hunDescription": "Közlemények, amelyek ennek az adatcsomagnak az adatait használják. A metaadat fülön a kapcsolódó publikációk teljes listája megjelenítésre kerül.",
+        "hunDescription": "The article or report that uses the data in the Dataset. The full list of related publications will be displayed on the metadata tab",
         "skos:prefLabel": "Related Publication",
-        "hunLabel": "Kapcsolódó közlemények",
+        "hunLabel": "Related Publication",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -4283,18 +4275,18 @@
       ],
       "schema:name": "notesText",
       "schema:description": "Additional information about the Dataset",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "aef1d2ae-15cd-329a-8cac-bc8e5c3be20d",
       "title": "notesText element schema",
       "description": "notesText element schema generated by the ARP",
-      "hunDescription": "További fontos információk az adatcsomaggal kapcsolatban.",
+      "hunDescription": "Additional information about the Dataset",
       "skos:prefLabel": "Notes",
-      "hunLabel": "Megjegyzés",
+      "hunLabel": "Notes",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -4941,19 +4933,19 @@
         "@value"
       ],
       "schema:name": "language",
-      "schema:description": "A language that the Dataset\u0027s files is written in",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "schema:description": "A language that the Dataset's files is written in",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "3e396105-c287-3140-982e-c82ca3ab5e21",
       "title": "language element schema",
       "description": "language element schema generated by the ARP",
-      "hunDescription": "Az adatcsomag nyelve",
+      "hunDescription": "A language that the Dataset's files is written in",
       "skos:prefLabel": "Language",
-      "hunLabel": "Nyelv",
+      "hunLabel": "Language",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -5012,11 +5004,11 @@
             "producerLogoURL": "producerLogoURL"
           },
           "propertyDescriptions": {
-            "producerName": "The name of the entity, e.g. the person\u0027s name or the name of an organization",
-            "producerAffiliation": "The name of the entity affiliated with the producer, e.g. an organization\u0027s name",
-            "producerAbbreviation": "The producer\u0027s abbreviated name (e.g. IQSS, ICPSR)",
-            "producerURL": "The URL of the producer\u0027s website",
-            "producerLogoURL": "The URL of the producer\u0027s logo"
+            "producerName": "The name of the entity, e.g. the person's name or the name of an organization",
+            "producerAffiliation": "The name of the entity affiliated with the producer, e.g. an organization's name",
+            "producerAbbreviation": "The producer's abbreviated name (e.g. IQSS, ICPSR)",
+            "producerURL": "The URL of the producer's website",
+            "producerLogoURL": "The URL of the producer's logo"
           }
         },
         "properties": {
@@ -5149,19 +5141,19 @@
               "@value"
             ],
             "schema:name": "producerName",
-            "schema:description": "The name of the entity, e.g. the person\u0027s name or the name of an organization",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the entity, e.g. the person's name or the name of an organization",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "0aec56af-0fb6-30c9-9179-5cbd8c92edbc",
             "title": "producerName element schema",
             "description": "producerName element schema generated by the ARP",
-            "hunDescription": "A készítő neve",
+            "hunDescription": "The name of the entity, e.g. the person's name or the name of an organization",
             "skos:prefLabel": "Name",
-            "hunLabel": "Név",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "watermark": "1) FamilyName, GivenName or 2) Organization",
@@ -5249,19 +5241,19 @@
               "@value"
             ],
             "schema:name": "producerAffiliation",
-            "schema:description": "The name of the entity affiliated with the producer, e.g. an organization\u0027s name",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the entity affiliated with the producer, e.g. an organization's name",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "15d455ad-6100-3758-90af-ef40a3de1301",
             "title": "producerAffiliation element schema",
             "description": "producerAffiliation element schema generated by the ARP",
-            "hunDescription": "Szervezet, amelyhez a készítő tartozik.",
+            "hunDescription": "The name of the entity affiliated with the producer, e.g. an organization's name",
             "skos:prefLabel": "Affiliation",
-            "hunLabel": "Intézmény",
+            "hunLabel": "Affiliation",
             "_arp": {
               "dataverse": {
                 "watermark": "Organization XYZ",
@@ -5349,19 +5341,19 @@
               "@value"
             ],
             "schema:name": "producerAbbreviation",
-            "schema:description": "The producer\u0027s abbreviated name (e.g. IQSS, ICPSR)",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The producer's abbreviated name (e.g. IQSS, ICPSR)",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "735a7b06-d6d2-3fee-b05e-e22e1aa0e95d",
             "title": "producerAbbreviation element schema",
             "description": "producerAbbreviation element schema generated by the ARP",
-            "hunDescription": "A készítőre vonatkozó közismert rövidítés. (pl. IQSS, ICPSR).",
+            "hunDescription": "The producer's abbreviated name (e.g. IQSS, ICPSR)",
             "skos:prefLabel": "Abbreviated Name",
-            "hunLabel": "Rövidítés",
+            "hunLabel": "Abbreviated Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "(#VALUE)",
@@ -5443,23 +5435,23 @@
               }
             },
             "schema:name": "producerURL",
-            "schema:description": "The URL of the producer\u0027s website",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The URL of the producer's website",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "484c429e-d7d7-3058-aecb-aa402a7dd7db",
             "title": "producerURL element schema",
             "description": "producerURL element schema generated by the ARP",
-            "hunDescription": "A készítő URL-je a személy vagy szervezet internetes profiljára mutat, ha van ilyen. A készítő oldalának abszolút URL-jét kell beírni, például http://www.my.org.",
+            "hunDescription": "The URL of the producer's website",
             "skos:prefLabel": "URL",
             "hunLabel": "URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\" rel\u003d\"noopener\"\u003e#VALUE\u003c/a\u003e",
+                "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -5538,23 +5530,23 @@
               }
             },
             "schema:name": "producerLogoURL",
-            "schema:description": "The URL of the producer\u0027s logo",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The URL of the producer's logo",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "d08e3aaa-5b0a-30ad-a9ab-02e421f2991f",
             "title": "producerLogoURL element schema",
             "description": "producerLogoURL element schema generated by the ARP",
-            "hunDescription": "A készítő weben elérhető logójának URL-je. Abszolút URL-t kell ide írni, például http://www.my.org/images/logo.gif.",
+            "hunDescription": "The URL of the producer's logo",
             "skos:prefLabel": "Logo URL",
-            "hunLabel": "Logó URL",
+            "hunLabel": "Logo URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003cimg src\u003d\"#VALUE\" alt\u003d\"#NAME\" class\u003d\"metadata-logo\"/\u003e\u003cbr/\u003e",
+                "displayFormat": "<img src=\"#VALUE\" alt=\"#NAME\" class=\"metadata-logo\"/><br/>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -5574,9 +5566,9 @@
           "producerURL",
           "producerLogoURL"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -5586,9 +5578,9 @@
         "title": "producer element schema",
         "description": "producer element schema generated by the ARP",
         "schema:identifier": "producer",
-        "hunDescription": "Az adatcsomagért pénzügyi vagy adminisztratív felelősséggel tartozó személy vagy szervezet (producer).",
+        "hunDescription": "The entity, such a person or organization, managing the finances or other administrative processes involved in the creation of the Dataset",
         "skos:prefLabel": "Producer",
-        "hunLabel": "Készítő",
+        "hunLabel": "Producer",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -5683,18 +5675,18 @@
       ],
       "schema:name": "productionDate",
       "schema:description": "The date when the data were produced (not distributed, published, or archived)",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "e36eefbb-51f8-3687-8703-e4c3a7ec29ee",
       "title": "productionDate element schema",
       "description": "productionDate element schema generated by the ARP",
-      "hunDescription": "Az adatcsomaghoz tartozó anyagok készítésének dátuma. (Nem a terjesztés, kiadás vagy archiválás dátuma.)",
+      "hunDescription": "The date when the data were produced (not distributed, published, or archived)",
       "skos:prefLabel": "Production Date",
-      "hunLabel": "Elkészítés dátuma",
+      "hunLabel": "Production Date",
       "_arp": {
         "dataverse": {
           "watermark": "YYYY-MM-DD",
@@ -5782,18 +5774,18 @@
       ],
       "schema:name": "productionPlace",
       "schema:description": "The location where the data and any related materials were produced or collected",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "79e19da6-3d77-3a1b-b99b-954cb8e1da3c",
       "title": "productionPlace element schema",
       "description": "productionPlace element schema generated by the ARP",
-      "hunDescription": "Az adatcsomaghoz tartozó anyagok készítésének helye.",
+      "hunDescription": "The location where the data and any related materials were produced or collected",
       "skos:prefLabel": "Production Location",
-      "hunLabel": "Elkészítés helye",
+      "hunLabel": "Production Location",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -5847,7 +5839,7 @@
           },
           "propertyDescriptions": {
             "contributorType": "Indicates the type of contribution made to the dataset",
-            "contributorName": "The name of the contributor, e.g. the person\u0027s name or the name of an organization"
+            "contributorName": "The name of the contributor, e.g. the person's name or the name of an organization"
           }
         },
         "properties": {
@@ -6020,18 +6012,18 @@
             ],
             "schema:name": "contributorType",
             "schema:description": "Indicates the type of contribution made to the dataset",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "f68897d0-29d3-3f1d-a29f-ef9c6134ab4d",
             "title": "contributorType element schema",
             "description": "contributorType element schema generated by the ARP",
-            "hunDescription": "A közreműködés típusa.",
+            "hunDescription": "Indicates the type of contribution made to the dataset",
             "skos:prefLabel": "Type",
-            "hunLabel": "Típus",
+            "hunLabel": "Type",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE ",
@@ -6118,19 +6110,19 @@
               "@value"
             ],
             "schema:name": "contributorName",
-            "schema:description": "The name of the contributor, e.g. the person\u0027s name or the name of an organization",
-            "pav:createdOn": "2024-10-11T16:44:24Z",
+            "schema:description": "The name of the contributor, e.g. the person's name or the name of an organization",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:24Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "a355a217-9e9b-3f17-b2a7-363b367e66c8",
             "title": "contributorName element schema",
             "description": "contributorName element schema generated by the ARP",
-            "hunDescription": "A közreműködő személy családi- és utóneve, vagy a szervezet megnevezése.",
+            "hunDescription": "The name of the contributor, e.g. the person's name or the name of an organization",
             "skos:prefLabel": "Name",
-            "hunLabel": "Név",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "watermark": "1) FamilyName, GivenName or 2) Organization",
@@ -6151,9 +6143,9 @@
           "contributorType",
           "contributorName"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -6163,9 +6155,9 @@
         "title": "contributor element schema",
         "description": "contributor element schema generated by the ARP",
         "schema:identifier": "contributor",
-        "hunDescription": "Személy vagy szervezet, aki gyűjtötte, menedzseli, vagy egyéb módon közreműködik az adatcsomaghoz tartozó anyagok fejlesztésében.",
+        "hunDescription": "The entity, such as a person or organization, responsible for collecting, managing, or otherwise contributing to the development of the Dataset",
         "skos:prefLabel": "Contributor",
-        "hunLabel": "Közreműködő",
+        "hunLabel": "Contributor",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -6343,18 +6335,18 @@
             ],
             "schema:name": "grantNumberAgency",
             "schema:description": "The agency that provided financial support for the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "a1508353-4316-36dc-868b-71c770b4878a",
             "title": "grantNumberAgency element schema",
             "description": "grantNumberAgency element schema generated by the ARP",
-            "hunDescription": "Támogató szervezet",
+            "hunDescription": "The agency that provided financial support for the Dataset",
             "skos:prefLabel": "Agency",
-            "hunLabel": "Támogató szervezet",
+            "hunLabel": "Agency",
             "_arp": {
               "dataverse": {
                 "watermark": "Organization XYZ",
@@ -6443,18 +6435,18 @@
             ],
             "schema:name": "grantNumberValue",
             "schema:description": "The grant identifier or contract identifier of the agency that provided financial support for the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "744aa734-0604-3a55-be94-34e740b9e800",
             "title": "grantNumberValue element schema",
             "description": "grantNumberValue element schema generated by the ARP",
-            "hunDescription": "A munkát támogató projekt támogatói vagy szerződésszáma.",
+            "hunDescription": "The grant identifier or contract identifier of the agency that provided financial support for the Dataset",
             "skos:prefLabel": "Identifier",
-            "hunLabel": "Támogatási szám",
+            "hunLabel": "Identifier",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -6467,16 +6459,16 @@
           }
         },
         "schema:name": "grantNumber",
-        "schema:description": "Information about the Dataset\u0027s financial support",
+        "schema:description": "Information about the Dataset's financial support",
         "required": [
           "@context",
           "@id",
           "grantNumberAgency",
           "grantNumberValue"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -6486,9 +6478,9 @@
         "title": "grantNumber element schema",
         "description": "grantNumber element schema generated by the ARP",
         "schema:identifier": "grantNumber",
-        "hunDescription": "Támogatási információk",
+        "hunDescription": "Information about the Dataset's financial support",
         "skos:prefLabel": "Funding Information",
-        "hunLabel": "Támogatói információk",
+        "hunLabel": "Funding Information",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -6552,11 +6544,11 @@
             "distributorLogoURL": "distributorLogoURL"
           },
           "propertyDescriptions": {
-            "distributorName": "The name of the entity, e.g. the person\u0027s name or the name of an organization",
-            "distributorAffiliation": "The name of the entity affiliated with the distributor, e.g. an organization\u0027s name",
-            "distributorAbbreviation": "The distributor\u0027s abbreviated name (e.g. IQSS, ICPSR)",
-            "distributorURL": "The URL of the distributor\u0027s webpage",
-            "distributorLogoURL": "The URL of the distributor\u0027s logo image, used to show the image on the Dataset\u0027s page"
+            "distributorName": "The name of the entity, e.g. the person's name or the name of an organization",
+            "distributorAffiliation": "The name of the entity affiliated with the distributor, e.g. an organization's name",
+            "distributorAbbreviation": "The distributor's abbreviated name (e.g. IQSS, ICPSR)",
+            "distributorURL": "The URL of the distributor's webpage",
+            "distributorLogoURL": "The URL of the distributor's logo image, used to show the image on the Dataset's page"
           }
         },
         "properties": {
@@ -6689,19 +6681,19 @@
               "@value"
             ],
             "schema:name": "distributorName",
-            "schema:description": "The name of the entity, e.g. the person\u0027s name or the name of an organization",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "schema:description": "The name of the entity, e.g. the person's name or the name of an organization",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "6d2c2980-c830-3c44-93c7-a6917d3ea63e",
             "title": "distributorName element schema",
             "description": "distributorName element schema generated by the ARP",
-            "hunDescription": "A terjesztő neve.",
+            "hunDescription": "The name of the entity, e.g. the person's name or the name of an organization",
             "skos:prefLabel": "Name",
-            "hunLabel": "Terjesztő",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "watermark": "1) FamilyName, GivenName or 2) Organization",
@@ -6789,19 +6781,19 @@
               "@value"
             ],
             "schema:name": "distributorAffiliation",
-            "schema:description": "The name of the entity affiliated with the distributor, e.g. an organization\u0027s name",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "schema:description": "The name of the entity affiliated with the distributor, e.g. an organization's name",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "855c67dd-d049-3318-9761-d1018d9fa73d",
             "title": "distributorAffiliation element schema",
             "description": "distributorAffiliation element schema generated by the ARP",
-            "hunDescription": "A szervezet, amelyhez a terjesztő tartozik.",
+            "hunDescription": "The name of the entity affiliated with the distributor, e.g. an organization's name",
             "skos:prefLabel": "Affiliation",
-            "hunLabel": "Intézmény",
+            "hunLabel": "Affiliation",
             "_arp": {
               "dataverse": {
                 "watermark": "Organization XYZ",
@@ -6889,19 +6881,19 @@
               "@value"
             ],
             "schema:name": "distributorAbbreviation",
-            "schema:description": "The distributor\u0027s abbreviated name (e.g. IQSS, ICPSR)",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "schema:description": "The distributor's abbreviated name (e.g. IQSS, ICPSR)",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "c5b32123-b221-308d-86c9-294dffce9f51",
             "title": "distributorAbbreviation element schema",
             "description": "distributorAbbreviation element schema generated by the ARP",
-            "hunDescription": "A terjesztőre vonatkozó közismert rövidítés. (pl. IQSS, ICPSR).",
+            "hunDescription": "The distributor's abbreviated name (e.g. IQSS, ICPSR)",
             "skos:prefLabel": "Abbreviated Name",
-            "hunLabel": "Rövidítés",
+            "hunLabel": "Abbreviated Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "(#VALUE)",
@@ -6983,23 +6975,23 @@
               }
             },
             "schema:name": "distributorURL",
-            "schema:description": "The URL of the distributor\u0027s webpage",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "schema:description": "The URL of the distributor's webpage",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "cd824cab-e727-3b82-8618-c855fef14870",
             "title": "distributorURL element schema",
             "description": "distributorURL element schema generated by the ARP",
-            "hunDescription": "A terjesztő URL-je a személy vagy szervezet internetes profiljára mutat, ha van ilyen. A készítő oldalának abszolút URL-jét kell beírni, például http://www.my.org.",
+            "hunDescription": "The URL of the distributor's webpage",
             "skos:prefLabel": "URL",
             "hunLabel": "URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003ca href\u003d\"#VALUE\" target\u003d\"_blank\" rel\u003d\"noopener\"\u003e#VALUE\u003c/a\u003e",
+                "displayFormat": "<a href=\"#VALUE\" target=\"_blank\" rel=\"noopener\">#VALUE</a>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -7078,23 +7070,23 @@
               }
             },
             "schema:name": "distributorLogoURL",
-            "schema:description": "The URL of the distributor\u0027s logo image, used to show the image on the Dataset\u0027s page",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "schema:description": "The URL of the distributor's logo image, used to show the image on the Dataset's page",
+            "pav:createdOn": "2025-10-21T13:35:58Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:58Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "7fa080e3-b5c5-353a-9c51-79b22a5a7450",
             "title": "distributorLogoURL element schema",
             "description": "distributorLogoURL element schema generated by the ARP",
-            "hunDescription": "A terjesztő weben elérhető logójának URL-je. Abszolút URL-t kell ide írni, például http://www.my.org/images/logo.gif.",
+            "hunDescription": "The URL of the distributor's logo image, used to show the image on the Dataset's page",
             "skos:prefLabel": "Logo URL",
-            "hunLabel": "Logó URL",
+            "hunLabel": "Logo URL",
             "_arp": {
               "dataverse": {
                 "watermark": "https://",
-                "displayFormat": "\u003cimg src\u003d\"#VALUE\" alt\u003d\"#NAME\" class\u003d\"metadata-logo\"/\u003e\u003cbr/\u003e",
+                "displayFormat": "<img src=\"#VALUE\" alt=\"#NAME\" class=\"metadata-logo\"/><br/>",
                 "advancedSearchField": false,
                 "facetable": false,
                 "displayoncreate": false
@@ -7114,9 +7106,9 @@
           "distributorURL",
           "distributorLogoURL"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -7126,9 +7118,9 @@
         "title": "distributor element schema",
         "description": "distributor element schema generated by the ARP",
         "schema:identifier": "distributor",
-        "hunDescription": "Az a szervezet, amelyet a szerző az általa készített anyagok sokszorosításával bízott meg, beleértve a szükséges módosításokat, javításokat.",
+        "hunDescription": "The entity, such as a person or organization, designated to generate copies of the Dataset, including any editions or revisions",
         "skos:prefLabel": "Distributor",
-        "hunLabel": "Terjesztő",
+        "hunLabel": "Distributor",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -7223,18 +7215,18 @@
       ],
       "schema:name": "distributionDate",
       "schema:description": "The date when the Dataset was made available for distribution/presentation",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "bdad7ee0-b984-3343-8bc1-ba431678350d",
       "title": "distributionDate element schema",
       "description": "distributionDate element schema generated by the ARP",
-      "hunDescription": "Dátum, amikor a tartalom terjesztését, bemutatását engedélyezték.",
+      "hunDescription": "The date when the Dataset was made available for distribution/presentation",
       "skos:prefLabel": "Distribution Date",
-      "hunLabel": "Kiadás dátuma",
+      "hunLabel": "Distribution Date",
       "_arp": {
         "dataverse": {
           "watermark": "YYYY-MM-DD",
@@ -7322,18 +7314,18 @@
       ],
       "schema:name": "depositor",
       "schema:description": "The entity, such as a person or organization, that deposited the Dataset in the repository",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "137cc684-9e53-3021-a2b1-4c81661a185a",
       "title": "depositor element schema",
       "description": "depositor element schema generated by the ARP",
-      "hunDescription": "A személy (családnév, utónév) vagy szervezet neve, amely felvette az adatcsomagot a repozitóriumba.",
+      "hunDescription": "The entity, such as a person or organization, that deposited the Dataset in the repository",
       "skos:prefLabel": "Depositor",
-      "hunLabel": "Létrehozó",
+      "hunLabel": "Depositor",
       "_arp": {
         "dataverse": {
           "watermark": "1) FamilyName, GivenName or 2) Organization",
@@ -7423,18 +7415,18 @@
       ],
       "schema:name": "dateOfDeposit",
       "schema:description": "The date when the Dataset was deposited into the repository",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "bb66fbd8-c5b7-3a4f-aab3-ebf91d7c7b73",
       "title": "dateOfDeposit element schema",
       "description": "dateOfDeposit element schema generated by the ARP",
-      "hunDescription": "Az adatcsomag repozitóriumba történő felvételének dátuma.",
+      "hunDescription": "The date when the Dataset was deposited into the repository",
       "skos:prefLabel": "Deposit Date",
-      "hunLabel": "Létrehozás dátuma",
+      "hunLabel": "Deposit Date",
       "_arp": {
         "dataverse": {
           "watermark": "YYYY-MM-DD",
@@ -7608,18 +7600,18 @@
             ],
             "schema:name": "timePeriodCoveredStart",
             "schema:description": "The start date of the time period that the data refer to",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "69b503c2-3277-3acd-bb0c-c274dbe10753",
             "title": "timePeriodCoveredStart element schema",
             "description": "timePeriodCoveredStart element schema generated by the ARP",
-            "hunDescription": "Kezdő dátum, amely az adatok által lefedett idő intervallum elejét jelöli, nem a kódolás, tervezés vagy gyűjtés elejét.",
+            "hunDescription": "The start date of the time period that the data refer to",
             "skos:prefLabel": "Start Date",
-            "hunLabel": "Kezdő dátum",
+            "hunLabel": "Start Date",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -7710,18 +7702,18 @@
             ],
             "schema:name": "timePeriodCoveredEnd",
             "schema:description": "The end date of the time period that the data refer to",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "fef2e7e8-9549-3211-9e62-6a9a9daa6f7d",
             "title": "timePeriodCoveredEnd element schema",
             "description": "timePeriodCoveredEnd element schema generated by the ARP",
-            "hunDescription": "Végdátum, amely az adatok által lefedett idő intervallum végét jelöli, nem a kódolás, tervezés vagy gyűjtés végét.",
+            "hunDescription": "The end date of the time period that the data refer to",
             "skos:prefLabel": "End Date",
-            "hunLabel": "Végdátum",
+            "hunLabel": "End Date",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -7742,9 +7734,9 @@
           "timePeriodCoveredStart",
           "timePeriodCoveredEnd"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -7754,9 +7746,9 @@
         "title": "timePeriodCovered element schema",
         "description": "timePeriodCovered element schema generated by the ARP",
         "schema:identifier": "timePeriodCovered",
-        "hunDescription": "Időtartam, amelyre az adatok utalnak. A mező az adatok által lefedett idő intervallumot tükrözi, nem a kódolás, tervezés vagy gyűjtés időtartamát.",
+        "hunDescription": "The time period that the data refer to. Also known as span. This is the time period covered by the data, not the dates of coding, collecting data, or making documents machine-readable",
         "skos:prefLabel": "Time Period",
-        "hunLabel": "Időtartam",
+        "hunLabel": "Time Period",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -7936,18 +7928,18 @@
             ],
             "schema:name": "dateOfCollectionStart",
             "schema:description": "The date when the data collection started",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "5bb3929b-4983-30b8-b914-1e1fad193f89",
             "title": "dateOfCollectionStart element schema",
             "description": "dateOfCollectionStart element schema generated by the ARP",
-            "hunDescription": "Az adatok gyűjtésének kezdő dátuma.",
+            "hunDescription": "The date when the data collection started",
             "skos:prefLabel": "Start Date",
-            "hunLabel": "Kezdő dátum",
+            "hunLabel": "Start Date",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -8038,18 +8030,18 @@
             ],
             "schema:name": "dateOfCollectionEnd",
             "schema:description": "The date when the data collection ended",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "b1071202-bc12-3af2-97dc-95483913cfba",
             "title": "dateOfCollectionEnd element schema",
             "description": "dateOfCollectionEnd element schema generated by the ARP",
-            "hunDescription": "Az adatok gyűjtésének végdátuma.",
+            "hunDescription": "The date when the data collection ended",
             "skos:prefLabel": "End Date",
-            "hunLabel": "Végdátum",
+            "hunLabel": "End Date",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -8070,9 +8062,9 @@
           "dateOfCollectionStart",
           "dateOfCollectionEnd"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -8082,9 +8074,9 @@
         "title": "dateOfCollection element schema",
         "description": "dateOfCollection element schema generated by the ARP",
         "schema:identifier": "dateOfCollection",
-        "hunDescription": "Az adatok gyűjtésének dátumát jelöli.",
+        "hunDescription": "The dates when the data were collected or generated",
         "skos:prefLabel": "Date of Collection",
-        "hunLabel": "Gyűjtés dátuma",
+        "hunLabel": "Date of Collection",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -8178,18 +8170,18 @@
       ],
       "schema:name": "kindOfData",
       "schema:description": "The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "4336dcce-bc4a-3406-bd8f-b078a9437e4a",
       "title": "kindOfData element schema",
       "description": "kindOfData element schema generated by the ARP",
-      "hunDescription": "az adatcsomaghoz tartozó adatok típusai: felmérési adat, számbavételi adat, összesített adat, klinikai adat, esemény/tranzakció adata, forráskód, számítógépes feldolgozásra szánt szöveg, adminisztratív rekordok adata, kísérleti adat, pszichológiai teszt, szöveges adat, kódolt szöveg, kódolt dokumentum, idő költségvetési naplók, megfigyelési adat/rangsorolás, folyamat által létrejött adat, vagy egyéb.",
+      "hunDescription": "The type of data included in the files (e.g. survey data, clinical data, or machine-readable text)",
       "skos:prefLabel": "Data Type",
-      "hunLabel": "Adatok típusa",
+      "hunLabel": "Data Type",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -8362,18 +8354,18 @@
             ],
             "schema:name": "seriesName",
             "schema:description": "The name of the dataset series",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "62c21e3c-269c-3bae-ab43-82554cc85730",
             "title": "seriesName element schema",
             "description": "seriesName element schema generated by the ARP",
-            "hunDescription": "A befoglaló adatcsomag sorozat neve.",
+            "hunDescription": "The name of the dataset series",
             "skos:prefLabel": "Name",
-            "hunLabel": "Cím",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -8461,18 +8453,18 @@
             ],
             "schema:name": "seriesInformation",
             "schema:description": "Can include 1) a history of the series and 2) a summary of features that apply to the series",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "19b5840a-3b3e-304e-a839-752edf36c97e",
             "title": "seriesInformation element schema",
             "description": "seriesInformation element schema generated by the ARP",
-            "hunDescription": "A sorozat története, illetve a teljes sorozatra vonatkozó tulajdonságok összefoglalása.",
+            "hunDescription": "Can include 1) a history of the series and 2) a summary of features that apply to the series",
             "skos:prefLabel": "Information",
-            "hunLabel": "Információk",
+            "hunLabel": "Information",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -8492,9 +8484,9 @@
           "seriesName",
           "seriesInformation"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -8504,9 +8496,9 @@
         "title": "series element schema",
         "description": "series element schema generated by the ARP",
         "schema:identifier": "series",
-        "hunDescription": "Az adatcsomagsorozatra vonatkozó információk.",
+        "hunDescription": "Information about the dataset series to which the Dataset belong",
         "skos:prefLabel": "Series",
-        "hunLabel": "Sorozat",
+        "hunLabel": "Series",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -8684,18 +8676,18 @@
             ],
             "schema:name": "softwareName",
             "schema:description": "The name of software used to generate the Dataset",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "c1d7c414-59bb-3d6b-98e6-29805268a311",
             "title": "softwareName element schema",
             "description": "softwareName element schema generated by the ARP",
-            "hunDescription": "Az adatcsomag előállítása során használt szoftver neve.",
+            "hunDescription": "The name of software used to generate the Dataset",
             "skos:prefLabel": "Name",
-            "hunLabel": "Név",
+            "hunLabel": "Name",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#VALUE",
@@ -8783,18 +8775,18 @@
             ],
             "schema:name": "softwareVersion",
             "schema:description": "The version of the software used to generate the Dataset, e.g. 4.11",
-            "pav:createdOn": "2024-10-11T16:44:25Z",
+            "pav:createdOn": "2025-10-21T13:35:59Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+            "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "d587a9ff-2379-361d-a14e-11b2f7863412",
             "title": "softwareVersion element schema",
             "description": "softwareVersion element schema generated by the ARP",
-            "hunDescription": "Az adatcsomag előállítása során használt szoftver verziója.",
+            "hunDescription": "The version of the software used to generate the Dataset, e.g. 4.11",
             "skos:prefLabel": "Version",
-            "hunLabel": "Verzió",
+            "hunLabel": "Version",
             "_arp": {
               "dataverse": {
                 "displayFormat": "#NAME: #VALUE",
@@ -8814,9 +8806,9 @@
           "softwareName",
           "softwareVersion"
         ],
-        "pav:createdOn": "2024-10-11T16:44:25Z",
+        "pav:createdOn": "2025-10-21T13:35:59Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+        "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -8826,9 +8818,9 @@
         "title": "software element schema",
         "description": "software element schema generated by the ARP",
         "schema:identifier": "software",
-        "hunDescription": "Az adatcsomag előállítása során használt szoftverre vonatkozó információk.",
+        "hunDescription": "Information about the software used to generate the Dataset",
         "skos:prefLabel": "Software",
-        "hunLabel": "Szoftver",
+        "hunLabel": "Software",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -8922,18 +8914,18 @@
       ],
       "schema:name": "relatedMaterial",
       "schema:description": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "698e3caa-7b7a-35c6-bc28-e147b752f239",
       "title": "relatedMaterial element schema",
       "description": "relatedMaterial element schema generated by the ARP",
-      "hunDescription": "Bármely, az adatcsomaghoz kapcsolódó anyag.",
+      "hunDescription": "Information, such as a persistent ID or citation, about the material related to the Dataset, such as appendices or sampling information available outside of the Dataset",
       "skos:prefLabel": "Related Material",
-      "hunLabel": "Kapcsolódó anyagok",
+      "hunLabel": "Related Material",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -9021,19 +9013,19 @@
         "@value"
       ],
       "schema:name": "relatedDatasets",
-      "schema:description": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset\u0027s subject",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "schema:description": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "1c6569cd-639b-3ba9-8a25-f80c1ebcef5d",
       "title": "relatedDatasets element schema",
       "description": "relatedDatasets element schema generated by the ARP",
-      "hunDescription": "Adatcsomag, amely ehhez az adatcsomaghoz kapcsolódik. Például korábbi kutatás ebben a témában.",
+      "hunDescription": "Information, such as a persistent ID or citation, about a related dataset, such as previous research on the Dataset's subject",
       "skos:prefLabel": "Related Dataset",
-      "hunLabel": "Kapcsolódó datasetek",
+      "hunLabel": "Related Dataset",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -9122,18 +9114,18 @@
       ],
       "schema:name": "otherReferences",
       "schema:description": "Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "5cbee1af-f40a-3939-868b-322cd5369367",
       "title": "otherReferences element schema",
       "description": "otherReferences element schema generated by the ARP",
-      "hunDescription": "Háttéranyagok, vagy az adatcsomag eredményeit alátámasztó anyagok.",
+      "hunDescription": "Information, such as a persistent ID or citation, about another type of resource that provides background or supporting material to the Dataset",
       "skos:prefLabel": "Other Reference",
-      "hunLabel": "Egyéb referenciák",
+      "hunLabel": "Other Reference",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -9222,18 +9214,18 @@
       ],
       "schema:name": "dataSources",
       "schema:description": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "7ba93013-e884-3036-b687-0c43ebcb71cb",
       "title": "dataSources element schema",
       "description": "dataSources element schema generated by the ARP",
-      "hunDescription": "Az adatgyűjtés forrásául szolgáló könyvek, cikkek, sorozatok vagy egyéb fájlok listája.",
+      "hunDescription": "Information, such as a persistent ID or citation, about sources of the Dataset (e.g. a book, article, serial, or machine-readable data file)",
       "skos:prefLabel": "Data Source",
-      "hunLabel": "Források",
+      "hunLabel": "Data Source",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -9322,18 +9314,18 @@
       ],
       "schema:name": "originOfSources",
       "schema:description": "For historical sources, the origin and any rules followed in establishing them as sources",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "29c73df6-95a3-3243-bae8-a5df06b250e2",
       "title": "originOfSources element schema",
       "description": "originOfSources element schema generated by the ARP",
-      "hunDescription": "Történelmi anyagokhoz a források eredetét, illetve a források kiválasztásának szabályait meg kell adni.",
+      "hunDescription": "For historical sources, the origin and any rules followed in establishing them as sources",
       "skos:prefLabel": "Origin of Historical Sources",
-      "hunLabel": "Források eredete",
+      "hunLabel": "Origin of Historical Sources",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -9420,18 +9412,18 @@
       ],
       "schema:name": "characteristicOfSources",
       "schema:description": "Characteristics not already noted elsewhere",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "4db09a99-f6ca-32f5-815f-2abfa298b1d6",
       "title": "characteristicOfSources element schema",
       "description": "characteristicOfSources element schema generated by the ARP",
-      "hunDescription": "A jellemzők és a forrásanyag értékelése.",
+      "hunDescription": "Characteristics not already noted elsewhere",
       "skos:prefLabel": "Characteristic of Sources",
-      "hunLabel": "A megjelölt források jellemzői",
+      "hunLabel": "Characteristic of Sources",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -9518,114 +9510,18 @@
       ],
       "schema:name": "accessToSources",
       "schema:description": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
+      "pav:createdOn": "2025-10-21T13:35:59Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+      "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "37deaa9d-e064-34bb-91a3-8c0256600634",
       "title": "accessToSources element schema",
       "description": "accessToSources element schema generated by the ARP",
-      "hunDescription": "Az eredeti források dokumentációs szintje.",
+      "hunDescription": "1) Methods or procedures for accessing data sources and 2) any special permissions needed for access",
       "skos:prefLabel": "Documentation and Access to Sources",
-      "hunLabel": "Dokumentáció és források hozzáférhetősége",
-      "_arp": {
-        "dataverse": {
-          "advancedSearchField": false,
-          "facetable": false,
-          "displayoncreate": false
-        }
-      },
-      "$schema": "http://json-schema.org/draft-04/schema#"
-    },
-    "hunTitle": {
-      "@type": "https://schema.metadatacenter.org/core/TemplateField",
-      "@context": {
-        "xsd": "http://www.w3.org/2001/XMLSchema#",
-        "pav": "http://purl.org/pav/",
-        "bibo": "http://purl.org/ontology/bibo/",
-        "oslc": "http://open-services.net/ns/core#",
-        "schema": "http://schema.org/",
-        "skos": "http://www.w3.org/2004/02/skos/core#",
-        "schema:name": {
-          "@type": "xsd:string"
-        },
-        "schema:description": {
-          "@type": "xsd:string"
-        },
-        "skos:prefLabel": {
-          "@type": "xsd:string"
-        },
-        "skos:altLabel": {
-          "@type": "xsd:string"
-        },
-        "pav:createdOn": {
-          "@type": "xsd:dateTime"
-        },
-        "pav:createdBy": {
-          "@type": "@id"
-        },
-        "pav:lastUpdatedOn": {
-          "@type": "xsd:dateTime"
-        },
-        "oslc:modifiedBy": {
-          "@type": "@id"
-        }
-      },
-      "type": "object",
-      "_ui": {
-        "inputType": "textfield"
-      },
-      "_valueConstraints": {
-        "requiredValue": false
-      },
-      "properties": {
-        "@type": {
-          "oneOf": [
-            {
-              "type": "string",
-              "format": "uri"
-            },
-            {
-              "type": "array",
-              "minItems": 1,
-              "items": {
-                "type": "string",
-                "format": "uri"
-              },
-              "uniqueItems": true
-            }
-          ]
-        },
-        "@value": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "rdfs:label": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "@value"
-      ],
-      "schema:name": "hunTitle",
-      "schema:description": "Help Text",
-      "pav:createdOn": "2024-10-11T16:44:25Z",
-      "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
-      "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "schema:schemaVersion": "1.6.0",
-      "additionalProperties": false,
-      "@id": "5fe30bf4-d037-32fc-bc01-a56f85e731dc",
-      "title": "hunTitle element schema",
-      "description": "hunTitle element schema generated by the ARP",
-      "skos:prefLabel": "HUngarian title",
+      "hunLabel": "Documentation and Access to Sources",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -9680,12 +9576,13 @@
     "dataSources",
     "originOfSources",
     "characteristicOfSources",
-    "accessToSources",
-    "hunTitle"
+    "accessToSources"
   ],
   "schema:name": "Citation Metadata",
   "schema:description": "",
-  "pav:lastUpdatedOn": "2024-10-11T16:44:25Z",
+  "pav:createdOn": null,
+  "pav:createdBy": null,
+  "pav:lastUpdatedOn": "2025-10-21T13:35:59Z",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
@@ -9693,8 +9590,8 @@
   "bibo:status": "bibo:draft",
   "title": "citation template schema",
   "description": "citation template schema generated by ARP",
-  "hunName": "Idézési Metaadatok",
+  "hunName": "Citation Metadata",
   "schema:identifier": "citation",
-  "@id": "https://repo.arp.orgx/templates/ab2a9696-291f-4705-b5e6-6c262266c506",
+  "@id": "https://repo.arp.orgx/templates/33677b82-7973-3e4c-b09d-b5189e095627",
   "$schema": "http://json-schema.org/draft-04/schema#"
 }

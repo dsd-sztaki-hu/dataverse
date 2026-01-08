@@ -141,7 +141,11 @@ public class CedarTemplateToDescriboProfileConverter {
     public boolean areAllChildrenDeprecated(Pair<String, DescriboInput> input, List<Pair<String, DescriboInput>> inputs) {
         if (input.getKey().equals("Dataset")) {
             var typeName = input.getValue().getName();
-            return inputs.stream().filter(pair -> pair.getKey().equals(typeName)).allMatch(pair -> pair.getValue().isDeprecated());
+            List<Pair<String, DescriboInput>> filtered = inputs.stream()
+                    .filter(pair -> pair.getKey().equals(typeName))
+                    .toList();
+
+            return !filtered.isEmpty() && filtered.stream().allMatch(pair -> pair.getValue().isDeprecated());
         } else {
             return false;
         }

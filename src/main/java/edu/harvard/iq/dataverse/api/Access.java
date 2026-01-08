@@ -6,32 +6,7 @@
 
 package edu.harvard.iq.dataverse.api;
 
-import edu.harvard.iq.dataverse.AuxiliaryFile;
-import edu.harvard.iq.dataverse.AuxiliaryFileServiceBean;
-import edu.harvard.iq.dataverse.DataCitation;
-import edu.harvard.iq.dataverse.DataFile;
-import edu.harvard.iq.dataverse.FileAccessRequest;
-import edu.harvard.iq.dataverse.FileMetadata;
-import edu.harvard.iq.dataverse.DataFileServiceBean;
-import edu.harvard.iq.dataverse.Dataset;
-import edu.harvard.iq.dataverse.DatasetVersion;
-import edu.harvard.iq.dataverse.DatasetVersionServiceBean;
-import edu.harvard.iq.dataverse.DatasetServiceBean;
-import edu.harvard.iq.dataverse.Dataverse;
-import edu.harvard.iq.dataverse.DataverseRequestServiceBean;
-import edu.harvard.iq.dataverse.DataverseRoleServiceBean;
-import edu.harvard.iq.dataverse.DataverseServiceBean;
-import edu.harvard.iq.dataverse.DataverseSession;
-import edu.harvard.iq.dataverse.DataverseTheme;
-import edu.harvard.iq.dataverse.FileDownloadServiceBean;
-import edu.harvard.iq.dataverse.GuestbookResponse;
-import edu.harvard.iq.dataverse.GuestbookResponseServiceBean;
-import edu.harvard.iq.dataverse.PermissionServiceBean;
-import edu.harvard.iq.dataverse.PermissionsWrapper;
-import edu.harvard.iq.dataverse.RoleAssignment;
-import edu.harvard.iq.dataverse.UserNotification;
-import edu.harvard.iq.dataverse.UserNotificationServiceBean;
-import edu.harvard.iq.dataverse.ThemeWidgetFragment;
+import edu.harvard.iq.dataverse.*;
 
 
 import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
@@ -39,6 +14,7 @@ import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -93,6 +69,7 @@ import java.io.OutputStream;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.json.Json;
 import java.net.URI;
 import jakarta.json.JsonArrayBuilder;
@@ -121,10 +98,12 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.ServiceUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
-import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import jakarta.ws.rs.core.StreamingOutput;
 import static edu.harvard.iq.dataverse.util.json.JsonPrinter.json;
+import static jakarta.ws.rs.core.Response.Status.*;
+
 import java.net.URISyntaxException;
+import java.util.stream.Collectors;
 
 import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.RedirectionException;
@@ -206,6 +185,8 @@ public class Access extends AbstractApiBean {
     RoCrateServiceBean roCrateServiceBean;
     @EJB
     ArpConfig arpConfig;
+    @EJB
+    ArpServiceBean arpService;
 
     //@EJB
     
@@ -2036,6 +2017,50 @@ public class Access extends AbstractApiBean {
             @Context HttpHeaders headers,
             @Context HttpServletResponse response
     ) throws WebApplicationException {
+        return downloadRoCrateZip(getRequestUser(crc), fileIds, version, datasetIdft, uriInfo, headers, response);
+    }
+
+    @Path("datafiles/rocrate/{datasetIdft : .+}")
+    @GET
+    @Produces({"application/zip"})
+    @AuthRequired
+    public Response downloadRoCrateZip(
+            @Context ContainerRequestContext crc,
+            @QueryParam("version") String version,
+            @PathParam("datasetIdft") String datasetIdft,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers,
+            @Context HttpServletResponse response
+    ) throws WebApplicationException, WrappedResponse {
+        var dataset = datasetService.findByGlobalId(datasetIdft);
+        var user = getRequestUser(crc);
+        DataverseRequest req = createDataverseRequest(user);
+        DatasetVersion requestedVersion;
+        if (version != null && !version.equals("DRAFT")) {
+            var optionalVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
+            if (optionalVersion.isPresent()) {
+                requestedVersion = optionalVersion.get();
+                if (!requestedVersion.isPublished() && (!user.isAuthenticated() || !permissionService.userOn(user, dataset).has(Permission.EditDataset))) {
+                    return error(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.");
+                }
+            } else {
+                return error(FORBIDDEN, "The requested RO-Crate version is not available.");
+            }
+        } else {
+            requestedVersion = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
+            if (requestedVersion == null) {
+                throw new WrappedResponse(error(FORBIDDEN, "Insufficient permission."));
+            }
+        }
+        
+        boolean roCrateCanBeDownloaded = requestedVersion.getFileMetadatas().stream().allMatch(fmd -> arpService.canDownloadFile(fmd, req));
+        
+        if (!roCrateCanBeDownloaded) {
+            return error(FORBIDDEN, "The RO-Crate can not be downloaded because it contains restricted files!");
+        }
+        
+        String fileIds = requestedVersion.getFileMetadatas().stream().map(fileMetadata -> String.valueOf(fileMetadata.getDataFile().getId())).collect(Collectors.joining(","));
+
         return downloadRoCrateZip(getRequestUser(crc), fileIds, version, datasetIdft, uriInfo, headers, response);
     }
 
