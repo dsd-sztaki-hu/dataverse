@@ -1309,7 +1309,7 @@ public class RoCrateImportManager {
     }
     
     // Check that every property name is valid, meaning that it starts with "@" or is a letter
-    // Also check that the context contains an URI for the property
+    // Also check that the context contains an URI for the property, and add it if known in DV, otherwise returns an error
     private void checkSyntaxAndContextProperties(JsonNode jsonNode, JsonNode roCrateContext, RoCrateImportPrepResult preProcessResult) {
         if (jsonNode.isObject()) {
             var hasId = jsonNode.has("@id");
@@ -1324,16 +1324,24 @@ public class RoCrateImportManager {
                                 "Ensure the property name '" + field.getKey() + "' is valid according to the schema");
                     }
                 }
-                if (roCrateContext != null && !field.getKey().startsWith("@")) {
+                if (roCrateContext != null && roCrateContext.isObject() && !field.getKey().startsWith("@")) {
                     var propsToIgnore = List.of("conformsTo", "name", "about", "hasPart");
-                    // Check that the property is present in the context
+                    // Check that the property is present in the context, add it if known in DV, otherwise keep the existing error
                     if (!roCrateContext.has(field.getKey()) && !propsToIgnore.contains(field.getKey())) {
-                        if (hasId) {
-                            preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Missing @context URI",
-                                    "Add the corresponding URI for '" + field.getKey() + "' to @context.");
+                        var dft = fieldService.findByName(field.getKey());
+                        if (dft != null && dft.getUri() != null && !dft.getUri().isBlank()) {
+                            ((ObjectNode) roCrateContext).put(field.getKey(), dft.getUri());
+                            preProcessResult.addWarning(null, field.getKey(), "Missing @context URI added");
                         } else {
-                            preProcessResult.addError("entity_without_valid_id", field.getKey(), "Missing @context URI",
-                                    "Add the corresponding URI for '" + field.getKey() + "' to @context.");
+                            if (!handleNonDftProp((ObjectNode) roCrateContext, field.getKey(), preProcessResult)) {
+                                if (hasId) {
+                                    preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Missing @context URI",
+                                            "Add the corresponding URI for '" + field.getKey() + "' to @context.");
+                                } else {
+                                    preProcessResult.addError("entity_without_valid_id", field.getKey(), "Missing @context URI",
+                                            "Add the corresponding URI for '" + field.getKey() + "' to @context.");
+                                }
+                            }
                         }
                     }
                 }
@@ -1344,6 +1352,26 @@ public class RoCrateImportManager {
         } else if (jsonNode.isArray()) {
             jsonNode.forEach(element -> checkSyntaxAndContextProperties(element, roCrateContext, preProcessResult));
         }
+    }
+    
+    // Handles missing @context URI-s for non-DatasetFieldType props
+    // returns true if the fix was successful
+    private boolean handleNonDftProp(ObjectNode roCrateContext, String fieldName, RoCrateImportPrepResult preProcessResult) {
+        switch (fieldName) {
+            case "license":
+                roCrateContext.put(fieldName, "https://schema.org/license");
+                break;
+            case "datePublished":
+                roCrateContext.put(fieldName, "https://schema.org/datePublished");
+                break;
+            case "hasPart":
+                roCrateContext.put(fieldName, "https://schema.org/hasPart");
+                break;
+            default:
+                return false;
+        }
+        preProcessResult.addWarning(null, fieldName, "Missing @context URI added");
+        return true;
     }
 
     // This function always returns the path of a "draft" RO-CRATE

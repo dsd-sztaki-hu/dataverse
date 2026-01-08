@@ -877,8 +877,32 @@ public class ArpApi extends AbstractApiBean {
         try {
             RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
 
-            var hasIssues = !roCrateImportPrepResult.getErrors().isEmpty() || !roCrateImportPrepResult.getWarnings().isEmpty();
+            var warnings = roCrateImportPrepResult.getWarnings();
+            var hasIssues = !roCrateImportPrepResult.getErrors().isEmpty() || !warnings.isEmpty();
             if (hasIssues) {
+                if (!warnings.isEmpty() && warnings.values().stream()
+                        .flatMap(warn -> warn.values().stream())
+                        .flatMap(Set::stream)
+                        .allMatch(issue -> "Missing @context URI added".equals(issue.message()))) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var responseJson = mapper.createObjectNode();
+                        responseJson.put("message", "Valid RO-Crate, but missing @context URI-s were added automatically.");
+                        responseJson.set("updated RO-Crate", mapper.readTree(roCrateImportPrepResult.getRoCrate().getJsonMetadata()));
+                        return Response.status(Response.Status.OK)
+                                .entity(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseJson))
+                                .type(MediaType.APPLICATION_JSON_TYPE).build();
+                    } catch (JsonProcessingException e) {
+                        String fallback = roCrateImportPrepResult.getRoCrate().getJsonMetadata().toString();
+                        var responseJson = NullSafeJsonBuilder.jsonObjectBuilder()
+                                .add( "message", "Valid RO-Crate, but missing @context URI-s were added automatically." )
+                                .add( "updated RO-Crate", fallback )
+                                .build();
+                        return Response.status(Response.Status.OK)
+                                .entity(responseJson)
+                                .type(MediaType.APPLICATION_JSON_TYPE).build();
+                    }
+                }
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                         .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                                 .add("status", STATUS_ERROR)
