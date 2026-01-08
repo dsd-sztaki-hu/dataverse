@@ -253,102 +253,102 @@
         },
         "astroType": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/astroType"
+            "https://dataverse.org/schema/astrophysics/astroType"
           ]
         },
         "astroFacility": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/astroFacility"
+            "https://dataverse.org/schema/astrophysics/astroFacility"
           ]
         },
         "astroInstrument": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/astroInstrument"
+            "https://dataverse.org/schema/astrophysics/astroInstrument"
           ]
         },
         "astroObject": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/astroObject"
+            "https://dataverse.org/schema/astrophysics/astroObject"
           ]
         },
         "resolution:Spatial": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/resolution.Spatial"
+            "https://dataverse.org/schema/astrophysics/resolution.Spatial"
           ]
         },
         "resolution:Spectral": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/resolution.Spectral"
+            "https://dataverse.org/schema/astrophysics/resolution.Spectral"
           ]
         },
         "resolution:Temporal": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/resolution.Temporal"
+            "https://dataverse.org/schema/astrophysics/resolution.Temporal"
           ]
         },
         "coverage:Spectral:Bandpass": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Spectral.Bandpass"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.Bandpass"
           ]
         },
         "coverage:Spectral:CentralWavelength": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Spectral.CentralWavelength"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.CentralWavelength"
           ]
         },
         "coverage:Spectral:Wavelength": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Spectral.Wavelength"
+            "https://dataverse.org/schema/astrophysics/coverage.Spectral.Wavelength"
           ]
         },
         "coverage:Temporal": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Temporal"
+            "https://dataverse.org/schema/astrophysics/coverage.Temporal"
           ]
         },
         "coverage:Spatial": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Spatial"
+            "https://dataverse.org/schema/astrophysics/coverage.Spatial"
           ]
         },
         "coverage:Depth": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Depth"
+            "https://dataverse.org/schema/astrophysics/coverage.Depth"
           ]
         },
         "coverage:ObjectDensity": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.ObjectDensity"
+            "https://dataverse.org/schema/astrophysics/coverage.ObjectDensity"
           ]
         },
         "coverage:ObjectCount": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.ObjectCount"
+            "https://dataverse.org/schema/astrophysics/coverage.ObjectCount"
           ]
         },
         "coverage:SkyFraction": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.SkyFraction"
+            "https://dataverse.org/schema/astrophysics/coverage.SkyFraction"
           ]
         },
         "coverage:Polarization": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.Polarization"
+            "https://dataverse.org/schema/astrophysics/coverage.Polarization"
           ]
         },
         "redshiftType": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/redshiftType"
+            "https://dataverse.org/schema/astrophysics/redshiftType"
           ]
         },
         "resolution:Redshift": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/resolution.Redshift"
+            "https://dataverse.org/schema/astrophysics/resolution.Redshift"
           ]
         },
         "coverage:RedshiftValue": {
           "enum": [
-            "https://dataverse.org/schema/astrophysics2222/coverage.RedshiftValue"
+            "https://dataverse.org/schema/astrophysics/coverage.RedshiftValue"
           ]
         }
       },
@@ -595,18 +595,18 @@
       ],
       "schema:name": "astroType",
       "schema:description": "The nature or genre of the content of the files in the dataset.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "51cbb52e-a937-3959-ba11-9f812644fb49",
       "title": "astroType element schema",
       "description": "astroType element schema generated by the ARP",
-      "hunDescription": "A fájlok tartalmának természete vagy fajtája az adatcsomagban.",
+      "hunDescription": "The nature or genre of the content of the files in the dataset.",
       "skos:prefLabel": "Type",
-      "hunLabel": "Típus",
+      "hunLabel": "Type",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -695,18 +695,18 @@
       ],
       "schema:name": "astroFacility",
       "schema:description": "The observatory or facility where the data was obtained. ",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "438ed1db-5eec-3230-aae6-b40a374074cf",
       "title": "astroFacility element schema",
       "description": "astroFacility element schema generated by the ARP",
-      "hunDescription": "Az obszervatórium vagy intézet, ahol az adatot gyűjtötték.",
+      "hunDescription": "The observatory or facility where the data was obtained. ",
       "skos:prefLabel": "Facility",
-      "hunLabel": "Intézet",
+      "hunLabel": "Facility",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -795,18 +795,18 @@
       ],
       "schema:name": "astroInstrument",
       "schema:description": "The instrument used to collect the data.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "1ffffa34-5de8-371d-8c1f-7da66e8291c7",
       "title": "astroInstrument element schema",
       "description": "astroInstrument element schema generated by the ARP",
-      "hunDescription": "Az adat gyűjtésére használt eszköz.",
+      "hunDescription": "The instrument used to collect the data.",
       "skos:prefLabel": "Instrument",
-      "hunLabel": "Eszköz",
+      "hunLabel": "Instrument",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -895,18 +895,18 @@
       ],
       "schema:name": "astroObject",
       "schema:description": "Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "1d2a4c8e-73a9-3d2d-b3f8-a5de24d303b7",
       "title": "astroObject element schema",
       "description": "astroObject element schema generated by the ARP",
-      "hunDescription": "Az adatcsomaghoz tartozó csillagászati objektumok (azonosítható SIMBAD név ajánlott).",
+      "hunDescription": "Astronomical Objects represented in the data (Given as SIMBAD recognizable names preferred).",
       "skos:prefLabel": "Object",
-      "hunLabel": "Objektum",
+      "hunLabel": "Object",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -995,18 +995,18 @@
       ],
       "schema:name": "resolution:Spatial",
       "schema:description": "The spatial (angular) resolution that is typical of the observations, in decimal degrees.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "6a0e71f2-3584-37c1-829c-34fef8fc9835",
       "title": "resolution:Spatial element schema",
       "description": "resolution:Spatial element schema generated by the ARP",
-      "hunDescription": "A megfigyelésekre jellemző térbeli (szög) felbontás, decimális fokban.",
+      "hunDescription": "The spatial (angular) resolution that is typical of the observations, in decimal degrees.",
       "skos:prefLabel": "Spatial Resolution",
-      "hunLabel": "Térbeli felbontás",
+      "hunLabel": "Spatial Resolution",
       "_arp": {
         "dataverse": {
           "advancedSearchField": true,
@@ -1093,18 +1093,18 @@
       ],
       "schema:name": "resolution:Spectral",
       "schema:description": "The spectral resolution that is typical of the observations, given as the ratio \\u03bb/\\u0394\\u03bb.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "fd2eebcb-bc58-3244-82cc-17530bf69bbe",
       "title": "resolution:Spectral element schema",
       "description": "resolution:Spectral element schema generated by the ARP",
-      "hunDescription": "A megfigyelésekre jellemző spektrális felbontás, λ/Δλ arányként megadva.",
+      "hunDescription": "The spectral resolution that is typical of the observations, given as the ratio λ/Δλ.",
       "skos:prefLabel": "Spectral Resolution",
-      "hunLabel": "Spektrális felbontás",
+      "hunLabel": "Spectral Resolution",
       "_arp": {
         "dataverse": {
           "advancedSearchField": true,
@@ -1191,18 +1191,18 @@
       ],
       "schema:name": "resolution:Temporal",
       "schema:description": "The temporal resolution that is typical of the observations, given in seconds.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "7420079e-089c-3ee6-a339-ec16331f6012",
       "title": "resolution:Temporal element schema",
       "description": "resolution:Temporal element schema generated by the ARP",
-      "hunDescription": "A megfigyelésekre jellemző időbeli felbontás, másodpercben.",
+      "hunDescription": "The temporal resolution that is typical of the observations, given in seconds.",
       "skos:prefLabel": "Time Resolution",
-      "hunLabel": "Időbeli felbontás",
+      "hunLabel": "Time Resolution",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -1289,18 +1289,18 @@
       ],
       "schema:name": "coverage:Spectral:Bandpass",
       "schema:description": "Conventional bandpass name",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "b193b2f4-f8cd-3f44-be1d-9e49b61264e0",
       "title": "coverage:Spectral:Bandpass element schema",
       "description": "coverage:Spectral:Bandpass element schema generated by the ARP",
-      "hunDescription": "Hagyományos sáváteresztő név",
+      "hunDescription": "Conventional bandpass name",
       "skos:prefLabel": "Bandpass",
-      "hunLabel": "Sáváteresztő",
+      "hunLabel": "Bandpass",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -1378,18 +1378,18 @@
       ],
       "schema:name": "coverage:Spectral:CentralWavelength",
       "schema:description": "The central wavelength of the spectral bandpass, in meters.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "895d7387-8649-36bc-aeb1-a66d952785c1",
       "title": "coverage:Spectral:CentralWavelength element schema",
       "description": "coverage:Spectral:CentralWavelength element schema generated by the ARP",
-      "hunDescription": "A spektrális sáváteresztő központi hullámhossza, méterben.",
+      "hunDescription": "The central wavelength of the spectral bandpass, in meters.",
       "skos:prefLabel": "Central Wavelength (m)",
-      "hunLabel": "Központi hullámhossz (m)",
+      "hunLabel": "Central Wavelength (m)",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -1453,12 +1453,12 @@
             "properties": {
               "coverage:Spectral:MinimumWavelength": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Spectral.MinimumWavelength"
+                  "https://dataverse.org/schema/astrophysics/coverage.Spectral.MinimumWavelength"
                 ]
               },
               "coverage:Spectral:MaximumWavelength": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Spectral.MaximumWavelength"
+                  "https://dataverse.org/schema/astrophysics/coverage.Spectral.MaximumWavelength"
                 ]
               }
             },
@@ -1552,16 +1552,16 @@
             ],
             "schema:name": "coverage:Spectral:MinimumWavelength",
             "schema:description": "The minimum wavelength of the spectral bandpass, in meters.",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "a05ff729-989a-3e0d-bce8-850bcb55cae1",
             "title": "coverage:Spectral:MinimumWavelength element schema",
             "description": "coverage:Spectral:MinimumWavelength element schema generated by the ARP",
-            "hunDescription": "A spektrális sáváteresztő minimum hullámhossza, méterben.",
+            "hunDescription": "The minimum wavelength of the spectral bandpass, in meters.",
             "skos:prefLabel": "Minimum (m)",
             "hunLabel": "Minimum (m)",
             "_arp": {
@@ -1640,16 +1640,16 @@
             ],
             "schema:name": "coverage:Spectral:MaximumWavelength",
             "schema:description": "The maximum wavelength of the spectral bandpass, in meters.",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "97edfc9b-9fd0-3f35-af79-57684900aee9",
             "title": "coverage:Spectral:MaximumWavelength element schema",
             "description": "coverage:Spectral:MaximumWavelength element schema generated by the ARP",
-            "hunDescription": "A spektrális sáváteresztő maximum hullámhossza, méterben.",
+            "hunDescription": "The maximum wavelength of the spectral bandpass, in meters.",
             "skos:prefLabel": "Maximum (m)",
             "hunLabel": "Maximum (m)",
             "_arp": {
@@ -1671,9 +1671,9 @@
           "coverage:Spectral:MinimumWavelength",
           "coverage:Spectral:MaximumWavelength"
         ],
-        "pav:createdOn": "2024-10-11T16:48:20Z",
+        "pav:createdOn": "2025-10-21T15:23:19Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+        "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -1683,9 +1683,9 @@
         "title": "coverage:Spectral:Wavelength element schema",
         "description": "coverage:Spectral:Wavelength element schema generated by the ARP",
         "schema:identifier": "coverage:Spectral:Wavelength",
-        "hunDescription": "A spektrális sáváteresztő minimum és maximum hullámhossza.",
+        "hunDescription": "The minimum and maximum wavelength of the spectral bandpass.",
         "skos:prefLabel": "Wavelength Range",
-        "hunLabel": "Hullámhossz tartomány",
+        "hunLabel": "Wavelength Range",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -1753,12 +1753,12 @@
             "properties": {
               "coverage:Temporal:StartTime": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Temporal.StartTime"
+                  "https://dataverse.org/schema/astrophysics/coverage.Temporal.StartTime"
                 ]
               },
               "coverage:Temporal:StopTime": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Temporal.StopTime"
+                  "https://dataverse.org/schema/astrophysics/coverage.Temporal.StopTime"
                 ]
               }
             },
@@ -1865,18 +1865,18 @@
             ],
             "schema:name": "coverage:Temporal:StartTime",
             "schema:description": "Dataset Start Date",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "4d9e9bbf-b34f-3c86-a336-cef808eecda2",
             "title": "coverage:Temporal:StartTime element schema",
             "description": "coverage:Temporal:StartTime element schema generated by the ARP",
-            "hunDescription": "Adatcsomag kezdődátuma",
+            "hunDescription": "Dataset Start Date",
             "skos:prefLabel": "Start",
-            "hunLabel": "Kezdődátum",
+            "hunLabel": "Start",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -1966,18 +1966,18 @@
             ],
             "schema:name": "coverage:Temporal:StopTime",
             "schema:description": "Dataset End Date",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "dba65e92-3910-3ff8-b284-5964937352f6",
             "title": "coverage:Temporal:StopTime element schema",
             "description": "coverage:Temporal:StopTime element schema generated by the ARP",
-            "hunDescription": "Adatcsomag végdátuma",
+            "hunDescription": "Dataset End Date",
             "skos:prefLabel": "End",
-            "hunLabel": "Végdátum",
+            "hunLabel": "End",
             "_arp": {
               "dataverse": {
                 "watermark": "YYYY-MM-DD",
@@ -1997,9 +1997,9 @@
           "coverage:Temporal:StartTime",
           "coverage:Temporal:StopTime"
         ],
-        "pav:createdOn": "2024-10-11T16:48:20Z",
+        "pav:createdOn": "2025-10-21T15:23:19Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+        "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -2009,9 +2009,9 @@
         "title": "coverage:Temporal element schema",
         "description": "coverage:Temporal element schema generated by the ARP",
         "schema:identifier": "coverage:Temporal",
-        "hunDescription": "Az adatok által lefedett időperiódus.",
+        "hunDescription": "Time period covered by the data.",
         "skos:prefLabel": "Dataset Date Range",
-        "hunLabel": "Az adatcsomag időtartománya",
+        "hunLabel": "Dataset Date Range",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -2104,18 +2104,18 @@
       ],
       "schema:name": "coverage:Spatial",
       "schema:description": "The sky coverage of the data object.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "925f4300-fa2b-3f10-a80a-6f53b1b424d2",
       "title": "coverage:Spatial element schema",
       "description": "coverage:Spatial element schema generated by the ARP",
-      "hunDescription": "Az ég ezen objektum általi lefedettsége.",
+      "hunDescription": "The sky coverage of the data object.",
       "skos:prefLabel": "Sky Coverage",
-      "hunLabel": "Égtakarás",
+      "hunLabel": "Sky Coverage",
       "minItems": 1,
       "maxItems ": 0,
       "_arp": {
@@ -2193,18 +2193,18 @@
       ],
       "schema:name": "coverage:Depth",
       "schema:description": "The (typical) depth coverage, or sensitivity, of the data object in Jy.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "bd3be644-3e93-353e-8347-fbf226d33208",
       "title": "coverage:Depth element schema",
       "description": "coverage:Depth element schema generated by the ARP",
-      "hunDescription": "Az adat objektum (tipikus) mélységi lefedettsége vagy érzékenysége Jy-ben.",
+      "hunDescription": "The (typical) depth coverage, or sensitivity, of the data object in Jy.",
       "skos:prefLabel": "Depth Coverage",
-      "hunLabel": "Mélységi fedés",
+      "hunLabel": "Depth Coverage",
       "_arp": {
         "dataverse": {
           "watermark": "Enter a floating-point number.",
@@ -2281,18 +2281,18 @@
       ],
       "schema:name": "coverage:ObjectDensity",
       "schema:description": "The (typical) density of objects, catalog entries, telescope pointings, etc., on the sky, in number per square degree.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "5ffe07fe-ae45-3c00-aa5a-58e0bd04128c",
       "title": "coverage:ObjectDensity element schema",
       "description": "coverage:ObjectDensity element schema generated by the ARP",
-      "hunDescription": "Az égbolton megjelenő tárgyak (tipikus) sűrűsége, katalógus bejegyzései, távcső mutatói stb., négyzetfokonkénti számban.",
+      "hunDescription": "The (typical) density of objects, catalog entries, telescope pointings, etc., on the sky, in number per square degree.",
       "skos:prefLabel": "Object Density",
-      "hunLabel": "Objektum sűrűsége",
+      "hunLabel": "Object Density",
       "_arp": {
         "dataverse": {
           "watermark": "Enter a floating-point number.",
@@ -2369,18 +2369,18 @@
       ],
       "schema:name": "coverage:ObjectCount",
       "schema:description": "The total number of objects, catalog entries, etc., in the data object.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "1c9bb5cb-d5c2-30da-9edd-5091f5551780",
       "title": "coverage:ObjectCount element schema",
       "description": "coverage:ObjectCount element schema generated by the ARP",
-      "hunDescription": "Objektumok és katalógus bejegyzések összesített száma az adatcsomagban.",
+      "hunDescription": "The total number of objects, catalog entries, etc., in the data object.",
       "skos:prefLabel": "Object Count",
-      "hunLabel": "Objektumok száma",
+      "hunLabel": "Object Count",
       "_arp": {
         "dataverse": {
           "watermark": "Enter an integer.",
@@ -2457,18 +2457,18 @@
       ],
       "schema:name": "coverage:SkyFraction",
       "schema:description": "The fraction of the sky represented in the observations, ranging from 0 to 1.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "68498c01-a1b1-3d64-ad4b-4b628581cba8",
       "title": "coverage:SkyFraction element schema",
       "description": "coverage:SkyFraction element schema generated by the ARP",
-      "hunDescription": "Az ég megfigyelt szelete, 0 - 1 között.",
+      "hunDescription": "The fraction of the sky represented in the observations, ranging from 0 to 1.",
       "skos:prefLabel": "Fraction of Sky",
-      "hunLabel": "Égrész",
+      "hunLabel": "Fraction of Sky",
       "_arp": {
         "dataverse": {
           "watermark": "Enter a floating-point number.",
@@ -2556,18 +2556,18 @@
       ],
       "schema:name": "coverage:Polarization",
       "schema:description": "The polarization coverage",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "cb2c5474-7369-33dd-aba7-41c8e06a7b80",
       "title": "coverage:Polarization element schema",
       "description": "coverage:Polarization element schema generated by the ARP",
-      "hunDescription": "Polarizációs fedés",
+      "hunDescription": "The polarization coverage",
       "skos:prefLabel": "Polarization",
-      "hunLabel": "Polarizáció",
+      "hunLabel": "Polarization",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -2654,18 +2654,18 @@
       ],
       "schema:name": "redshiftType",
       "schema:description": "RedshiftType string C \"Redshift\"; or \"Optical\" or \"Radio\" definitions of Doppler velocity used in the data object.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "93273b48-39a0-3b76-b407-369da35c4f5c",
       "title": "redshiftType element schema",
       "description": "redshiftType element schema generated by the ARP",
-      "hunDescription": "Az adatobjektumnál használt vöröseltolódás típus karkterlánc C \"vöröseltolódás\", \"optikai\" vagy \"radio\", amivel az adatobjektumok a Dopplersebességet definiálják.",
+      "hunDescription": "RedshiftType string C \"Redshift\"; or \"Optical\" or \"Radio\" definitions of Doppler velocity used in the data object.",
       "skos:prefLabel": "RedshiftType",
-      "hunLabel": "Vöröseltolódás típusa",
+      "hunLabel": "RedshiftType",
       "_arp": {
         "dataverse": {
           "advancedSearchField": false,
@@ -2741,18 +2741,18 @@
       ],
       "schema:name": "resolution:Redshift",
       "schema:description": "The resolution in redshift (unitless) or Doppler velocity (km/s) in the data object.",
-      "pav:createdOn": "2024-10-11T16:48:20Z",
+      "pav:createdOn": "2025-10-21T15:23:19Z",
       "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-      "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+      "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
       "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
       "schema:schemaVersion": "1.6.0",
       "additionalProperties": false,
       "@id": "6b623965-141d-3471-b740-4237fd4e1cc7",
       "title": "resolution:Redshift element schema",
       "description": "resolution:Redshift element schema generated by the ARP",
-      "hunDescription": "A felbontás vöröseltolódásban (mértékegység nélkül), vagy Dopplersebességben (km/s) az adatobjektumban.",
+      "hunDescription": "The resolution in redshift (unitless) or Doppler velocity (km/s) in the data object.",
       "skos:prefLabel": "Redshift Resolution",
-      "hunLabel": "Vöröseltolódás felbontása",
+      "hunLabel": "Redshift Resolution",
       "_arp": {
         "dataverse": {
           "watermark": "Enter a floating-point number.",
@@ -2814,12 +2814,12 @@
             "properties": {
               "coverage:Redshift:MinimumValue": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Redshift.MinimumValue"
+                  "https://dataverse.org/schema/astrophysics/coverage.Redshift.MinimumValue"
                 ]
               },
               "coverage:Redshift:MaximumValue": {
                 "enum": [
-                  "https://dataverse.org/schema/astrophysics2222/coverage.Redshift.MaximumValue"
+                  "https://dataverse.org/schema/astrophysics/coverage.Redshift.MaximumValue"
                 ]
               }
             },
@@ -2913,16 +2913,16 @@
             ],
             "schema:name": "coverage:Redshift:MinimumValue",
             "schema:description": "The minimum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "01aabb05-a762-3dbc-8669-4e5285ff635a",
             "title": "coverage:Redshift:MinimumValue element schema",
             "description": "coverage:Redshift:MinimumValue element schema generated by the ARP",
-            "hunDescription": "A vöröseltolódás minimális értéke (mértékegység nélkül), vagy Dopplersebességben (km/s) az adatobjektumban.",
+            "hunDescription": "The minimum value of the redshift (unitless) or Doppler velocity (km/s) in the data object.",
             "skos:prefLabel": "Minimum",
             "hunLabel": "Minimum",
             "_arp": {
@@ -3001,16 +3001,16 @@
             ],
             "schema:name": "coverage:Redshift:MaximumValue",
             "schema:description": "The maximum value of the redshift (unitless) or Doppler velocity (km/s in the data object.",
-            "pav:createdOn": "2024-10-11T16:48:20Z",
+            "pav:createdOn": "2025-10-21T15:23:19Z",
             "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-            "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+            "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
             "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
             "schema:schemaVersion": "1.6.0",
             "additionalProperties": false,
             "@id": "06219b16-beeb-32cf-8cf4-c16dcd3e29b0",
             "title": "coverage:Redshift:MaximumValue element schema",
             "description": "coverage:Redshift:MaximumValue element schema generated by the ARP",
-            "hunDescription": "A vöröseltolódás maximális értéke (mértékegység nélkül), vagy Dopplersebességben (km/s) az adatobjektumban.",
+            "hunDescription": "The maximum value of the redshift (unitless) or Doppler velocity (km/s) in the data object.",
             "skos:prefLabel": "Maximum",
             "hunLabel": "Maximum",
             "_arp": {
@@ -3032,9 +3032,9 @@
           "coverage:Redshift:MinimumValue",
           "coverage:Redshift:MaximumValue"
         ],
-        "pav:createdOn": "2024-10-11T16:48:20Z",
+        "pav:createdOn": "2025-10-21T15:23:19Z",
         "pav:createdBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
-        "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+        "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
         "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
         "schema:schemaVersion": "1.6.0",
         "additionalProperties": false,
@@ -3044,9 +3044,9 @@
         "title": "coverage:RedshiftValue element schema",
         "description": "coverage:RedshiftValue element schema generated by the ARP",
         "schema:identifier": "coverage:RedshiftValue",
-        "hunDescription": "A Vöröseltolódás értéke (mértékegység nélkül), vagy Dopplersebességben (km/s) az adatobjektumban.",
+        "hunDescription": "The value of the redshift (unitless) or Doppler velocity (km/s) in the data object.",
         "skos:prefLabel": "Redshift Value",
-        "hunLabel": "Vöröseltolódás mértéke",
+        "hunLabel": "Redshift Value",
         "minItems": 1,
         "maxItems ": 0,
         "_valueConstraints": {
@@ -3097,7 +3097,7 @@
   ],
   "schema:name": "Astronomy and Astrophysics Metadata",
   "schema:description": "",
-  "pav:lastUpdatedOn": "2024-10-11T16:48:20Z",
+  "pav:lastUpdatedOn": "2025-10-21T15:23:19Z",
   "oslc:modifiedBy": "https://metadatacenter.org/users/ab2a9696-291f-4705-b5e6-6c262266c506",
   "schema:schemaVersion": "1.6.0",
   "additionalProperties": false,
@@ -3105,7 +3105,7 @@
   "bibo:status": "bibo:draft",
   "title": "astrophysics template schema",
   "description": "astrophysics template schema generated by ARP",
-  "hunName": "Csillagászati és asztrofizikai metaadatok",
+  "hunName": "Astronomy and Astrophysics Metadata",
   "schema:identifier": "astrophysics",
   "@id": "https://repo.arp.orgx/templates/ab2a9696-291f-4705-b5e6-6c262266c506",
   "$schema": "http://json-schema.org/draft-04/schema#"
