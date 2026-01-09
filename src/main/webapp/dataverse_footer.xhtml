@@ -24,7 +24,7 @@
                 <div class="row">
                     <div class="col-sm-8 small" jsf:rendered="#{!widgetView}">
                         <p>
-                            <h:outputText value="#{settingsWrapper.footerCopyrightAndYear}#{settingsWrapper.get(':FooterCopyright')}" escape="false"/> <ui:fragment rendered="#{!empty settingsWrapper.get(':ApplicationPrivacyPolicyUrl')}">&#160;|&#160; <h:outputLink value="#{settingsWrapper.get(':ApplicationPrivacyPolicyUrl')}" target="_blank" rel="noopener">#{bundle['footer.privacyPolicy']}</h:outputLink></ui:fragment> <ui:fragment rendered="#{!empty settingsWrapper.get(':ApplicationTermsOfUse')}">&#160;|&#160; <h:outputText value="#{systemConfig.applicationTermsOfUse}" escape="false"/></ui:fragment>
+                            <h:outputText value="#{settingsWrapper.footerCopyrightAndYear}#{settingsWrapper.get(':FooterCopyright')}" escape="false"/> <ui:fragment rendered="#{!empty settingsWrapper.get(':ApplicationPrivacyPolicyUrl')}">&#160;|&#160; <h:outputLink value="#{settingsWrapper.get(':ApplicationPrivacyPolicyUrl')}" target="_blank" rel="noopener">#{bundle['footer.privacyPolicy']}</h:outputLink></ui:fragment>
                         </p>
                     </div>
                     <div class="col-xs-7 small" jsf:rendered="#{widgetView}">
@@ -51,6 +51,6 @@
                 </div>
             </div>
         </div>
-    <o:resourceInclude path="/CustomizationFilesServlet?customFileType=footer" rendered="#{!widgetView}"/>
+        <o:resourceInclude path="/CustomizationFilesServlet?customFileType=footer" rendered="#{!widgetView}"/>
     </footer>
 </ui:composition>

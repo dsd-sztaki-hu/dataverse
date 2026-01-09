@@ -1,7 +1,11 @@
 package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.api.arp.CedarTemplateToDvMdbConverter;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,24 +15,33 @@ import java.util.HashSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CedarTemplateToDvMdbConverterTest {
-    
-    CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter;
-    
+
+    static CedarTemplateToDvMdbConverter cedarTemplateToDvMdbConverter;
+
+    @BeforeAll
+    public static void setUp() {
+        // Create a mock ArpServiceBean
+        ArpServiceBean mockArpService = Mockito.mock(ArpServiceBean.class);
+
+        // Mock the hasExternalValues method to return false by default
+        when(mockArpService.hasExternalValues(Mockito.any())).thenReturn(false);
+
+        // Initialize the converter with the mock
+        cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter(mockArpService);
+    }
+
     @Test
     public void testCitationModifiedArpValuesForAuthorName() throws IOException {
-        cedarTemplateToDvMdbConverter = new CedarTemplateToDvMdbConverter(null);
         String originalSchema = Files.readString(Paths.get("src/test/resources/arp/citation.json"));
         String originalTsv = Files.readString(Paths.get("src/test/resources/arp/citation.tsv"));
         String generatedMdbTsv = cedarTemplateToDvMdbConverter.processCedarTemplate(originalSchema, new HashSet<>());
         assertEquals(originalTsv.toLowerCase(), generatedMdbTsv.toLowerCase().trim());
-        
+
         // Modify the "_arp" and "_valueConstraints" values of the authorName and datasetContactEmail properties as if 
         // these values were edited in CEDAR
         String modifiedSchema = Files.readString(Paths.get("src/test/resources/arp/citation_modified_arp_values.json"));
         String modifiedTsv = Files.readString(Paths.get("src/test/resources/arp/citation_modified_arp_values.tsv"));
         String generatedModifiedMdbTsv = cedarTemplateToDvMdbConverter.processCedarTemplate(modifiedSchema, new HashSet<>());
         assertEquals(modifiedTsv.toLowerCase(), generatedModifiedMdbTsv.toLowerCase().trim());
-        
     }
-    
 }

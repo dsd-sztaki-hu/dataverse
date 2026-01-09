@@ -59,6 +59,18 @@
         "required": false,
         "multiple": false,
         "readonly": true
+      },
+      {
+        "id": "https://dataverse.org/schema/file/directoryLabel",
+        "name": "directoryLabel",
+        "label": "Directory label",
+        "help": "Fájl elérési útvonala",
+        "type": [
+          "Text"  
+        ],
+        "required": false,
+        "multiple": false,
+        "readonly": true
       }
     ]
 }

@@ -32,6 +32,9 @@
     "producer" : "https://dataverse.org/schema/citation/producer",
     "depositor" : "https://dataverse.org/schema/citation/depositor",
     "publicationURL" : "https://schema.org/distribution",
+    "license" : "https://schema.org/license",
+    "datasetContactAffiliation" : "https://schema.org/datasetContactAffiliation",
+    "datePublished" : "https://schema.org/datePublished",
     "keywordValue" : "https://dataverse.org/schema/citation/keywordValue"
   } ],
   "@graph" : [ {
