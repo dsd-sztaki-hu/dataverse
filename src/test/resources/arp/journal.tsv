@@ -7,35 +7,35 @@
 	journalPubDate	Publication Date	The publication date for this journal volume/issue, which this Dataset is associated with (e.g., 1999).	YYYY or YYYY-MM or YYYY-MM-DD	DATE	3		true	false	false	true	false	false	journalVolumeIssue	journal	https://dataverse.org/schema/journal/journalPubDate
 	journalArticleType	Type of Article	Indicates what kind of article this is, for example, a research article, a commentary, a book or product review, a case report, a calendar, etc (based on JATS). 		TEXT	4		true	true	false	true	false	false		journal	https://dataverse.org/schema/journal/journalArticleType
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder
-	journalArticleType	reprint		0
-	journalArticleType	research article		1
-	journalArticleType	retraction		2
-	journalArticleType	review article		3
-	journalArticleType	translation		4
-	journalArticleType	other		5
-	journalArticleType	in brief		6
-	journalArticleType	introduction		7
-	journalArticleType	letter		8
-	journalArticleType	meeting report		9
-	journalArticleType	news		10
-	journalArticleType	obituary		11
-	journalArticleType	oration		12
-	journalArticleType	partial retraction		13
-	journalArticleType	product review		14
-	journalArticleType	rapid communication		15
-	journalArticleType	reply		16
-	journalArticleType	abstract		17
-	journalArticleType	addendum		18
-	journalArticleType	announcement		19
-	journalArticleType	article-commentary		20
-	journalArticleType	book review		21
-	journalArticleType	books received		22
-	journalArticleType	brief report		23
-	journalArticleType	calendar		24
-	journalArticleType	case report		25
-	journalArticleType	collection		26
-	journalArticleType	correction		27
-	journalArticleType	data paper		28
-	journalArticleType	discussion		29
-	journalArticleType	dissertation		30
-	journalArticleType	editorial		31
+	journalArticleType	reply		25
+	journalArticleType	reprint		26
+	journalArticleType	research article		27
+	journalArticleType	retraction		28
+	journalArticleType	review article		29
+	journalArticleType	translation		30
+	journalArticleType	other		31
+	journalArticleType	product review		0
+	journalArticleType	rapid communication		1
+	journalArticleType	abstract		2
+	journalArticleType	addendum		3
+	journalArticleType	announcement		4
+	journalArticleType	article-commentary		5
+	journalArticleType	book review		6
+	journalArticleType	books received		7
+	journalArticleType	brief report		8
+	journalArticleType	calendar		9
+	journalArticleType	case report		10
+	journalArticleType	collection		11
+	journalArticleType	correction		12
+	journalArticleType	data paper		13
+	journalArticleType	discussion		14
+	journalArticleType	dissertation		15
+	journalArticleType	editorial		16
+	journalArticleType	in brief		17
+	journalArticleType	introduction		18
+	journalArticleType	letter		19
+	journalArticleType	meeting report		20
+	journalArticleType	news		21
+	journalArticleType	obituary		22
+	journalArticleType	oration		23
+	journalArticleType	partial retraction		24

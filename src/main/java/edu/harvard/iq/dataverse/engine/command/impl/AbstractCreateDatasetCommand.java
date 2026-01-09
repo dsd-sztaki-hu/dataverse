@@ -1,8 +1,7 @@
 package edu.harvard.iq.dataverse.engine.command.impl;
 
-import edu.harvard.iq.dataverse.DataFile;
-import edu.harvard.iq.dataverse.Dataset;
-import edu.harvard.iq.dataverse.DatasetVersion;
+import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.dataaccess.DataAccess;
@@ -15,6 +14,11 @@ import edu.harvard.iq.dataverse.pidproviders.PidProvider;
 import static edu.harvard.iq.dataverse.util.StringUtil.isEmpty;
 import java.util.Objects;
 import java.util.logging.Logger;
+
+import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.JsfHelper;
+import jakarta.enterprise.inject.spi.CDI;
+import org.apache.solr.client.solrj.SolrServerException;
 
 /**;
  * An abstract base class for commands that creates {@link Dataset}s.
@@ -150,6 +154,15 @@ public abstract class AbstractCreateDatasetCommand extends AbstractDatasetComman
         postDBFlush(theDataset, ctxt);
         
         ctxt.index().asyncIndexDataset(theDataset, true);
+
+        try {
+            // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+            RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+            roCrateExportManager.createOrUpdateRoCrate(theDataset.getLatestVersion());
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
                  
         return theDataset;
     }
