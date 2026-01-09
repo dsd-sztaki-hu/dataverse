@@ -1440,4 +1440,14 @@ public class JsonPrinter {
         jsonObjectBuilder.add("include", inputLevel.isInclude());
         return jsonObjectBuilder;
     }
+    
+    public static JsonObjectBuilder jsonLanguage(String locale, String title) {
+        // returns a single metadata language entry
+        return jsonObjectBuilder().add("locale", locale).add("title", title);
+    }
+
+    public static JsonArrayBuilder jsonLanguage(Map<String, String> langMap) {
+        // returns an array of metadatalanguages
+        return Json.createArrayBuilder(langMap.entrySet().stream().map(entry -> jsonLanguage(entry.getKey(), entry.getValue())).toList());
+    }
 }

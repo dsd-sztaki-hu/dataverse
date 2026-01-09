@@ -4305,4 +4305,20 @@ public class UtilIT {
                 .delete("/api/datasets/datasetTypes/" + doomed);
     }
 
+    public static Response getDataverseMetadataLanguage(String alias, String apiToken) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .get("/api/dataverses/"
+                        + alias
+                        + "/allowedMetadataLanguages");
+    }
+
+    public static Response setDataverseMetadataLanguage(String alias, String apiToken, String lang) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .put("/api/dataverses/"
+                        + alias
+                        + "/allowedMetadataLanguages/"
+                        + lang);
+    }
 }

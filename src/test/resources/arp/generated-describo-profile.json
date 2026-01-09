@@ -19,7 +19,8 @@
             "Text"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/8f0bd2e4-fb8e-405e-ba94-16293f6a814c",
@@ -31,7 +32,8 @@
           ],
           "required": true,
           "multiple": true,
-          "regex": "^((?!\\.)[\\w\\-_.]*[^.])(@\\w+(\\-?\\w+)*)(\\.\\w+(\\-?\\w+)*)*\\.[a-zA-Z]{2,}$"
+          "regex": "^((?!\\.)[\\w\\-_.]*[^.])(@\\w+(\\-?\\w+)*)(\\.\\w+(\\-?\\w+)*)*\\.[a-zA-Z]{2,}$",
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/4677c6ef-164d-4ec0-8298-70ec06b211d8",
@@ -42,7 +44,8 @@
             "DateTime"
           ],
           "required": true,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/f2274f70-0952-4359-9710-19966e0beec6",
@@ -59,7 +62,8 @@
             "Single option 4_test"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/69c43448-13ca-4c71-a9c0-48b97de82c3a",
@@ -77,7 +81,8 @@
             "Multiple option 5_test"
           ],
           "required": true,
-          "multiple": true
+          "multiple": true,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/29b3bb34-df00-45e5-823d-20527df731ed",
@@ -88,7 +93,8 @@
             "URL"
           ],
           "required": true,
-          "multiple": true
+          "multiple": true,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/ef6214fc-8cc4-4a77-81d6-37b325765c14",
@@ -102,7 +108,8 @@
           "multiple": false,
           "numberType": [
             "Int"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/48c7112a-5dd2-429f-bb13-34e928d5c97d",
@@ -116,7 +123,8 @@
           "multiple": false,
           "numberType": [
             "Double"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/a6f6c9b6-1320-40ee-a54f-d41f785ecb30",
@@ -127,7 +135,8 @@
             "Text"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         },
         {
           "id": "https://schema.metadatacenter.orgx/properties/ffda9a22-0413-4bb5-94f4-0ec541138b42",
@@ -138,7 +147,8 @@
             "creatorName_test"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         }
       ],
       "label": "Dataset",
@@ -157,7 +167,8 @@
             "Text"
           ],
           "required": true,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         },
         {
           "id": "http://www.w3.org/2006/vcard/ns#familyName",
@@ -168,7 +179,8 @@
             "Text"
           ],
           "required": false,
-          "multiple": false
+          "multiple": false,
+          "deprecated": false
         }
       ],
       "label": "Creator Name_test",

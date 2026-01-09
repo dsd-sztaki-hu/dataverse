@@ -27,8 +27,4 @@
 	socialScienceNotesType	Type	Type of note.		TEXT	23		false	false	false	false	false	false	socialScienceNotes	socialscience	https://dataverse.org/schema/socialscience/socialScienceNotesType
 	socialScienceNotesSubject	Subject	Note subject.		TEXT	24		false	false	false	false	false	false	socialScienceNotes	socialscience	https://dataverse.org/schema/socialscience/socialScienceNotesSubject
 	socialScienceNotesText	Text	Text for this note.		TEXTBOX	25		false	false	false	false	false	false	socialScienceNotes	socialscience	https://dataverse.org/schema/socialscience/socialScienceNotesText
-	socialElem	socialElem			NONE	26		false	false	false	false	false	false		socialscience	http://asd.as/asd/socElem
-	socSimpleField	Soc simple field	Help Text		TEXT	27		false	false	false	false	false	false	socialElem	socialscience	http://asdasd.qwe/socSimpleField
-	socEmail	Soc email	Help Text		EMAIL	28		false	false	false	false	false	false	socialElem	socialscience	http://asdasd.qwe/socEmail
-	szocialField	Social fielddddd	Help Text		TEXT	29		false	false	false	false	false	false		socialscience	http://asdasd.qwe/szocialField
 #controlledVocabulary	DatasetField	Value	identifier	displayOrder

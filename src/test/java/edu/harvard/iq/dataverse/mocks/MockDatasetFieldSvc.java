@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse.mocks;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.json.JsonObject;
@@ -53,6 +54,11 @@ public class MockDatasetFieldSvc extends DatasetFieldServiceBean {
     
     public Map<Long, JsonObject> getCVocConf(boolean byTermUriField){
         return new HashMap<Long, JsonObject>();
+    }
+    
+    @Override
+    public List<DatasetFieldType> findAllOrderedById() {
+        return fieldTypes.values().stream().toList();
     }
 
 }

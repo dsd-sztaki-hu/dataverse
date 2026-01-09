@@ -11,25 +11,24 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.logging.Logger;
 
 import static edu.harvard.iq.dataverse.api.ApiConstants.*;
 import static edu.harvard.iq.dataverse.api.UtilIT.API_TOKEN_HTTP_HEADER;
 import static io.restassured.RestAssured.given;
-import static io.restassured.path.json.JsonPath.with;
 import static jakarta.ws.rs.core.Response.Status.*;
-import static java.lang.Thread.sleep;
 import static org.hamcrest.CoreMatchers.*;
-import static org.hamcrest.Matchers.contains;
 
 /**
  * Test RoCrate editing an RoCrate-Dataset synchronisation. Based on DatasetsIT.java.
  */
-public class ArpRoCrateIT
-{
+public class ArpRoCrateIT {
 
     private static final Logger logger = Logger.getLogger(ArpRoCrateIT.class.getCanonicalName());
 
@@ -67,7 +66,7 @@ public class ArpRoCrateIT
                 .statusCode(200);
          */
     }
-    
+
 
     @AfterAll
     public static void afterClass() {
@@ -114,7 +113,7 @@ public class ArpRoCrateIT
         public Integer datasetId;
         public String datasetPersistentId;
     }
-    
+
     /**
      * Helper method to create a random user, dataverse, and dataset for testing purposes.
      * This method sets up a complete environment for running tests, including:
@@ -122,12 +121,12 @@ public class ArpRoCrateIT
      * - Creating a random dataverse and publishing it
      * - Creating a random dataset within the dataverse
      * - Retrieving the dataset's persistent ID
-     * 
+     *
      * @return TestSetup object containing all the necessary information for the test setup
      */
     public static TestSetup createRandomUserDataverseAndDataset() {
         TestSetup setup = new TestSetup();
-    
+
         // Create random user
         Response createUserResponse = UtilIT.createRandomUser();
         createUserResponse.then().assertThat().statusCode(OK.getStatusCode());
@@ -138,16 +137,16 @@ public class ArpRoCrateIT
         Response createDataverseResponse = UtilIT.createRandomDataverse(setup.apiToken);
         createDataverseResponse.then().assertThat().statusCode(CREATED.getStatusCode());
         setup.dataverseAlias = UtilIT.getAliasFromResponse(createDataverseResponse);
-    
+
         // Publish dataverse
         Response publishDataverseResponse = UtilIT.publishDataverseViaSword(setup.dataverseAlias, setup.apiToken);
         publishDataverseResponse.then().assertThat().statusCode(OK.getStatusCode());
-    
+
         // Create random dataset
         Response createDatasetResponse = UtilIT.createRandomDatasetViaNativeApi(setup.dataverseAlias, setup.apiToken);
         createDatasetResponse.then().assertThat().statusCode(CREATED.getStatusCode());
         setup.datasetId = UtilIT.getDatasetIdFromResponse(createDatasetResponse);
-    
+
         // Get dataset persistent ID
         Response datasetAsJson = UtilIT.nativeGet(setup.datasetId, setup.apiToken);
         datasetAsJson.then().assertThat().statusCode(OK.getStatusCode());
@@ -155,7 +154,7 @@ public class ArpRoCrateIT
         String authority = JsonPath.from(datasetAsJson.getBody().asString()).getString("data.authority");
         String identifier = JsonPath.from(datasetAsJson.getBody().asString()).getString("data.identifier");
         setup.datasetPersistentId = protocol + ":" + authority + "/" + identifier;
-    
+
         return setup;
     }
 
@@ -165,7 +164,7 @@ public class ArpRoCrateIT
      * - Deletes the dataset
      * - Deletes the dataverse
      * - Deletes the user
-     * 
+     *
      * @param setup TestSetup object containing the information about the environment to be cleaned up
      */
     public static void cleanupUserDataverseAndDataset(TestSetup setup) {
@@ -300,10 +299,10 @@ public class ArpRoCrateIT
         String originalJson = datasetResponse.getBody().asString();
         // Create an ArpDatasetMetadataEditor instance
         ArpDatasetMetadataEditor editor = new ArpDatasetMetadataEditor(originalJson);
-    
+
         // Edit the title
         editor.editFieldLevelMetadata("citation", "title", "Updated Darwin's Finches Study");
-    
+
         // Edit the author (complex field)
         JsonObject newAuthor = new JsonObject();
         JsonObject authorName = new JsonObject();
@@ -414,6 +413,27 @@ public class ArpRoCrateIT
 //        cleanupUserDataverseAndDataset(setup);
     }
 
+    @Test
+    public void testUploadRoCrateJson() throws IOException {
+        TestSetup setup = createRandomUserDataverseAndDataset();
+
+        // Read the RO-Crate JSON file
+        String roCrateJson = Files.readString(Paths.get("src/test/resources/arp/rocrate-api-tests/ro-crate-metadata.json"));
+
+        // Upload the RO-Crate JSON
+        Response uploadResponse = uploadRoCrateJson(roCrateJson, setup.apiToken, setup.dataverseAlias);
+
+        // Assert that the response code is 200 and the status is OK
+        uploadResponse.then().assertThat()
+                .statusCode(OK.getStatusCode())
+                .body("status", equalTo("OK"));
+
+        String arpPid = ((LinkedHashMap<String, Object>) ((ArrayList<Object>) uploadResponse.getBody().jsonPath().getMap("data").get("@graph")).get(0)).get("@arpPid").toString();
+        UtilIT.destroyDataset(arpPid, setup.apiToken);
+
+        cleanupUserDataverseAndDataset(setup);
+    }
+    
     public static Response getRoCrate(String persistentId, String version, String apiToken) {
         String path = String.format("/api/arp/rocrate/%s", persistentId);
         if (version != null) {
@@ -431,5 +451,16 @@ public class ArpRoCrateIT
                 .contentType(ContentType.JSON)
                 .body(roCrateJson)
                 .post(path);
+    }
+
+    /**
+     * Helper method to upload RO-Crate JSON using the uploadRoCrateJson API
+     */
+    public static Response uploadRoCrateJson(String roCrateJson, String apiToken, String ownerId) {
+        return given()
+                .header(API_TOKEN_HTTP_HEADER, apiToken)
+                .contentType(ContentType.JSON)
+                .body(roCrateJson)
+                .post("/api/arp/uploadRoCrateJson?ownerId=" + ownerId);
     }
 }
