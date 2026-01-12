@@ -1278,7 +1278,7 @@ public class ArpServiceBean implements java.io.Serializable {
     // "dataverseFile" and "dataverseDataset" are special Template Elements in CEDAR that are used to represent file relations
     // these properties need to be handled differently
     boolean notFollowsDvNamingConvention(String fieldName, List<String> listOfStaticFields, String aromaType, String mdbName) {
-        return !fieldName.matches("^(?![_\\W].*_$)[^0-9:]\\w*(:?\\w*)*") ||
+        return !fieldName.matches("^(?![_\\W].*_$)[^\\W:]\\w*(:?\\w*)*") ||
                 listOfStaticFields.contains(fieldName) && metadataBlockService.findByName(mdbName) == null
                         && !aromaType.equals("dataverseFile") && !aromaType.equals("dataverseDataset");
     }
