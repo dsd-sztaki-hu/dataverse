@@ -123,11 +123,13 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
 
     /**
      * Checks if there is a MetadataBlockArp with the same schema:identifier but different @id
+     * and verifies that the provided version is greater than or equal to the existing version.
      * @param schemaIdentifier The schema:identifier to check
      * @param id The @id to compare against
-     * @return true if a duplicate is found, false otherwise
+     * @param providedVersion The pav:version of the schema being checked (e.g., "0.0.1")
+     * @return true if a duplicate is found and provided version is smaller than existing version, false otherwise
      */
-    public boolean isDuplicateSchemaIdentifier(String schemaIdentifier, String id) {
+    public boolean isDuplicateSchemaIdentifier(String schemaIdentifier, String id, String providedVersion) {
         try {
             // Get all MetadataBlockArp records
             var query = em.createQuery("SELECT mdbArp FROM MetadataBlockArp mdbArp", MetadataBlockArp.class);
@@ -142,7 +144,18 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
                     if (existingIdentifier != null && existingIdentifier.getAsString().equals(schemaIdentifier)) {
                         var existingId = jsonObject.get("@id");
                         if (existingId != null && !existingId.getAsString().equals(id)) {
-                            return true;
+                            // Check version comparison if both versions exist
+                            var existingVersion = jsonObject.get("pav:version");
+                            if (existingVersion != null && providedVersion != null) {
+                                var existingVersionString = existingVersion.getAsString();
+                                // Only return true if provided smaller than existing version
+                                if (compareVersions(providedVersion, existingVersionString) < 0) {
+                                    return true;
+                                }
+                            } else if (existingVersion != null && providedVersion == null) {
+                                // If existing has version but provided doesn't, treat as a duplicate
+                                return true;
+                            }
                         }
                     }
                 }
@@ -151,6 +164,34 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
         } catch (Exception e) {
             logger.warning("Error checking for duplicate schema:identifier: " + e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Compares two semantic version strings (e.g., "0.0.1").
+     * @param version1 First version to compare
+     * @param version2 Second version to compare
+     * @return negative if version1 < version2, zero if equal, positive if version1 > version2
+     */
+    private int compareVersions(String version1, String version2) {
+        try {
+            String[] parts1 = version1.split("\\.");
+            String[] parts2 = version2.split("\\.");
+            int maxLength = Math.max(parts1.length, parts2.length);
+            
+            for (int i = 0; i < maxLength; i++) {
+                int part1 = i < parts1.length ? Integer.parseInt(parts1[i]) : 0;
+                int part2 = i < parts2.length ? Integer.parseInt(parts2[i]) : 0;
+                
+                if (part1 != part2) {
+                    return part1 - part2;
+                }
+            }
+            return 0;
+        } catch (Exception e) {
+            logger.warning("Error comparing versions: " + e.getMessage());
+            // If version parsing fails, treat as equal to avoid false positives
+            return 0;
         }
     }
 

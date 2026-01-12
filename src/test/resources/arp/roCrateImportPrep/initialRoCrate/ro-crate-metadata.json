@@ -12,7 +12,9 @@
     "dsDescription" : "https://dataverse.org/schema/citation/dsDescription",
     "dateOfDeposit" : "http://purl.org/dc/terms/dateSubmitted",
     "datasetContactAffiliation" : "https://dataverse.org/schema/citation/datasetContactAffiliation",
-    "depositor" : "https://dataverse.org/schema/citation/depositor"
+    "depositor" : "https://dataverse.org/schema/citation/depositor",
+    "datePublished": "https://schema.org/datePublished",
+    "license": "https://schema.org/license"
   } ],
   "@graph" : [ {
     "@id" : "./",

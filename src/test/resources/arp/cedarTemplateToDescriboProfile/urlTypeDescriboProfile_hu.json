@@ -20,7 +20,8 @@
           ],
           "required": true,
           "multiple": false,
-          "placeholder": "Watermark as Placeholder Link"
+          "placeholder": "Watermark as Placeholder Link",
+          "deprecated": false
         }
       ],
       "label": "Adatcsomag",
