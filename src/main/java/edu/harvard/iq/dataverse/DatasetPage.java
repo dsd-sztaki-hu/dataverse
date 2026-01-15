@@ -339,6 +339,7 @@ public class DatasetPage implements java.io.Serializable {
     private String dropBoxSelection = "";
     private String deaccessionReasonText = "";
     private String displayCitation;
+    private String displayTitle;
     private String deaccessionForwardURLFor = "";
     private String showVersionList = "false";
     private List<Template> dataverseTemplates = new ArrayList<>();
@@ -1694,6 +1695,14 @@ public class DatasetPage implements java.io.Serializable {
         this.displayCitation = displayCitation;
     }
 
+    public String getDisplayTitle() {
+        return displayTitle;
+    }
+
+    public void setDisplayTitle(String displayTitle) {
+        this.displayTitle = displayTitle;
+    }
+
     public String getDropBoxSelection() {
         return dropBoxSelection;
     }
@@ -2185,6 +2194,8 @@ public class DatasetPage implements java.io.Serializable {
                 //msg("checkit " + retrieveDatasetVersionResponse.getDifferentVersionMessage());
                 JsfHelper.addWarningMessage(retrieveDatasetVersionResponse.getDifferentVersionMessage());//BundleUtil.getStringFromBundle("dataset.message.metadataSuccess"));
             }
+
+            displayTitle = workingVersion.getTitle();
 
             // init the citation
             displayCitation = dataset.getCitation(true, workingVersion, isAnonymizedAccess());

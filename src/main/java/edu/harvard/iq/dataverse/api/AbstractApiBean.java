@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse.api;
 
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
+
 import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
 import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
@@ -23,12 +24,16 @@ import edu.harvard.iq.dataverse.engine.command.impl.GetLatestPublishedDatasetVer
 import edu.harvard.iq.dataverse.engine.command.impl.GetSpecificPublishedDatasetVersionCommand;
 import edu.harvard.iq.dataverse.externaltools.ExternalToolServiceBean;
 import edu.harvard.iq.dataverse.license.LicenseServiceBean;
+import edu.harvard.iq.dataverse.pidproviders.FailedPIDResolutionLoggingServiceBean;
 import edu.harvard.iq.dataverse.pidproviders.PidUtil;
+import edu.harvard.iq.dataverse.pidproviders.FailedPIDResolutionLoggingServiceBean.FailedPIDResolutionEntry;
 import edu.harvard.iq.dataverse.locality.StorageSiteServiceBean;
 import edu.harvard.iq.dataverse.metrics.MetricsServiceBean;
 import edu.harvard.iq.dataverse.search.savedsearch.SavedSearchServiceBean;
+import edu.harvard.iq.dataverse.settings.FeatureFlags;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.DateUtil;
 import edu.harvard.iq.dataverse.util.FileUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 import edu.harvard.iq.dataverse.util.json.JsonParser;
@@ -45,6 +50,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
+import jakarta.inject.Inject;
 import jakarta.json.*;
 import jakarta.json.JsonValue.ValueType;
 import jakarta.persistence.EntityManager;
@@ -61,6 +67,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
@@ -239,6 +246,9 @@ public abstract class AbstractApiBean {
     @EJB 
     GuestbookResponseServiceBean gbRespSvc;
 
+    @Inject
+    FailedPIDResolutionLoggingServiceBean fprLogService;
+    
     @PersistenceContext(unitName = "VDCNet-ejbPU")
     protected EntityManager em;
 
@@ -418,8 +428,13 @@ public abstract class AbstractApiBean {
                 datasetId = dvObjSvc.findIdByAltGlobalId(globalId, DvObject.DType.Dataset);
             }
             if (datasetId == null) {
+                if (FeatureFlags.ENABLE_PID_FAILURE_LOG.enabled()) {
+
+                    FailedPIDResolutionLoggingServiceBean.FailedPIDResolutionEntry entry = new FailedPIDResolutionEntry(persistentId, httpRequest.getRequestURI(), httpRequest.getMethod(), new DataverseRequest(null, httpRequest).getSourceAddress());
+                    fprLogService.logEntry(entry);
+                }
                 throw new WrappedResponse(
-                    notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset_id_is_null", Collections.singletonList(PERSISTENT_ID_KEY.substring(1)))));
+                        notFound(BundleUtil.getStringFromBundle("find.dataset.error.dataset_id_is_null", Collections.singletonList(PERSISTENT_ID_KEY.substring(1)))));
             }
         }
         if (deep) {
@@ -459,10 +474,22 @@ public abstract class AbstractApiBean {
         return dsv;
     }
 
-    protected void validateInternalVersionNumberIsNotOutdated(Dataset dataset, int internalVersion) throws WrappedResponse {
-        if (dataset.getLatestVersion().getVersion() > internalVersion) {
+    protected void validateInternalTimestampIsNotOutdated(DvObject dvObject, String sourceLastUpdateTime) throws WrappedResponse {
+        Date date = sourceLastUpdateTime != null ? DateUtil.parseDate(sourceLastUpdateTime, "yyyy-MM-dd'T'HH:mm:ss'Z'") : null;
+        if (date == null) {
             throw new WrappedResponse(
-                    badRequest(BundleUtil.getStringFromBundle("abstractApiBean.error.datasetInternalVersionNumberIsOutdated", Collections.singletonList(Integer.toString(internalVersion))))
+                    badRequest(BundleUtil.getStringFromBundle("jsonparser.error.parsing.date", Collections.singletonList(sourceLastUpdateTime)))
+            );
+        }
+        Instant instant = date.toInstant();
+        Instant updateTimestamp =
+                (dvObject instanceof DataFile) ? ((DataFile) dvObject).getFileMetadata().getDatasetVersion().getLastUpdateTime().toInstant() :
+                (dvObject instanceof Dataset) ? ((Dataset) dvObject).getLatestVersion().getLastUpdateTime().toInstant() :
+                instant;
+        // granularity is to the second since the json output only returns dates in this format to the second
+        if (updateTimestamp.getEpochSecond() != instant.getEpochSecond()) {
+            throw new WrappedResponse(
+                    badRequest(BundleUtil.getStringFromBundle("abstractApiBean.error.internalVersionTimestampIsOutdated", Collections.singletonList(sourceLastUpdateTime)))
             );
         }
     }
@@ -477,6 +504,11 @@ public abstract class AbstractApiBean {
             }
             datafile = fileService.findByGlobalId(persistentId);
             if (datafile == null) {
+                if (FeatureFlags.ENABLE_PID_FAILURE_LOG.enabled()) {
+
+                    FailedPIDResolutionLoggingServiceBean.FailedPIDResolutionEntry entry = new FailedPIDResolutionEntry(persistentId, httpRequest.getRequestURI(), httpRequest.getMethod(), new DataverseRequest(null, httpRequest).getSourceAddress());
+                    fprLogService.logEntry(entry);
+                }
                 throw new WrappedResponse(notFound(BundleUtil.getStringFromBundle("find.datafile.error.dataset.not.found.persistentId", Collections.singletonList(persistentId))));
             }
             return datafile;
