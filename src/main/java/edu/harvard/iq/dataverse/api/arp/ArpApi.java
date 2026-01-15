@@ -874,16 +874,18 @@ public class ArpApi extends AbstractApiBean {
             @QueryParam("strict") @DefaultValue("false") boolean isStrict,
             String roCrateJson)
     {
+        final String missingContextWarning = "Missing @context URI added";
         try {
             RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
 
             var warnings = roCrateImportPrepResult.getWarnings();
-            var hasIssues = !roCrateImportPrepResult.getErrors().isEmpty() || !warnings.isEmpty();
+            var errors = roCrateImportPrepResult.getErrors();
+            var hasIssues = !errors.isEmpty() || !warnings.isEmpty();
             if (hasIssues) {
-                if (!warnings.isEmpty() && warnings.values().stream()
+                if (errors.isEmpty() && warnings.values().stream()
                         .flatMap(warn -> warn.values().stream())
                         .flatMap(Set::stream)
-                        .allMatch(issue -> "Missing @context URI added".equals(issue.message()))) {
+                        .allMatch(issue -> missingContextWarning.equals(issue.message()))) {
                     try {
                         ObjectMapper mapper = new ObjectMapper();
                         var responseJson = mapper.createObjectNode();
@@ -893,7 +895,7 @@ public class ArpApi extends AbstractApiBean {
                                 .entity(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseJson))
                                 .type(MediaType.APPLICATION_JSON_TYPE).build();
                     } catch (JsonProcessingException e) {
-                        String fallback = roCrateImportPrepResult.getRoCrate().getJsonMetadata().toString();
+                        String fallback = roCrateImportPrepResult.getRoCrate().getJsonMetadata();
                         var responseJson = NullSafeJsonBuilder.jsonObjectBuilder()
                                 .add( "message", "Valid RO-Crate, but missing @context URI-s were added automatically." )
                                 .add( "updated RO-Crate", fallback )
@@ -903,6 +905,14 @@ public class ArpApi extends AbstractApiBean {
                                 .type(MediaType.APPLICATION_JSON_TYPE).build();
                     }
                 }
+                warnings.entrySet().removeIf(entityEntry -> {
+                    var fields = entityEntry.getValue();
+                    fields.entrySet().removeIf(fieldEntry -> {
+                        fieldEntry.getValue().removeIf(issue -> missingContextWarning.equals(issue.message()));
+                        return fieldEntry.getValue().isEmpty();
+                    });
+                    return fields.isEmpty();
+                });
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                         .entity( NullSafeJsonBuilder.jsonObjectBuilder()
                                 .add("status", STATUS_ERROR)
