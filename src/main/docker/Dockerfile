@@ -27,7 +27,10 @@ FROM $BASE_IMAGE
 # Make Payara use the "ct" profile for MicroProfile Config. Will switch various defaults for the application
 # setup in META-INF/microprofile-config.properties.
 # See also https://download.eclipse.org/microprofile/microprofile-config-3.0/microprofile-config-spec-3.0.html#configprofile
-ENV MP_CONFIG_PROFILE=ct
+ENV MP_CONFIG_PROFILE=ct \
+    LINUX_USER="payara" \
+    LINUX_PASSWORD="payara" \
+    DOMAIN_PASSWORD="changeit"
 
 # Workaround to configure upload directories by default to useful place until we can have variable lookups in
 # defaults for glassfish-web.xml and other places.

@@ -44,7 +44,10 @@ ENV PAYARA_DIR="${HOME_DIR}/appserver" \
     PAYARA_ADMIN_USER="admin" \
     # This is a public default, easy to change via this env var at runtime
     PAYARA_ADMIN_PASSWORD="admin" \
+    LINUX_USER="payara" \
+    LINUX_PASSWORD="payara" \
     DOMAIN_NAME="domain1" \
+    DOMAIN_PASSWORD="changeit" \
     PAYARA_ARGS=""
 ENV PATH="${PATH}:${PAYARA_DIR}/bin:${SCRIPT_DIR}" \
     DOMAIN_DIR="${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}" \
@@ -83,13 +86,29 @@ RUN <<EOF
     mkdir -p "${HOME_DIR}" "${PAYARA_DIR}" "${DEPLOY_DIR}" "${CONFIG_DIR}" "${SCRIPT_DIR}"
     mkdir -p "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
     # Create user
-    addgroup --gid ${GID} payara
-    adduser --system --uid ${UID} --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup payara payara
-    echo payara:payara | chpasswd
+    if getent group payara >/dev/null; then
+      PAYARA_GROUP="payara"
+    elif getent group "${GID}" >/dev/null; then
+      addgroup payara
+      PAYARA_GROUP="payara"
+    else
+      addgroup --gid "${GID}" payara
+      PAYARA_GROUP="payara"
+    fi
+    if getent passwd payara >/dev/null; then
+      PAYARA_USER="payara"
+    elif getent passwd "${UID}" >/dev/null; then
+      adduser --system --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup "${PAYARA_GROUP}" payara
+      PAYARA_USER="payara"
+    else
+      adduser --system --uid ${UID} --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup "${PAYARA_GROUP}" payara
+      PAYARA_USER="payara"
+    fi
+    echo payara:payara | chpasswd || true
     # Set permissions
     # Note: Following OpenShift best practices for arbitrary user id support:
     #       https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#use-uid_create-images
-    chown -R payara:0 "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
+    chown -R "${PAYARA_USER}":0 "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
     chmod -R g=u "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
 
 EOF
