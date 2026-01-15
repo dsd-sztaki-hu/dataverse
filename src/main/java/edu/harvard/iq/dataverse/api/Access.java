@@ -8,7 +8,6 @@ package edu.harvard.iq.dataverse.api;
 
 import edu.harvard.iq.dataverse.*;
 
-
 import static edu.harvard.iq.dataverse.api.Datasets.handleVersion;
 
 import edu.harvard.iq.dataverse.arp.ArpConfig;
@@ -32,18 +31,12 @@ import edu.harvard.iq.dataverse.dataaccess.OptionalAccessService;
 import edu.harvard.iq.dataverse.dataaccess.ImageThumbConverter;
 import edu.harvard.iq.dataverse.datavariable.DataVariable;
 import edu.harvard.iq.dataverse.datavariable.VariableServiceBean;
+import edu.harvard.iq.dataverse.dataverse.featured.DataverseFeaturedItem;
+import edu.harvard.iq.dataverse.dataverse.featured.DataverseFeaturedItemServiceBean;
 import edu.harvard.iq.dataverse.engine.command.Command;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
-import edu.harvard.iq.dataverse.engine.command.impl.AssignRoleCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDatasetCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetDraftDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetLatestPublishedDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetSpecificPublishedDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.RequestAccessCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.RevokeRoleCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.engine.command.impl.*;
 import edu.harvard.iq.dataverse.export.DDIExportServiceBean;
 import edu.harvard.iq.dataverse.makedatacount.MakeDataCountLoggingServiceBean;
 import edu.harvard.iq.dataverse.makedatacount.MakeDataCountLoggingServiceBean.MakeDataCountEntry;
@@ -67,6 +60,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -109,6 +106,15 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.ServerErrorException;
 import jakarta.ws.rs.core.MediaType;
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
+import static jakarta.ws.rs.core.Response.Status.UNAUTHORIZED;
+
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
@@ -170,6 +176,8 @@ public class Access extends AbstractApiBean {
     PermissionsWrapper permissionsWrapper;
     @Inject
     MakeDataCountLoggingServiceBean mdcLogService;
+    @Inject
+    DataverseFeaturedItemServiceBean dataverseFeaturedItemServiceBean;
     
     @EJB
     RoCrateServiceBean roCrateServiceBean;
@@ -178,6 +186,7 @@ public class Access extends AbstractApiBean {
     @EJB
     ArpServiceBean arpService;
 
+    private static final String DEFAULT_BUNDLE_NAME = "dataverse_files.zip";
     //@EJB
     
     // TODO: 
@@ -260,11 +269,11 @@ public class Access extends AbstractApiBean {
          return df;
     }
         
-
+            
     @GET
     @AuthRequired
     @Path("datafile/{fileId:.+}")
-    @Produces({"application/xml"})
+    @Produces({"application/xml","*/*"})
     public Response datafile(@Context ContainerRequestContext crc, @PathParam("fileId") String fileId, @QueryParam("gbrecs") boolean gbrecs, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) /*throws NotFoundException, ServiceUnavailableException, PermissionDeniedException, AuthorizationRequiredException*/ {
         
         // check first if there's a trailing slash, and chop it: 
@@ -452,7 +461,9 @@ public class Access extends AbstractApiBean {
         if (!dataFile.isTabularData()) { 
            throw new BadRequestException("tabular data required");
         }
-        
+        if (FileUtil.isRetentionExpired(dataFile)) {
+            throw new BadRequestException("unable to download file with expired retention");
+        }
         if (dataFile.isRestricted() || FileUtil.isActivelyEmbargoed(dataFile)) {
             boolean hasPermissionToDownloadFile = false;
             DataverseRequest dataverseRequest;
@@ -509,7 +520,7 @@ public class Access extends AbstractApiBean {
      * GET method for retrieving a list of auxiliary files associated with 
      * a tabular datafile.
      */
-
+    
     @GET
     @AuthRequired
     @Path("datafile/{fileId}/auxiliary")
@@ -650,7 +661,7 @@ public class Access extends AbstractApiBean {
     public Response postDownloadDatafiles(@Context ContainerRequestContext crc, String fileIds, @QueryParam("gbrecs") boolean gbrecs, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) throws WebApplicationException {
         
 
-        return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response);
+        return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response, null);
     }
 
     @GET
@@ -671,7 +682,7 @@ public class Access extends AbstractApiBean {
                     // We don't want downloads from Draft versions to be counted, 
                     // so we are setting the gbrecs (aka "do not write guestbook response") 
                     // variable accordingly:
-                    return downloadDatafiles(getRequestUser(crc), fileIds, true, uriInfo, headers, response);
+                    return downloadDatafiles(getRequestUser(crc), fileIds, true, uriInfo, headers, response, "draft");
                 }
             }
             
@@ -692,7 +703,7 @@ public class Access extends AbstractApiBean {
             }
             
             String fileIds = getFileIdsAsCommaSeparated(latest.getFileMetadatas());
-            return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response);
+            return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response, latest.getFriendlyVersionNumber());
         } catch (WrappedResponse wr) {
             return wr.getResponse();
         }
@@ -742,7 +753,7 @@ public class Access extends AbstractApiBean {
             if (dsv.isDraft()) {
                 gbrecs = true;
             }
-            return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response);
+            return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response, dsv.getFriendlyVersionNumber().toLowerCase());
         } catch (WrappedResponse wr) {
             return wr.getResponse();
         }
@@ -756,6 +767,24 @@ public class Access extends AbstractApiBean {
         }
         return String.join(",", ids);
     }
+    
+    private String generateMultiFileBundleName(Dataset dataset, String versionTag) {
+        String bundleName = DEFAULT_BUNDLE_NAME;
+        
+        if (dataset != null && dataset.getGlobalId() != null) {
+            String protocol = dataset.getProtocol();
+            String authority = dataset.getAuthority().toLowerCase();
+            String identifier = dataset.getIdentifier().replace('/', '-').toLowerCase();
+                
+            if (versionTag != null) {
+                bundleName = protocol + "-" + authority + "-" + identifier + "_" + versionTag + ".zip"; 
+            } else {
+                bundleName = protocol + "-" + authority + "-" + identifier + ".zip";
+            }
+        }
+        
+        return bundleName;
+    }
 
     /*
      * API method for downloading zipped bundles of multiple files:
@@ -765,10 +794,10 @@ public class Access extends AbstractApiBean {
     @Path("datafiles/{fileIds}")
     @Produces({"application/zip"})
     public Response datafiles(@Context ContainerRequestContext crc, @PathParam("fileIds") String fileIds, @QueryParam("gbrecs") boolean gbrecs, @Context UriInfo uriInfo, @Context HttpHeaders headers, @Context HttpServletResponse response) throws WebApplicationException {
-        return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response);
+        return downloadDatafiles(getRequestUser(crc), fileIds, gbrecs, uriInfo, headers, response, null);
     }
 
-    private Response downloadDatafiles(User user, String rawFileIds, boolean donotwriteGBResponse, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response) throws WebApplicationException /* throws NotFoundException, ServiceUnavailableException, PermissionDeniedException, AuthorizationRequiredException*/ {
+    private Response downloadDatafiles(User user, String rawFileIds, boolean donotwriteGBResponse, UriInfo uriInfo, HttpHeaders headers, HttpServletResponse response, String versionTag) throws WebApplicationException /* throws NotFoundException, ServiceUnavailableException, PermissionDeniedException, AuthorizationRequiredException*/ {
         final long zipDownloadSizeLimit = systemConfig.getZipDownloadLimit();
                 
         logger.fine("setting zip download size limit to " + zipDownloadSizeLimit + " bytes.");
@@ -859,8 +888,9 @@ public class Access extends AbstractApiBean {
                                         // to produce some output.
                                         zipper = new DataFileZipper(os);
                                         zipper.setFileManifest(fileManifest);
-                                        response.setHeader("Content-disposition", "attachment; filename=\"dataverse_files.zip\"");
-                                        response.setHeader("Content-Type", "application/zip; name=\"dataverse_files.zip\"");
+                                        String bundleName = generateMultiFileBundleName(file.getOwner(), versionTag);
+                                        response.setHeader("Content-disposition", "attachment; filename=\"" + bundleName + "\"");
+                                        response.setHeader("Content-Type", "application/zip; name=\"" + bundleName + "\"");
                                     }
                                     
                                     long size = 0L;
@@ -907,14 +937,15 @@ public class Access extends AbstractApiBean {
                                     }
                                 } else { 
                                     boolean embargoed = FileUtil.isActivelyEmbargoed(file);
-                                    if (file.isRestricted() || embargoed) {
+                                    boolean retentionExpired = FileUtil.isRetentionExpired(file);
+                                    if (file.isRestricted() || embargoed || retentionExpired) {
                                         if (zipper == null) {
                                             fileManifest = fileManifest + file.getFileMetadata().getLabel() + " IS "
-                                                    + (embargoed ? "EMBARGOED" : "RESTRICTED")
+                                                    + (embargoed ? "EMBARGOED" : retentionExpired ? "RETENTIONEXPIRED" : "RESTRICTED")
                                                     + " AND CANNOT BE DOWNLOADED\r\n";
                                         } else {
                                             zipper.addToManifest(file.getFileMetadata().getLabel() + " IS "
-                                                    + (embargoed ? "EMBARGOED" : "RESTRICTED")
+                                                    + (embargoed ? "EMBARGOED" : retentionExpired ? "RETENTIONEXPIRED" : "RESTRICTED")
                                                     + " AND CANNOT BE DOWNLOADED\r\n");
                                         }
                                     } else {
@@ -954,8 +985,8 @@ public class Access extends AbstractApiBean {
         };
         return Response.ok(stream).build();
     }
-
-    /*
+    
+    /* 
      * Geting rid of the tempPreview API - it's always been a big, fat hack. 
      * the edit files page is now using the Base64 image strings in the preview 
      * URLs, just like the search and dataset pages.
@@ -966,8 +997,8 @@ public class Access extends AbstractApiBean {
 
     }*/
     
-    
-    
+        
+
     // TODO: Rather than only supporting looking up files by their database IDs, consider supporting persistent identifiers.
     @Path("fileCardImage/{fileId}")
     @GET
@@ -1231,6 +1262,20 @@ public class Access extends AbstractApiBean {
     @AuthRequired
     @Path("datafile/{fileId}/auxiliary/{formatTag}/{formatVersion}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces("application/json")
+    @Operation(summary = "Save auxiliary file with version", 
+               description = "Saves an auxiliary file")
+    @APIResponses(value = {
+        @APIResponse(responseCode = "200",
+                    description = "File saved response"),
+        @APIResponse(responseCode = "403",
+                    description = "User not authorized to edit the dataset."),
+        @APIResponse(responseCode = "400",
+                    description = "File not found based on id.")
+    })
+    @Tag(name = "saveAuxiliaryFileWithVersion", 
+         description = "Save Auxiliary File With Version")
+    @RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA))
     public Response saveAuxiliaryFileWithVersion(@Context ContainerRequestContext crc,
                                                  @PathParam("fileId") Long fileId,
                                                  @PathParam("formatTag") String formatTag,
@@ -1386,6 +1431,10 @@ public class Access extends AbstractApiBean {
         } catch (WrappedResponse ex) {
             List<String> args = Arrays.asList(fileToRequestAccessId);
             return error(BAD_REQUEST, BundleUtil.getStringFromBundle("access.api.requestAccess.fileNotFound", args));
+        }
+
+        if (FileUtil.isRetentionExpired(dataFile)) {
+            return error(BAD_REQUEST, BundleUtil.getStringFromBundle("access.api.requestAccess.failure.retentionExpired"));
         }
 
         if (!dataFile.getOwner().isFileAccessRequest()) {
@@ -1721,8 +1770,11 @@ public class Access extends AbstractApiBean {
         //True if there's an embargo that hasn't yet expired
         //In this state, we block access as though the file is restricted (even if it is not restricted)
         boolean embargoed = FileUtil.isActivelyEmbargoed(df);
-        
-        
+        // access is also blocked for retention expired files
+        boolean retentionExpired = FileUtil.isRetentionExpired(df);
+        // No access ever if retention is expired
+        if(retentionExpired) return false;
+
         /*
         SEK 7/26/2018 for 3661 relying on the version state of the dataset versions
             to which this file is attached check to see if at least one is  RELEASED
@@ -1787,7 +1839,7 @@ public class Access extends AbstractApiBean {
         
 
         //The one case where we don't need to check permissions
-        if (!restricted && !embargoed && published) {
+        if (!restricted && !embargoed && !retentionExpired && published) {
             // If they are not published, they can still be downloaded, if the user
             // has the permission to view unpublished versions! (this case will 
             // be handled below)
@@ -1968,6 +2020,26 @@ public class Access extends AbstractApiBean {
             throw new BadRequestException(); 
         }
         return redirectUri;
+    }
+
+    @GET
+    @AuthRequired
+    @Produces({"image/png"})
+    @Path("dataverseFeaturedItemImage/{itemId}")
+    public InputStream getDataverseFeatureItemImage(@Context ContainerRequestContext crc, @PathParam("itemId") Long itemId) {
+        DataverseFeaturedItem dataverseFeaturedItem;
+        try {
+            dataverseFeaturedItem = execCommand(new GetDataverseFeaturedItemCommand(createDataverseRequest(getRequestUser(crc)), dataverseFeaturedItemServiceBean.findById(itemId)));
+        } catch (WrappedResponse wr) {
+            logger.warning("Cannot locate a dataverse featured item with id " + itemId);
+            return null;
+        }
+        try {
+            return dataverseFeaturedItemServiceBean.getImageFileAsInputStream(dataverseFeaturedItem);
+        } catch (IOException e) {
+            logger.warning("Error while obtaining the input stream for the image file associated with the dataverse featured item with id " + itemId);
+            return null;
+        }
     }
 
     @Path("datafiles/rocrate/{datasetIdft : .+}")

@@ -57,12 +57,6 @@ public class SystemConfig {
     AuthenticationServiceBean authenticationService;
     
    public static final String DATAVERSE_PATH = "/dataverse/";
-   
-    /**
-     * Some installations may not want download URLs to their files to be
-     * available in Schema.org JSON-LD output.
-     */
-    public static final String FILES_HIDE_SCHEMA_DOT_ORG_DOWNLOAD_URLS = "dataverse.files.hide-schema-dot-org-download-urls";
 
     /**
      * A JVM option to override the number of minutes for which a password reset
@@ -78,6 +72,7 @@ public class SystemConfig {
     public static final long defaultZipDownloadLimit = 104857600L; // 100MB
     private static final int defaultMultipleUploadFilesLimit = 1000;
     private static final int defaultLoginSessionTimeout = 480; // = 8 hours
+    private static final int defaultGlobusBatchLookupSize = 50; 
     
     private String buildNumber = null;
     
@@ -87,8 +82,8 @@ public class SystemConfig {
     private static final long DEFAULT_THUMBNAIL_SIZE_LIMIT_IMAGE = 3000000L; // 3 MB
     private static final long DEFAULT_THUMBNAIL_SIZE_LIMIT_PDF = 1000000L; // 1 MB
     
-    public final static String DEFAULTCURATIONLABELSET = "DEFAULT";
-    public final static String CURATIONLABELSDISABLED = "DISABLED";
+    public static final String DEFAULTCURATIONLABELSET = "DEFAULT";
+    public static final String CURATIONLABELSDISABLED = "DISABLED";
     
     public String getVersion() {
         return getVersion(false);
@@ -427,15 +422,24 @@ public class SystemConfig {
     }
     
     public String getApplicationTermsOfUse() {
-        String language = BundleUtil.getCurrentLocale().getLanguage();
+        return getApplicationTermsOfUse(null);
+    }
+
+    public String getApplicationTermsOfUse(String languageIn) {
+        String language = null;
+        if (languageIn != null) {
+            language = languageIn;
+        } else {
+            language = BundleUtil.getCurrentLocale().getLanguage();
+        }
         String saneDefaultForAppTermsOfUse = BundleUtil.getStringFromBundle("system.app.terms");
-        // Get the value for the defaultLocale. IT will either be used as the return
+        // Get the value for the defaultLocale. It will either be used as the return
         // value, or as a better default than the saneDefaultForAppTermsOfUse if there
         // is no language-specific value
         String appTermsOfUse = settingsService.getValueForKey(SettingsServiceBean.Key.ApplicationTermsOfUse, saneDefaultForAppTermsOfUse);
-        //Now get the language-specific value if it exists
+        // Now get the language-specific value if it exists
         if (language != null && !language.equalsIgnoreCase(BundleUtil.getDefaultLocale().getLanguage())) {
-            appTermsOfUse = settingsService.getValueForKey(SettingsServiceBean.Key.ApplicationTermsOfUse, language,	appTermsOfUse);
+            appTermsOfUse = settingsService.getValueForKey(SettingsServiceBean.Key.ApplicationTermsOfUse, language, appTermsOfUse);
         }
         return appTermsOfUse;
     }
@@ -473,7 +477,7 @@ public class SystemConfig {
         String fragSize = settingsService.getValueForKey(SettingsServiceBean.Key.SearchHighlightFragmentSize);
         if (fragSize != null) {
             try {
-                return new Integer(fragSize);
+                return Integer.valueOf(fragSize);
             } catch (NumberFormatException nfe) {
                 logger.info("Could not convert " + SettingsServiceBean.Key.SearchHighlightFragmentSize + " to int: " + nfe);
             }
@@ -490,7 +494,7 @@ public class SystemConfig {
         
         if (limitEntry != null) {
             try {
-                Long sizeOption = new Long(limitEntry);
+                Long sizeOption = Long.valueOf(limitEntry);
                 return sizeOption;
             } catch (NumberFormatException nfe) {
                 logger.warning("Invalid value for TabularIngestSizeLimit option? - " + limitEntry);
@@ -515,7 +519,7 @@ public class SystemConfig {
                 
         if (limitEntry != null) {
             try {
-                Long sizeOption = new Long(limitEntry);
+                Long sizeOption = Long.valueOf(limitEntry);
                 return sizeOption;
             } catch (NumberFormatException nfe) {
                 logger.warning("Invalid value for TabularIngestSizeLimit:" + formatName + "? - " + limitEntry );
@@ -545,7 +549,7 @@ public class SystemConfig {
         }
         return false;
     }
-
+    
     public String getFooterCopyrightAndYear() {
         return BundleUtil.getStringFromBundle("footer.copyright", Arrays.asList(Year.now().getValue() + ""));
     }
@@ -752,6 +756,7 @@ public class SystemConfig {
          * DCM stands for Data Capture Module. Right now it supports upload over
          * rsync+ssh but DCM may support additional methods in the future.
          */
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         RSYNC("dcm/rsync+ssh"),
         /**
          * Traditional Dataverse file handling, which tends to involve users
@@ -809,6 +814,7 @@ public class SystemConfig {
          * RSAL stands for Repository Storage Abstraction Layer. Downloads don't
          * go through Glassfish.
          */
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         RSYNC("rsal/rsync"),
         NATIVE("native/http"),
         GLOBUS("globus")
@@ -862,6 +868,7 @@ public class SystemConfig {
      */
     public enum TransferProtocols {
 
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         RSYNC("rsync"),
         /**
          * POSIX includes NFS. This is related to Key.LocalDataAccessPath in
@@ -899,7 +906,8 @@ public class SystemConfig {
         boolean saneDefault = false;
         return settingsService.isTrueForKey(SettingsServiceBean.Key.PublicInstall, saneDefault);
     }
-    
+
+    @Deprecated(forRemoval = true, since = "2024-07-07")
     public boolean isRsyncUpload(){
         return getMethodAvailable(SystemConfig.FileUploadMethods.RSYNC.toString(), true);
     }
@@ -916,7 +924,8 @@ public class SystemConfig {
     public boolean isHTTPUpload(){       
         return getMethodAvailable(SystemConfig.FileUploadMethods.NATIVE.toString(), true);
     }
-    
+
+    @Deprecated(forRemoval = true, since = "2024-07-07")
     public boolean isRsyncOnly(){
         String downloadMethods = settingsService.getValueForKey(SettingsServiceBean.Key.DownloadMethods);
         if(downloadMethods == null){
@@ -932,11 +941,12 @@ public class SystemConfig {
            return  Arrays.asList(uploadMethods.toLowerCase().split("\\s*,\\s*")).size() == 1 && uploadMethods.toLowerCase().equals(SystemConfig.FileUploadMethods.RSYNC.toString());
         }
     }
-    
+
+    @Deprecated(forRemoval = true, since = "2024-07-07")
     public boolean isRsyncDownload() {
         return getMethodAvailable(SystemConfig.FileUploadMethods.RSYNC.toString(), false);
     }
-    
+
     public boolean isHTTPDownload() {
         return getMethodAvailable(SystemConfig.FileUploadMethods.NATIVE.toString(), false);
     }
@@ -949,6 +959,11 @@ public class SystemConfig {
         return (isGlobusDownload() && settingsService.isTrueForKey(SettingsServiceBean.Key.GlobusSingleFileTransfer, false));
     }
 
+    public int getGlobusBatchLookupSize() {
+        String batchSizeOption = settingsService.getValueForKey(SettingsServiceBean.Key.GlobusBatchLookupSize);
+        return getIntLimitFromStringOrDefault(batchSizeOption, defaultGlobusBatchLookupSize);
+    }
+    
     private Boolean getMethodAvailable(String method, boolean upload) {
         String methods = settingsService.getValueForKey(
                 upload ? SettingsServiceBean.Key.UploadMethods : SettingsServiceBean.Key.DownloadMethods);
@@ -967,25 +982,6 @@ public class SystemConfig {
            return  Arrays.asList(uploadMethods.toLowerCase().split("\\s*,\\s*")).size();
         }       
     }
-    public boolean isDataFilePIDSequentialDependent(){
-        String doiIdentifierType = settingsService.getValueForKey(SettingsServiceBean.Key.IdentifierGenerationStyle, "randomString");
-        String doiDataFileFormat = settingsService.getValueForKey(SettingsServiceBean.Key.DataFilePIDFormat, "DEPENDENT");
-        if (doiIdentifierType.equals("storedProcGenerated") && doiDataFileFormat.equals("DEPENDENT")){
-            return true;
-        }
-        return false;
-    }
-    
-    public int getPIDAsynchRegFileCount() {
-        String fileCount = settingsService.getValueForKey(SettingsServiceBean.Key.PIDAsynchRegFileCount, "10");
-        int retVal = 10;
-        try {
-            retVal = Integer.parseInt(fileCount);
-        } catch (NumberFormatException e) {           
-            //if no number in the setting we'll return 10
-        }
-        return retVal;
-    }
 
     public boolean isAllowCustomTerms() {
         boolean safeDefaultIfKeyNotFound = true;
@@ -1000,7 +996,7 @@ public class SystemConfig {
         Dataverse thisCollection = collection; 
         
         // If neither enabled nor disabled specifically for this collection,
-        // the parent collection setting is inhereted (recursively): 
+        // the parent collection setting is inherited (recursively): 
         while (thisCollection.getFilePIDsEnabled() == null) {
             if (thisCollection.getOwner() == null) {
                 // We've reached the root collection, and file PIDs registration
@@ -1015,17 +1011,6 @@ public class SystemConfig {
         // If present, the setting of the first direct ancestor collection 
         // takes precedent:
         return thisCollection.getFilePIDsEnabled();
-    }
-    
-    public boolean isIndependentHandleService() {
-        boolean safeDefaultIfKeyNotFound = false;
-        return settingsService.isTrueForKey(SettingsServiceBean.Key.IndependentHandleService, safeDefaultIfKeyNotFound);
-    
-    }
-    
-    public String getHandleAuthHandle() {
-        String handleAuthHandle = settingsService.getValueForKey(SettingsServiceBean.Key.HandleAuthHandle, null);
-        return handleAuthHandle;
     }
 
     public String getMDCLogPath() {
@@ -1086,7 +1071,7 @@ public class SystemConfig {
 
         if (limitEntry != null) {
             try {
-                Long sizeOption = new Long(limitEntry);
+                Long sizeOption = Long.valueOf(limitEntry);
                 return sizeOption;
             } catch (NumberFormatException nfe) {
                 logger.warning("Invalid value for DatasetValidationSizeLimit option? - " + limitEntry);
@@ -1101,7 +1086,7 @@ public class SystemConfig {
 
         if (limitEntry != null) {
             try {
-                Long sizeOption = new Long(limitEntry);
+                Long sizeOption = Long.valueOf(limitEntry);
                 return sizeOption;
             } catch (NumberFormatException nfe) {
                 logger.warning("Invalid value for FileValidationSizeLimit option? - " + limitEntry);
@@ -1173,5 +1158,27 @@ public class SystemConfig {
      */
     public Long getTestStorageQuotaLimit() {
         return settingsService.getValueForKeyAsLong(SettingsServiceBean.Key.StorageQuotaSizeInBytes);
+    }
+    /**
+     * Should we store tab-delimited files produced during ingest *with* the
+     * variable name header line included?
+     * @return boolean - defaults to false.
+     */
+    public boolean isStoringIngestedFilesWithHeaders() {
+        return settingsService.isTrueForKey(SettingsServiceBean.Key.StoreIngestedTabularFilesWithVarHeaders, false);
+    }
+
+    /**
+     * RateLimitUtil will parse the json to create a List<RateLimitSetting>
+     */
+    public String getRateLimitsJson() {
+        return settingsService.getValueForKey(SettingsServiceBean.Key.RateLimitingCapacityByTierAndAction, "");
+    }
+    public String getRateLimitingDefaultCapacityTiers() {
+        return settingsService.getValueForKey(SettingsServiceBean.Key.RateLimitingDefaultCapacityTiers, "");
+    }
+
+    public long getContactFeedbackMessageSizeLimit() {
+        return settingsService.getValueForKeyAsLong(SettingsServiceBean.Key.ContactFeedbackMessageSizeLimit, 0L);
     }
 }

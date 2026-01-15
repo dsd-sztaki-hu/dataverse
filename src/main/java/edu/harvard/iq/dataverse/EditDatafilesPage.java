@@ -72,10 +72,10 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonReader;
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.httpclient.methods.GetMethod;
-
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 import java.util.logging.Level;
 import jakarta.faces.event.AjaxBehaviorEvent;
 import jakarta.faces.event.FacesEvent;
@@ -83,6 +83,11 @@ import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
 import org.primefaces.PrimeFaces;
 
 // ARP specific
@@ -200,7 +205,10 @@ public class EditDatafilesPage implements java.io.Serializable {
     private Long maxIngestSizeInBytes = null;
     // CSV: 4.8 MB, DTA: 976.6 KB, XLSX: 5.7 MB, etc.
     private String humanPerFormatTabularLimits = null;
-    private Integer multipleUploadFilesLimit = null; 
+    private Integer multipleUploadFilesLimit = null;
+    // Maximum number of files per dataset allowed ot be uploaded
+    private Integer maxFileUploadCount = null;
+    private Integer fileUploadsAvailable = null;
     
     //MutableBoolean so it can be passed from DatasetPage, supporting DatasetPage.cancelCreate()
     private MutableBoolean uploadInProgress = null;
@@ -392,6 +400,10 @@ public class EditDatafilesPage implements java.io.Serializable {
         return String.join(", ", formatLimits);
     }
 
+    public Integer getFileUploadsAvailable() {
+        return fileUploadsAvailable != null ? fileUploadsAvailable : -1;
+    }
+
     /*
         The number of files the GUI user is allowed to upload in one batch, 
         via drag-and-drop, or through the file select dialog. Now configurable 
@@ -542,16 +554,27 @@ public class EditDatafilesPage implements java.io.Serializable {
         this.maxIngestSizeInBytes = systemConfig.getTabularIngestSizeLimit();
         this.humanPerFormatTabularLimits = populateHumanPerFormatTabularLimits();
         this.multipleUploadFilesLimit = systemConfig.getMultipleUploadFilesLimit();
-
+        setFileUploadCountLimits(0);
         logger.fine("done");
 
         saveEnabled = true;
 
         return null;
     }
-
+    private void setFileUploadCountLimits(int preLoaded) {
+        this.maxFileUploadCount = this.maxFileUploadCount == null ? dataset.getEffectiveDatasetFileCountLimit() : this.maxFileUploadCount;
+        Long id = dataset.getId() != null ? dataset.getId() : dataset.getOwner() != null ? dataset.getOwner().getId() : null;
+        this.fileUploadsAvailable = this.maxFileUploadCount != null && id != null ?
+                Math.max(0, this.maxFileUploadCount - datasetService.getDataFileCountByOwner(id) - preLoaded) :
+                -1;
+    }
+    
     public boolean isQuotaExceeded() {
         return systemConfig.isStorageQuotasEnforced() && uploadSessionQuota != null && uploadSessionQuota.getRemainingQuotaInBytes() == 0;
+    }
+    public boolean isFileUploadCountExceeded() {
+        boolean ignoreLimit = this.session.getUser().isSuperuser();
+        return !ignoreLimit && !isFileReplaceOperation() && fileUploadsAvailable != null && fileUploadsAvailable == 0;
     }
 
     public String init() {
@@ -604,7 +627,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         this.maxIngestSizeInBytes = systemConfig.getTabularIngestSizeLimit();
         this.humanPerFormatTabularLimits = populateHumanPerFormatTabularLimits();
         this.multipleUploadFilesLimit = systemConfig.getMultipleUploadFilesLimit();
-        
+        setFileUploadCountLimits(0);
         hasValidTermsOfAccess = isHasValidTermsOfAccess();
         if (!hasValidTermsOfAccess) {
             PrimeFaces.current().executeScript("PF('blockDatasetForm').show()");
@@ -1102,9 +1125,17 @@ public class EditDatafilesPage implements java.io.Serializable {
                     }
                 }
             }
-
+            boolean ignoreUploadFileLimits = this.session.getUser() != null ? this.session.getUser().isSuperuser() : false;
             // Try to save the NEW files permanently: 
-            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(workingVersion, newFiles, null, true);
+            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(workingVersion, newFiles, null, true, ignoreUploadFileLimits);
+            if (filesAdded.size() < nNewFiles) {
+                // Not all files were saved
+                Integer limit = dataset.getEffectiveDatasetFileCountLimit();
+                if (limit != null) {
+                    String msg = BundleUtil.getStringFromBundle("file.add.count_exceeds_limit", List.of(limit.toString()));
+                    JsfHelper.addInfoMessage(msg);
+                }
+            }
             
             // reset the working list of fileMetadatas, as to only include the ones
             // that have been added to the version successfully: 
@@ -1239,9 +1270,6 @@ public class EditDatafilesPage implements java.io.Serializable {
              - We decided not to bother obtaining persistent ids for new files 
              as they are uploaded and created. The identifiers will be assigned 
              later, when the version is published. 
-             
-            logger.info("starting async job for obtaining persistent ids for files.");
-            datasetService.obtainPersistentIdentifiersForDatafiles(dataset);
              */
         }
 
@@ -1347,46 +1375,6 @@ public class EditDatafilesPage implements java.io.Serializable {
         return returnToDatasetOnly();
     }
 
-    /* deprecated; super inefficient, when called repeatedly on a long list 
-       of files! 
-       leaving the code here, commented out, for illustration purposes. -- 4.6
-    public boolean isDuplicate(FileMetadata fileMetadata) {
-
-        Map<String, Integer> MD5Map = new HashMap<String, Integer>();
-
-        // TODO: 
-        // think of a way to do this that doesn't involve populating this 
-        // map for every file on the page? 
-        // may not be that much of a problem, if we paginate and never display 
-        // more than a certain number of files... Still, needs to be revisited
-        // before the final 4.0. 
-        // -- L.A. 4.0
-
-        // make a "defensive copy" to avoid java.util.ConcurrentModificationException from being thrown
-        // when uploading 100+ files
-        List<FileMetadata> wvCopy = new ArrayList<>(workingVersion.getFileMetadatas());
-        Iterator<FileMetadata> fmIt = wvCopy.iterator();
-
-        while (fmIt.hasNext()) {
-            FileMetadata fm = fmIt.next();
-            String md5 = fm.getDataFile().getChecksumValue();
-            if (md5 != null) {
-                if (MD5Map.get(md5) != null) {
-                    MD5Map.put(md5, MD5Map.get(md5).intValue() + 1);
-                } else {
-                    MD5Map.put(md5, 1);
-                }
-            }
-        }
-
-        return MD5Map.get(thisMd5) != null && MD5Map.get(thisMd5).intValue() > 1;
-    }*/
-    private HttpClient getClient() {
-        // TODO: 
-        // cache the http client? -- L.A. 4.0 alpha
-        return new HttpClient();
-    }
-
     /**
      * Is this page in File Replace mode
      *
@@ -1425,30 +1413,35 @@ public class EditDatafilesPage implements java.io.Serializable {
      * @param fileLink
      * @return
      */
-    private InputStream getDropBoxInputStream(String fileLink, GetMethod dropBoxMethod) {
-
+    private InputStream getDropBoxInputStream(String fileLink) {
         if (fileLink == null) {
             return null;
         }
 
-        // -----------------------------------------------------------
-        // Make http call, download the file: 
-        // -----------------------------------------------------------
-        int status = 0;
-        //InputStream dropBoxStream = null;
-
         try {
-            status = getClient().executeMethod(dropBoxMethod);
+            CloseableHttpClient httpClient = HttpClients.createDefault();
+            HttpGet httpGet = new HttpGet(fileLink);
+            
+            // Use the non-deprecated execute method with ClassicHttpResponse
+            ClassicHttpResponse response = httpClient.executeOpen(null, httpGet, null);
+            
+            int status = response.getCode();
+            
             if (status == 200) {
-                return dropBoxMethod.getResponseBodyAsStream();
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    // Return the content as a stream directly
+                    return entity.getContent();
+                }
             }
+            
+            logger.log(Level.WARNING, "Failed to get DropBox InputStream for file: {0}. Status code: {1}", new Object[]{fileLink, status});
+            response.close();
+            return null;
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed to access DropBox url: {0}!", fileLink);
             return null;
         }
-
-        logger.log(Level.WARNING, "Failed to get DropBox InputStream for file: {0}", fileLink);
-        return null;
     } // end: getDropBoxInputStream
 
     /**
@@ -1475,7 +1468,6 @@ public class EditDatafilesPage implements java.io.Serializable {
         // Iterate through the Dropbox file information (JSON)
         // -----------------------------------------------------------
         DataFile dFile = null;
-        GetMethod dropBoxMethod = null;
         String localWarningMessage = null;
         for (int i = 0; i < dbArray.size(); i++) {
             JsonObject dbObject = dbArray.getJsonObject(i);
@@ -1508,14 +1500,13 @@ public class EditDatafilesPage implements java.io.Serializable {
             }
 
             dFile = null;
-            dropBoxMethod = new GetMethod(fileLink);
 
             // -----------------------------------------------------------
             // Download the file
             // -----------------------------------------------------------
-            InputStream dropBoxStream = this.getDropBoxInputStream(fileLink, dropBoxMethod);
+            InputStream dropBoxStream = this.getDropBoxInputStream(fileLink);
             if (dropBoxStream == null) {
-                logger.severe("Could not retrieve dropgox input stream for: " + fileLink);
+                logger.severe("Could not retrieve dropbox input stream for: " + fileLink);
                 continue;  // Error skip this file
             }
 
@@ -1553,14 +1544,6 @@ public class EditDatafilesPage implements java.io.Serializable {
                 this.logger.log(Level.SEVERE, "Error during ingest of DropBox file {0} from link {1}: {2}", new Object[]{fileName, fileLink, ex.getMessage()});
                 continue;
             }*/ finally {
-                // -----------------------------------------------------------
-                // release connection for dropBoxMethod
-                // -----------------------------------------------------------
-
-                if (dropBoxMethod != null) {
-                    dropBoxMethod.releaseConnection();
-                }
-
                 // -----------------------------------------------------------
                 // close the  dropBoxStream
                 // -----------------------------------------------------------
@@ -1712,26 +1695,6 @@ public class EditDatafilesPage implements java.io.Serializable {
 
     public String getRsyncScriptFilename() {
         return rsyncScriptFilename;
-    }
-
-    @Deprecated
-    public void requestDirectUploadUrl() {
-
-        S3AccessIO<?> s3io = FileUtil.getS3AccessForDirectUpload(dataset);
-        if (s3io == null) {
-            FacesContext.getCurrentInstance().addMessage(uploadComponentId, new FacesMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("dataset.file.uploadWarning"), "Direct upload not supported for this dataset"));
-        }
-        String url = null;
-        String storageIdentifier = null;
-        try {
-            url = s3io.generateTemporaryS3UploadUrl();
-            storageIdentifier = FileUtil.getStorageIdentifierFromLocation(s3io.getStorageLocation());
-        } catch (IOException io) {
-            logger.warning(io.getMessage());
-            FacesContext.getCurrentInstance().addMessage(uploadComponentId, new FacesMessage(FacesMessage.SEVERITY_ERROR, BundleUtil.getStringFromBundle("dataset.file.uploadWarning"), "Issue in connecting to S3 store for direct upload"));
-        }
-
-        PrimeFaces.current().executeScript("uploadFileDirectly('" + url + "','" + storageIdentifier + "')");
     }
 
     public void requestDirectUploadUrls() {
@@ -2146,6 +2109,12 @@ public class EditDatafilesPage implements java.io.Serializable {
             errorMessages.add(cex.getMessage());
             uploadComponentId = event.getComponent().getClientId();
             return;
+        } finally {
+            try {
+                uFile.delete();
+            } catch (IOException ioex) {
+                logger.warning("Failed to delete temp file uploaded via PrimeFaces " + uFile.getFileName());
+            }
         }
         /*catch (FileExceedsMaxSizeException ex) {
             logger.warning("Failed to process and/or save the file " + uFile.getFileName() + "; " + ex.getMessage());
@@ -2251,8 +2220,12 @@ public class EditDatafilesPage implements java.io.Serializable {
     }
 
     /**
-     * Using information from the DropBox choose, ingest the chosen files
-     * https://www.dropbox.com/developers/dropins/chooser/js
+     * External, aka "Direct" Upload. 
+     * The file(s) have been uploaded to physical storage (such as S3) directly,
+     * this call is to create and add the DataFiles to the Dataset on the Dataverse 
+     * side. The method does NOT finalize saving the datafiles in the database -
+     * that will happen when the user clicks 'Save', similar to how the "normal"
+     * uploads are handled. 
      *
      * @param event
      */

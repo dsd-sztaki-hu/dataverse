@@ -57,7 +57,6 @@ public abstract class StorageIO<T extends DvObject> {
     static final String UPLOAD_REDIRECT = "upload-redirect";
     static final String UPLOAD_OUT_OF_BAND = "upload-out-of-band";
     protected static final String DOWNLOAD_REDIRECT = "download-redirect";
-    protected static final String DATAVERSE_INACCESSIBLE = "dataverse-inaccessible";
 
 
     public StorageIO() {
@@ -218,7 +217,7 @@ public abstract class StorageIO<T extends DvObject> {
     private String mimeType;
     private String fileName;
     private String varHeader;
-    private String errorMessage;
+    protected String errorMessage;
 
     private String temporarySwiftUrl;
     private String tempUrlExpiry;
@@ -624,7 +623,7 @@ public abstract class StorageIO<T extends DvObject> {
 
     //True by default, Stores (e.g. RemoteOverlay, Globus) can set this false to stop attempts to read bytes
     public static boolean isDataverseAccessible(String driverId) {
-        return (true && !Boolean.parseBoolean(getConfigParamForDriver(driverId, DATAVERSE_INACCESSIBLE)));
+        return (true && !Boolean.parseBoolean(StorageIO.getConfigParamForDriver(driverId, AbstractRemoteOverlayAccessIO.FILES_NOT_ACCESSIBLE_BY_DATAVERSE)));
     }
     
     // Check that storageIdentifier is consistent with store's config
@@ -672,6 +671,10 @@ public abstract class StorageIO<T extends DvObject> {
         return getConfigParamForDriver(this.driverId, parameterName, defaultValue);
     }
 
+    public boolean isDataverseAccessible() {
+        return true;
+    }
+    
     protected static String getConfigParamForDriver(String driverId, String parameterName) {
         return getConfigParamForDriver(driverId, parameterName, null);
     }
@@ -682,5 +685,4 @@ public abstract class StorageIO<T extends DvObject> {
     public static String getNewIdentifier(String driverId) {
         return driverId + DataAccess.SEPARATOR + FileUtil.generateStorageIdentifier();
     }
-
 }

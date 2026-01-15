@@ -9,6 +9,8 @@ import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -67,17 +69,10 @@ public class LinkIT {
         UtilIT.publishDataverseViaNativeApi(dataverse1Alias, apiToken).then().assertThat()
                 .statusCode(OK.getStatusCode());
 
-        // You can't link an unpublished dataset.
+        // You can link an unpublished dataset
         Response tryToLinkUnpublishedDataset = UtilIT.linkDataset(datasetPid, dataverse2Alias, superuserApiToken);
         tryToLinkUnpublishedDataset.prettyPrint();
         tryToLinkUnpublishedDataset.then().assertThat()
-                .statusCode(FORBIDDEN.getStatusCode())
-                .body("message", equalTo("Can't link a dataset that has not been published or is not harvested"));
-
-        UtilIT.publishDatasetViaNativeApi(datasetPid, "major", apiToken).then().assertThat()
-                .statusCode(OK.getStatusCode());
-
-        UtilIT.publishDataverseViaNativeApi(dataverse2Alias, apiToken).then().assertThat()
                 .statusCode(OK.getStatusCode());
 
         // A dataset cannot be linked to its parent dataverse.
@@ -86,12 +81,6 @@ public class LinkIT {
         tryToLinkToParentDataverse.then().assertThat()
                 .statusCode(FORBIDDEN.getStatusCode())
                 .body("message", equalTo("Can't link a dataset to its dataverse"));
-
-        // Link dataset to non-parent dataverse (allowed).
-        Response linkDataset = UtilIT.linkDataset(datasetPid, dataverse2Alias, superuserApiToken);
-        linkDataset.prettyPrint();
-        linkDataset.then().assertThat()
-                .statusCode(OK.getStatusCode());
 
         // A dataset cannot be linked to the same dataverse again.
         Response tryToLinkAgain = UtilIT.linkDataset(datasetPid, dataverse2Alias, superuserApiToken);
@@ -163,6 +152,8 @@ public class LinkIT {
                 .statusCode(OK.getStatusCode())
                 .body("data.message", equalTo("Dataverse " + level1a + " linked successfully to " + level1b));
 
+        assertTrue(UtilIT.sleepForSearch("*", apiToken, "&subtree="+level1b, 1, UtilIT.GENERAL_LONG_DURATION), "Zero counts in level1b");
+        
         Response searchLevel1toLevel1 = UtilIT.search("*", apiToken, "&subtree=" + level1b);
         searchLevel1toLevel1.prettyPrint();
         searchLevel1toLevel1.then().assertThat()
@@ -184,6 +175,8 @@ public class LinkIT {
                 .statusCode(OK.getStatusCode())
                 .body("data.message", equalTo("Dataverse " + level2a + " linked successfully to " + level2b));
 
+        assertTrue(UtilIT.sleepForSearch("*", apiToken, "&subtree=" + level2b, 1, UtilIT.GENERAL_LONG_DURATION), "Never found linked dataverse: " + level2b);
+        
         Response searchLevel2toLevel2 = UtilIT.search("*", apiToken, "&subtree=" + level2b);
         searchLevel2toLevel2.prettyPrint();
         searchLevel2toLevel2.then().assertThat()

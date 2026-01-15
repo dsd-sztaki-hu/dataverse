@@ -2,7 +2,7 @@ package edu.harvard.iq.dataverse.settings;
 
 import edu.harvard.iq.dataverse.actionlogging.ActionLogRecord;
 import edu.harvard.iq.dataverse.actionlogging.ActionLogServiceBean;
-import edu.harvard.iq.dataverse.api.ApiBlockingFilter;
+import edu.harvard.iq.dataverse.api.filter.ApiBlockingFilter;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.ejb.EJB;
@@ -45,6 +45,7 @@ public class SettingsServiceBean {
      * over your shoulder when typing strings in various places of a large app. 
      * So there.
      */
+    @SuppressWarnings("java:S115")
     public enum Key {
         AllowApiTokenLookupViaApi,
         /**
@@ -54,6 +55,10 @@ public class SettingsServiceBean {
         CustomDatasetSummaryFields,
         /**
          * Defines a public installation -- all datafiles are unrestricted
+         *
+         * This was added along with CloudEnvironmentName and ComputeBaseUrl.
+         * See https://github.com/IQSS/dataverse/issues/3776 and
+         * https://github.com/IQSS/dataverse/pull/3967
          */
         PublicInstall,
         /**
@@ -74,9 +79,12 @@ public class SettingsServiceBean {
         /**
          * For example, https://datacapture.example.org
          */
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         DataCaptureModuleUrl,
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         RepositoryStorageAbstractionLayerUrl,
         UploadMethods,
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         DownloadMethods,
         /**
          * If the data replicated around the world using RSAL (Repository
@@ -86,7 +94,17 @@ public class SettingsServiceBean {
          * TODO: Think about if it makes sense to make this a column in the
          * StorageSite database table.
          */
+        @Deprecated(forRemoval = true, since = "2024-07-07")
         LocalDataAccessPath,
+        /**
+         * The algorithm used to generate PIDs, randomString (default) or
+         * storedProcedure
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         IdentifierGenerationStyle,
         OAuth2CallbackUrl,
         DefaultAuthProvider,
@@ -120,19 +138,25 @@ public class SettingsServiceBean {
 
         /**
          * API endpoints that are not accessible. Comma separated list.
+         * @see JvmSettings#API_BLOCKED_ENDPOINTS
          */
+        @Deprecated(forRemoval = true, since = "2025-04-29")
         BlockedApiEndpoints,
         
         /**
          * A key that, with the right {@link ApiBlockingFilter.BlockPolicy},
          * allows calling blocked APIs.
+         * @see JvmSettings#API_BLOCKED_KEY
          */
+        @Deprecated(forRemoval = true, since = "2025-04-29")
         BlockedApiKey,
         
         
         /**
          * How to treat blocked APIs. One of drop, localhost-only, unblock-key
+         * @see JvmSettings#API_BLOCKED_POLICY
          */
+        @Deprecated(forRemoval = true, since = "2025-04-29")
         BlockedApiPolicy,
         
         /**
@@ -151,27 +175,6 @@ public class SettingsServiceBean {
          */
         ApplicationPrivacyPolicyUrl,
         /**
-         * A boolean defining if indexing and search should respect the concept
-         * of "permission root".
-         *
-         * <p>
-         *
-         * If we ignore permissionRoot at index time, we should blindly give
-         * search ("discoverability") access to people and group who have access
-         * defined in a parent dataverse, all the way back to the root.
-         *
-         * <p>
-         *
-         * If we respect permissionRoot, this means that the dataverse being
-         * indexed is an island of permissions all by itself. We should not look
-         * to its parent to see if more people and groups might be able to
-         * search the DvObjects within it. We would assume no implicit
-         * inheritance of permissions. In this mode, all permissions must be
-         * explicitly defined on DvObjects. No implied inheritance.
-         *
-         */
-        SearchRespectPermissionRoot,
-        /**
          * Solr hostname and port, such as "localhost:8983".
          * @deprecated New installations should not use this database setting, but use {@link JvmSettings#SOLR_HOST}
          *             and {@link JvmSettings#SOLR_PORT}.
@@ -189,24 +192,51 @@ public class SettingsServiceBean {
         SignUpUrl,
         /** Key for whether we allow users to sign up */
         AllowSignUp,
-        /** protocol for global id */
+        /**
+         * protocol for global id
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         Protocol,
-        /** authority for global id */
+        /**
+         * authority for global id
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         Authority,
-        /** DoiProvider for global id */
+        /**
+         * DoiProvider for global id
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         DoiProvider,
-        /** Shoulder for global id - used to create a common prefix on identifiers */
+        /**
+         * Shoulder for global id - used to create a common prefix on identifiers
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         Shoulder,
-        /* Removed for now - tried to add here but DOI Service Bean didn't like it at start-up
-        DoiUsername,
-        DoiPassword,
-        DoiBaseurlstring,
-        */
         /** Optionally override http://guides.dataverse.org . */
         GuidesBaseUrl,
 
         CVocConf,
 
+        // Default calls per hour for each tier. csv format (30,60,...)
+        RateLimitingDefaultCapacityTiers,
+        // json defined list of capacities by tier and action list. See RateLimitSetting.java
+        RateLimitingCapacityByTierAndAction,
         /**
          * A link to an installation of https://github.com/IQSS/miniverse or
          * some other metrics app.
@@ -227,7 +257,12 @@ public class SettingsServiceBean {
         /* the number of files the GUI user is allowed to upload in one batch, 
             via drag-and-drop, or through the file select dialog */
         MultipleUploadFilesLimit,
-        /* return email address for system emails such as notifications */
+        /**
+         * Return email address for system emails such as notifications
+         * @deprecated Please replace usages with {@link edu.harvard.iq.dataverse.MailServiceBean#getSystemAddress},
+         *             which is backward compatible with this setting.
+         */
+        @Deprecated(since = "6.2", forRemoval = true)
         SystemEmail, 
         /* size limit for Tabular data file ingests */
         /* (can be set separately for specific ingestable formats; in which 
@@ -347,10 +382,16 @@ public class SettingsServiceBean {
          */
         PVCustomPasswordResetAlertMessage,
         /*
-        String to describe DOI format for data files. Default is DEPENDENT. 
-        'DEPENEDENT' means the DOI will be the Dataset DOI plus a file DOI with a slash in between.
-        'INDEPENDENT' means a new global id, completely independent from the dataset-level global id.
-        */
+         * String to describe DOI format for data files. Default is DEPENDENT.
+         * 'DEPENDENT' means the DOI will be the Dataset DOI plus a file DOI with a
+         * slash in between. 'INDEPENDENT' means a new global id, completely independent
+         * from the dataset-level global id.
+         *
+         * @deprecated New installations should not use this database setting, but use
+         * the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         DataFilePIDFormat, 
         /* Json array of supported languages
         */
@@ -358,7 +399,7 @@ public class SettingsServiceBean {
         /*
         Number for the minimum number of files to send PID registration to asynchronous workflow
         */
-        PIDAsynchRegFileCount,
+        //PIDAsynchRegFileCount,
         /**
          * 
          */
@@ -366,12 +407,22 @@ public class SettingsServiceBean {
 
         /**
          * Indicates if the Handle service is setup to work 'independently' (No communication with the Global Handle Registry)
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
          */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         IndependentHandleService,
 
         /**
         Handle to use for authentication if the default is not being used
-        */
+         * 
+         * @deprecated New installations should not use this database setting, but use
+         *             the settings within {@link JvmSettings#SCOPE_PID}.
+         * 
+         */
+        @Deprecated(forRemoval = true, since = "2024-02-13")
         HandleAuthHandle,
 
         /**
@@ -411,7 +462,15 @@ public class SettingsServiceBean {
         /**
          * Allow CORS flag (true or false). It is true by default
          *
+         * The allowed origin for CORS requests.
+         * 
+         * @see JvmSettings#CORS_ORIGIN
+         * @see JvmSettings#CORS_METHODS
+         * @see JvmSettings#CORS_ALLOW_HEADERS
+         * @see JvmSettings#CORS_EXPOSE_HEADERS
          */
+        @Deprecated(forRemoval = true, since = "2025-04-29")
+        
         AllowCors, 
         
         /**
@@ -473,6 +532,12 @@ public class SettingsServiceBean {
          *
          */
         GlobusSingleFileTransfer,
+        /** Lower limit of the number of files in a Globus upload task where 
+         * the batch mode should be utilized in looking up the file information 
+         * on the remote end node (file sizes, primarily), instead of individual
+         * lookups. 
+         */
+        GlobusBatchLookupSize,
         /**
          * Optional external executables to run on the metadata for dataverses 
          * and datasets being published; as an extra validation step, to 
@@ -528,6 +593,12 @@ public class SettingsServiceBean {
          * n: embargo enabled with n months the maximum allowed duration
          */
         MaxEmbargoDurationInMonths,
+        /** This setting enables Retention capabilities in Dataverse and sets the minimum Retention duration allowed.
+         * 0 or not set: new retentions disabled
+         * -1: retention enabled, no time limit
+         * n: retention enabled with n months the minimum allowed duration
+         */
+        MinRetentionDurationInMonths,
         /*
          * Include "Custom Terms" as an item in the license drop-down or not.
          */
@@ -598,7 +669,25 @@ public class SettingsServiceBean {
          * Allows an instance admin to disable Solr search facets on the collection
          * and dataset pages instantly
          */
-        DisableSolrFacets
+        DisableSolrFacets,
+        DisableSolrFacetsForGuestUsers,
+        DisableSolrFacetsWithoutJsession,
+        DisableUncheckedTypesFacet,
+        /**
+         * When ingesting tabular data files, store the generated tab-delimited 
+         * files *with* the variable names line up top. 
+         */
+        StoreIngestedTabularFilesWithVarHeaders,
+
+        ContactFeedbackMessageSizeLimit,
+        //Experimental setting to allow connecting to a GET external search service expecting a GET request with query parameter mirroring the search API query parameters (without search_service) 
+        GetExternalSearchUrl,
+        //Experimental setting to provide a display name for the GET external search service
+        GetExternalSearchName,
+        //Experimental setting to allow connecting to a POST external search service expecting a POST request with a JSON payload mirroring the search API query parameters 
+        PostExternalSearchUrl,
+        //Experimental setting to provide a display name for the POST external search service
+        PostExternalSearchName,
         ;
 
         @Override
@@ -663,6 +752,23 @@ public class SettingsServiceBean {
             return null;
         }
         
+    }
+
+    /**
+     * Attempt to convert the value to an integer
+     *  - Applicable for keys such as MaxFileUploadSizeInBytes
+     *
+     * On failure (key not found or string not convertible to a long), returns defaultValue
+     * @param key
+     * @param defaultValue
+     * @return
+     */
+    public Long getValueForKeyAsLong(Key key, Long defaultValue) {
+           Long val = getValueForKeyAsLong(key);
+           if (val == null) {
+               return defaultValue;
+           }
+           return val;
     }
     
        /**

@@ -69,7 +69,8 @@ The Theme features provides you with a way to customize the look of your Dataver
 
 - Inherit the theme from the parent Dataverse collection. This option is helpful if you'd like consistency across several Dataverse collections that all share the same parent.
 - Add or update a logo image, which will appear at the top of your Dataverse collection.
-- Add or update a footer image, which will appear at at the bottom of your Dataverse collection.
+- Add or update a thumbnail image, which will appear on featured dataverses of your Dataverse collection.
+- Add or update a footer image, which will appear at the bottom of your Dataverse collection.
 - Change the colors of the background, links, and text within the header of your Dataverse collection.
 - Add or update the tagline for your Dataverse collection, which can provide more information about your organization, journal, institution, etc.
 - Add a URL for a website that will be accessed when visitors click the tagline text.
@@ -217,6 +218,8 @@ For example, researchers working on a collaborative study across institutions ca
 In order to link a dataset, you will need your account to have the "Publish Dataset" permission on the Dataverse collection that is doing the linking. If you created the Dataverse collection then you should have this permission already, but if not then you will need to ask the admin of that Dataverse collection to assign that permission to your account. You do not need any special permissions on the dataset being linked.
 
 To link a dataset to your Dataverse collection, you must navigate to that dataset and click the white "Link" button in the upper-right corner of the dataset page. This will open up a window where you can type in the name of the Dataverse collection that you would like to link the dataset to. Select your Dataverse collection and click the save button. This will establish the link, and the dataset will now appear under your Dataverse collection.
+
+A draft dataset can be linked to other Dataverse collections. It will only become publicly visible in the linked collection(s) after it has been published. To publish the dataset, your account must have the "Publish Dataset" permission for the Dataverse collection in which the dataset was originally created. Permissions in the linked Dataverse collections do not apply.
 
 There is currently no way to remove established links in the UI. If you need to remove a link between a Dataverse collection and a dataset, please contact the support team for the Dataverse installation you are using (see the :ref:`unlink-a-dataset` section of the Admin Guide for more information).
 

@@ -24,6 +24,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
+import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
 import java.sql.Timestamp;
@@ -65,6 +66,7 @@ public class IngestMessageBean implements MessageListener {
     @EJB IngestServiceBean ingestService;
     @EJB UserNotificationServiceBean userNotificationService;
     @EJB AuthenticationServiceBean authenticationServiceBean;
+    @EJB IndexServiceBean indexService;
     @EJB
     RoCrateExportManager roCrateExportManager;
 
@@ -118,6 +120,7 @@ public class IngestMessageBean implements MessageListener {
                         // and "mixed success and failure" emails. Now we never list successfully
                         // ingested files so this line is commented out.
                         // sbIngestedFiles.append(String.format("<li>%s</li>", datafile.getCurrentName()));
+                        indexService.asyncIndexDataset(datafile.getOwner(), true);
                     } else {
                         logger.warning("Error occurred during ingest job for file id " + datafile_id + "!");
                         sbIngestedFiles.append(String.format("<li>%s</li>", datafile.getCurrentName()));
@@ -184,9 +187,9 @@ public class IngestMessageBean implements MessageListener {
         } finally {
             // when we're done, go ahead and remove the lock
             try {
-                // Remove the dataset lock:
+                // Remove the dataset lock: 
                 // (note that the assumption here is that all of the datafiles
-                // packed into this IngestMessage belong to the same dataset)
+                // packed into this IngestMessage belong to the same dataset) 
                 Dataset dataset = datasetService.find(ingestMessage.getDatasetId());
                 if (dataset != null && dataset.getId() != null) {
                     datasetService.removeDatasetLocks(dataset, DatasetLock.Reason.Ingest);

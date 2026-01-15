@@ -1,14 +1,18 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.dataaccess.DataAccess;
+import edu.harvard.iq.dataverse.pidproviders.PidProvider;
+import edu.harvard.iq.dataverse.pidproviders.PidUtil;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.storageuse.StorageUse;
 import edu.harvard.iq.dataverse.util.SystemConfig;
-import jakarta.persistence.CascadeType;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.persistence.*;
+
 import java.util.Optional;
 
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.OneToOne;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -42,9 +46,17 @@ public abstract class DvObjectContainer extends DvObject {
     private String metadataLanguage=null;
     
     private Boolean guestbookAtRequest = null;
+    
+    private String pidGeneratorSpecs = null;
+    
+    @Transient
+    private PidProvider pidGenerator = null;
    
     @OneToOne(mappedBy = "dvObjectContainer",cascade={ CascadeType.REMOVE, CascadeType.PERSIST}, orphanRemoval=true)
     private StorageUse storageUse;
+
+    @Column( nullable = true )
+    private Integer datasetFileCountLimit;
     
     public String getEffectiveStorageDriverId() {
         String id = storageDriver;
@@ -174,5 +186,98 @@ public abstract class DvObjectContainer extends DvObject {
      */
     public void setStorageUse(StorageUse storageUse) {
         this.storageUse = storageUse;
+    }
+
+    
+    /* Dataverse collections and dataset can be configured to use different PidProviders as PID generators for contained objects (datasets or data files). 
+     * This mechanism is similar to others except that the stored value is a JSON object defining the protocol, authority, shoulder, and, optionally, the separator for the PidProvider. 
+     */
+        
+    public String getPidGeneratorSpecs() {
+        return pidGeneratorSpecs;
+    }
+
+    public void setPidGeneratorSpecs(String pidGeneratorSpecs) {
+        this.pidGeneratorSpecs = pidGeneratorSpecs;
+    }
+
+    // Used in JSF when selecting the PidGenerator
+    // It only returns an id if this dvObjectContainer has PidGenerator specs set on it, otherwise it returns "default" 
+    public String getPidGeneratorId() {
+        if (StringUtils.isBlank(getPidGeneratorSpecs())) {
+            return "default";
+        } else {
+            return getEffectivePidGenerator().getId();
+        }
+    }
+   
+    //Used in JSF when setting the PidGenerator
+    public void setPidGeneratorId(String pidGeneratorId) {
+        // Note that the "default" provider will not be found so will result in
+        // setPidGenerator(null), which unsets the pidGenerator/Specs as desired
+        setPidGenerator(PidUtil.getPidProvider(pidGeneratorId));
+    }
+
+    public void setPidGenerator(PidProvider pidGenerator) {
+        this.pidGenerator = pidGenerator;
+        if (pidGenerator != null) {
+            JsonObjectBuilder job = jakarta.json.Json.createObjectBuilder();
+            this.pidGeneratorSpecs = job.add("protocol", pidGenerator.getProtocol())
+                    .add("authority", pidGenerator.getAuthority()).add("shoulder", pidGenerator.getShoulder())
+                    .add("separator", pidGenerator.getSeparator()).build().toString();
+        } else {
+            this.pidGeneratorSpecs = null;
+        }
+    }
+
+    public PidProvider getEffectivePidGenerator() {
+        if (pidGenerator == null) {
+            String specs = getPidGeneratorSpecs();
+            if (StringUtils.isBlank(specs)) {
+                GlobalId pid = getGlobalId();
+                if ((pid != null) && PidUtil.getPidProvider(pid.getProviderId()).canCreatePidsLike(pid)) {
+                    pidGenerator = PidUtil.getPidProvider(pid.getProviderId());
+                } else {
+                    if (getOwner() != null) {
+                        pidGenerator = getOwner().getEffectivePidGenerator();
+                    }
+                }
+            } else {
+                JsonObject providerSpecs = JsonUtil.getJsonObject(specs);
+                if (providerSpecs.containsKey("separator")) {
+                    pidGenerator = PidUtil.getPidProvider(providerSpecs.getString("protocol"),
+                            providerSpecs.getString("authority"), providerSpecs.getString("shoulder"),
+                            providerSpecs.getString("separator"));
+                } else {
+                    pidGenerator = PidUtil.getPidProvider(providerSpecs.getString("protocol"),
+                            providerSpecs.getString("authority"), providerSpecs.getString("shoulder"));
+                }
+            }
+            if(pidGenerator!=null && pidGenerator.canManagePID()) {
+                setPidGenerator(pidGenerator);
+            } else {
+                setPidGenerator(null);
+            }
+        }
+        return pidGenerator;
+    }
+    public Integer getDatasetFileCountLimit() {
+        return datasetFileCountLimit;
+    }
+    public void setDatasetFileCountLimit(Integer datasetFileCountLimit) {
+        this.datasetFileCountLimit = datasetFileCountLimit != null && datasetFileCountLimit < 0 ? null : datasetFileCountLimit;
+    }
+
+    public Integer getEffectiveDatasetFileCountLimit() {
+        if (!isDatasetFileCountLimitSet(getDatasetFileCountLimit()) && getOwner() != null) {
+            return getOwner().getEffectiveDatasetFileCountLimit();
+        } else if (!isDatasetFileCountLimitSet(getDatasetFileCountLimit())) {
+                Optional<Integer> opt = JvmSettings.DEFAULT_DATASET_FILE_COUNT_LIMIT.lookupOptional(Integer.class);
+                return (opt.isPresent()) ? opt.get() : null;
+        }
+        return getDatasetFileCountLimit();
+    }
+    public boolean isDatasetFileCountLimitSet(Integer datasetFileCountLimit) {
+        return datasetFileCountLimit != null && datasetFileCountLimit >= 0;
     }
 }
