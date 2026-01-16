@@ -7,14 +7,6 @@ set -euo pipefail
 
 # Someone set the env var for passwords - get the new password in. Otherwise print warning.
 # https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#avoid-default-passwords
-LINUX_USER="${LINUX_USER:-payara}"
-LINUX_PASSWORD="${LINUX_PASSWORD:-payara}"
-HOME_DIR="${HOME_DIR:-/opt/payara}"
-if [ -z "${TMPDIR:-}" ] || [ ! -w "${TMPDIR:-/tmp}" ]; then
-  TMPDIR="${HOME_DIR}/tmp"
-fi
-mkdir -p "${TMPDIR}" || true
-export TMPDIR
 if [ "$LINUX_PASSWORD" != "payara" ]; then
   echo -e "$LINUX_USER\n$LINUX_PASSWORD\n$LINUX_PASSWORD" | passwd || { echo "Linux password unchanged!"; }
 else
@@ -23,7 +15,6 @@ else
 fi
 
 # Change the domain admin password if necessary
-PAYARA_ADMIN_PASSWORD="${PAYARA_ADMIN_PASSWORD:-admin}"
 if [ "$PAYARA_ADMIN_PASSWORD" != "admin" ]; then
   PASSWORD_FILE=$(mktemp)
   echo "AS_ADMIN_PASSWORD=admin" > "$PASSWORD_FILE"
@@ -40,7 +31,6 @@ fi
 # > Instead, Payara Server strictly uses the master password to ONLY encrypt the keystore and truststore used to store keys and certificates for the DAS and instances usage.
 # It will be requested when booting the application server!
 # https://docs.payara.fish/community/docs/Technical%20Documentation/Payara%20Server%20Documentation/Security%20Guide/Administering%20System%20Security.html#to-change-the-master-password
-DOMAIN_PASSWORD="${DOMAIN_PASSWORD:-changeit}"
 if [ "$DOMAIN_PASSWORD" != "changeit" ]; then
   PASSWORD_FILE=$(mktemp)
   echo "AS_ADMIN_MASTERPASSWORD=changeit" >> "$PASSWORD_FILE"

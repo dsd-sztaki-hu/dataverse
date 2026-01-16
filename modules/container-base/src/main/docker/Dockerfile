@@ -44,11 +44,15 @@ ENV PAYARA_DIR="${HOME_DIR}/appserver" \
     PAYARA_ADMIN_USER="admin" \
     # This is a public default, easy to change via this env var at runtime
     PAYARA_ADMIN_PASSWORD="admin" \
-    LINUX_USER="payara" \
-    LINUX_PASSWORD="payara" \
     DOMAIN_NAME="domain1" \
+    # This is the public default as per https://docs.payara.fish/community/docs/Technical%20Documentation/Payara%20Server%20Documentation/Security%20Guide/Administering%20System%20Security.html#to-change-the-master-password
+    # Can be changed at runtime via this env var
     DOMAIN_PASSWORD="changeit" \
-    PAYARA_ARGS=""
+    PAYARA_ARGS="" \
+    LINUX_USER="payara" \
+    LINUX_GROUP="payara" \
+    # This is a public default and can be changed at runtime using this env var
+    LINUX_PASSWORD="payara"
 ENV PATH="${PATH}:${PAYARA_DIR}/bin:${SCRIPT_DIR}" \
     DOMAIN_DIR="${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}" \
     DEPLOY_PROPS="" \
@@ -85,32 +89,18 @@ RUN <<EOF
     # Create pathes
     mkdir -p "${HOME_DIR}" "${PAYARA_DIR}" "${DEPLOY_DIR}" "${CONFIG_DIR}" "${SCRIPT_DIR}"
     mkdir -p "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
+    # Remove the default user if present (do not fail build if not, introduced by Ubuntu 24.04)
+    userdel --force --remove ubuntu || true
+    groupdel -f ubuntu || true # for some reason, groupdel on Ubuntu 22.04 does not like --force
     # Create user
-    if getent group payara >/dev/null; then
-      PAYARA_GROUP="payara"
-    elif getent group "${GID}" >/dev/null; then
-      addgroup payara
-      PAYARA_GROUP="payara"
-    else
-      addgroup --gid "${GID}" payara
-      PAYARA_GROUP="payara"
-    fi
-    if getent passwd payara >/dev/null; then
-      PAYARA_USER="payara"
-    elif getent passwd "${UID}" >/dev/null; then
-      adduser --system --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup "${PAYARA_GROUP}" payara
-      PAYARA_USER="payara"
-    else
-      adduser --system --uid ${UID} --no-create-home --shell /bin/bash --home "${HOME_DIR}" --gecos "" --ingroup "${PAYARA_GROUP}" payara
-      PAYARA_USER="payara"
-    fi
-    echo payara:payara | chpasswd || true
+    groupadd --gid "${GID}" "${LINUX_GROUP}"
+    useradd --system --uid "${UID}" --no-create-home --shell /bin/false --home "${HOME_DIR}" --gid "${LINUX_GROUP}" "${LINUX_USER}"
+    echo "${LINUX_USER}:$LINUX_PASSWORD" | chpasswd
     # Set permissions
     # Note: Following OpenShift best practices for arbitrary user id support:
     #       https://docs.openshift.com/container-platform/4.14/openshift_images/create-images.html#use-uid_create-images
-    chown -R "${PAYARA_USER}":0 "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
+    chown -R "${LINUX_USER}:0" "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
     chmod -R g=u "${HOME_DIR}" "${STORAGE_DIR}" "${SECRETS_DIR}" "${DUMPS_DIR}"
-
 EOF
 
 ARG JATTACH_VERSION="v2.2"
