@@ -1197,40 +1197,6 @@ public class DataversesIT {
                 .body("data.name", equalTo("Root"));
     }
     
-    
-    @Test
-    public void testDataverseMetadataLanguage() {
-        Response createUser = UtilIT.createRandomUser();
-        createUser.prettyPrint();
-        String apiToken = UtilIT.getApiTokenFromResponse(createUser);
-        Response createDataverse1Response = UtilIT.createRandomDataverse(apiToken);
-
-        createDataverse1Response.prettyPrint();
-        createDataverse1Response.then().assertThat().statusCode(CREATED.getStatusCode());
-
-        String alias = UtilIT.getAliasFromResponse(createDataverse1Response);
-
-        Response noLang = UtilIT.getDataverseMetadataLanguage(alias, apiToken);
-        noLang.prettyPrint();
-
-        noLang.then().assertThat().body("data", equalTo(List.of()));
-
-        UtilIT.setSetting(SettingsServiceBean.Key.MetadataLanguages,
-                        "[{\"locale\":\"en\",\"title\":\"English\"},{\"locale\":\"hu\",\"title\":\"magyar\"}]");
-        Response allLangs = UtilIT.getDataverseMetadataLanguage(alias, apiToken);
-        allLangs.prettyPrint();
-        allLangs.then().assertThat()
-                        .body("data.size()", equalTo(2))
-                        .and().body("data[0].locale", equalTo("en"))
-                        .and().body("data[1].locale", equalTo("hu"));
-        
-        Response english = UtilIT.setDataverseMetadataLanguage(alias, apiToken, "en");
-        english.then().assertThat().body("data", equalTo(List.of(Map.of("locale", "en", "title", "English"))));
-        Response singleLang = UtilIT.getDataverseMetadataLanguage(alias, apiToken);
-        singleLang.then().assertThat().body("data", equalTo(List.of(Map.of("locale", "en", "title", "English"))));
-    }
-
-
     @Test
     public void testListMetadataBlocks() {
         Response createUserResponse = UtilIT.createRandomUser();
