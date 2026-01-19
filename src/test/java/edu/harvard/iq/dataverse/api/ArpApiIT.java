@@ -9,7 +9,6 @@ import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
 import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
