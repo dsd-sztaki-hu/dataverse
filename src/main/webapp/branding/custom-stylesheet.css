@@ -537,6 +537,7 @@ div.card-preview-icon-block img {
 
 .footerstamp {
 	margin-top: -10px;
+	margin-right: 5px;
 }
 
 @media (max-width: 767px) {
