@@ -26,6 +26,8 @@ services:
       DATAVERSE_AUTH_OIDC_CLIENT_SECRET: 94XHrfNRwXsjqTqApRrwWmhDLDHpIYV8
       DATAVERSE_AUTH_OIDC_AUTH_SERVER_URL: http://keycloak.mydomain.com:8090/realms/test
       DATAVERSE_SPI_EXPORTERS_DIRECTORY: "/dv/exporters"
+      DATAVERSE_CORS_ORIGIN: "*"
+      DATAVERSE_CORS_HEADERS_ALLOW: "Accept,Content-Type,X-Dataverse-key,Authorization,cedar-client-session-id,cedar-debug"
       # These two oai settings are here to get HarvestingServerIT to pass
       dataverse_oai_server_maxidentifiers: "2"
       dataverse_oai_server_maxrecords: "2"
@@ -81,8 +83,6 @@ services:
         -Ddataverse.files.wigner.access-key=4cc355_k3y
         -Ddataverse.files.wigner.secret-key=s3cr3t_4cc355_k3y
         -Ddataverse.files.wigner.directory=/dv/store/wigner
-        -Ddataverse.cors.origin=*
-        -Ddataverse.cors.headers.allow=Accept,Content-Type,X-Dataverse-key,Authorization
     ports:
       - "8080:8080" # HTTP (Dataverse Application)
       # - "4949:4848" # HTTPS (Payara Admin Console)
