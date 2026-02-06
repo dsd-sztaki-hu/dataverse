@@ -46,6 +46,7 @@
   var portallink = document.getElementById('portallink');
   var searchlink = document.getElementById('searchlink');
   var sitelogo =  document.getElementById('sitelogo');
+  var smalllogo = document.querySelector('img[src*="topbanner_arp_002_dark425.png"]');
   if (lang == 'hu') {
     topheader.innerHTML = 'Az ARP Adatrepozitórium fejlesztését a <a href="https://hun-ren.hu/" target="_blank">HUN-REN</a> által támogatott <a href="https://science-research-data.hu/" target="_blank">ARP</a> projekt végzi';
     portallink.innerHTML = '<a href="https://researchdata.hu/" target="_blank"><img src="/branding/arp_portal_btn.png" width="158" height="50"/><span class="textlink">ARP Portál</span></a>';
@@ -56,5 +57,6 @@
     portallink.innerHTML = '<a href="https://researchdata.hu/en" target="_blank"><img src="/branding/arp_portal_btn.png" width="158" height="50"/><span class="textlink">ARP Portal</span></a>';
     searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Federated Search</span></a>';
 	sitelogo.innerHTML = '<img src="/branding/topbanner_arp_002_eng.png" width="100%" />';
+	if (smalllogo) smalllogo.src = "/branding/topbanner_arp_002_dark425_eng.png";
   }
 </script>
