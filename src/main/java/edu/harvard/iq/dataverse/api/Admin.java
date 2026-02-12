@@ -231,7 +231,11 @@ public class Admin extends AbstractApiBean {
     @PUT
     public Response putSetting(@PathParam("name") String name, String content) {
         try {
-            SettingsServiceBean.validateSettingName(name);
+            // In ARP we don't want to add all our settings to the SettingsServiceBean.Key
+            // because it is cumbersome. We are OK with the old way of using free form
+            // keys for settings.
+            // So, we ignore validation here.
+            // SettingsServiceBean.validateSettingName(name);
             
             Setting s = settingsSvc.set(name, content);
             return ok("Setting " + name + " added.");
@@ -258,7 +262,11 @@ public class Admin extends AbstractApiBean {
     @GET
     public Response getSetting(@PathParam("name") String name) {
         try {
-            SettingsServiceBean.validateSettingName(name);
+            // In ARP we don't want to add all our settings to the SettingsServiceBean.Key
+            // because it is cumbersome. We are OK with the old way of using free form
+            // keys for settings.
+            // So, we ignore validation here.
+            //SettingsServiceBean.validateSettingName(name);
             
             String content = settingsSvc.get(name);
             return (content != null) ? ok(content) : notFound("Setting " + name + " not found.");

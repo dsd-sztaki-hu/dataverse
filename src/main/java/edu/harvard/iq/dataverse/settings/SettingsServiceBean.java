@@ -832,6 +832,7 @@ public class SettingsServiceBean {
      * @deprecated This will be removed in a future version of Dataverse. Please refrain from using it and migrate
      *             any code doing so to use a {@link Key} and the {@link #getValueForKey(Key)} variants instead.
      */
+    // In ARP we want to keep this!
     @Deprecated(since = "6.9", forRemoval = true)
     public String get( String name ) {
         List<Setting> tokens = em.createNamedQuery("Setting.findByName", Setting.class)
@@ -1021,6 +1022,7 @@ public class SettingsServiceBean {
      * @deprecated This will be removed in a future version of Dataverse. Please refrain from using it and migrate
      *             any code doing so to use a {@link Key} and the {@link #setValueForKey(Key, String)} variants instead.
      */
+    // TODO: In ARP we want to keep this!
     @Deprecated(since = "6.9", forRemoval = true)
     public Setting set( String name, String content ) {
         Setting s = null; 
@@ -1122,6 +1124,7 @@ public class SettingsServiceBean {
      * @deprecated This will be removed in a future version of Dataverse. Please refrain from using it and migrate
      *             any code doing so to use a {@link Key} and {@link #deleteValueForKey(Key)} instead.
      */
+    // In ARP we want to keep this!
     @Deprecated(since = "6.9", forRemoval = true)
     public void delete( String name ) {
         actionLogSvc.log( new ActionLogRecord(ActionLogRecord.ActionType.Setting, "delete")
