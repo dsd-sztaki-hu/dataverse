@@ -49,12 +49,16 @@ public class SettingsCleanupCallback implements Callback {
 
         logger.info("Starting settings cleanup: removing entries with unknown keys");
 
-        try {
-            cleanupInvalidSettings(context.getConnection());
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Error while cleaning up settings table", e);
-            throw new FlywayException("Failed to clean up invalid settings", e);
-        }
+        // In ARP we don't want to add all our settings to the SettingsServiceBean.Key
+        // because it is cumbersome. We are OK with the old way of using free form
+        // keys for settings.
+        // So, we ignore validation and cleanup here.
+        //try {
+        //    cleanupInvalidSettings(context.getConnection());
+        //} catch (SQLException e) {
+        //    logger.log(Level.SEVERE, "Error while cleaning up settings table", e);
+        //    throw new FlywayException("Failed to clean up invalid settings", e);
+        //}
 
         logger.info("Finished cleaning up settings");
     }
