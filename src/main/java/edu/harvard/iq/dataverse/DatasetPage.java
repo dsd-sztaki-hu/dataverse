@@ -6681,6 +6681,10 @@ public class DatasetPage implements java.io.Serializable {
         return true;
     }
 
+    public Retention getSelectionRetention() {
+        return selectionRetention;
+    }
+
     public void setSelectionRetention(Retention selectionRetention) {
         this.selectionRetention = selectionRetention;
     }
