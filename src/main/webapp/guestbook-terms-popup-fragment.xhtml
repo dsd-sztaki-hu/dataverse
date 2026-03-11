@@ -48,7 +48,7 @@
                     </a>
                     <ui:fragment
                         rendered="#{empty workingVersion.termsOfUseAndAccess.license}">
-                        <h:outputText
+                        <h:outputText rendered="#{!datasetVersionServiceBean.isVersionDefaultCustomTerms(workingVersion)}"
                             value="#{bundle['file.dataFilesTab.terms.list.license.customterms.txt']}"
                             escape="false" />
                     </ui:fragment>
@@ -153,7 +153,7 @@
                 value="#{MarkupChecker:sanitizeBasicHTML(workingVersion.termsOfUseAndAccess.termsOfAccess)}"
                 escape="false" /> 
         </div>
-            <p:fragment rendered="#{guestbookAndTermsPopupRequired and guestbookPopupRequired}" id="guestbookUIFragment">
+            <p:fragment rendered="#{guestbookAndTermsPopupRequired and (((termsGuestbookPopupAction != bundle.download) != guestbookPopupRequiredAtDownload) and guestbookPopupRequired)}" id="guestbookUIFragment">
                 <div class="container messagePanel">
                     <iqbs:messages collapsible="true" />
                 </div>

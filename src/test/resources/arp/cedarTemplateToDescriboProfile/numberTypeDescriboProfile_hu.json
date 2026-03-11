@@ -25,7 +25,8 @@
           "placeholder": "Watermark as Placeholder any",
           "numberType": [
             "Any"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.cedardev.dsd.sztaki.hu/properties/45915974-11ca-4dfb-8484-de9baf6d59c3",
@@ -42,7 +43,8 @@
           "placeholder": "Watermark as Placeholder long",
           "numberType": [
             "Long"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.cedardev.dsd.sztaki.hu/properties/32dc6256-873f-4e9d-af89-dd3d7a71e641",
@@ -59,7 +61,8 @@
           "placeholder": "Watermark as Placeholder int",
           "numberType": [
             "Int"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.cedardev.dsd.sztaki.hu/properties/89b399c9-e35c-47f6-bc88-4118156a23bb",
@@ -76,7 +79,8 @@
           "placeholder": "Watermark as Placeholder double",
           "numberType": [
             "Double"
-          ]
+          ],
+          "deprecated": false
         },
         {
           "id": "https://schema.cedardev.dsd.sztaki.hu/properties/9cbf95e6-d37a-4449-8ede-9f6d436e7470",
@@ -93,7 +97,8 @@
           "placeholder": "Watermark as Placeholder float",
           "numberType": [
             "Float"
-          ]
+          ],
+          "deprecated": false
         }
       ],
       "label": "Adatcsomag",

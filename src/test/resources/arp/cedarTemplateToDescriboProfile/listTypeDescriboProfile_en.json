@@ -24,7 +24,9 @@
           ],
           "required": true,
           "multiple": false,
-          "placeholder": "Watermark as Placeholder radio"
+          "placeholder": "Watermark as Placeholder radio",
+          "style": "radio",
+          "deprecated": false
         },
         {
           "id": "https://schema.cedardev.dsd.sztaki.hu/properties/03b55617-e9cc-4ebf-912a-de221241b45e",
@@ -40,7 +42,8 @@
           ],
           "required": true,
           "multiple": false,
-          "placeholder": "Watermark as Placeholder list"
+          "placeholder": "Watermark as Placeholder list",
+          "deprecated": false
         }
       ],
       "label": "Dataset",

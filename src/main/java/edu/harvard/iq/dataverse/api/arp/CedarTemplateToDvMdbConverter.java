@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.ControlledVocabularyValue;
 import edu.harvard.iq.dataverse.api.arp.util.JsonHelper;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,12 +19,13 @@ import static edu.harvard.iq.dataverse.api.arp.util.JsonHelper.*;
 public class CedarTemplateToDvMdbConverter {
 
     private String language;
+    private ArpServiceBean arpService;
 
-    public CedarTemplateToDvMdbConverter() {
-        this("en");
+    public CedarTemplateToDvMdbConverter(ArpServiceBean arpService) {
+        this("en", arpService);
     }
 
-    public CedarTemplateToDvMdbConverter(String language)
+    public CedarTemplateToDvMdbConverter(String language, ArpServiceBean arpService)
     {
         if (language == null) {
             this.language = "en";
@@ -31,6 +33,7 @@ public class CedarTemplateToDvMdbConverter {
         else {
             this.language = language;
         }
+        this.arpService = arpService;
     }
 
     public String processCedarTemplate(String cedarTemplate, Set<String> overridePropNames) throws IOException {
@@ -149,7 +152,7 @@ public class CedarTemplateToDvMdbConverter {
         DataverseDatasetField dataverseDatasetField = new DataverseDatasetField();
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
         boolean allowCtrlVocab = Objects.equals(fieldType, "list") || Objects.equals(fieldType, "radio");
-        boolean hasExternalVocabValues = JsonHelper.getJsonObject(templateField, "_valueConstraints.branches[0]") != null;
+        boolean hasExternalVocabValues = arpService.hasExternalValues(templateField);
         String displayFormat = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.displayFormat")).map(JsonElement::getAsString).orElse(null);
         String watermark = Optional.ofNullable(getJsonElement(templateField, "_arp.dataverse.watermark")).map(JsonElement::getAsString).orElse(null);
 

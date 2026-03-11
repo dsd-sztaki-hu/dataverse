@@ -128,7 +128,7 @@ You might find studying the following test classes helpful in writing tests for 
 - DeletePrivateUrlCommandTest.java
 - GetPrivateUrlCommandTest.java
 
-In addition, there is a writeup on "The Testable Command" at https://github.com/IQSS/dataverse/blob/develop/doc/theTestableCommand/TheTestableCommand.md .
+In addition, there is a writeup on "The Testable Command" at https://github.com/IQSS/dataverse/blob/master/doc/theTestableCommand/TheTestableCommand.md .
 
 Running Non-Essential (Excluded) Unit Tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -141,6 +141,8 @@ All unit tests (that have not been annotated with ``@Disable``), including these
 Generally speaking, unit tests have been flagged as non-essential because they are slow or because they require an Internet connection.
 You should not feel obligated to run these tests continuously but you can use the ``mvn`` command above to run them.
 To iterate on the unit test in Netbeans and execute it with "Run -> Test File", you must temporarily comment out the annotation flagging the test as non-essential.
+
+.. _integration-tests:
 
 Integration Tests
 -----------------
@@ -167,12 +169,12 @@ different people. For our purposes, an integration test can have two flavors:
 Running the Full API Test Suite Using EC2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Prerequisite:** To run the API test suite in an EC2 instance you should first follow the steps in the :doc:`deployment` section to get set up with the AWS binary to launch EC2 instances. If you're here because you just want to spin up a branch, you'll still want to follow the AWS deployment setup steps, but may find the `ec2-create README.md <https://github.com/GlobalDataverseCommunityConsortium/dataverse-ansible/blob/master/ec2/README.md>`_ Quick Start section helpful.
+**Prerequisite:** To run the API test suite in an EC2 instance you should first follow the steps in the :doc:`deployment` section to get set up with the AWS binary to launch EC2 instances. If you're here because you just want to spin up a branch, you'll still want to follow the AWS deployment setup steps, but may find the `ec2-create README.md <https://github.com/gdcc/dataverse-ansible/blob/develop/ec2/README.md>`_ Quick Start section helpful.
 
-You may always retrieve a current copy of the ec2-create-instance.sh script and accompanying group_var.yml file from the `dataverse-ansible repo <https://github.com/GlobalDataverseCommunityConsortium/dataverse-ansible/>`_. Since we want to run the test suite, let's grab the group_vars used by Jenkins:
+You may always retrieve a current copy of the ec2-create-instance.sh script and accompanying group_var.yml file from the `dataverse-ansible repo <https://github.com/gdcc/dataverse-ansible/>`_. Since we want to run the test suite, let's grab the group_vars used by Jenkins:
 
-- `ec2-create-instance.sh <https://raw.githubusercontent.com/GlobalDataverseCommunityConsortium/dataverse-ansible/master/ec2/ec2-create-instance.sh>`_
-- `jenkins.yml <https://raw.githubusercontent.com/GlobalDataverseCommunityConsortium/dataverse-ansible/master/tests/group_vars/jenkins.yml>`_
+- `ec2-create-instance.sh <https://raw.githubusercontent.com/gdcc/dataverse-ansible/develop/ec2/ec2-create-instance.sh>`_
+- `jenkins.yml <https://raw.githubusercontent.com/gdcc/dataverse-ansible/develop/tests/group_vars/jenkins.yml>`_
 
 Edit ``jenkins.yml`` to set the desired GitHub repo and branch, and to adjust any other options to meet your needs:
 
@@ -182,7 +184,7 @@ Edit ``jenkins.yml`` to set the desired GitHub repo and branch, and to adjust an
 - ``dataverse.unittests.enabled: true``
 - ``dataverse.sampledata.enabled: true``
 
-If you wish, you may pass the script a ``-l`` flag with a local relative path in which the script will `copy various logs <https://github.com/GlobalDataverseCommunityConsortium/dataverse-ansible/blob/master/ec2/ec2-create-instance.sh#L185>`_ at the end of the test suite for your review.
+If you wish, you may pass the script a ``-l`` flag with a local relative path in which the script will `copy various logs <https://github.com/gdcc/dataverse-ansible/blob/develop/ec2/ec2-create-instance.sh>`_ at the end of the test suite for your review.
 
 Finally, run the script:
 
@@ -207,7 +209,7 @@ The Burrito Key
 
 For reasons that have been lost to the mists of time, the Dataverse software really wants you to to have a burrito. Specifically, if you're trying to run REST Assured tests and see the error "Dataverse config issue: No API key defined for built in user management", you must run the following curl command (or make an equivalent change to your database):
 
-``curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/BuiltinUsers.KEY``
+``curl -X PUT -d 'burrito' http://localhost:8080/api/admin/settings/:BuiltinUsersKey``
 
 Without this "burrito" key in place, REST Assured will not be able to create users. We create users to create objects we want to test, such as collections, datasets, and files.
 
@@ -273,7 +275,7 @@ Remember, it’s only a test (and it's not graded)! Some guidelines to bear in m
 - If you need to test an optional service (S3, etc.), add it to our docker compose file. See :doc:`/container/dev-usage`.
 - Just as with any development, if you’re stuck: ask for help!
 
-To execute existing integration tests on your local Dataverse installation, a helpful command line tool to use is `Maven <https://maven.apache.org/ref/3.1.0/maven-embedder/cli.html>`_. You should have Maven installed as per the `Development Environment <https://guides.dataverse.org/en/latest/developers/dev-environment.html>`_ guide, but if not it’s easily done via Homebrew: ``brew install maven``.
+To execute existing integration tests on your local Dataverse installation from the command line, use Maven. You should have Maven installed as per :doc:`dev-environment`, but if not it's easily done via Homebrew: ``brew install maven``.
 
 Once installed, you may run commands with ``mvn [options] [<goal(s)>] [<phase(s)>]``.
 
@@ -392,10 +394,10 @@ Run this as the "dataverse" user.
 
 Note that after deployment the file "/usr/local/payara6/glassfish/domains/domain1/config/jacoco.exec" exists and is empty.
 
-Run API Tests
-~~~~~~~~~~~~~
+Run API Tests to Determine Code Coverage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note that even though you see "docker-aio" in the command below, we assume you are not necessarily running the test suite within Docker. (Some day we'll probably move this script to another directory.) For this reason, we pass the URL with the normal port (8080) that app servers run on to the ``run-test-suite.sh`` script.
+Note that if you are looking for how to run API tests generally, you should refer to :ref:`integration-tests`.
 
 Note that "/usr/local/payara6/glassfish/domains/domain1/config/jacoco.exec" will become non-empty after you stop and start Payara. You must stop and start Payara before every run of the integration test suite.
 
@@ -405,7 +407,8 @@ Note that "/usr/local/payara6/glassfish/domains/domain1/config/jacoco.exec" will
   /usr/local/payara6/bin/asadmin start-domain
   git clone https://github.com/IQSS/dataverse.git
   cd dataverse
-  conf/docker-aio/run-test-suite.sh http://localhost:8080
+  TESTS=$(<tests/integration-tests.txt)
+  mvn test -Dtest=$TESTS
 
 (As an aside, you are not limited to API tests for the purposes of learning which code paths are being executed. You could click around the GUI, for example. Jacoco doesn't know or care how you exercise the application.)
 
@@ -426,6 +429,8 @@ target/coverage-it/index.html is the place to start reading the code coverage re
 
 Load/Performance Testing
 ------------------------
+
+See also :doc:`/qa/performance-tests` in the QA Guide.
 
 .. _locust:
 
@@ -471,25 +476,6 @@ Maven to download more dynamic dependencies, which are not easy to track, like S
 reduced anyway.
 
 You will obviously have to utilize caching functionality of your CI service or do proper Docker layering.
-
-The Phoenix Server
-~~~~~~~~~~~~~~~~~~
-
-How the Phoenix Tests Work
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-A server at http://phoenix.dataverse.org has been set up to test the latest code from the develop branch. Testing is done using chained builds of Jenkins jobs:
-
-- A war file is built from the latest code in develop: https://build.hmdc.harvard.edu:8443/job/phoenix.dataverse.org-build-develop/
-- The resulting war file is depoyed to the Phoenix server: https://build.hmdc.harvard.edu:8443/job/phoenix.dataverse.org-deploy-develop/
-- REST Assured Tests are run across the wire from the Jenkins server to the Phoenix server:  https://build.hmdc.harvard.edu:8443/job/phoenix.dataverse.org-apitest-develop/
-
-How to Run the Phoenix Tests
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- Take a quick look at http://phoenix.dataverse.org to make sure the server is up and running Dataverse. If it's down, fix it.
-- Log into Jenkins and click "Build Now" at https://build.hmdc.harvard.edu:8443/job/phoenix.dataverse.org-build-develop/
-- Wait for all three chained Jenkins jobs to complete and note if they passed or failed. If you see a failure, open a GitHub issue or at least get the attention of some developers.
 
 Accessibility Testing
 ---------------------
@@ -540,7 +526,7 @@ Browser-Based Testing
 Installation Testing
 ~~~~~~~~~~~~~~~~~~~~
 
-- Work with @donsizemore to automate testing of https://github.com/GlobalDataverseCommunityConsortium/dataverse-ansible
+- Work with @donsizemore to automate testing of https://github.com/gdcc/dataverse-ansible
 
 Future Work on Load/Performance Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -552,8 +538,4 @@ Future Work on Load/Performance Testing
 Future Work on Accessibility Testing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Using https://github.com/GlobalDataverseCommunityConsortium/dataverse-ansible and hooks available from accessibility testing tools, automate the running of accessibility tools on PRs so that developers will receive quicker feedback on proposed code changes that reduce the accessibility of the application.
-
-----
-
-Previous: :doc:`sql-upgrade-scripts` | Next: :doc:`documentation`
+- Using https://github.com/gdcc/dataverse-ansible and hooks available from accessibility testing tools, automate the running of accessibility tools on PRs so that developers will receive quicker feedback on proposed code changes that reduce the accessibility of the application.

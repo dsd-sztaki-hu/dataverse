@@ -387,4 +387,8 @@ public class RoCrateUploadServiceBean implements Serializable {
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
     }
+    
+    public void setRoCrateGraph(ArrayNode roCrateGraph) {
+        this.roCrateGraph = roCrateGraph;
+    }
 }

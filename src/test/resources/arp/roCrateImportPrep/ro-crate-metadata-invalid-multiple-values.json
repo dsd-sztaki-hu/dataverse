@@ -10,9 +10,12 @@
     "datasetContactEmail" : "https://dataverse.org/schema/citation/datasetContactEmail",
     "authorName" : "https://dataverse.org/schema/citation/authorName",
     "dsDescription" : "https://dataverse.org/schema/citation/dsDescription",
+    "dsDescriptionDate" : "https://dataverse.org/schema/citation/dsDescriptionDate",
     "dateOfDeposit" : "http://purl.org/dc/terms/dateSubmitted",
     "datasetContactAffiliation" : "https://dataverse.org/schema/citation/datasetContactAffiliation",
-    "depositor" : "https://dataverse.org/schema/citation/depositor"
+    "depositor" : "https://dataverse.org/schema/citation/depositor",
+    "datePublished": "https://schema.org/datePublished",
+    "license": "https://schema.org/license"
   } ],
   "@graph" : [ {
     "@id" : "./",

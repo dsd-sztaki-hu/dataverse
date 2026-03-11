@@ -44,15 +44,12 @@ public class CedarTemplateErrors {
         return builder.build();
     }
     
-    public jakarta.json.JsonObject warningsAsJson() {
-        NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
-
+    public jakarta.json.JsonArray warningsAsJson() {
+        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
         if (!warnings.isEmpty()) {
-            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
             warnings.forEach(jsonArrayBuilder::add);
-            builder.add("warnings", jsonArrayBuilder);
         }
 
-        return builder.build();
+        return jsonArrayBuilder.build();
     }
 }

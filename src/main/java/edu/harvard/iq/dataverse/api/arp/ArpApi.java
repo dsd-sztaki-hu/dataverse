@@ -4,26 +4,30 @@ package edu.harvard.iq.dataverse.api.arp;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.gson.*;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.arp.*;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
-import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.*;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.PrivateUrlUser;
+import edu.harvard.iq.dataverse.engine.command.Command;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
-import edu.harvard.iq.dataverse.engine.command.impl.CreateDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.GetLatestAccessibleDatasetVersionCommand;
-import edu.harvard.iq.dataverse.engine.command.impl.UpdateDatasetVersionCommand;
+import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
+import edu.harvard.iq.dataverse.engine.command.impl.*;
+import edu.harvard.iq.dataverse.ingest.IngestServiceBean;
+import edu.harvard.iq.dataverse.license.LicenseServiceBean;
 import edu.harvard.iq.dataverse.search.IndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.util.file.CreateDataFileResult;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
+import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -56,6 +60,9 @@ import static edu.harvard.iq.dataverse.api.ApiConstants.STATUS_ERROR;
 
 import java.net.URI;
 import jakarta.ws.rs.core.HttpHeaders;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -120,6 +127,18 @@ public class ArpApi extends AbstractApiBean {
 
     @Inject
     DataverseSession dataverseSession;
+    
+    @Inject
+    RoCrateUploadServiceBean roCrateUploadServiceBean;
+
+    @EJB
+    EjbDataverseEngine commandEngine;
+
+    @EJB
+    IngestServiceBean ingestService;
+
+    @Inject
+    LicenseServiceBean licenseServiceBean;
 
     public ArpApi() throws NoSuchAlgorithmException, KeyManagementException {
     }
@@ -223,8 +242,10 @@ public class ArpApi extends AbstractApiBean {
 
         try {
             mdbTsv = arpService.createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload);
-            String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
-            arpService.updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
+            if (!skipUpload) {
+                String metadataBlockName = new ObjectMapper().readTree(templateJson).get("schema:identifier").textValue();
+                arpService.updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
+            }
         } catch (CedarTemplateErrorsException cte) {
             cte.printStackTrace();
             logger.log(Level.SEVERE, "CEDAR template upload failed:"+cte.getErrors().toJson());
@@ -326,6 +347,166 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok(res).build();
     }
 
+    /**
+     * Extracts TemplateElements from a CEDAR Template and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Template
+     * @return
+     */
+    @POST
+    @Path("/extractTemplateElements")
+    @Consumes("application/json")
+    @AuthRequired
+    public Response extractTemplateElements(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedElements;
+        var mapper = new ObjectMapper();
+        String extractedElementsJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = new ObjectMapper().readTree(requestBody);
+
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedElements = arpService.extractTemplateElements(cedarResource, exportToCedarParams);
+            extractedElementsJson = mapper.writeValueAsString(extractedElements);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedElementsJson).build();
+    }
+
+    /**
+     * Extracts TemplateFields from a CEDAR Resource and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Resource
+     * @return
+     */
+    @POST
+    @Path("/extractTemplateFields")
+    @Consumes("application/json")
+    @AuthRequired
+    public Response extractTemplateFields(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedFields;
+        var mapper = new ObjectMapper();
+        String extractedFieldsJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = new ObjectMapper().readTree(requestBody);
+            
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+            
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedFields = arpService.extractTemplateFields(cedarResource, exportToCedarParams);
+            extractedFieldsJson = mapper.writeValueAsString(extractedFields);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedFieldsJson).build();
+    }
+
+    /**
+     * Extracts TemplateFields and TemplateElements from a CEDAR Resource and uploads them to CEDAR.
+     * Requires superuser authentication
+     *
+     * @param requestBody
+     * containing the CEDAR Parameters and the CEDAR Resource
+     * @return
+     */
+    @POST
+    @Path("/extractResources")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @AuthRequired
+    public Response extractResources(
+            @Context ContainerRequestContext crc,
+            String requestBody)
+    {
+        List<JsonNode> extractedResources;
+        var mapper = new ObjectMapper();
+        String extractedResourcesJson = null;
+        try {
+            AuthenticatedUser user = getRequestAuthenticatedUserOrDie(crc);
+            if (!user.isSuperuser()) {
+                return error(Response.Status.FORBIDDEN, "Superusers only.");
+            }
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(Response.Status.FORBIDDEN, "Superusers only.");
+        }
+
+        try {
+            JsonNode extractParams = mapper.readTree(requestBody);
+
+            JsonNode cedarResource;
+            if (extractParams.has("cedarResource") && !extractParams.get("cedarResource").isNull()) {
+                cedarResource = extractParams.get("cedarResource");
+            }  else {
+                return error(Response.Status.BAD_REQUEST, "cedarResource is required");
+            }
+
+            ExportToCedarParams exportToCedarParams = arpService.getExtractParams(extractParams);
+            extractedResources = arpService.extractResources(cedarResource, exportToCedarParams);
+            extractedResourcesJson = mapper.writeValueAsString(extractedResources);
+        } catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        return Response.ok(extractedResourcesJson).build();
+    }
+    
     /**
      * Converts a MetadataBlock TSV to a CEDAR template and returns it.
      *
@@ -685,6 +866,69 @@ public class ArpApi extends AbstractApiBean {
         return Response.ok("Metadata block of dataverse with name: " + metadataBlockName + " updated").build();
     }
 
+    @POST
+    @Path("/validateRoCrate")
+    @Consumes("application/json")
+    @Produces("application/json")
+    public Response validateRoCrate(
+            @QueryParam("strict") @DefaultValue("false") boolean isStrict,
+            String roCrateJson)
+    {
+        final String missingContextWarning = "Missing @context URI added";
+        try {
+            RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
+
+            var warnings = roCrateImportPrepResult.getWarnings();
+            var errors = roCrateImportPrepResult.getErrors();
+            var hasIssues = !errors.isEmpty() || !warnings.isEmpty();
+            if (hasIssues) {
+                if (errors.isEmpty() && warnings.values().stream()
+                        .flatMap(warn -> warn.values().stream())
+                        .flatMap(Set::stream)
+                        .allMatch(issue -> missingContextWarning.equals(issue.message()))) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        var responseJson = mapper.createObjectNode();
+                        responseJson.put("message", "Valid RO-Crate, but missing @context URI-s were added automatically.");
+                        responseJson.set("updated RO-Crate", mapper.readTree(roCrateImportPrepResult.getRoCrate().getJsonMetadata()));
+                        return Response.status(Response.Status.OK)
+                                .entity(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(responseJson))
+                                .type(MediaType.APPLICATION_JSON_TYPE).build();
+                    } catch (JsonProcessingException e) {
+                        String fallback = roCrateImportPrepResult.getRoCrate().getJsonMetadata();
+                        var responseJson = NullSafeJsonBuilder.jsonObjectBuilder()
+                                .add( "message", "Valid RO-Crate, but missing @context URI-s were added automatically." )
+                                .add( "updated RO-Crate", fallback )
+                                .build();
+                        return Response.status(Response.Status.OK)
+                                .entity(responseJson)
+                                .type(MediaType.APPLICATION_JSON_TYPE).build();
+                    }
+                }
+                warnings.entrySet().removeIf(entityEntry -> {
+                    var fields = entityEntry.getValue();
+                    fields.entrySet().removeIf(fieldEntry -> {
+                        fieldEntry.getValue().removeIf(issue -> missingContextWarning.equals(issue.message()));
+                        return fieldEntry.getValue().isEmpty();
+                    });
+                    return fields.isEmpty();
+                });
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                        .entity( NullSafeJsonBuilder.jsonObjectBuilder()
+                                .add("status", STATUS_ERROR)
+                                .add( "message", roCrateImportPrepResult.toJson() ).build()
+                        ).type(MediaType.APPLICATION_JSON_TYPE).build();
+            } else {
+                return ok(NullSafeJsonBuilder.jsonObjectBuilder()
+                        .add("message", "OK - RO-Crate is valid")
+                        .build());
+            }
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+    
     @GET
     @Path("/rocrate/{persistentId : .+}")
     @Produces("application/json")
@@ -692,6 +936,7 @@ public class ArpApi extends AbstractApiBean {
     public Response getRoCrate(
             @Context ContainerRequestContext crc,
             @QueryParam("version") String version,
+            @QueryParam("forceReload") @DefaultValue("false") boolean forceReload,
             @PathParam("persistentId") String persistentId) throws WrappedResponse
     {
         // Get the dataset by pid so that we get is actual ID.
@@ -716,7 +961,7 @@ public class ArpApi extends AbstractApiBean {
             // The opened version is either the version that was requested if that is available to the user or the latest version accessible to the user.
             // For a guest it must be a published version for an author it is either the opened version or DRAFT.
             DatasetVersion opened = null;
-            if (version != null) {
+            if (version != null && !version.equals("DRAFT")) {
                 var optionalVersion = dataset.getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(version)).findFirst();
                 if (optionalVersion.isPresent()) {
                     opened = optionalVersion.get();
@@ -747,8 +992,10 @@ public class ArpApi extends AbstractApiBean {
                 }
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
                 JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
-                if (needToRegenerate(roCrateJson)) {
+                // or a superuser is requesting a force reload.
+                if (needToRegenerate(roCrateJson) || shouldForceReload) {
                     roCrateExportManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
                         roCrateExportManager.saveRoCrateDraftVersion(opened);
@@ -769,7 +1016,7 @@ public class ArpApi extends AbstractApiBean {
                             .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
                 } else {
                     // the editable version of the requested latest version
-                    BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateFolder(dataset)));
+                    BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateJson(dataset)));
                     JsonObject draftRoCrateJson = gson.fromJson(br, JsonObject.class);
                     resp = Response.ok(draftRoCrateJson.toString());
                 }
@@ -825,7 +1072,7 @@ public class ArpApi extends AbstractApiBean {
                 throw new RuntimeException(
                         BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
             }
-            preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson);
+            preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson, true);
         } catch (IOException | RuntimeException | ArpException e) {
             e.printStackTrace();
             return error(INTERNAL_SERVER_ERROR, e.getMessage());
@@ -898,6 +1145,201 @@ public class ArpApi extends AbstractApiBean {
             ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return error(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/uploadRoCrateJson")
+    @Consumes("application/json")
+    @Produces("application/json")
+    @AuthRequired
+    public Response uploadRoCrateJson(
+            @QueryParam("ownerId") String ownerId,
+            @Context ContainerRequestContext crc,
+            String roCrateJson
+    ) {
+        AuthenticatedUser user;
+        try {
+            user = getRequestAuthenticatedUserOrDie(crc);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+        catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        }
+
+        DataverseRequest req = createDataverseRequest(user);
+        try {
+            JsonNode uploadedRoCrate = uploadRoCrateJson(roCrateJson, ownerId, req);
+            return ok( JsonUtil.getJsonObject(uploadedRoCrate.toPrettyString()) );
+        } catch (ArpException e) {
+            e.printStackTrace();
+            logger.severe(e.getMessage());
+            return error(BAD_REQUEST, e.getMessage());
+        }
+    }
+    
+    public JsonNode uploadRoCrateJson(String roCrateJsonString, String ownerId, DataverseRequest req) throws ArpException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode uploadedCrate;
+        try {
+            var roCrateJson = mapper.readTree(roCrateJsonString);
+            // whether the arpPid is present or not means it is a new ds or one already present in dv
+            var arpPid = roCrateJson.get("@graph").get(0).get("@arpPid");
+            boolean alreadyPresentDs = arpPid != null;
+            Dataset dataset;
+            DatasetVersion newVersion;
+
+            if (alreadyPresentDs) {
+                dataset = datasetService.findByGlobalId(arpPid.textValue());
+                if (dataset == null) {
+                    throw new ArpException("Invalid '@arpPid': " + arpPid.textValue());
+                }
+                newVersion = dataset.getOrCreateEditVersion();
+            } else {
+                dataset = new Dataset();
+                newVersion = dataset.getOrCreateEditVersion();
+                // If the ownerId which can be the id or the name of the owner dv not provided, we use the root dv
+                if (ownerId == null) {
+                    dataset.setOwner(dataverseService.findRootDataverse());
+                } else {
+                    var ownerDv = findDataverseOrDie(ownerId);
+                    if (ownerDv == null) {
+                        throw new ArpException("Can't find dataverse with identifier='" + ownerId + "'");
+                    } else {
+                        dataset.setOwner(ownerDv);
+                    }
+                }
+
+                // Using some default values for the new ds
+                TermsOfUseAndAccess terms = new TermsOfUseAndAccess();
+                terms.setDatasetVersion(newVersion);
+                terms.setLicense(licenseServiceBean.getDefault());
+                terms.setFileAccessRequest(true);
+                newVersion.setTermsOfUseAndAccess(terms);
+                newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
+                dataset.setVersions(List.of(newVersion));
+            }
+
+            RoCrate preProcessedRoCrate = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJsonString, true);
+
+            DatasetVersion managedVersion;
+            if (alreadyPresentDs) {
+                boolean updateDraft = dataset.getLatestVersion().isDraft();
+                if (updateDraft) {
+                    roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
+                    var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(newVersion.getDataset(), preProcessedRoCrate);
+                    if (!filesToBeDeleted.isEmpty()) {
+                        for (FileMetadata markedForDelete : filesToBeDeleted) {
+                            if (markedForDelete.getId() != null) {
+                                dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                            }
+                        }
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted)).getOrCreateEditVersion();
+                    } else {
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req)).getOrCreateEditVersion();
+                    }
+                } else {
+                    newVersion = new DatasetVersion();
+                    newVersion.setDataset(dataset);
+                    newVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
+                    newVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
+                    newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
+                    boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(newVersion.getTermsOfUseAndAccess(), null);
+                    if (!hasValidTerms) {
+                        throw new ArpException(BundleUtil.getStringFromBundle("dataset.message.toua.invalid"));
+                    }
+                    roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
+                    var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(dataset, preProcessedRoCrate);
+                    managedVersion = execCommand(new CreateDatasetVersionCommand(req, dataset, newVersion));
+                    if (!filesToBeDeleted.isEmpty()) {
+                        for (FileMetadata markedForDelete : filesToBeDeleted) {
+                            if (markedForDelete.getId() != null) {
+                                managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                            }
+                        }
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
+                    }
+                    indexService.indexDataset(dataset, true);
+                }
+                
+            } else {
+                roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
+                managedVersion = execCommand(new CreateNewDatasetCommand(dataset, req)).getOrCreateEditVersion();;
+            }
+
+            roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
+            String roCratePath = roCrateServiceBean.getRoCratePath(managedVersion);
+            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
+            uploadedCrate = mapper.readTree(bufferedReader);
+            
+        } catch (WrappedResponse | ArpException | IOException | SolrServerException e) {
+            e.printStackTrace();
+            throw new ArpException("An error occurred during processing the uploaded RO-Crate: " + roCrateJsonString +
+                    "Details: " + e.getMessage());
+        }
+
+        return uploadedCrate;
+    }
+
+    @POST
+    @Path("/uploadRoCrateZip")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces("application/json")
+    @AuthRequired
+    public Response uploadRoCrateZip(
+            @QueryParam("ownerId") String ownerId,
+            @Context ContainerRequestContext crc,
+            @FormDataParam("file") InputStream fileStream,
+            @FormDataParam("file") FormDataContentDisposition fileDetail,
+            @FormDataParam("file") FormDataBodyPart bodyPart) throws IOException {
+
+        if (fileDetail == null) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("No file uploaded").build();
+        }
+        
+        AuthenticatedUser user;
+        try {
+            user = getRequestAuthenticatedUserOrDie(crc);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            return error(INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+        catch (WrappedResponse ex) {
+            ex.printStackTrace();
+            return error(FORBIDDEN, "Authorized users only.");
+        }
+        byte[] fileBytes = fileStream.readAllBytes();
+        var roCrateFilesContent = roCrateUploadServiceBean.processRoCrateZip(fileBytes);
+
+        DataverseRequest req = createDataverseRequest(user);
+        try {
+            var roCrateString = arpService.extractFileFromZip(new ByteArrayInputStream(fileBytes), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+            JsonNode uploadedRoCrate = uploadRoCrateJson(roCrateString, ownerId, req);
+            String filename = fileDetail.getFileName();
+            String type = (bodyPart != null && bodyPart.getMediaType() != null)
+                    ? bodyPart.getMediaType().toString()
+                    : "unknown";
+
+            var arpPid = uploadedRoCrate.get("@graph").get(0).get("@arpPid");
+            var version = datasetService.findByGlobalId(arpPid.textValue()).getLatestVersion();
+            Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
+            CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
+            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
+            roCrateUploadServiceBean.setRoCrateGraph((ArrayNode) uploadedRoCrate.get("@graph"));
+            roCrateUploadServiceBean.createImportMapping(filesAdded);
+            var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
+            var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);
+            String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(updatedDataset.getLatestVersion());
+            Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
+            return ok( JsonUtil.getJsonObject(crate.getJsonMetadata()) );
+            
+        } catch (ArpException | CommandException e) {
+            e.printStackTrace();
+            logger.severe(e.getMessage());
+            return error(BAD_REQUEST, e.getMessage());
         }
     }
 

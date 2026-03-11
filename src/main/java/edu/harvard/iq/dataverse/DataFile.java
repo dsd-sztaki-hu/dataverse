@@ -13,6 +13,7 @@ import edu.harvard.iq.dataverse.dataaccess.StorageIO;
 import edu.harvard.iq.dataverse.datasetutility.FileSizeChecker;
 import edu.harvard.iq.dataverse.ingest.IngestReport;
 import edu.harvard.iq.dataverse.ingest.IngestRequest;
+import edu.harvard.iq.dataverse.search.SolrIndexServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.FileUtil;
 import edu.harvard.iq.dataverse.util.ShapefileHandler;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +52,26 @@ import jakarta.validation.constraints.NotBlank;
         @NamedQuery(name="DataFile.findDataFileThatReplacedId",
                 query="SELECT s.id FROM DataFile s WHERE s.previousDataFileId=:identifier")
 })
+@NamedNativeQuery(
+        name = "DataFile.getDataFileInfoForPermissionIndexing",
+        query = "SELECT fm.label, df.id, dvo.publicationDate " +
+                "FROM filemetadata fm " +
+                "JOIN datafile df ON fm.datafile_id = df.id " +
+                "JOIN dvobject dvo ON df.id = dvo.id " +
+                "WHERE fm.datasetversion_id = ?",
+        resultSetMapping = "DataFileInfoMapping"
+    )
+    @SqlResultSetMapping(
+        name = "DataFileInfoMapping",
+        classes = @ConstructorResult(
+            targetClass = SolrIndexServiceBean.DataFileProxy.class,
+            columns = {
+                @ColumnResult(name = "label", type = String.class),
+                @ColumnResult(name = "id", type = Long.class),
+                @ColumnResult(name = "publicationDate", type = Date.class)
+            }
+        )
+    )
 @Entity
 @Table(indexes = {@Index(columnList="ingeststatus")
         , @Index(columnList="checksumvalue")
@@ -240,6 +262,18 @@ public class DataFile extends DvObject implements Comparable {
 
     public void setEmbargo(Embargo embargo) {
         this.embargo = embargo;
+    }
+
+    @ManyToOne
+    @JoinColumn(name="retention_id")
+    private Retention retention;
+
+    public Retention getRetention() {
+        return retention;
+    }
+
+    public void setRetention(Retention retention) {
+        this.retention = retention;
     }
 
     public DataFile() {
@@ -545,61 +579,61 @@ public class DataFile extends DvObject implements Comparable {
             fmd.setDescription(description);
         }
     }
+
+    public FileMetadata getDraftFileMetadata() {
+        FileMetadata latestFileMetadata = getLatestFileMetadata();
+        if (latestFileMetadata.getDatasetVersion().isDraft()) {
+            return latestFileMetadata;
+        }
+        return null;
+    }
     
     public FileMetadata getFileMetadata() {
         return getLatestFileMetadata();
     }
-    
-    public FileMetadata getLatestFileMetadata() {
-        FileMetadata fmd = null;
 
-        // for newly added or harvested, just return the one fmd
+    public FileMetadata getLatestFileMetadata() {
+        FileMetadata resultFileMetadata = null;
+
         if (fileMetadatas.size() == 1) {
             return fileMetadatas.get(0);
         }
-        
+
         for (FileMetadata fileMetadata : fileMetadatas) {
-            // if it finds a draft, return it
             if (fileMetadata.getDatasetVersion().getVersionState().equals(VersionState.DRAFT)) {
                 return fileMetadata;
-            }            
-            
-            // otherwise return the one with the latest version number
-            // duplicate logic in getLatestPublishedFileMetadata()
-            if (fmd == null || fileMetadata.getDatasetVersion().getVersionNumber().compareTo( fmd.getDatasetVersion().getVersionNumber() ) > 0 ) {
-                fmd = fileMetadata;
-            } else if ((fileMetadata.getDatasetVersion().getVersionNumber().compareTo( fmd.getDatasetVersion().getVersionNumber())==0 )&& 
-                   ( fileMetadata.getDatasetVersion().getMinorVersionNumber().compareTo( fmd.getDatasetVersion().getMinorVersionNumber()) > 0 )   ) {
-                fmd = fileMetadata;
             }
+            resultFileMetadata = getTheNewerFileMetadata(resultFileMetadata, fileMetadata);
         }
-        return fmd;
+
+        return resultFileMetadata;
     }
-    
-//    //Returns null if no published version
+
     public FileMetadata getLatestPublishedFileMetadata() throws UnsupportedOperationException {
-        FileMetadata fmd = null;
-        
-        for (FileMetadata fileMetadata : fileMetadatas) {
-            // if it finds a draft, skip
-            if (fileMetadata.getDatasetVersion().getVersionState().equals(VersionState.DRAFT)) {
-                continue;
-            }            
-            
-            // otherwise return the one with the latest version number
-            // duplicate logic in getLatestFileMetadata()
-            if (fmd == null || fileMetadata.getDatasetVersion().getVersionNumber().compareTo( fmd.getDatasetVersion().getVersionNumber() ) > 0 ) {
-                fmd = fileMetadata;
-            } else if ((fileMetadata.getDatasetVersion().getVersionNumber().compareTo( fmd.getDatasetVersion().getVersionNumber())==0 )&& 
-                   ( fileMetadata.getDatasetVersion().getMinorVersionNumber().compareTo( fmd.getDatasetVersion().getMinorVersionNumber()) > 0 )   ) {
-                fmd = fileMetadata;
-            }
-        }
-        if(fmd == null) {
+        FileMetadata resultFileMetadata = fileMetadatas.stream()
+                .filter(metadata -> !metadata.getDatasetVersion().getVersionState().equals(VersionState.DRAFT))
+                .reduce(null, DataFile::getTheNewerFileMetadata);
+
+        if (resultFileMetadata == null) {
             throw new UnsupportedOperationException("No published metadata version for DataFile " + this.getId());
         }
 
-        return fmd;
+        return resultFileMetadata;
+    }
+
+    public static FileMetadata getTheNewerFileMetadata(FileMetadata current, FileMetadata candidate) {
+        if (current == null) {
+            return candidate;
+        }
+
+        DatasetVersion currentVersion = current.getDatasetVersion();
+        DatasetVersion candidateVersion = candidate.getDatasetVersion();
+
+        if (DatasetVersion.compareByVersion.compare(candidateVersion, currentVersion) > 0) {
+            return candidate;
+        }
+
+        return current;
     }
 
     /**
@@ -610,7 +644,7 @@ public class DataFile extends DvObject implements Comparable {
         if (this.filesize == null) {
             // -1 means "unknown"
             return -1;
-        } 
+        }
         return this.filesize;
     }
 
@@ -1106,6 +1140,33 @@ public class DataFile extends DvObject implements Comparable {
     private boolean tagExists(String tagLabel) {
         for (DataFileTag dataFileTag : dataFileTags) {
             if (dataFileTag.getTypeLabel().equals(tagLabel)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public boolean isDeaccessioned() {
+        // return true, if all published versions were deaccessioned
+        boolean inDeaccessionedVersions = false;
+        for (FileMetadata fmd : getFileMetadatas()) {
+            DatasetVersion testDsv = fmd.getDatasetVersion();
+            if (testDsv.isReleased()) {
+                return false;
+            }
+            // Also check for draft version
+            if (testDsv.isDraft()) {
+                return false;
+            }
+            if (testDsv.isDeaccessioned()) {
+                inDeaccessionedVersions = true;
+            }
+        }
+        return inDeaccessionedVersions; // since any published version would have already returned
+    }
+    public boolean isInDatasetVersion(DatasetVersion version) {
+        for (FileMetadata fmd : getFileMetadatas()) {
+            if (fmd.getDatasetVersion().equals(version)) {
                 return true;
             }
         }
