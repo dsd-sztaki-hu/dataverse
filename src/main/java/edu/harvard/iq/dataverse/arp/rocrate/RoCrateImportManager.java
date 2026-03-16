@@ -712,12 +712,13 @@ public class RoCrateImportManager {
         entity.fields().forEachRemaining(field -> prepareAndValidateField(field, entityId, preProcessedRoCrate,
                 roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false));
         if (entityType.equals("File")) {
-            var invalidFileProps = validateFileEntityProps(entity);
-            if (!invalidFileProps.isEmpty()) {
-                invalidFileProps.forEach(prop ->
-                    preProcessResult.addError(entityId, prop,  "Invalid property", "Modify or remove the invalid property.")        
-                );
-            }
+//            Temporarily disable property validation for files
+//            var invalidFileProps = validateFileEntityProps(entity);
+//            if (!invalidFileProps.isEmpty()) {
+//                invalidFileProps.forEach(prop ->
+//                    preProcessResult.addError(entityId, prop,  "Invalid property", "Modify or remove the invalid property.")        
+//                );
+//            }
             // compare the file ids and hashes with the values from the previous version of
             // the RO-Crate
             if (!latestRoCrateFileIdsAndHashes.isEmpty()) {
