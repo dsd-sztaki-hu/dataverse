@@ -1314,8 +1314,8 @@ public class RoCrateImportManager {
         if (jsonNode.isObject()) {
             var hasId = jsonNode.has("@id");
             jsonNode.fields().forEachRemaining(field -> {
-                // Check property name validity
-                if (!(field.getKey().startsWith("@") || Character.isLetter(field.getKey().charAt(0)))) {
+                // Naming convention is not clear at this point, both mdb and property names can start with numbers too
+                if (!(field.getKey().startsWith("@") || Character.isLetterOrDigit(field.getKey().charAt(0)))) {
                     if (hasId) {
                         preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Invalid property name",
                                 "Ensure the property name '" + field.getKey() + "' is valid according to the schema");
