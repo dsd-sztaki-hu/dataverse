@@ -292,7 +292,11 @@ public class ArpServiceBean implements java.io.Serializable {
      * @throws JsonProcessingException
      */
     public JsonObject tsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate) throws JsonProcessingException {
-        var converter = new TsvToCedarTemplate(tsv, convertDotToColon, existingTemplate);
+        return tsvToCedarTemplate(tsv, convertDotToColon, existingTemplate, false);
+    }
+
+    public JsonObject tsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate, boolean forceNamespaceUri) throws JsonProcessingException {
+        var converter = new TsvToCedarTemplate(tsv, convertDotToColon, existingTemplate, forceNamespaceUri);
         return converter.convert();
     }
 
@@ -1772,7 +1776,7 @@ public class ArpServiceBean implements java.io.Serializable {
         writer.close();
     }
 
-    public void syncMetadataBlockWithCedar(ArpInitialSetupParams.MdbParam mdbParam, ExportToCedarParams cedarParams) {
+    public void syncMetadataBlockWithCedar(ArpInitialSetupParams.MdbParam mdbParam, ExportToCedarParams cedarParams, boolean forceNamespaceUri) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String cedarDomain = cedarParams.cedarDomain;
@@ -1786,7 +1790,7 @@ public class ArpServiceBean implements java.io.Serializable {
             var actualUuid = mdbParam.cedarUuid != null ? mdbParam.cedarUuid : generateNamedUuid(mdbParam.name);
 
             JsonObject existingTemplate = getCedarTemplateForMdb(mdbParam.name);
-            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getName()), existingTemplate).toString());
+            JsonNode cedarTemplate = mapper.readTree(tsvToCedarTemplate(exportMdbAsTsv(mdb.getName()), true, existingTemplate, forceNamespaceUri).toString());
             String templateJson = exportTemplateToCedar(cedarTemplate, actualUuid, cedarParams);
             createOrUpdateMdbFromCedarTemplate("root", templateJson, false);
         } catch (Exception e) {

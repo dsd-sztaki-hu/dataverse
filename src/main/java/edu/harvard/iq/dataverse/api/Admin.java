@@ -2696,6 +2696,7 @@ public class Admin extends AbstractApiBean {
 	//      "cedarUuid": "aaaaaaaa-bbbb-cccc-dddd-65d43571f306"
 	//    }
 	//  ],
+	//  "forceNamespaceUri": false,
 	//  "cedarParams": {
 	//    "cedarDomain": "arp3.orgx",
 	//    "apiKey": "0000111122223333444455556666777788889999aaaabbbbccccddddeeeeffff",
@@ -2747,9 +2748,10 @@ public class Admin extends AbstractApiBean {
 				arpService.updateMetadatablockNamesaceUris(namespaceUris);
 			}
 
+            boolean forceNamespaceUri = Boolean.TRUE.equals(params.getForceNamespaceUri());
 			params.getMdbParams().stream().forEach(mdbParam -> {
 				logger.info("Syncing MDB '"+mdbParam.name+"' ...");
-				arpService.syncMetadataBlockWithCedar(mdbParam, params.cedarParams);
+				arpService.syncMetadataBlockWithCedar(mdbParam, params.cedarParams, forceNamespaceUri);
 				logger.info("Syncing MDB '"+mdbParam.name+"' done.");
 			});
 			return Response.ok("Done").build();

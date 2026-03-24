@@ -25,6 +25,12 @@ public class ArpInitialSetupParams
     public List<MdbParam> mdbParams;
     public ExportToCedarParams cedarParams;
 
+    /**
+     * When true, forces the use of namespaceUri (from mdbParams) for all property URIs,
+     * overwriting any existing termUri on dataset fields. When false, existing termUri is preserved.
+     */
+    public Boolean forceNamespaceUri;
+
     public ArpInitialSetupParams()
     {
     }
@@ -47,5 +53,12 @@ public class ArpInitialSetupParams
     public void setCedarParams(ExportToCedarParams cedarParams)
     {
         this.cedarParams = cedarParams;
+    }
+
+    public Boolean getForceNamespaceUri() { return forceNamespaceUri; }
+
+    public void setForceNamespaceUri(Boolean forceNamespaceUri)
+    {
+        this.forceNamespaceUri = forceNamespaceUri;
     }
 }
