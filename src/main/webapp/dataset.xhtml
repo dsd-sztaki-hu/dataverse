@@ -2294,12 +2294,11 @@
                     </p:remoteCommand>
                     <p:remoteCommand name="datasetSaveCommand" action="#{DatasetPage.save()}" update=":datasetForm,:messagePanel"/>
                     <!-- END: Publish/Submit for Review Dialogs -->
-                    <p:remoteCommand name="sendRoCrateAsBase64" actionListener="#{EditDatafilesPage.handleRoCrateUpload}" />
+                    <p:remoteCommand name="sendRoCrateAsBase64" actionListener="#{EditDatafilesPage.handleRoCrateUpload}"
+                                     rendered="#{roCrateUploadServiceBean.roCrateInputStream ne null}"
+                                     autoRun="true" process="@this" update=":datasetForm"/>
                 </h:form>
                 <c:set var="descriptionText" value="#{DatasetPage.datasetVersionUI.description.datasetFieldType.localeTitle}" />
-                <script>
-                    sendRoCrateAsBase64();
-                </script>
                 <script>
                     //<![CDATA[
                     $(document).ready(function () {
