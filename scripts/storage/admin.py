@@ -39,6 +39,8 @@ def getList(args):
 			q+=" AND id IN (SELECT DISTINCT id FROM dvobject WHERE owner_id IN (SELECT id FROM dataverse WHERE alias='"+args['ownername']+"'"+"))"
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
+		if args['published_only']:
+			q+=" AND dvobject.publicationdate IS NOT NULL"
 	elif args['type']=='dataset':
 		if args['cpap_only']:
 			args['remote_locations']=True
@@ -63,6 +65,8 @@ def getList(args):
 			q+=" AND rsl.status='"+args['rslstatus']+"'"
 		if args['cpap_only']:
 			q+=" AND rsl.status IN ('CPAP','CPIN') AND storagesite.name='"+args['to_storage']+"'"
+		if args['published_only']:
+			q+=" AND dvo1.publicationdate IS NOT NULL"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
 		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN (SELECT datafile_id,label,directorylabel,MAX(datasetversion_id) FROM filemetadata GROUP BY datafile_id,label,directorylabel) fm ON dvo.id=fm.datafile_id WHERE true"
@@ -72,11 +76,18 @@ def getList(args):
 			q+=" AND owner_id="+str(args['ownerid'])
 		elif args['ownername'] is not None:
 			print("Sorry, --ownername not implemented yet for files")
+		if args['published_only']:
+			q+=" AND dvo.publicationdate IS NOT NULL"
 			exit(1)
 			# q+= TODO
 		if args['storage'] is not None:
 			q+=" AND storageidentifier LIKE '"+args['storage']+"://%' ORDER BY owner_id"
 	
+	if args['limit'] is not None:
+		q += f" LIMIT {args['limit']}"
+		if args['offset'] is not None:
+			q += f" OFFSET {args['offset']}"
+
 	records=get_records_for_query(q)
 	if args['recursive']:
 		args.update({'command':'getList'})
@@ -628,6 +639,9 @@ def main():
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	ap.add_argument("--remote-locations", required=False, action='store_true', help="print remote location information")
 	ap.add_argument("--cpap-only", required=False, action='store_true', help="filter for Copy Approved")
+	ap.add_argument("--published-only", required=False, action='store_true', help="filter for published")
+	ap.add_argument("-l", "--limit", required=False, help="limit result to this many result")
+	ap.add_argument("-o", "--offset", required=False, help="offset in result list, only usable with --limit")
 	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
 	
