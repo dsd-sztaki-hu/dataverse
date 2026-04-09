@@ -67,34 +67,6 @@
         <param-value>${MPCONFIG=dataverse.jsf.refresh-period:-1}</param-value>
     </context-param>
     <!-- JSF mapping -->
-    <filter>
-        <filter-name>CORS</filter-name>
-        <filter-class>com.thetransactioncompany.cors.CORSFilter</filter-class>
-    </filter>
-    <filter>
-        <filter-name>Router</filter-name>
-        <filter-class>edu.harvard.iq.dataverse.api.ApiRouter</filter-class>
-    </filter>
-    <filter>
-        <filter-name>Blocker</filter-name>
-        <filter-class>edu.harvard.iq.dataverse.api.ApiBlockingFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>CORS</filter-name>
-        <url-pattern>/api/*</url-pattern>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>Router</filter-name>
-        <url-pattern>/api/*</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-        <dispatcher>FORWARD</dispatcher>
-    </filter-mapping>
-    <filter-mapping>
-        <filter-name>Blocker</filter-name>
-        <url-pattern>/api/*</url-pattern>
-        <dispatcher>REQUEST</dispatcher>
-        <dispatcher>FORWARD</dispatcher>
-    </filter-mapping>
     <servlet>
         <servlet-name>Faces Servlet</servlet-name>
         <servlet-class>jakarta.faces.webapp.FacesServlet</servlet-class>
@@ -190,6 +162,11 @@
         <extension>webmanifest</extension>
         <mime-type>application/manifest+json</mime-type>
     </mime-mapping>
+    <mime-mapping>
+        <extension>xhtml</extension>
+        <mime-type>text/html</mime-type>
+    </mime-mapping>
+    
     <!-- BEGIN Data Deposit API (SWORD v2) -->
     <!-- See also SwordConfigurationImpl for how deprecation warnings are configured -->
     <context-param>
@@ -285,6 +262,15 @@
         <url-pattern>/dvn/api/data-deposit/v1.1/swordv2/edit-media/*</url-pattern>
     </filter-mapping>
     <!-- END Data Deposit API (SWORD v2) -->
+
+    <filter>
+        <filter-name>edu.harvard.iq.dataverse.filter.CorsFilter</filter-name>
+        <filter-class>edu.harvard.iq.dataverse.filter.CorsFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>edu.harvard.iq.dataverse.filter.CorsFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 
     <servlet>
         <servlet-name>AromaServlet</servlet-name>

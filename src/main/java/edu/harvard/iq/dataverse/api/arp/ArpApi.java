@@ -1327,7 +1327,7 @@ public class ArpApi extends AbstractApiBean {
             var version = datasetService.findByGlobalId(arpPid.textValue()).getLatestVersion();
             Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
             CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
-            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true);
+            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
             roCrateUploadServiceBean.setRoCrateGraph((ArrayNode) uploadedRoCrate.get("@graph"));
             roCrateUploadServiceBean.createImportMapping(filesAdded);
             var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);

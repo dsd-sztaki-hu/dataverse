@@ -712,12 +712,13 @@ public class RoCrateImportManager {
         entity.fields().forEachRemaining(field -> prepareAndValidateField(field, entityId, preProcessedRoCrate,
                 roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, false));
         if (entityType.equals("File")) {
-            var invalidFileProps = validateFileEntityProps(entity);
-            if (!invalidFileProps.isEmpty()) {
-                invalidFileProps.forEach(prop ->
-                    preProcessResult.addError(entityId, prop,  "Invalid property", "Modify or remove the invalid property.")        
-                );
-            }
+//            Temporarily disable property validation for files
+//            var invalidFileProps = validateFileEntityProps(entity);
+//            if (!invalidFileProps.isEmpty()) {
+//                invalidFileProps.forEach(prop ->
+//                    preProcessResult.addError(entityId, prop,  "Invalid property", "Modify or remove the invalid property.")        
+//                );
+//            }
             // compare the file ids and hashes with the values from the previous version of
             // the RO-Crate
             if (!latestRoCrateFileIdsAndHashes.isEmpty()) {
@@ -1314,8 +1315,8 @@ public class RoCrateImportManager {
         if (jsonNode.isObject()) {
             var hasId = jsonNode.has("@id");
             jsonNode.fields().forEachRemaining(field -> {
-                // Check property name validity
-                if (!(field.getKey().startsWith("@") || Character.isLetter(field.getKey().charAt(0)))) {
+                // Naming convention is not clear at this point, both mdb and property names can start with numbers too
+                if (!(field.getKey().startsWith("@") || Character.isLetterOrDigit(field.getKey().charAt(0)))) {
                     if (hasId) {
                         preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Invalid property name",
                                 "Ensure the property name '" + field.getKey() + "' is valid according to the schema");

@@ -53,11 +53,11 @@ public abstract class StorageIO<T extends DvObject> {
 
     static final String INGEST_SIZE_LIMIT = "ingestsizelimit";
     static final String PUBLIC = "public";
-    static final String TYPE = "type";
-    static final String UPLOAD_REDIRECT = "upload-redirect";
-    static final String UPLOAD_OUT_OF_BAND = "upload-out-of-band";
-    protected static final String DOWNLOAD_REDIRECT = "download-redirect";
-    protected static final String DATAVERSE_INACCESSIBLE = "dataverse-inaccessible";
+    public static final String TYPE = "type";
+    public static final String UPLOAD_REDIRECT = "upload-redirect";
+    public static final String UPLOAD_OUT_OF_BAND = "upload-out-of-band";
+    public static final String DOWNLOAD_REDIRECT = "download-redirect";
+    public static final String LABEL = "label";
 
 
     public StorageIO() {
@@ -218,7 +218,7 @@ public abstract class StorageIO<T extends DvObject> {
     private String mimeType;
     private String fileName;
     private String varHeader;
-    private String errorMessage;
+    protected String errorMessage;
 
     private String temporarySwiftUrl;
     private String tempUrlExpiry;
@@ -624,7 +624,7 @@ public abstract class StorageIO<T extends DvObject> {
 
     //True by default, Stores (e.g. RemoteOverlay, Globus) can set this false to stop attempts to read bytes
     public static boolean isDataverseAccessible(String driverId) {
-        return (true && !Boolean.parseBoolean(getConfigParamForDriver(driverId, DATAVERSE_INACCESSIBLE)));
+        return (true && !Boolean.parseBoolean(StorageIO.getConfigParamForDriver(driverId, AbstractRemoteOverlayAccessIO.FILES_NOT_ACCESSIBLE_BY_DATAVERSE)));
     }
     
     // Check that storageIdentifier is consistent with store's config
@@ -672,15 +672,19 @@ public abstract class StorageIO<T extends DvObject> {
         return getConfigParamForDriver(this.driverId, parameterName, defaultValue);
     }
 
-    protected static String getConfigParamForDriver(String driverId, String parameterName) {
+    public boolean isDataverseAccessible() {
+        return true;
+    }
+    
+    public static String getConfigParamForDriver(String driverId, String parameterName) {
         return getConfigParamForDriver(driverId, parameterName, null);
     }
-    protected static String getConfigParamForDriver(String driverId, String parameterName, String defaultValue) {
+    
+    public static String getConfigParamForDriver(String driverId, String parameterName, String defaultValue) {
         return System.getProperty("dataverse.files." + driverId + "." + parameterName, defaultValue);
     }
     
     public static String getNewIdentifier(String driverId) {
         return driverId + DataAccess.SEPARATOR + FileUtil.generateStorageIdentifier();
     }
-
 }
