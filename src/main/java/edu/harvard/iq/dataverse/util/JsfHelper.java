@@ -15,23 +15,48 @@ public class JsfHelper {
 	public static final JsfHelper JH = new JsfHelper();
 
         public static void addSuccessMessage(String message) {
-              FacesContext.getCurrentInstance().getExternalContext().getFlash().put("successMsg", message);
+              FacesContext facesContext = FacesContext.getCurrentInstance();
+              if (facesContext == null) {
+                  logger.fine("FacesContext is null. Skipping JSF success message: " + message);
+                  return;
+              }
+              facesContext.getExternalContext().getFlash().put("successMsg", message);
       
         } 
         public static void addFlashMessage(String message) {
             addSuccessMessage(message);
         }
         public static void addErrorMessage(String message) {
-              FacesContext.getCurrentInstance().getExternalContext().getFlash().put("errorMsg", message);      
+              FacesContext facesContext = FacesContext.getCurrentInstance();
+              if (facesContext == null) {
+                  logger.fine("FacesContext is null. Skipping JSF error message: " + message);
+                  return;
+              }
+              facesContext.getExternalContext().getFlash().put("errorMsg", message);      
         } 
         public static void addInfoMessage(String message) {
-              FacesContext.getCurrentInstance().getExternalContext().getFlash().put("infoMsg", message);      
+              FacesContext facesContext = FacesContext.getCurrentInstance();
+              if (facesContext == null) {
+                  logger.fine("FacesContext is null. Skipping JSF info message: " + message);
+                  return;
+              }
+              facesContext.getExternalContext().getFlash().put("infoMsg", message);      
         } 
         public static void addWarningMessage(String message) {
-              FacesContext.getCurrentInstance().getExternalContext().getFlash().put("warningMsg", message);      
+              FacesContext facesContext = FacesContext.getCurrentInstance();
+              if (facesContext == null) {
+                  logger.fine("FacesContext is null. Skipping JSF warning message: " + message);
+                  return;
+              }
+              facesContext.getExternalContext().getFlash().put("warningMsg", message);      
         } 
 	public void addMessage( FacesMessage.Severity s, String summary, String details ) {
-		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(s, summary, details));
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (facesContext == null) {
+			logger.fine("FacesContext is null. Skipping FacesMessage: " + summary);
+			return;
+		}
+		facesContext.addMessage(null, new FacesMessage(s, summary, details));
 	}
 	public void addMessage( FacesMessage.Severity s, String summary ) {
 		addMessage(s, summary, "");

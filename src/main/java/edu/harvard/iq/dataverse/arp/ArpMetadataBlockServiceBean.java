@@ -84,6 +84,9 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
     }
 
     public MetadataBlockArp findMetadataBlockArpForMetadataBlock(MetadataBlock metadataBlock) {
+        if (metadataBlock == null) {
+            return null;
+        }
         var query = em.createNamedQuery("MetadataBlockArp.findOneForMetadataBlock", MetadataBlockArp.class);
         query.setParameter("metadataBlock", metadataBlock);
         var res = query.getResultList();

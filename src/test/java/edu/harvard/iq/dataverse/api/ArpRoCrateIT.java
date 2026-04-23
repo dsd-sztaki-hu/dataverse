@@ -174,6 +174,14 @@ public class ArpRoCrateIT {
     
         // Delete dataverse
         Response deleteDataverseResponse = UtilIT.deleteDataverse(setup.dataverseAlias, setup.apiToken);
+        for (int i = 0; i < 5; i++) {
+            if (deleteDataverseResponse.statusCode() == OK.getStatusCode()) {
+                break;
+            }
+            deleteDataverseResponse.prettyPrint();
+            UtilIT.sleepForDeadlock(2);
+            deleteDataverseResponse = UtilIT.deleteDataverse(setup.dataverseAlias, setup.apiToken);
+        }
         deleteDataverseResponse.then().assertThat().statusCode(OK.getStatusCode());
     
         // Delete user
@@ -224,7 +232,21 @@ public class ArpRoCrateIT {
         String updatedJson = editor.getCurrentJsonStateForUpdate();
 
         // Use the updated JSON to update the dataset
-        Response updateResponse = updateDatasetMetadataJsonViaNative(setup.datasetPersistentId, updatedJson, setup.apiToken);
+        // After SWORD upload, the dataset can be temporarily locked (e.g. ingest).
+        Response updateResponse = null;
+        for (int i = 0; i < 5; i++) {
+            org.junit.jupiter.api.Assertions.assertTrue(
+                    UtilIT.sleepForLock(setup.datasetPersistentId, null, setup.apiToken, 60),
+                    "Dataset remained locked too long"
+            );
+            updateResponse = updateDatasetMetadataJsonViaNative(setup.datasetPersistentId, updatedJson, setup.apiToken);
+            if (updateResponse.statusCode() == OK.getStatusCode()) {
+                break;
+            }
+            updateResponse.prettyPrint();
+            UtilIT.sleepForDeadlock(2);
+        }
+        org.junit.jupiter.api.Assertions.assertNotNull(updateResponse);
         updateResponse.then().assertThat().statusCode(OK.getStatusCode());
 
         // Verify the changes
@@ -289,7 +311,8 @@ public class ArpRoCrateIT {
 
         System.out.println("Initial Ro-Crate metadata JSON to be comapred with rocrate1.json");
         Response roCrateResponse = getRoCrate(setup.datasetPersistentId, "DRAFT", setup.apiToken);
-        String roCrateJson = roCrateResponse.prettyPrint();
+        var roCrateMap = JsonPath.from(roCrateResponse.getBody().asString()).getMap("data.roCrate");
+        String roCrateJson = gson.toJson(roCrateMap);
 
         // Commpare with snapshot. Ignore ID and date related fields from comparison
         String rocrate1Json = Files.readString(Paths.get("src/test/resources/arp/rocrate-tests/rocrate1.json"));
@@ -326,7 +349,20 @@ public class ArpRoCrateIT {
         String updatedJson = editor.getCurrentJsonStateForUpdate();
         System.out.println("updatedJson:\n" + updatedJson);
         // Use the updated JSON to update the dataset
-        Response updateResponse = updateDatasetMetadataJsonViaNative(setup.datasetPersistentId, updatedJson, setup.apiToken);
+        Response updateResponse = null;
+        for (int i = 0; i < 5; i++) {
+            org.junit.jupiter.api.Assertions.assertTrue(
+                    UtilIT.sleepForLock(setup.datasetPersistentId, null, setup.apiToken, 60),
+                    "Dataset remained locked too long"
+            );
+            updateResponse = updateDatasetMetadataJsonViaNative(setup.datasetPersistentId, updatedJson, setup.apiToken);
+            if (updateResponse.statusCode() == OK.getStatusCode()) {
+                break;
+            }
+            updateResponse.prettyPrint();
+            UtilIT.sleepForDeadlock(2);
+        }
+        org.junit.jupiter.api.Assertions.assertNotNull(updateResponse);
         updateResponse.then().assertThat().statusCode(OK.getStatusCode());
     
         // Download and verify the updated RO-Crate metadata JSON
@@ -428,7 +464,7 @@ public class ArpRoCrateIT {
                 .statusCode(OK.getStatusCode())
                 .body("status", equalTo("OK"));
 
-        String arpPid = ((LinkedHashMap<String, Object>) ((ArrayList<Object>) uploadResponse.getBody().jsonPath().getMap("data").get("@graph")).get(0)).get("@arpPid").toString();
+        String arpPid = uploadResponse.getBody().jsonPath().getString("data.roCrate.@graph[0].@arpPid");
         UtilIT.destroyDataset(arpPid, setup.apiToken);
 
         cleanupUserDataverseAndDataset(setup);
