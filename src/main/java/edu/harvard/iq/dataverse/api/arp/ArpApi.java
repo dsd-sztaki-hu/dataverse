@@ -1028,16 +1028,20 @@ public class ArpApi extends AbstractApiBean {
                     opened = optionalVersion.get();
                     if (!opened.isPublished() && (authenticatedUser == null || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset))) {
                         if (!privateUrlUser) {
-                            return roCrateError(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.", null);
+                            return error(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.");
+//                            return roCrateError(FORBIDDEN, "Anonymous users can download RO-Crate from published versions only.", null);
                         }
                     }
                 } else {
-                    return roCrateError(FORBIDDEN, "The requested RO-Crate version is not available.", null);
+                    return error(FORBIDDEN, "The requested RO-Crate version is not available.");
+
+//                    return roCrateError(FORBIDDEN, "The requested RO-Crate version is not available.", null);
                 }
             } else {
                 opened = execCommand(new GetLatestAccessibleDatasetVersionCommand(req, dataset));
                 if (opened == null) {
-                    return roCrateError(FORBIDDEN, "Insufficient permission.", null);
+                    return error(FORBIDDEN, "Insufficient permission.");
+//                    return roCrateError(FORBIDDEN, "Insufficient permission.", null);
                 }
             }
             
@@ -1065,37 +1069,48 @@ public class ArpApi extends AbstractApiBean {
                     bufferedReader = new BufferedReader(new FileReader(roCratePath));
                     roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 }
+                Response.ResponseBuilder resp;
                 // If returning the released version it is readonly
                 // In any other case the user is already checked to have access to a draft version and can edit
                 // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
                 if (privateUrlUser || authenticatedUser == null || (dataset.isLocked() && !dataset.isLockedFor(DatasetLock.Reason.InReview)) 
                         || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
                         || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
-                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                            .add("roCrate", JsonUtil.getJsonObject(roCrateJson.toString()))
-                            .build();
-                    return roCrateOk("OK", data, Map.of(
-                            "X-Arp-RoCrate-Readonly", true,
-                            "Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly"
-                    ));
+                    resp = Response.ok(roCrateJson.toString());
+                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
+                            .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+//                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+//                            .add("roCrate", JsonUtil.getJsonObject(roCrateJson.toString()))
+//                            .build();
+//                    return roCrateOk("OK", data, Map.of(
+//                            "X-Arp-RoCrate-Readonly", true,
+//                            "Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly"
+//                    ));
                 } else {
                     // the editable version of the requested latest version
                     BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateJson(dataset)));
                     JsonObject draftRoCrateJson = gson.fromJson(br, JsonObject.class);
-                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                            .add("roCrate", JsonUtil.getJsonObject(draftRoCrateJson.toString()))
-                            .build();
-                    return roCrateOk("OK", data);
+                    resp = Response.ok(draftRoCrateJson.toString());
+                    
+//                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+//                            .add("roCrate", JsonUtil.getJsonObject(draftRoCrateJson.toString()))
+//                            .build();
+//                    return roCrateOk("OK", data);
                 }
+
+                return resp.build();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
-                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
+//                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
+                return Response.serverError().entity(e.getMessage()).build();
             } catch (WrappedResponse ex) {
                 ex.printStackTrace();
-                return roCrateError(FORBIDDEN, "Authorized users only.", null);
+//                return roCrateError(FORBIDDEN, "Authorized users only.", null);
+                return error(FORBIDDEN, "Authorized users only.");
             } catch (Exception e) {
                 e.printStackTrace();
-                return roCrateError(INTERNAL_SERVER_ERROR, e.getLocalizedMessage(), null);
+//                return roCrateError(INTERNAL_SERVER_ERROR, e.getLocalizedMessage(), null);
+                return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
             }
         }, getRequestUser(crc));
     }
