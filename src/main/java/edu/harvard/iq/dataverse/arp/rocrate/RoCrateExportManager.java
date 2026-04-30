@@ -17,13 +17,11 @@ import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
-import edu.kit.datamanager.ro_crate.payload.RoCratePayload;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.Readers;
 import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
-import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.apache.commons.io.FileUtils;
 
@@ -61,9 +59,6 @@ public class RoCrateExportManager {
     @EJB
     RoCrateNameProvider roCrateNameProvider;
 
-    @Inject
-    RoCrateUploadServiceBean roCrateUploadServiceBean;
-
     @EJB
     DatasetServiceBean datasetService;
 
@@ -75,6 +70,9 @@ public class RoCrateExportManager {
     
     @EJB
     ArpServiceBean arpServiceBean;
+
+    @EJB
+    RoCrateExportJobBean roCrateExportJobBean;
     
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
@@ -131,7 +129,19 @@ public class RoCrateExportManager {
         roCrateServiceBean.collectConformsToIds(version.getDataset(), rootDataEntity);
     }
 
+    /**
+     * Entry point called from Dataverse core (dataset create/update commands).
+     * We intentionally offload the heavy RO-Crate generation into an async method with a new transaction,
+     * to avoid interacting with the caller's transaction/persistence context.
+     */
     public void createOrUpdateRoCrate(DatasetVersion version) throws Exception {
+        if (version == null || version.getId() == null) {
+            return;
+        }
+        roCrateExportJobBean.createOrUpdateRoCrateAsync(version.getId());
+    }
+
+    public void doCreateOrUpdateRoCrate(DatasetVersion version, Map<String, String> importMapping) throws Exception {
         var dataset = version.getDataset();
         logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
         var roCratePath = Paths.get(roCrateServiceBean.getRoCratePath(version));
@@ -153,14 +163,13 @@ public class RoCrateExportManager {
             Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean.getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
         }
-        processRoCrateFiles(roCrate, version.getFileMetadatas(), roCrateUploadServiceBean.getImportMapping());
+        processRoCrateFiles(roCrate, version.getFileMetadatas(), importMapping);
         // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
         // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
         // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
         Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
         // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
         // addUploadedFileMetadata would do nothing.
-        roCrateUploadServiceBean.reset();
 
         // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
         // from the beginning
@@ -440,8 +449,6 @@ public class RoCrateExportManager {
         DatasetFieldType parentFieldType = parentField.getDatasetFieldType();
         String parentFieldName = parentFieldType.getName();
         String parentFieldUri = parentFieldType.getUri();
-        DatasetFieldTypeArp dsfArp = arpMetadataBlockServiceBean.findDatasetFieldTypeArpForFieldType(parentFieldType);
-
         ContextualEntity.ContextualEntityBuilder contextualEntityBuilder = new ContextualEntity.ContextualEntityBuilder();
         buildNewContextualEntity(roCrate, roCrateContextUpdater, contextualEntityBuilder, compoundValue, mapper, parentFieldName, parentFieldUri, isCreation);
 
@@ -496,7 +503,7 @@ public class RoCrateExportManager {
             // No need to set anything, since the context entity will already have a "name" field with a value
         }
         // Find an explicit displayNameField set in dsfArp
-        else if (dsfArp.getDisplayNameField() != null) {
+        else if (dsfArp != null && dsfArp.getDisplayNameField() != null) {
             var displayNameField = dsfArp.getDisplayNameField();
             var displayNameFieldValue = compoundValue.getChildDatasetFields().stream()
                     .filter(datasetField -> datasetField.getDatasetFieldType().getName().equals(displayNameField))

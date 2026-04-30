@@ -311,8 +311,7 @@ public class ArpRoCrateIT {
 
         System.out.println("Initial Ro-Crate metadata JSON to be comapred with rocrate1.json");
         Response roCrateResponse = getRoCrate(setup.datasetPersistentId, "DRAFT", setup.apiToken);
-        var roCrateMap = JsonPath.from(roCrateResponse.getBody().asString()).getMap("data.roCrate");
-        String roCrateJson = gson.toJson(roCrateMap);
+        String roCrateJson = roCrateResponse.getBody().prettyPrint();
 
         // Commpare with snapshot. Ignore ID and date related fields from comparison
         String rocrate1Json = Files.readString(Paths.get("src/test/resources/arp/rocrate-tests/rocrate1.json"));
@@ -464,7 +463,8 @@ public class ArpRoCrateIT {
                 .statusCode(OK.getStatusCode())
                 .body("status", equalTo("OK"));
 
-        String arpPid = uploadResponse.getBody().jsonPath().getString("data.roCrate.@graph[0].@arpPid");
+        String arpPid = JsonPath.from(uploadResponse.getBody().asString())
+                .getString("data.roCrate['@graph'][0]['@arpPid']");
         UtilIT.destroyDataset(arpPid, setup.apiToken);
 
         cleanupUserDataverseAndDataset(setup);

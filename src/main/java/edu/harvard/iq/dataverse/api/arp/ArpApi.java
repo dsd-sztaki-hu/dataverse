@@ -230,6 +230,12 @@ public class ArpApi extends AbstractApiBean {
     RoCrateUploadServiceBean roCrateUploadServiceBean;
 
     @EJB
+    RoCrateImportMappingServiceBean roCrateImportMappingServiceBean;
+
+    @EJB
+    RoCrateImportMappingStoreBean roCrateImportMappingStoreBean;
+
+    @EJB
     EjbDataverseEngine commandEngine;
 
     @EJB
@@ -1215,7 +1221,7 @@ public class ArpApi extends AbstractApiBean {
                     }
                     managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
                 }
-                indexService.indexDataset(dataset, true);
+                // Avoid triggering indexing from ARP here; Dataverse core will index as needed.
             }
 
             roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
@@ -1233,7 +1239,7 @@ public class ArpApi extends AbstractApiBean {
         } catch (WrappedResponse ex) {
             ex.printStackTrace();
             return ex.getResponse();
-        } catch (IOException | SolrServerException ex ) {
+        } catch (IOException ex ) {
             ex.printStackTrace();
             logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
             return roCrateError(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage(), null);
@@ -1291,7 +1297,11 @@ public class ArpApi extends AbstractApiBean {
         try {
             var roCrateJson = mapper.readTree(roCrateJsonString);
             // whether the arpPid is present or not means it is a new ds or one already present in dv
-            var arpPid = roCrateJson.get("@graph").get(0).get("@arpPid");
+            var graph = roCrateJson.get("@graph");
+            if (graph == null || !graph.isArray() || graph.isEmpty() || graph.get(0) == null) {
+                throw new ArpException("Invalid RO-Crate: missing or empty '@graph'");
+            }
+            var arpPid = graph.get(0).get("@arpPid");
             boolean alreadyPresentDs = arpPid != null;
             Dataset dataset;
             DatasetVersion newVersion;
@@ -1372,7 +1382,7 @@ public class ArpApi extends AbstractApiBean {
                         }
                         managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
                     }
-                    indexService.indexDataset(dataset, true);
+                    // Avoid triggering indexing from ARP here; Dataverse core will index as needed.
                 }
                 
             } else {
@@ -1385,7 +1395,7 @@ public class ArpApi extends AbstractApiBean {
             BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
             uploadedCrate = mapper.readTree(bufferedReader);
             
-        } catch (WrappedResponse | ArpException | IOException | SolrServerException e) {
+        } catch (WrappedResponse | ArpException | IOException e) {
             e.printStackTrace();
             throw new ArpException("An error occurred during processing the uploaded RO-Crate: " + roCrateJsonString +
                     "Details: " + e.getMessage());
@@ -1438,8 +1448,12 @@ public class ArpApi extends AbstractApiBean {
             Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
             CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
             List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
-            roCrateUploadServiceBean.setRoCrateGraph((ArrayNode) uploadedRoCrate.get("@graph"));
-            roCrateUploadServiceBean.createImportMapping(filesAdded);
+
+            // Store the import mapping for the async RO-Crate export triggered by the upcoming update command.
+            // We cannot rely on session-scoped state during async export.
+            var importMapping = roCrateImportMappingServiceBean.createImportMapping((ArrayNode) uploadedRoCrate.get("@graph"), filesAdded);
+            roCrateImportMappingStoreBean.put(version.getId(), importMapping);
+
             var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
             var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);
             String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(updatedDataset.getLatestVersion());
