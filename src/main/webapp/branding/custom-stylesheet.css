@@ -560,3 +560,22 @@ label[for="mutedNotifications"] {
 .nobr {
 	white-space: nowrap;
 }
+
+a,
+a:focus,
+a:active,
+a:hover,
+a:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+a img,
+a:focus img,
+a:active img,
+a:hover img,
+a:focus-visible img {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 0 !important;
+}
