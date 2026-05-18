@@ -92,8 +92,8 @@ public class ArpJsonStructureComparator
         List<Map.Entry<String, String>> sortedIds1 = new ArrayList<>(idMap1.entrySet());
         List<Map.Entry<String, String>> sortedIds2 = new ArrayList<>(idMap2.entrySet());
 
-        sortedIds1.sort(Comparator.comparing(Map.Entry::getValue));
-        sortedIds2.sort(Comparator.comparing(Map.Entry::getValue));
+        sortedIds1.sort(Comparator.comparing(Map.Entry::getKey));
+        sortedIds2.sort(Comparator.comparing(Map.Entry::getKey));
 
         for (int i = 0; i < sortedIds1.size(); i++) {
             if (!sortedIds1.get(i).getValue().equals(sortedIds2.get(i).getValue())) {
@@ -110,8 +110,9 @@ public class ArpJsonStructureComparator
 
         if (elem.isJsonObject()) {
             JsonObject obj = elem.getAsJsonObject();
-            if (obj.has("@id")) {
-                idMap.put(obj.get("@id").getAsString(), obj.has("@type") ? obj.get("@type").getAsString() : "");
+            // do not save '@id' multiple times from the parent objects too without a '@type'
+            if (obj.has("@id") && obj.has("@type")) {
+                idMap.put(obj.get("@id").getAsString(), obj.get("@type").getAsString());
             }
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                 idMap.putAll(collectIds(entry.getValue()));

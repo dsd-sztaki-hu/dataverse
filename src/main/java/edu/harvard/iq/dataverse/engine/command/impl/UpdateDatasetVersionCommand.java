@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse.engine.command.impl;
 
 import edu.harvard.iq.dataverse.*;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.engine.command.CommandContext;
@@ -9,6 +10,7 @@ import edu.harvard.iq.dataverse.engine.command.RequiredPermissions;
 import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
 import edu.harvard.iq.dataverse.engine.command.exception.IllegalCommandException;
 import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
+import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.DatasetFieldUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
@@ -17,6 +19,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import edu.harvard.iq.dataverse.util.JsfHelper;
+import jakarta.enterprise.inject.spi.CDI;
 import jakarta.validation.ConstraintViolationException;
 
 /**
@@ -95,7 +99,7 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
         if ( ! (getUser() instanceof AuthenticatedUser) ) {
             throw new IllegalCommandException("Only authenticated users can update datasets", this);
         }
-        
+
         Dataset theDataset = getDataset();        
         ctxt.permissions().checkUpdateDatasetVersionLock(theDataset, getRequest(), this);
         Dataset savedDataset = null;
@@ -110,13 +114,16 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
          */
         if(persistedVersion==null) {
             Long id = getDataset().getLatestVersion().getId();
-            persistedVersion = ctxt.datasetVersion().find(id!=null ? id: getDataset().getLatestVersionForCopy().getId());
+            persistedVersion = ctxt.datasetVersion().find(id!=null ? id : getDataset().getLatestVersionForCopy(true).getId());
         }
         
         //Will throw an IllegalCommandException if a system metadatablock is changed and the appropriate key is not supplied.
         checkSystemMetadataKeyIfNeeded(getDataset().getOrCreateEditVersion(fmVarMet), persistedVersion);
-        
-        
+
+        getDataset().getOrCreateEditVersion().setLastUpdateTime(getTimestamp());
+
+        registerExternalVocabValuesIfAny(ctxt, getDataset().getOrCreateEditVersion(fmVarMet));
+
         try {
             // Invariant: Dataset has no locks preventing the update
             String lockInfoMessage = "saving current edits";
@@ -128,6 +135,7 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
             }
             
             getDataset().getOrCreateEditVersion(fmVarMet).setDatasetFields(getDataset().getOrCreateEditVersion(fmVarMet).initDatasetFields());
+
             validateOrDie(getDataset().getOrCreateEditVersion(fmVarMet), isValidateLenient());
 
             final DatasetVersion editVersion = getDataset().getOrCreateEditVersion(fmVarMet);
@@ -146,7 +154,7 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
             		throw e;
             	}
             }
-
+            //Set creator and create date for files if needed
             for (DataFile dataFile : theDataset.getFiles()) {
                 if (dataFile.getCreateDate() == null) {
                     dataFile.setCreateDate(getTimestamp());
@@ -222,7 +230,8 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
                     if (!theDataset.getOrCreateEditVersion().equals(fmd.getDatasetVersion())) {
                         fmd = FileMetadataUtil.getFmdForFileInEditVersion(fmd, theDataset.getOrCreateEditVersion());
                     }
-                } 
+                }
+                fmd.setDataFile(ctxt.em().merge(fmd.getDataFile()));
                 fmd = ctxt.em().merge(fmd);
 
                 // There are two datafile cases as well - the file has been released, so we're
@@ -233,13 +242,15 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
                     ctxt.engine().submit(new DeleteDataFileCommand(fmd.getDataFile(), getRequest()));
                     // and remove the file from the dataset's list
                     theDataset.getFiles().remove(fmd.getDataFile());
-                } else {
-                    // if we aren't removing the file, we need to explicitly remove the fmd from the
-                    // context and then remove it from the datafile's list
+                    ctxt.em().remove(fmd.getDataFile());
                     ctxt.em().remove(fmd);
+                } else {
+                    ctxt.em().remove(fmd);
+                    // if we aren't removing the file, we need to remove it from the datafile's list
                     FileMetadataUtil.removeFileMetadataFromList(fmd.getDataFile().getFileMetadatas(), fmd);
                 }
-                // In either case, to fully remove the fmd, we have to remove any other possible
+                // In either case, we've removed from the  context 
+                // And, to fully remove the fmd, we have to remove any other possible
                 // references
                 // From the datasetversion
                 FileMetadataUtil.removeFileMetadataFromList(theDataset.getOrCreateEditVersion().getFileMetadatas(), fmd);
@@ -247,10 +258,12 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
                 for (DataFileCategory cat : theDataset.getCategories()) {
                     FileMetadataUtil.removeFileMetadataFromList(cat.getFileMetadatas(), fmd);
                 }
+
             }
             for(FileMetadata fmd: theDataset.getOrCreateEditVersion().getFileMetadatas()) {
                 logger.fine("FMD: " + fmd.getId() + " for file: " + fmd.getDataFile().getId() + "is in final draft version");    
             }
+            registerFilePidsIfNeeded(theDataset, ctxt, true);
             
             if (recalculateUNF) {
                 ctxt.ingest().recalculateDatasetVersionUNF(theDataset.getOrCreateEditVersion());
@@ -277,6 +290,15 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
                 ctxt.datasets().removeDatasetLocks(theDataset, DatasetLock.Reason.EditInProgress);
             }
         }
+        
+        try {
+            // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+            RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+            roCrateExportManager.createOrUpdateRoCrate(savedDataset.getLatestVersion());
+        } catch (Exception e) {
+            e.printStackTrace();
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
 
         return savedDataset; 
     }
@@ -288,7 +310,10 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
         // (it will be scheduled then for later indexing of the newest version).
         // See the documentation of asyncIndexDataset method for more details.
         ctxt.index().asyncIndexDataset((Dataset) r, true);
+        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+        RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+        roCrateExportManager.finalizeRoCrateForPublish(((Dataset) r).getLatestVersion());
         return true;
     }
-
+    
 }

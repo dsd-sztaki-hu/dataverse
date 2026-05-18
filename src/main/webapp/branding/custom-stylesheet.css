@@ -119,7 +119,7 @@ div#panelCollapseFMD div.panel-body div.form-group {
 }
 
 #dataverseForm {
-	display: table;
+	display: block;
 	width: 100%;
 }
 
@@ -173,7 +173,7 @@ div#metrics-content {
 
 #actionButtonBlock {
 	padding: 0px 30px 0px 30px;
-	margin-top: 0px;
+	margin-top: 15px;
 	margin-left: auto;
 }
 
@@ -537,10 +537,26 @@ div.card-preview-icon-block img {
 
 .footerstamp {
 	margin-top: -10px;
+	margin-right: 5px;
 }
 
 @media (max-width: 767px) {
 	.footerstamp {
 		margin-top: 0px;
 	}
+}
+
+#dataverseUserForm\:dataRelatedToMeView\:mutedNotifications {
+    margin-top: 15px;
+    border-top: 1px solid lightgrey;
+
+}
+
+label[for="mutedNotifications"] {
+    margin-top: 15px;
+    border-top: 1px solid lightgrey;
+}
+
+.nobr {
+	white-space: nowrap;
 }

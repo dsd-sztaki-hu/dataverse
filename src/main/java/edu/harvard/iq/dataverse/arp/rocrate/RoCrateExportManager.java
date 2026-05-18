@@ -9,6 +9,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpMetadataBlockServiceBean;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.DatasetFieldTypeArp;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.kit.datamanager.ro_crate.RoCrate;
@@ -16,11 +17,10 @@ import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
+import edu.kit.datamanager.ro_crate.payload.RoCratePayload;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
-import edu.kit.datamanager.ro_crate.reader.FolderReader;
-import edu.kit.datamanager.ro_crate.reader.RoCrateReader;
-import edu.kit.datamanager.ro_crate.writer.FolderWriter;
-import edu.kit.datamanager.ro_crate.writer.RoCrateWriter;
+import edu.kit.datamanager.ro_crate.reader.Readers;
+import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -72,9 +72,10 @@ public class RoCrateExportManager {
 
     @EJB
     ArpConfig arpConfig;
-
-    //TODO: what should we do with the "name" property of the contextualEntities? 
-    // now the "name" prop is added from AROMA and it's value is the same as the original id of the entity
+    
+    @EJB
+    ArpServiceBean arpServiceBean;
+    
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
@@ -88,9 +89,11 @@ public class RoCrateExportManager {
         // Make sure license and datePublished is set
         var props = rootDataEntity.getProperties();
         props.set("license", mapper.createObjectNode().put("@id", DatasetUtil.getLicenseURI(version)));
+        roCrateContextUpdater.addValuePairToContext("license", "https://schema.org/license");
 
         String formattedDate = getDatePublishedForRoCrate(version);
         props.put("datePublished", formattedDate);
+        roCrateContextUpdater.addValuePairToContext("datePublished", "https://schema.org/datePublished");
 
         rootDataEntity.setProperties(props);
 
@@ -98,6 +101,10 @@ public class RoCrateExportManager {
         if (!isCreation) {
             removeDeletedEntities(roCrate, version, datasetFields, datasetFieldTypeMap);
         }
+        
+        // Need to collect and remove the URL entities that were modified in DV
+        // Can not remove them during the fieldType processing because of the concurrentmodificationexceptions
+        var urlEntityIdsToRemove = new ArrayList<String>();
 
         // Update the RO-Crate with the values from DV
         for (var datasetField : datasetFields) {
@@ -111,14 +118,17 @@ public class RoCrateExportManager {
 
             // Update the contextual entities with the new compound values
             if (fieldType.isCompound()) {
-                processCompoundFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+                processCompoundFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlEntityIdsToRemove);
             } else {
-                processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+                processPrimitiveFieldType(roCrate, roCrateContextUpdater, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlEntityIdsToRemove);
             }
         }
+        
+        // Remove the URL entities that are no longer used
+        urlEntityIdsToRemove.forEach(roCrate::deleteEntityById);
 
         // MDB-s can only be get via the Dataset and its Dataverse, so we need to pass version.getDataset()
-        collectConformsToIds(version.getDataset(), rootDataEntity);
+        roCrateServiceBean.collectConformsToIds(version.getDataset(), rootDataEntity);
     }
 
     public void createOrUpdateRoCrate(DatasetVersion version) throws Exception {
@@ -138,8 +148,7 @@ public class RoCrateExportManager {
                 Files.createDirectories(roCrateFolder);
             }
         } else {
-            RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-            var ro = roCrateFolderReader.readCrate(roCrateFolderPath);
+            RoCrate ro = Readers.newFolderReader().readCrate(roCrateFolderPath);
             roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean.getDatasetFieldTypeMapByConformsTo(roCrate);
             createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
@@ -148,9 +157,7 @@ public class RoCrateExportManager {
         // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
         // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
         // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
-        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, roCrateFolderPath);
-
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
         // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
         // addUploadedFileMetadata would do nothing.
         roCrateUploadServiceBean.reset();
@@ -163,13 +170,16 @@ public class RoCrateExportManager {
             var releasedPath = roCrateServiceBean.getRoCratePath(released);
             if (!Files.exists(Paths.get(releasedPath))) {
                 logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
-                saveRoCrateVersion(dataset, releasedVersion);
+                saveRoCrateVersion(dataset, releasedVersion, false);
             }
         }
 
     }
 
-    private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                           RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, 
+                                           String fieldUri, ObjectMapper mapper, boolean isCreation,
+                                           ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         List<DatasetFieldValue> fieldValues = datasetField.getDatasetFieldValues();
         List<ControlledVocabularyValue> controlledVocabValues = datasetField.getControlledVocabularyValues();
         var roCrateContext = mapper.readTree(roCrate.getJsonMetadata()).get("@context").get(1);
@@ -182,6 +192,16 @@ public class RoCrateExportManager {
                     String urlString = fieldValues.get(0).getValue();
                     var alreadyPresentUrlEntity = roCrate.getEntityById(urlString);
                     if (alreadyPresentUrlEntity == null) {
+                        // save the old id that will be removed
+                        var prop = rootDataEntity.getProperty(fieldName);
+                        if (prop != null) {
+                            // have to handle the "old" string values too
+                            if (prop.isTextual()) {
+                                urlIdsToRemove.add(prop.textValue());
+                            } else {
+                                urlIdsToRemove.add(prop.get("@id").textValue());
+                            }
+                        }
                         addUrlContextualEntity(roCrate, urlString);
                         var idObj = mapper.createObjectNode();
                         idObj.put("@id", urlString);
@@ -193,15 +213,37 @@ public class RoCrateExportManager {
             } else {
                 ArrayNode valuesNode = mapper.createArrayNode();
                 if (datasetField.getDatasetFieldType().getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                    ArrayList<String> existingUrls = new ArrayList<>();
+                    var parentObj = rootDataEntity.getProperty(fieldName);
+                    if (parentObj != null) {
+                        if (parentObj.isArray()) {
+                            parentObj.elements().forEachRemaining(idObj -> {
+                                if (idObj.isTextual()) {
+                                    existingUrls.add(idObj.textValue());
+                                } else {
+                                    existingUrls.add(idObj.get("@id").textValue());
+                                }
+                            });
+                        } else {
+                            if (parentObj.isTextual()) {
+                                existingUrls.add(parentObj.textValue());
+                            } else {
+                                existingUrls.add(parentObj.get("@id").textValue());
+                            }
+                        }
+                    }
                     for (var fieldValue : fieldValues) {
-                        var alreadyPresentUrlEntity = roCrate.getEntityById(fieldValue.getValue());
-                        if (alreadyPresentUrlEntity == null) {
+                        var urlString = fieldValue.getValue();
+                        if (!existingUrls.contains(urlString)) {
                             addUrlContextualEntity(roCrate, fieldValue.getValue());
+                        } else {
+                            existingUrls.remove(urlString);
                         }
                         var idObj = mapper.createObjectNode();
                         idObj.put("@id", fieldValue.getValue());
                         valuesNode.add(idObj);
                     }
+                    urlIdsToRemove.addAll(existingUrls);
                 } else {
                     for (var fieldValue : fieldValues) {
                         valuesNode.add(fieldValue.getValue());
@@ -220,10 +262,13 @@ public class RoCrateExportManager {
         urlEntity.setId(url);
         roCrate.addContextualEntity(urlEntity.build());
     }
-
-    private void processCompoundFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    
+    private void processCompoundFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                          RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, 
+                                          String fieldUri, ObjectMapper mapper, boolean isCreation, 
+                                          ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         List<DatasetFieldCompoundValue> compoundValues = datasetField.getDatasetFieldCompoundValues();
-        List<ContextualEntity> contextualEntities = roCrate.getAllContextualEntities();
+        Set<ContextualEntity> contextualEntities = roCrate.getAllContextualEntities();
 
         if (!rootDataEntity.getProperties().has(fieldName)) {
             //Add new contextual entity to the RO-Crate
@@ -257,11 +302,16 @@ public class RoCrateExportManager {
                 }
             }
 
-            processCompoundValues(roCrate, roCrateContextUpdater, compoundValues, contextualEntities, entityToUpdate, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation);
+            processCompoundValues(roCrate, roCrateContextUpdater, compoundValues, contextualEntities, entityToUpdate, rootDataEntity, datasetField, fieldName, fieldUri, mapper, isCreation, urlIdsToRemove);
         }
     }
 
-    private void processCompoundValues(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, List<DatasetFieldCompoundValue> compoundValues, List<ContextualEntity> contextualEntities, JsonNode entityToUpdate, RootDataEntity rootDataEntity, DatasetField datasetField, String fieldName, String fieldUri, ObjectMapper mapper, boolean isCreation) throws JsonProcessingException {
+    private void processCompoundValues(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
+                                       List<DatasetFieldCompoundValue> compoundValues, 
+                                       Set<ContextualEntity> contextualEntities, 
+                                       JsonNode entityToUpdate, RootDataEntity rootDataEntity, 
+                                       DatasetField datasetField, String fieldName, String fieldUri, 
+                                       ObjectMapper mapper, boolean isCreation, ArrayList<String> urlIdsToRemove) throws JsonProcessingException {
         // The entityToUpdate value has to be updated after every modification, in case its value is changed in the RO-Crate,
         // eg: from object to array
         for (var compoundValue : compoundValues) {
@@ -311,9 +361,53 @@ public class RoCrateExportManager {
                             roCrateContextUpdater.addValuePairToContext(childFieldName, childFieldUri);
                         }
                         if (!childFieldValues.isEmpty()) {
-                            for (var childFieldValue : childFieldValues) {
-                                actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
+                            // Save the "old" urls from the RO-Crate, so when the values are updated
+                            // which means, the new ids from DV are added to the RO-Crate
+                            // and the original values are overridden, we can later remove the corresponding entities
+                            // with the replaced id-s (urls)
+                            ArrayList<String> existingUrls = new ArrayList<>();
+                            if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                                var parentObj = actEntityToUpdate.getProperty(childFieldName);
+                                if (parentObj != null) {
+                                    if (parentObj.isArray()) {
+                                        parentObj.elements().forEachRemaining(idObj -> {
+                                            // Handle the "old" string values too
+                                            if (idObj.isTextual()) {
+                                                existingUrls.add(idObj.textValue());
+                                            } else {
+                                                existingUrls.add(idObj.get("@id").textValue());
+                                            }
+                                        });
+                                    } else {
+                                        if (parentObj.isTextual()) {
+                                            existingUrls.add(parentObj.textValue());
+                                        } else {
+                                            existingUrls.add(parentObj.get("@id").textValue());
+                                        }
+                                    }
+                                }
                             }
+                            // TODO: for now DV wont allow multiple URLs for compound fields
+                            // later if that is fixed, the process should be fixed as it works for the primitive field types
+                            for (var childFieldValue : childFieldValues) {
+                                if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                                    var urlString = childFieldValue.getValue();
+                                    if (!existingUrls.contains(urlString)) {
+                                        addUrlContextualEntity(roCrate, urlString);
+                                        var idObj = mapper.createObjectNode();
+                                        idObj.put("@id", urlString);
+                                        actEntityToUpdate.addProperty(childFieldName, idObj);
+                                    } else {
+                                        existingUrls.remove(urlString);
+                                    }
+                                } else {
+                                    actEntityToUpdate.addProperty(childFieldName, childFieldValue.getValue());
+                                }
+                            }
+                            // We need to remove the entities with the old id-s (urls),
+                            // since in DV there is no more data saved to a URL than its value, which is a string
+                            // so we have to find the corresponding URL entity by its id and remove it from the crate
+                            urlIdsToRemove.addAll(existingUrls);
                         }
                         // Update RO-Crate entity name based on new compound value. NOTE: the update is coming from
                         // Dataverse (API or UI) so the user cannot control the Ro-Crate name property, we have to
@@ -439,7 +533,15 @@ public class RoCrateExportManager {
                 }
                 if (!childFieldValues.isEmpty()) {
                     for (var childFieldValue : childFieldValues) {
-                        contextualEntityBuilder.addProperty(childFieldName, childFieldValue.getValue());
+                        if (childFieldType.getFieldType().equals(DatasetFieldType.FieldType.URL)) {
+                            var urlString = childFieldValue.getValue();
+                            addUrlContextualEntity(roCrate, urlString);
+                            var idObj = mapper.createObjectNode();
+                            idObj.put("@id", urlString);
+                            contextualEntityBuilder.addProperty(childFieldName, idObj);
+                        } else {
+                            contextualEntityBuilder.addProperty(childFieldName, childFieldValue.getValue());
+                        }
                     }
                 }
                 if (!childControlledVocabValues.isEmpty()) {
@@ -463,45 +565,6 @@ public class RoCrateExportManager {
                 }
                 parentEntity.addProperty(fieldName, strValuesNode);
             }
-        }
-    }
-
-    private void collectConformsToIds(Dataset dataset, RootDataEntity rootDataEntity)
-    {
-        collectConformsToIds(rootDataEntity, dataset, new ObjectMapper());
-    }
-
-    private void collectConformsToIds(RootDataEntity rootDataEntity, Dataset dataset, ObjectMapper mapper) {
-        var conformsToArray = mapper.createArrayNode();
-        var conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
-
-        Set<String> existingConformsToIds = new HashSet<>();
-        if (rootDataEntity.getProperties().has("conformsTo")) {
-            JsonNode conformsToNode = rootDataEntity.getProperties().get("conformsTo");
-            // conformsTo maybe an array or an object
-            if (conformsToNode.isArray()) {
-                conformsToNode.elements().forEachRemaining(jsonNode -> {
-                    existingConformsToIds.add(((ObjectNode)jsonNode).get("@id").textValue());
-                    conformsToArray.add(jsonNode);
-                });
-            }
-            else {
-                existingConformsToIds.add(((ObjectNode)conformsToNode).get("@id").textValue());
-                conformsToArray.add(conformsToNode);
-            }
-        }
-
-        // Add those ID-s that are not already in conformsToArray
-        conformsToIdsFromMdbs.forEach(id -> {
-            if (!existingConformsToIds.contains(id)) {
-                conformsToArray.add(mapper.createObjectNode().put("@id", id));
-            }
-        });
-
-        if (rootDataEntity.getProperties().has("conformsTo")) {
-            rootDataEntity.getProperties().set("conformsTo", conformsToArray);
-        } else {
-            rootDataEntity.addProperty("conformsTo", conformsToArray);
         }
     }
 
@@ -580,17 +643,15 @@ public class RoCrateExportManager {
     }
 
     public String getDatePublishedForRoCrate(DatasetVersion version) {
-        // Take either release, lst update or current time. For published version it must be always the released date
+        // Take either release, publication or lst update. For published version it must be always the released date
         Date publishedDate = null;
         DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
         if (version.getReleaseTime() != null) {
             publishedDate = version.getReleaseTime();
-        }
-//        else if (version.getLastUpdateTime() != null) {
-//            publishedDate = version.getLastUpdateTime();
-//        }
-        else {
-            publishedDate = new Date();
+        } else if (version.getDataset().getPublicationDate() != null) {
+            publishedDate = version.getDataset().getPublicationDate();
+        } else {
+            publishedDate = version.getLastUpdateTime();
         }
         ZonedDateTime zonedDateTime = publishedDate.toInstant().atZone(ZoneId.systemDefault());
         OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
@@ -612,18 +673,22 @@ public class RoCrateExportManager {
 
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            if (roCrateServiceBean.isVirtualFile(fe)) {
-                return;
-            }
+            
             String dataFileId = roCrateServiceBean.getDataFileIdFromRoId(fe.get("@id").textValue());
             Optional<FileMetadata> datasetFile;
-            if (importMapping == null) {
-                datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
-            } else {
+            // importMapping data is only available during RO-Crate .zip uploads
+            if (importMapping != null && !importMapping.isEmpty()) {
                 datasetFile = datasetFiles.stream().filter(fileMetadata ->
-                        Objects.equals(fileMetadata.getDataFile().getStorageIdentifier().split("://")[1], importMapping.get(fe.get("@id").textValue()))
+                        Objects.equals(fileMetadata.getDataFile().getStorageIdentifier(), importMapping.get(fe.get("@id").textValue()))
                 ).findFirst();
+            } else {
+                if (roCrateServiceBean.isVirtualFile(fe)) {
+                    return;
+                } else {
+                    datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
+                }
             }
+
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
                 if (importMapping != null) {
@@ -653,6 +718,21 @@ public class RoCrateExportManager {
             }
         });
 
+        if (!roCrateFileEntities.isEmpty() || !datasetFiles.isEmpty()) {
+            RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
+            roCrateContextUpdater.addValuePairToContext("hasPart", "https://schema.org/hasPart");
+            roCrateContextUpdater.addValuePairToContext("directoryLabel", "https://dataverse.org/schema/file/directoryLabel");
+            var fileClassEn = arpServiceBean.getFileClassEn();
+            if (fileClassEn != null) {
+                fileClassEn.getAsJsonArray("inputs").forEach(
+                        input -> roCrateContextUpdater.addValuePairToContext(
+                                input.getAsJsonObject().get("name").getAsString(),
+                                input.getAsJsonObject().get("id").getAsString()
+                        )
+                );
+            }
+        }
+        
         // Add the new files to the RO-CRATE as well
         for (FileMetadata df : datasetFiles) {
             ArrayList<String> folderNames = df.getDirectoryLabel() != null ? new ArrayList<>(Arrays.asList(df.getDirectoryLabel().split("/"))) : new ArrayList<>();
@@ -964,7 +1044,10 @@ public class RoCrateExportManager {
             fileEntityBuilder.addProperty("tags", new ObjectMapper().valueToTree(fileMetadata.getCategoriesByName()));
         }
         var file = fileEntityBuilder.build();
-        roCrate.addDataEntity(file, toHasPart);
+        roCrate.addDataEntity(file);
+        if (!toHasPart) {
+            roCrate.getRootDataEntity().removeFromHasPart(file.getId());
+        }
 
         return fileId;
     }
@@ -1031,15 +1114,23 @@ public class RoCrateExportManager {
     // different then the actual releaseDate at the end.
     public void saveRoCrateVersion(Dataset dataset, boolean isUpdate, boolean isMinor) throws IOException {
         String versionNumber = isUpdate ? dataset.getLatestVersionForCopy().getFriendlyVersionNumber() : isMinor ? dataset.getNextMinorVersionString() : dataset.getNextMajorVersionString();
-        saveRoCrateVersion(dataset, versionNumber);
+        saveRoCrateVersion(dataset, versionNumber, isUpdate);
 //        String roCrateFolderPath = getRoCrateFolder(dataset.getLatestVersion());
 //        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
     }
 
 
-    public void saveRoCrateVersion(Dataset dataset, String versionNumber) throws IOException {
+    public void saveRoCrateVersion(Dataset dataset, String versionNumber, boolean isUpdate) throws IOException {
         String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion());
-        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(roCrateFolderPath + "_v" + versionNumber));
+        String destFolderPath;
+        String versionSuffix = "_v" + versionNumber;
+        if (isUpdate && roCrateFolderPath.endsWith(versionSuffix)) {
+            destFolderPath = roCrateFolderPath;
+            roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+        } else {
+            destFolderPath = roCrateFolderPath + versionSuffix;
+        }
+        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(destFolderPath));
     }
 
     public void saveRoCrateDraftVersion(DatasetVersion version) throws IOException {
@@ -1049,17 +1140,15 @@ public class RoCrateExportManager {
         FileUtils.copyDirectory(new File(roCrateFolderPath), new File(draftPath));
     }
 
-    public void updateRoCrateFileMetadatas(Dataset dataset) throws JsonProcessingException {
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        var ro = roCrateFolderReader.readCrate(roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+    public void updateRoCrateFileMetadatas(Dataset dataset) throws IOException {
+        RoCrate ro = Readers.newFolderReader()
+                .readCrate(roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
         RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
         processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), null);
-        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
     }
 
-    public void updateRoCrateFileMetadataAfterIngest(List<Long> fileIds) {
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
+    public void updateRoCrateFileMetadataAfterIngest(List<Long> fileIds) throws IOException {
         HashSet<Long> parentDsIds = new HashSet<>();
         // Collect the dataset and the belonging file ids, so we no longer need to assume that every ingest message
         // contains files that belong to the same dataset as it is assumed here: edu/harvard/iq/dataverse/ingest/IngestMessageBean.java
@@ -1067,14 +1156,15 @@ public class RoCrateExportManager {
             var dsId = datafileService.findCheapAndEasy(fileId).getOwner().getId();
             parentDsIds.add(dsId);
         });
-        parentDsIds.forEach(dsId -> {
+        for (Long dsId : parentDsIds) {
             var datasetVersion = datasetService.find(dsId).getLatestVersion();
-            var ro = roCrateFolderReader.readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
+            RoCrate ro = Readers.newFolderReader()
+                    .readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
             RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
             updateFileMetadataAfterIngest(roCrate, datasetVersion);
-            RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-            roCrateFolderWriter.save(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
-        });
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
+            
+        }
     }
 
     private void updateFileMetadataAfterIngest(RoCrate roCrate, DatasetVersion datasetVersion) {
@@ -1109,21 +1199,59 @@ public class RoCrateExportManager {
     Upon the dataset's successful publication, removes any sensitive data from the RO-Crate and updates the publicationDate
     */
     public void finalizeRoCrateForDatasetVersion(DatasetVersion datasetVersion) {
-        RoCrateReader roCrateFolderReader = new RoCrateReader(new FolderReader());
-        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrateFolderReader.readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion))).setPreview(new AutomaticPreview()).build();
+        RoCrate ro = null;
+        String roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
+        try {
+            if (!Files.exists(Paths.get(roCratePath))) {
+                createOrUpdateRoCrate(datasetVersion);
+//                if (datasetVersion.getDataset().getLatestVersion().isPublished()) {
+//                    saveRoCrateDraftVersion(datasetVersion);
+//                }
+            }
+            ro = Readers.newFolderReader().readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
         String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(datasetVersion);
 
         removeDatasetContactEmail(roCrateWithPreview);
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
+        updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
 
-        RoCrateWriter roCrateFolderWriter = new RoCrateWriter(new FolderWriter());
-        roCrateFolderWriter.save(roCrateWithPreview, roCrateFolderPath);
+        try {
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
+            
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public void updateDatePublishedInDraftRoCrate(Dataset dataset) {
+        RoCrate roCrate;
+        try {
+            roCrate = Readers.newFolderReader().readCrate(roCrateServiceBean.getDraftRoCrateFolder(dataset));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
+        String roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+
+        updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(dataset.getLatestVersion()));
+
+        try {
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public void finalizeRoCrateForPublish(DatasetVersion datasetVersion)
-    {
+    public void finalizeRoCrateForPublish(DatasetVersion datasetVersion) {
         // Finalize as usual
-        finalizeRoCrateForDatasetVersion(datasetVersion);
+        if (!datasetVersion.isDraft()) {
+            finalizeRoCrateForDatasetVersion(datasetVersion);
+        }
 
         // If we have local access to the KG (as in case of a demo install) ingest the published
         // dataset right away for instant findability

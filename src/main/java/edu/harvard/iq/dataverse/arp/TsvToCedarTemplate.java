@@ -34,6 +34,8 @@ public class TsvToCedarTemplate implements java.io.Serializable {
 
     private boolean convertDotToColon = true;
 
+    private boolean forceNamespaceUri = false;
+
     private Locale hunLocale = new Locale("hu");
 
     private JsonObject existingTemplate;
@@ -79,11 +81,12 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         }
     }
 
-    public TsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate)
+    public TsvToCedarTemplate(String tsv, boolean convertDotToColon, JsonObject existingTemplate, boolean forceNamespaceUri)
     {
         this.tsv = tsv;
         this.convertDotToColon = convertDotToColon;
         this.existingTemplate = existingTemplate;
+        this.forceNamespaceUri = forceNamespaceUri;
     }
 
     public JsonObject convert() throws JsonProcessingException {
@@ -197,10 +200,12 @@ public class TsvToCedarTemplate implements java.io.Serializable {
         * however getting the termURI below with the datasetField.getTermURI() function, for southLongitude the result is not an empty string but null,
         * but this value can not be null in the CEDAR Template just an empty string.
         * There's also a comment in DatasetFieldConstant.java that says southLongitude value is "Incorrect in DB".
+        * When forceNamespaceUri is true, always use namespaceUri + propName, ignoring existing termUri.
         * */
         String termUri = datasetField.getTermURI();
         String nameSpaceUri = dataverseMetadataBlock.getBlockURI().endsWith("/") ? dataverseMetadataBlock.getBlockURI() : dataverseMetadataBlock.getBlockURI() + "/";
-        String uri = !termUri.isBlank() ? termUri : nameSpaceUri + datasetField.getName() ;
+        String constructedUri = nameSpaceUri + datasetField.getName();
+        String uri = forceNamespaceUri ? constructedUri : (termUri != null && !termUri.isBlank() ? termUri : constructedUri);
         enumArray.add(uri);
         enumObj.add("enum", enumArray);
         JsonHelper.getJsonElement(parentObj,"properties.@context.properties").getAsJsonObject().add(propName, enumObj);
