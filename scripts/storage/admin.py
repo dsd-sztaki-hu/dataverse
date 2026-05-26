@@ -7,17 +7,17 @@ import pprint, argparse, subprocess
 import requests
 from stat import *
 from config import (ConfigSectionMap)
-from database import (query_database, get_last_timestamp, record_datafile_status, get_datafile_status, create_database_connection)
+from database import (get_records_for_query, sql_update)
 from storage import (open_dataverse_file)
 import shutil
 import yaml
 import boto3
 import tempfile
+import csv
 from var_dump import var_dump
 from icecream import ic
 from rich.console import Console
 from rich.table import Table
-
 
 GLASSFISH_DIR=os.getenv("GLASSFISH_DIR", "/usr/local/payara6")
 ASADMIN=GLASSFISH_DIR+"/bin/asadmin"
@@ -39,14 +39,17 @@ def getList(args):
 			q+=" AND id IN (SELECT DISTINCT id FROM dvobject WHERE owner_id IN (SELECT id FROM dataverse WHERE alias='"+args['ownername']+"'"+"))"
 		if args['storage'] is not None:
 			q+=" AND storagedriver='"+str(args['storage'])+"'"
+		if args['published_only']:
+			q+=" AND publicationdate IS NOT NULL"
 	elif args['type']=='dataset':
 		if args['cpap_only']:
 			args['remote_locations']=True
 		rsl_fields = ', dsv.id as vid, storagesite.name, rsl.status' if args['remote_locations'] else ''
 		rsl_end = ', dsv.id, storagesite.name, rsl.status' if args['remote_locations'] else ''
-		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id """+rsl_fields+""" FROM dataset ds1 NATURAL JOIN dvobject dvo1 
-		     LEFT OUTER JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id JOIN datasetversion dsv ON ds1.id=dsv.dataset_id 
-		     LEFT OUTER JOIN dvobjectremotestoragelocation rsl ON dsv.id=datasetversion_id LEFT OUTER JOIN storagesite ON site_id=storagesite.id
+		q="""SELECT ds1.id, dvo1.identifier, '' as description, dvo1.storageidentifier, 'dataset' as type, sum(filesize), dvo1.owner_id """+rsl_fields+"""
+		     FROM dataset ds1 NATURAL JOIN dvobject dvo1 
+		          LEFT OUTER JOIN (datafile df2 NATURAL JOIN dvobject dvo2) ON ds1.id=dvo2.owner_id JOIN datasetversion dsv ON ds1.id=dsv.dataset_id 
+		          LEFT OUTER JOIN dvobjectremotestoragelocation rsl ON dsv.id=datasetversion_id LEFT OUTER JOIN storagesite ON site_id=storagesite.id
 		     WHERE true"""
 		end=" GROUP BY ds1.id,dvo1.identifier,dvo1.storageidentifier,dvo1.owner_id"+rsl_end
 		if args['ownerid'] is not None:
@@ -63,9 +66,14 @@ def getList(args):
 			q+=" AND rsl.status='"+args['rslstatus']+"'"
 		if args['cpap_only']:
 			q+=" AND rsl.status IN ('CPAP','CPIN') AND storagesite.name='"+args['to_storage']+"'"
+		if args['published_only']:
+			q+=" AND dvo1.publicationdate IS NOT NULL"
 		q+=end
 	elif args['type']=='datafile' or args['type'] is None:
-		q="SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id FROM datafile NATURAL JOIN dvobject dvo JOIN (SELECT datafile_id,label,directorylabel,MAX(datasetversion_id) FROM filemetadata GROUP BY datafile_id,label,directorylabel) fm ON dvo.id=fm.datafile_id WHERE true"
+		q="""SELECT dvo.id, directorylabel, label, dvo.storageidentifier, 'datafile' as type, filesize, owner_id
+		      FROM datafile NATURAL JOIN dvobject dvo 
+		           JOIN (SELECT datafile_id,label,directorylabel,MAX(datasetversion_id) 
+		                 FROM filemetadata GROUP BY datafile_id,label,directorylabel) fm ON dvo.id=fm.datafile_id WHERE true"""
 		if args['ids'] is not None:
 			q+=" AND dvo.id in ("+args['ids']+")"
 		if args['ownerid'] is not None:
@@ -76,6 +84,13 @@ def getList(args):
 			# q+= TODO
 		if args['storage'] is not None:
 			q+=" AND storageidentifier LIKE '"+args['storage']+"://%' ORDER BY owner_id"
+		if args['published_only']:
+			q+=" AND dvo.publicationdate IS NOT NULL"
+	
+	if args['limit'] is not None:
+		q+=" LIMIT "+args['limit']
+	if args['offset'] is not None:
+		q+=" OFFSET "+args['offset']
 	
 	records=get_records_for_query(q)
 	if args['recursive']:
@@ -88,6 +103,12 @@ def getList(args):
 
 def ls(args):
 	records=getList(args)
+
+	if args['csv']:
+		writer=csv.writer(sys.stdout)
+		for r in records:
+			writer.writerow([str(v) for v in r.values()])
+		return
 
 	table = Table(show_header=True, header_style="bold magenta")
 	if args['type']=='storage':
@@ -291,6 +312,20 @@ def move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,mov
 		print(f"Removing original file {fromStorageName}://{key}")
 		client1.delete_object(Bucket=bucket1.name,Key=key)
 
+def move_or_copy_file_from_s3_with_rsync(row,path,fromStorageName,destStorageName,move):
+	storageDict=getStorageDict()
+	id=str(row['id'])
+	bucket1,client1=getS3BucketAndClient(fromStorageName)
+	key=path['fullpath']
+	print(f"Copying from {fromStorageName}://{key} to {destStorageName}://{key}")
+	with tempfile.TemporaryFile() as fp:
+		client1.download_fileobj(Fileobj=fp,Bucket=bucket1.name,Key=key)
+		fp.seek(0)
+		
+
+	if(move):
+		print("Move for rsnyc not implemented, and probably never will.")
+
 
 def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 	if fromStorageName==None:
@@ -313,6 +348,8 @@ def move_or_copy_file(row,path,fromStorageName,destStorageName,move):
 		return move_or_copy_file_from_file_to_s3(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["type"]=='s3':
 		return move_or_copy_file_from_s3_to_s3(row,path,fromStorageName,destStorageName,move)
+	elif storageDict[fromStorageName]["type"]=='s3' and storageDict[destStorageName]["transferprotocols"]=='rsync':
+		return move_or_copy_file_from_s3_with_rsync(row,path,fromStorageName,destStorageName,move)
 	elif storageDict[fromStorageName]["type"]=='swift' or storageDict[destStorageName]["type"]=='swift':
 		print("Moving file to and from swift is not supported and, as dataverse swift support itself is deprecated, it may never be.")
 		return False
@@ -386,13 +423,14 @@ def mv_or_cp(args,move):
 		elif move:
 			changeStorageInDatabase(args['to_storage'],row['id'],row['type'])
 
-def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, 'command': None, 'remote_locations': None, 'cpap_only': None, 'rslstatus': None,}, 
+def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, 'command': None, 'remote_locations': None, 'cpap_only': None, 'rslstatus': None, 'published_only': None, 'limit': None, 'offset': None}, 
                  ids=None, 
                  ownerid=None, 
                  ownername=None, 
                  recursive=None, 
                  type=None,
                  cpap_only=None, 
+                 published_only=None, 
                  command=None, 
                  storage=None,
                  to_storage=None,
@@ -408,7 +446,10 @@ def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, '
 		'ownername': ownername,
 		'remote_locations': remote_locations if remote_locations!=None else args['remote_locations'],
 		'cpap_only': cpap_only if cpap_only!=None else args['cpap_only'],
+		'published_only': published_only if published_only!=None else args['published_only'],
 		'rslstatus': args['rslstatus'],
+		'limit': args['limit'],
+		'offset': args['offset'],
 	}
 
 def recurse(args, ownerid):
@@ -525,23 +566,6 @@ def calculateStorageDict():
 		storageDict[x['name']]["id"]=x["id"]
 	return storageDict
 
-def get_records_for_query(query):
-	ic(query)
-	dataverse_db_connection = create_database_connection()
-	cursor = dataverse_db_connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-	cursor.execute(query)
-#	columns = list(cursor.description)
-	records = cursor.fetchall()
-	dataverse_db_connection.close()
-	return records
-
-def sql_update(query, params):
-	print("updating database: "+(query%params))
-	dataverse_db_connection = create_database_connection()
-	cursor = dataverse_db_connection.cursor()
-	cursor.execute(query, params)
-	dataverse_db_connection.commit() 
-	dataverse_db_connection.close()
 
 def get_filepaths(idlist=None,separatePaths=True):
 	storages=getStorageDict()
@@ -628,6 +652,10 @@ def main():
 	ap.add_argument("-r", "--recursive", required=False, action='store_true', help="make action recursive")
 	ap.add_argument("--remote-locations", required=False, action='store_true', help="print remote location information")
 	ap.add_argument("--cpap-only", required=False, action='store_true', help="filter for Copy Approved")
+	ap.add_argument("--limit", required=False, help="limit output size")
+	ap.add_argument("--offset", required=False, help="offset for queries")
+	ap.add_argument("--published-only", required=False, action='store_true', help="filter only for published")
+	ap.add_argument("--csv", required=False, action='store_true', help="print csv instead of pretty table")
 	ap.add_argument("--debug", required=False, action='store_true', help="print debug messages")
 	args = vars(ap.parse_args())
 	
