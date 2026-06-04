@@ -1619,14 +1619,7 @@ public class RoCrateImportManager {
             if (!compoundFieldProps.isEmpty()) {
                 DatasetFieldCompoundValue valueToObtainIdFrom = compoundValues.get(positionOfProp);
                 String newId = roCrateServiceBean.createRoIdForCompound(valueToObtainIdFrom);
-                var rootDataEntity = roCrate.getRootDataEntity().getProperties().get(propName);
-                if (rootDataEntity.isObject()) {
-                    ((ObjectNode) rootDataEntity).put("@id", newId);
-                } else {
-                    ((ObjectNode) rootDataEntity.get(positionOfProp)).put("@id", newId);
-                }
-
-                contextualEntityToUpdateId.get().getProperties().put("@id", newId);
+                roCrateServiceBean.replaceEntityIdReferences(roCrate, oldId, newId);
                 return true;
             }
         }

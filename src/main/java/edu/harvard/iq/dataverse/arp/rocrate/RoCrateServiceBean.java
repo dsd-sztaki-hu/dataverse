@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse.arp.rocrate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
@@ -9,6 +10,7 @@ import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ejb.EJB;
@@ -238,5 +240,59 @@ public class RoCrateServiceBean {
         return roid;
 
     }
-    
+
+    /**
+     * Replaces every {@code @id} reference to {@code oldId} with {@code newId} across the whole RO-Crate,
+     * including nested file and folder entities.
+     */
+    public void replaceEntityIdReferences(RoCrate roCrate, String oldId, String newId) {
+        if (oldId == null || newId == null || oldId.equals(newId)) {
+            return;
+        }
+        replaceIdInProperties(roCrate.getRootDataEntity().getProperties(), oldId, newId);
+        roCrate.getAllContextualEntities().forEach(entity -> replaceIdInProperties(entity.getProperties(), oldId, newId));
+        roCrate.getAllDataEntities().forEach(entity -> replaceIdInProperties(entity.getProperties(), oldId, newId));
+        AbstractEntity entity = roCrate.getEntityById(oldId);
+        if (entity != null) {
+            entity.getProperties().put("@id", newId);
+        }
+    }
+
+    private void replaceIdInProperties(ObjectNode properties, String oldId, String newId) {
+        properties.fields().forEachRemaining(field -> {
+            if (propsToIgnore.contains(field.getKey())) {
+                return;
+            }
+            JsonNode value = field.getValue();
+            if (isIdReferenceNode(value)) {
+                replaceIdNode(value, oldId, newId);
+            }
+        });
+    }
+
+    private boolean isIdReferenceNode(JsonNode node) {
+        if (node.isObject() && node.size() == 1 && node.has("@id")) {
+            return true;
+        }
+        if (node.isArray()) {
+            for (JsonNode element : node) {
+                if (!element.isObject() || element.size() != 1 || !element.has("@id")) {
+                    return false;
+                }
+            }
+            return !node.isEmpty();
+        }
+        return false;
+    }
+
+    private void replaceIdNode(JsonNode node, String oldId, String newId) {
+        if (node.isObject()) {
+            if (node.has("@id") && oldId.equals(node.get("@id").textValue())) {
+                ((ObjectNode) node).put("@id", newId);
+            }
+        } else if (node.isArray()) {
+            node.forEach(idObj -> replaceIdNode(idObj, oldId, newId));
+        }
+    }
+
 }
