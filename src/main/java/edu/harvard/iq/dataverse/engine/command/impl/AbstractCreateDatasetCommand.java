@@ -167,16 +167,21 @@ public abstract class AbstractCreateDatasetCommand extends AbstractDatasetComman
             ctxt.index().asyncIndexDataset(theDataset, true);
         }
 
+        return theDataset;
+    }
+
+    @Override
+    public boolean onSuccess(CommandContext ctxt, Object r) {
+        Dataset dataset = (Dataset) r;
         try {
-            // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
             RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
-            roCrateExportManager.createOrUpdateRoCrate(theDataset.getLatestVersion());
+            roCrateExportManager.createOrUpdateRoCrate(dataset.getLatestVersion());
         } catch (Exception e) {
+            logger.warning("Failed to export RO-Crate after dataset create: " + e.getMessage());
             e.printStackTrace();
             JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
         }
-                 
-        return theDataset;
+        return true;
     }
 
     @Override

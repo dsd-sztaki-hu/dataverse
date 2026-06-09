@@ -22,6 +22,7 @@ import edu.kit.datamanager.ro_crate.reader.Readers;
 import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.apache.commons.io.FileUtils;
 
@@ -59,8 +60,17 @@ public class RoCrateExportManager {
     @EJB
     RoCrateNameProvider roCrateNameProvider;
 
+    @Inject
+    RoCrateUploadServiceBean roCrateUploadServiceBean;
+
+    @EJB
+    RoCrateImportMappingStoreBean roCrateImportMappingStore;
+
     @EJB
     DatasetServiceBean datasetService;
+
+    @EJB
+    DatasetVersionServiceBean datasetVersionService;
 
     @EJB
     DataFileServiceBean datafileService;
@@ -70,9 +80,6 @@ public class RoCrateExportManager {
     
     @EJB
     ArpServiceBean arpServiceBean;
-
-    @EJB
-    RoCrateExportJobBean roCrateExportJobBean;
     
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
@@ -131,14 +138,39 @@ public class RoCrateExportManager {
 
     /**
      * Entry point called from Dataverse core (dataset create/update commands).
-     * We intentionally offload the heavy RO-Crate generation into an async method with a new transaction,
-     * to avoid interacting with the caller's transaction/persistence context.
      */
     public void createOrUpdateRoCrate(DatasetVersion version) throws Exception {
         if (version == null || version.getId() == null) {
             return;
         }
-        roCrateExportJobBean.createOrUpdateRoCrateAsync(version.getId());
+        Map<String, String> importMapping = roCrateImportMappingStore.take(version.getId());
+        if (importMapping == null || importMapping.isEmpty()) {
+            importMapping = roCrateUploadServiceBean.getImportMapping();
+        }
+        doCreateOrUpdateRoCrate(findDeepVersion(version), importMapping);
+        roCrateUploadServiceBean.reset();
+    }
+
+    /**
+     * Final RO-Crate export for API zip uploads. Runs after files are saved so the export
+     * sees the complete file list and uses the uploaded file @id mapping explicitly.
+     */
+    public void finalizeRoCrateAfterZipUpload(DatasetVersion version, Map<String, String> importMapping) throws Exception {
+        if (version == null || version.getId() == null) {
+            return;
+        }
+        doCreateOrUpdateRoCrate(findDeepVersion(version), importMapping);
+    }
+
+    public JsonNode readRoCrateJsonFromDisk(DatasetVersion version) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        try (BufferedReader reader = Files.newBufferedReader(Paths.get(roCrateServiceBean.getRoCratePath(version)))) {
+            return mapper.readTree(reader);
+        }
+    }
+
+    private DatasetVersion findDeepVersion(DatasetVersion version) {
+        return datasetVersionService.findDeep(version.getId());
     }
 
     public void doCreateOrUpdateRoCrate(DatasetVersion version, Map<String, String> importMapping) throws Exception {

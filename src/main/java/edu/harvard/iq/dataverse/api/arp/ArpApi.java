@@ -25,9 +25,7 @@ import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.file.CreateDataFileResult;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
-import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
-import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.json.Json;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonStructure;
@@ -234,6 +232,9 @@ public class ArpApi extends AbstractApiBean {
 
     @EJB
     RoCrateImportMappingStoreBean roCrateImportMappingStoreBean;
+
+    @EJB
+    DatasetVersionServiceBean datasetVersionService;
 
     @EJB
     EjbDataverseEngine commandEngine;
@@ -1270,9 +1271,9 @@ public class ArpApi extends AbstractApiBean {
 
         DataverseRequest req = createDataverseRequest(user);
         try {
-            JsonNode uploadedRoCrate = uploadRoCrateJson(roCrateJson, ownerId, req);
+            RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateJson, ownerId, req);
             jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                    .add("roCrate", JsonUtil.getJsonObject(uploadedRoCrate.toString()))
+                    .add("roCrate", JsonUtil.getJsonObject(uploadResult.roCrate().toString()))
                     .build();
             return roCrateOk("RO-Crate uploaded", data);
         } catch (ArpException e) {
@@ -1291,9 +1292,10 @@ public class ArpApi extends AbstractApiBean {
         }
     }
     
-    public JsonNode uploadRoCrateJson(String roCrateJsonString, String ownerId, DataverseRequest req) throws ArpException {
+    public RoCrateJsonUploadResult uploadRoCrateJson(String roCrateJsonString, String ownerId, DataverseRequest req) throws ArpException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode uploadedCrate;
+        DatasetVersion managedVersion;
         try {
             var roCrateJson = mapper.readTree(roCrateJsonString);
             // whether the arpPid is present or not means it is a new ds or one already present in dv
@@ -1345,7 +1347,6 @@ public class ArpApi extends AbstractApiBean {
 
             RoCrate preProcessedRoCrate = preProcessResult.getRoCrate();
 
-            DatasetVersion managedVersion;
             if (alreadyPresentDs) {
                 boolean updateDraft = dataset.getLatestVersion().isDraft();
                 if (updateDraft) {
@@ -1401,7 +1402,43 @@ public class ArpApi extends AbstractApiBean {
                     "Details: " + e.getMessage());
         }
 
-        return uploadedCrate;
+        return new RoCrateJsonUploadResult(uploadedCrate, managedVersion);
+    }
+
+    private DatasetVersion findUploadedDatasetVersion(DatasetVersion versionFromUpload) throws ArpException {
+        if (versionFromUpload == null) {
+            throw new ArpException("Dataset version is not available after RO-Crate metadata import");
+        }
+        Long versionId = versionFromUpload.getId();
+        if (versionId != null) {
+            for (int attempt = 0; attempt < 10; attempt++) {
+                try {
+                    DatasetVersion version = datasetVersionService.findDeep(versionId);
+                    if (version != null) {
+                        return version;
+                    }
+                } catch (RuntimeException ignored) {
+                    // Treat as "not visible yet" and retry.
+                }
+                try {
+                    Thread.sleep(200L);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+        if (versionFromUpload.getDataset() != null && versionFromUpload.getDataset().getGlobalId() != null) {
+            Dataset dataset = datasetService.findByGlobalId(versionFromUpload.getDataset().getGlobalId().asString());
+            if (dataset != null && dataset.getLatestVersion() != null) {
+                try {
+                    return datasetVersionService.findDeep(dataset.getLatestVersion().getId());
+                } catch (RuntimeException ignored) {
+                    return dataset.getLatestVersion();
+                }
+            }
+        }
+        throw new ArpException("Dataset version not found after RO-Crate metadata import (id=" + versionId + ")");
     }
 
     @POST
@@ -1437,32 +1474,37 @@ public class ArpApi extends AbstractApiBean {
         DataverseRequest req = createDataverseRequest(user);
         try {
             var roCrateString = arpService.extractFileFromZip(new ByteArrayInputStream(fileBytes), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
-            JsonNode uploadedRoCrate = uploadRoCrateJson(roCrateString, ownerId, req);
+            RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateString, ownerId, req);
+            JsonNode uploadedRoCrate = uploadResult.roCrate();
             String filename = fileDetail.getFileName();
             String type = (bodyPart != null && bodyPart.getMediaType() != null)
                     ? bodyPart.getMediaType().toString()
                     : "unknown";
 
-            var arpPid = uploadedRoCrate.get("@graph").get(0).get("@arpPid");
-            var version = datasetService.findByGlobalId(arpPid.textValue()).getLatestVersion();
+            DatasetVersion version = findUploadedDatasetVersion(uploadResult.version());
             Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
             CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
             List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
 
-            // Store the import mapping for the async RO-Crate export triggered by the upcoming update command.
-            // We cannot rely on session-scoped state during async export.
+            // Store the import mapping for the RO-Crate export triggered by the upcoming update command.
+            // API requests have no HTTP session, so session-scoped upload state is unavailable.
             var importMapping = roCrateImportMappingServiceBean.createImportMapping((ArrayNode) uploadedRoCrate.get("@graph"), filesAdded);
             roCrateImportMappingStoreBean.put(version.getId(), importMapping);
 
             var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
             var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);
-            String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(updatedDataset.getLatestVersion());
-            Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
+            var latestVersion = updatedDataset.getLatestVersion();
+            roCrateExportManager.finalizeRoCrateAfterZipUpload(latestVersion, importMapping);
+            JsonNode roCrate = roCrateExportManager.readRoCrateJsonFromDisk(latestVersion);
             return roCrateOk("RO-Crate uploaded", NullSafeJsonBuilder.jsonObjectBuilder()
-                    .add("roCrate", JsonUtil.getJsonObject(crate.getJsonMetadata()))
+                    .add("roCrate", JsonUtil.getJsonObject(roCrate.toString()))
                     .build());
             
-        } catch (ArpException | CommandException e) {
+        } catch (ArpException | CommandException | IOException e) {
+            e.printStackTrace();
+            logger.severe(e.getMessage());
+            return roCrateError(BAD_REQUEST, e.getMessage(), null);
+        } catch (Exception e) {
             e.printStackTrace();
             logger.severe(e.getMessage());
             return roCrateError(BAD_REQUEST, e.getMessage(), null);
@@ -1621,5 +1663,6 @@ public class ArpApi extends AbstractApiBean {
 //        }
     }
 
+    public record RoCrateJsonUploadResult(JsonNode roCrate, DatasetVersion version) {}
 
 }

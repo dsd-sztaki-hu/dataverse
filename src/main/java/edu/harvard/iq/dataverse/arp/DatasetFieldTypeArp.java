@@ -13,6 +13,8 @@ import java.io.Serializable;
         // This should give a single result
         @NamedQuery(name = "DatasetFieldTypeArp.findOneForDatasetFieldType",
                 query = "SELECT o FROM DatasetFieldTypeArp o WHERE o.fieldType=:fieldType ORDER BY o.id"),
+        @NamedQuery(name = "DatasetFieldTypeArp.findOneForFieldTypeId",
+                query = "SELECT o FROM DatasetFieldTypeArp o WHERE o.fieldType.id=:fieldTypeId ORDER BY o.id"),
         @NamedQuery(name = "DatasetFieldTypeArp.findAllByMetadataBlock",
                 query = "SELECT o FROM DatasetFieldTypeArp o JOIN DatasetFieldType dft ON dft.id=o.id JOIN MetadataBlock mdb ON mdb.id=dft.id WHERE mdb=:metadataBlock ORDER BY mdb.id, dft.id")
 })
