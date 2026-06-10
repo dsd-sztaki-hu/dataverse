@@ -1494,7 +1494,9 @@ public class ArpApi extends AbstractApiBean {
             var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
             var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);
             var latestVersion = updatedDataset.getLatestVersion();
-            roCrateExportManager.finalizeRoCrateAfterZipUpload(latestVersion, importMapping);
+            // skip finalization to let the files be a part of multiple datasets and the root dataset too
+            // not only the actually containing folder (dataset)
+            // roCrateExportManager.finalizeRoCrateAfterZipUpload(latestVersion, importMapping);
             JsonNode roCrate = roCrateExportManager.readRoCrateJsonFromDisk(latestVersion);
             return roCrateOk("RO-Crate uploaded", NullSafeJsonBuilder.jsonObjectBuilder()
                     .add("roCrate", JsonUtil.getJsonObject(roCrate.toString()))
