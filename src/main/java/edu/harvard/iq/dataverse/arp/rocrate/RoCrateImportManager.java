@@ -461,24 +461,17 @@ public class RoCrateImportManager {
     }
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
-    public RoCrate preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport, boolean isStrict) throws IOException, ArpException {
+    public RoCrateImportPrepResult preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport, boolean isStrict) throws IOException {
         String latestVersionRoCrateFolderPath = dataset.getId() != null ? getRoCrateFolderForPreProcess(dataset.getLatestVersion()) : null;
         RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? 
                 new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(latestVersionRoCrateFolderPath) :
                 null;
         RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate, isStrict);
-
-        var prepErrors = roCrateImportPrepResult.getErrors();
-        var prepWarnings = roCrateImportPrepResult.getWarnings();
-        if (!prepErrors.isEmpty() || !prepWarnings.isEmpty()) {
-            throw new ArpException(roCrateImportPrepResult.toJson().toString());
-        }
-
         RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
-
-        roCrateServiceBean.collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
-
-        return roCrateToImport;
+        if (roCrateToImport != null) {
+            roCrateServiceBean.collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
+        }
+        return roCrateImportPrepResult;
     }
 
     public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString, boolean isStrict) {
@@ -1332,14 +1325,19 @@ public class RoCrateImportManager {
                         var dft = fieldService.findByName(field.getKey());
                         if (dft != null && dft.getUri() != null && !dft.getUri().isBlank()) {
                             ((ObjectNode) roCrateContext).put(field.getKey(), dft.getUri());
-                            preProcessResult.addWarning(null, field.getKey(), "Missing @context URI added");
+                            if (hasId) {
+                                preProcessResult.addWarning(jsonNode.get("@id").textValue(), field.getKey(), "Missing @context URI added");
+                            } else {
+                                preProcessResult.addWarning("entity_without_valid_id", field.getKey(), "Missing @context URI added");
+                            }
                         } else {
-                            if (!handleNonDftProp((ObjectNode) roCrateContext, field.getKey(), preProcessResult)) {
+                            var entityId = hasId ? jsonNode.get("@id").textValue() : "entity_without_valid_id";
+                            if (!handleNonDftProp((ObjectNode) roCrateContext, field.getKey(), preProcessResult, entityId)) {
                                 if (hasId) {
-                                    preProcessResult.addError(jsonNode.get("@id").textValue(), field.getKey(), "Missing @context URI",
+                                    preProcessResult.addError(entityId, field.getKey(), "Missing @context URI",
                                             "Add the corresponding URI for '" + field.getKey() + "' to @context.");
                                 } else {
-                                    preProcessResult.addError("entity_without_valid_id", field.getKey(), "Missing @context URI",
+                                    preProcessResult.addError(entityId, field.getKey(), "Missing @context URI",
                                             "Add the corresponding URI for '" + field.getKey() + "' to @context.");
                                 }
                             }
@@ -1357,7 +1355,7 @@ public class RoCrateImportManager {
     
     // Handles missing @context URI-s for non-DatasetFieldType props
     // returns true if the fix was successful
-    private boolean handleNonDftProp(ObjectNode roCrateContext, String fieldName, RoCrateImportPrepResult preProcessResult) {
+    private boolean handleNonDftProp(ObjectNode roCrateContext, String fieldName, RoCrateImportPrepResult preProcessResult, String entityId) {
         switch (fieldName) {
             case "license":
                 roCrateContext.put(fieldName, "https://schema.org/license");
@@ -1371,7 +1369,7 @@ public class RoCrateImportManager {
             default:
                 return false;
         }
-        preProcessResult.addWarning(null, fieldName, "Missing @context URI added");
+        preProcessResult.addWarning(entityId, fieldName, "Missing @context URI added");
         return true;
     }
 

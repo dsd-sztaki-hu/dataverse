@@ -291,15 +291,6 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
             }
         }
         
-        try {
-            // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
-            RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
-            roCrateExportManager.createOrUpdateRoCrate(savedDataset.getLatestVersion());
-        } catch (Exception e) {
-            e.printStackTrace();
-            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
-        }
-
         return savedDataset; 
     }
     
@@ -310,8 +301,14 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
         // (it will be scheduled then for later indexing of the newest version).
         // See the documentation of asyncIndexDataset method for more details.
         ctxt.index().asyncIndexDataset((Dataset) r, true);
-        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
         RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+        try {
+            roCrateExportManager.createOrUpdateRoCrate(((Dataset) r).getLatestVersion());
+        } catch (Exception e) {
+            logger.warning("Failed to export RO-Crate after dataset update: " + e.getMessage());
+            e.printStackTrace();
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataset.message.roCrateError"));
+        }
         roCrateExportManager.finalizeRoCrateForPublish(((Dataset) r).getLatestVersion());
         return true;
     }

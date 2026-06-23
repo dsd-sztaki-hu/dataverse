@@ -17,20 +17,19 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 @Stateless
 @Named
 public class RoCrateServiceBean {
+    private static final Logger logger = Logger.getLogger(RoCrateServiceBean.class.getCanonicalName());
 
     @EJB
     DatasetFieldServiceBean fieldService;
@@ -103,7 +102,13 @@ public class RoCrateServiceBean {
 
     public void collectConformsToIds(RootDataEntity rootDataEntity, Dataset dataset, ObjectMapper mapper) {
         var conformsToArray = mapper.createArrayNode();
-        var conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
+        final List<String> conformsToIdsFromMdbs;
+        try {
+            conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
+        } catch (RuntimeException e) {
+            logger.warning("Failed to generate RO-Crate conformsTo ids: " + e.getMessage());
+            return;
+        }
 
         Set<String> existingConformsToIds = new HashSet<>();
         if (rootDataEntity.getProperties().has("conformsTo")) {
