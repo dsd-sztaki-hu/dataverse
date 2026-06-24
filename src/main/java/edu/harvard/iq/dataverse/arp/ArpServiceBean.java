@@ -123,6 +123,7 @@ public class ArpServiceBean implements java.io.Serializable {
     public static String RO_CRATE_METADATA_JSON_NAME = "ro-crate-metadata.json";
     public static String RO_CRATE_PREVIEW_HTML_NAME = "ro-crate-preview.html";
     public static String RO_CRATE_EXTRAS_JSON_NAME = "ro-crate-extras.json";
+    public static String ID_OF_FILES_WITH_METADATA = "idOfFilesWithMetadata";
 
     private static JsonObject fileClassHu;
     private static JsonObject fileClassEn;

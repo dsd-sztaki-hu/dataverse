@@ -119,6 +119,14 @@
                                   data-clipboard-text="#{unfValue}" 
                                   title="#{bundle['file.metaData.checksum.copy']}&lt;br/&gt;#{unfValue}"></span>
                 </div>
+                <!-- RO-CRATE FILE METADATA -->
+                <div class="rocrate-metadata-block" jsf:rendered="#{hasFileId and DatasetPage.fileHasRoCrateMetadata(dataFile.id)}">
+                    <span style="margin-right:3px;">#{bundle['file.roCrate.viewAdditionalMetadata']}</span>
+                    <a href="#{widgetWrapper.wrapURL(DatasetPage.getFileRoCrateMetadataUrl(fileMetadata))}"
+                       class="glyphicon glyphicon-edit btn-copy checksum-tooltip"
+                       data-toggle="tooltip" data-placement="top"
+                       title="#{bundle['file.roCrate.viewAdditionalMetadata']}"></a>
+                </div>
             </div>
             <div class="fileDescription small" jsf:rendered="#{hasDescription}">
                 <h:outputText id="fileDescNonEmpty" value="#{fileMetadata.description}"/>

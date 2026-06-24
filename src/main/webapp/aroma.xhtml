@@ -15,25 +15,19 @@
 
     <h:body>
         <ui:composition>
-            <script>
-                setTimeout(() => {
-                  const persistentId = "#{persistentId}";
-                  const language = "#{language}";
-                  const showFile = "#{showFile}";
-                  const version = "#{version}";
-                  let uri = "#{aromaAddress}?dataset=" + encodeURIComponent(persistentId)+"&amp;lang="+language+"&amp;embed="+true;
-                  if (showFile) {
-                    uri += "&amp;showFile="+showFile;
-                  }
-                  if (version) {
-                      uri += "&amp;version="+version;
-                  }
-                  uri += "#{DatasetPage.optionalApiKeyParameterForAroma}";
-                  document.getElementById('iframeId').src = uri;
-                }, 10)
-            </script>
-            <div id="frame-div" class="embed-responsive embed-responsive-16by9">
-                <iframe id="iframeId" title="ARP AROMA" src=""></iframe>
+            <c:set var="aromaIframeDomId" value="#{empty aromaIframeElementId ? 'iframeId' : aromaIframeElementId}"/>
+            <c:set var="optionalApiKeyParameter" value="#{empty optionalApiKeyParameter ? '' : optionalApiKeyParameter}"/>
+            <c:set var="optionalReadonlyParameter" value="#{empty optionalReadonlyParameter ? '' : optionalReadonlyParameter}"/>
+            <div id="aromaEmbedWrap_#{aromaIframeDomId}" class="embed-responsive embed-responsive-16by9 aroma-embed-wrap"
+                 data-aroma-address="#{aromaAddress}"
+                 data-aroma-persistent-id="#{persistentId}"
+                 data-aroma-language="#{language}"
+                 data-aroma-version="#{version}"
+                 data-aroma-focus="#{focus}"
+                 data-aroma-focus-dataset="#{focusDataset}"
+                 data-aroma-api-key-param="#{optionalApiKeyParameter}"
+                 data-aroma-readonly-param="#{optionalReadonlyParameter}">
+                <iframe id="#{aromaIframeDomId}" title="ARP AROMA" src="about:blank" data-aroma-embed="true"></iframe>
             </div>
         </ui:composition>
     </h:body>

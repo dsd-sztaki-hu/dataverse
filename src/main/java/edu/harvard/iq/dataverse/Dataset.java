@@ -44,10 +44,6 @@ import edu.harvard.iq.dataverse.storageuse.StorageUse;
 import edu.harvard.iq.dataverse.util.StringUtil;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 
-// ARP specific
-import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
-import java.util.Optional;
-
 /**
  *
  * @author skraffmiller
@@ -1029,23 +1025,4 @@ public class Dataset extends DvObjectContainer {
     public String getTargetUrl() {
         return Dataset.TARGET_URL;
     }
-    public boolean hasJsonCrate(String versionString) {
-       return containsRoCrateJson(versionString);
-    }
-
-    private boolean containsRoCrateJson(String versionString) {
-        DatasetVersion actVersion;
-        if (versionString == null || versionString.isBlank()) {
-            actVersion = getLatestVersionForCopy();
-        } else {
-            Optional<DatasetVersion> dsVersion = getVersions().stream().filter(dsv -> dsv.getFriendlyVersionNumber().equals(versionString)).findFirst();
-            actVersion = dsVersion.orElseGet(this::getLatestVersion);
-        }
-        return actVersion.getFileMetadatas().stream().anyMatch(fileMetadata ->
-                fileMetadata != null &&
-                Objects.equals(fileMetadata.getDataFile().getDisplayName(), RO_CRATE_METADATA_JSON_NAME) &&
-                (fileMetadata.getDataFile().getDirectoryLabel() == null || fileMetadata.getDataFile().getDirectoryLabel().isBlank())
-        );
-    }
-
 }

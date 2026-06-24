@@ -1,18 +1,82 @@
 /*
  * Rebind bootstrap UI components after Primefaces ajax calls
  */
+window.aromaEmbedCache = window.aromaEmbedCache || {};
+
+function buildAromaUriFromWrap(wrapEl) {
+    var $wrap = $(wrapEl);
+    if (!$wrap.length || !$wrap.data('aroma-address')) {
+        return null;
+    }
+    var uri = $wrap.data('aroma-address') + '?dataset=' + encodeURIComponent($wrap.data('aroma-persistent-id'))
+        + '&lang=' + $wrap.data('aroma-language') + '&embed=true';
+    var focusDataset = $wrap.data('aroma-focus-dataset');
+    if (focusDataset) {
+        uri += '&focusDataset=true';
+    }
+    var focus = $wrap.data('aroma-focus');
+    if (focus) {
+        uri += '&focus=' + encodeURIComponent(focus);
+    }
+    var version = $wrap.data('aroma-version');
+    if (version) {
+        uri += '&version=' + version;
+    }
+    var apiKeyParam = $wrap.data('aroma-api-key-param');
+    if (apiKeyParam) {
+        uri += apiKeyParam;
+    }
+    var readonlyParam = $wrap.data('aroma-readonly-param');
+    if (readonlyParam) {
+        uri += readonlyParam;
+    }
+    return uri;
+}
+
+function loadAromaEmbed(iframeId) {
+    var frame = document.getElementById(iframeId);
+    if (!frame) {
+        return;
+    }
+    var wrap = frame.closest('.aroma-embed-wrap');
+    if (!wrap) {
+        return;
+    }
+    var uri = buildAromaUriFromWrap(wrap);
+    if (!uri) {
+        return;
+    }
+    if (window.aromaEmbedCache[iframeId] === uri && frame.src && frame.src.indexOf('about:blank') === -1) {
+        return;
+    }
+    frame.src = uri;
+    window.aromaEmbedCache[iframeId] = uri;
+}
+
+function loadAromaEmbedsInContainer(container) {
+    $(container).find('iframe[data-aroma-embed]').each(function () {
+        var $collapse = $(this).closest('div.collapse');
+        if ($collapse.length && !$collapse.hasClass('in')) {
+            return;
+        }
+        loadAromaEmbed(this.id);
+    });
+}
+
 function bind_bsui_components(){
     // Facet panel Filter Results btn toggle
     $(document).on('click', '[data-toggle=offcanvas]', function() {
         $('.row-offcanvas').toggleClass('active', 200);
     });
     
-    // Collapse Header Icons
-    $('div[id^="panelCollapse"]').on('shown.bs.collapse', function () {
+    // Collapse Header Icons + lazy AROMA embed load
+    $(document).off('shown.bs.collapse.aroma hidden.bs.collapse.aroma', 'div[id^="panelCollapse"]');
+    $(document).on('shown.bs.collapse.aroma', 'div[id^="panelCollapse"]', function () {
       $(this).siblings('div.panel-heading').children('span.glyphicon').removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+      loadAromaEmbedsInContainer(this);
     });
 
-    $('div[id^="panelCollapse"]').on('hidden.bs.collapse', function () {
+    $(document).on('hidden.bs.collapse.aroma', 'div[id^="panelCollapse"]', function () {
       $(this).siblings('div.panel-heading').children('span.glyphicon').removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
     });
     

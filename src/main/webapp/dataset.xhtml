@@ -774,6 +774,37 @@
                     <!-- END Top Button/Citation Blocks -->
                     <!-- END View infoMode -->
 
+                    <div id="datasetRoCrateBlock" class="row"
+                         jsf:rendered="#{empty DatasetPage.editMode and !DatasetPage.workingVersion.deaccessioned and !widgetWrapper.widgetView and (DatasetPage.hasAdditionalRoCrateMetadata() or permissionsWrapper.canIssueUpdateDatasetCommand(DatasetPage.dataset))}">
+                        <div class="col-xs-12 col-sm-12 col-md-8 col-lg-9 metadata-container padding-none margin-bottom">
+                            <table class="metadata">
+                                <tbody>
+                                    <tr>
+                                        <th scope="row">
+                                            #{bundle['dataset.metadata.additionalRoCrateMetadata']}
+                                            <span class="glyphicon glyphicon-question-sign tooltip-icon"
+                                                  data-toggle="tooltip" data-placement="auto right"
+                                                  data-original-title="#{bundle['dataset.roCrate.summary.tooltip']}"/>
+                                        </th>
+                                        <td>
+                                            <h:inputHidden id="datasetSelectedTabIndex" value="#{DatasetPage.selectedTabIndex}"/>
+                                            <h:inputHidden id="navigateRoCrateToAromaTab" value="#{DatasetPage.navigateRoCrateToAromaTab}"/>
+                                            <p:remoteCommand name="openRoCrateMetadataRC"
+                                                             actionListener="#{DatasetPage.navigateToRoCrateMetadataPanel}"
+                                                             process="@this"
+                                                             update=":datasetForm:tabView :datasetForm:datasetSelectedTabIndex :datasetForm:navigateRoCrateToAromaTab"
+                                                             oncomplete="finishOpenRoCrateMetadata();"/>
+                                            <button type="button" class="btn btn-default"
+                                                    onclick="openRoCrateMetadataRC(); return false;">
+                                                #{DatasetPage.hasAdditionalRoCrateMetadata() ? bundle['file.roCrate.viewAdditionalMetadata'] : bundle['dataset.roCrate.addBtn']}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Create/Edit editMode -->
                     <ui:fragment rendered="#{DatasetPage.editMode == 'METADATA' or DatasetPage.editMode == 'CREATE'}">
                         <p:focus context="datasetForm"/>
@@ -963,7 +994,8 @@
                         <p:tabView id="tabView" widgetVar="content" activeIndex="#{DatasetPage.selectedTabIndex}"
                                    rendered="#{empty DatasetPage.editMode or (DatasetPage.editMode == 'METADATA' or DatasetPage.editMode == 'LICENSE')}">
                             <!-- oncomplete we reset the tab change handler -->
-                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this" />
+                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this"
+                                    oncomplete="handleDatasetTabChangeComplete();"/>
                             <p:tab id="dataFilesTab" title="#{bundle.files}" 
                                    rendered="#{(!deaccessioned 
                                                 or (deaccessioned and canUpdateDataset)) 
@@ -978,37 +1010,32 @@
                                 <div class="button-block tab-header margin-bottom text-right" jsf:rendered="#{empty DatasetPage.editMode}">
                                     <!-- If the RO-Crate is not downloadable, because some files are restricted for the user. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" onclick="PF('roCrateDownloadInvalid').show();"
-                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and empty DatasetPage.editMode and !widgetWrapper.widgetView}"
-                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                                   rendered="#{!DatasetPage.canDownloadRoCrate() and empty DatasetPage.editMode and !widgetWrapper.widgetView}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <!-- If the RO-Crate is downloadable and the popup is required. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}" oncomplete="PF('guestbookAndTermsPopup').show();"
                                                    update=":datasetForm:guestbookAndTermsPopup"
-                                                   rendered="#{!DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
-                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                                   rendered="#{!DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                         <f:actionListener binding="#{DatasetPage.setTermsGuestbookPopupAction(bundle.download)}"/>
                                     </p:commandLink>
                                     <!-- If the RO-Crate is downloadable and the popup is not required. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateDownload()}"
                                                    ajax="false"
-                                                   rendered="#{DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
-                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                                   rendered="#{DatasetPage.workingVersion.draft and DatasetPage.canDownloadRoCrate() and !DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <!-- If the RO-Crate is too large to download. -->
                                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.setRoCrateMetadataDownload(true)}"
                                                    update=":downloadRoCrate,:datasetForm:guestbookAndTermsPopup" oncomplete="PF('downloadRoCrate').show()"
-                                                   rendered="#{DatasetPage.canDownloadRoCrate() and DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}"
-                                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                                   rendered="#{DatasetPage.canDownloadRoCrate() and DatasetPage.tooLargeToDownloadArchival and !widgetWrapper.widgetView and empty DatasetPage.editMode}">
                                         #{bundle['file.dataFilesTab.metadata.downloadRoCrate']}
                                     </p:commandLink>
                                     <h:outputLink
-                                            styleClass="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())? 'btn btn-default btn-access btn-disabled' : 'btn btn-default btn-access'}"
-                                            value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}&amp;start=true#{DatasetPage.optionalApiKeyParameterForAroma}"
+                                            styleClass="btn btn-default btn-access"
+                                            value="#{DatasetPage.aromaAddress}?dataset=#{DatasetPage.uriEncodedPersistentId}&amp;lang=#{DatasetPage.language}&amp;version=#{DatasetPage.workingVersion.getFriendlyVersionNumber()}&amp;start=true#{DatasetPage.optionalApiKeyParameterForAroma}#{DatasetPage.optionalReadonlyParameterForAroma}"
                                             rendered="#{!widgetWrapper.widgetView}"
-                                            disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}"
                                             target="_blank">
                                         #{bundle['arp.dataset.openAroma']}
                                     </h:outputLink>
@@ -1072,7 +1099,7 @@
                             </p:tab>
                             <p:tab id="aromaTab" title="#{bundle['dataset.aromaTab']}"
                                    rendered="#{!DatasetPage.workingVersion.deaccessioned and (empty DatasetPage.editMode or DatasetPage.editMode == 'METADATA')}"
-                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                   disabled="#{!DatasetPage.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
                                 <c:if test="#{DatasetPage.aromaTabSelected}">
                                     <ui:include src="aroma.xhtml">
                                         <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
@@ -1080,6 +1107,9 @@
                                         <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
                                         <ui:param name="language" value="#{DatasetPage.language}"/>
                                         <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
+                                        <ui:param name="aromaIframeElementId" value="aromaDatasetTabEmbedIframe"/>
+                                        <ui:param name="optionalApiKeyParameter" value="#{DatasetPage.optionalApiKeyParameterForAroma}"/>
+                                        <ui:param name="optionalReadonlyParameter" value="#{DatasetPage.optionalReadonlyParameterForAroma}"/>
                                     </ui:include>
                                 </c:if>
                             </p:tab>
@@ -2455,8 +2485,137 @@
                   }
 
                   function findDataIndexOfTab(tabName) {
-                    var dataIndex = $("a[href$='" + tabName + "']").closest('li').attr('data-index');
+                    var dataIndex = $('div[id$="tabView"] a[href$="' + tabName + '"]').closest('li').attr('data-index');
                     return dataIndex;
+                  }
+
+                  function collapseDatasetRoCrateMetadataPanel() {
+                    var $collapse = $('div.ui-tabs-panel[id$="metadataMapTab"] [id$="panelCollapseMetadataRoCrate"]');
+                    if (!$collapse.length) {
+                      $collapse = $('[id$="panelCollapseMetadataRoCrate"]').first();
+                    }
+                    if (!$collapse.length) {
+                      return;
+                    }
+                    var $heading = $collapse.closest('.panel').find('.panel-heading');
+                    if ($collapse.hasClass('in')) {
+                      $collapse.collapse('hide');
+                    }
+                    $collapse.removeClass('in').css('height', '');
+                    $heading.find('.glyphicon').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+                  }
+
+                  function expandDatasetRoCrateMetadataPanel() {
+                    var $collapse = $('div.ui-tabs-panel[id$="metadataMapTab"] [id$="panelCollapseMetadataRoCrate"]');
+                    if (!$collapse.length) {
+                      $collapse = $('[id$="panelCollapseMetadataRoCrate"]').first();
+                    }
+                    if (!$collapse.length) {
+                      return;
+                    }
+                    var scrollTarget = $collapse.closest('.panel').find('.panel-heading')[0] || $collapse[0];
+                    function afterPanelOpen() {
+                      if (typeof bind_bsui_components === 'function') {
+                        bind_bsui_components();
+                      }
+                      if (typeof loadAromaEmbed === 'function') {
+                        var iframe = $collapse.find('iframe[data-aroma-embed]')[0];
+                        loadAromaEmbed(iframe ? iframe.id : 'aromaMetadataEmbedIframe');
+                      }
+                      if (scrollTarget) {
+                        setTimeout(function () {
+                          scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                      }
+                    }
+                    if ($collapse.hasClass('in')) {
+                      afterPanelOpen();
+                      return;
+                    }
+                    $collapse.one('shown.bs.collapse.datasetRoCrateOpen', afterPanelOpen);
+                    $collapse.collapse('show');
+                    setTimeout(function () {
+                      if (!$collapse.hasClass('in')) {
+                        $collapse.off('shown.bs.collapse.datasetRoCrateOpen');
+                        $collapse.addClass('in').css('height', 'auto');
+                        afterPanelOpen();
+                      }
+                    }, 400);
+                  }
+
+                  window.expandRoCrateAfterTabChange = false;
+
+                  function handleDatasetTabChangeComplete() {
+                    addTabChangeHandlers();
+                    if (window.expandRoCrateAfterTabChange) {
+                      window.expandRoCrateAfterTabChange = false;
+                      expandDatasetRoCrateMetadataPanel();
+                    } else {
+                      collapseDatasetRoCrateMetadataPanel();
+                    }
+                    var $aromaPanel = $('div.ui-tabs-panel[id$="aromaTab"]:visible');
+                    if ($aromaPanel.length && typeof loadAromaEmbed === 'function') {
+                      var iframe = $aromaPanel.find('iframe[data-aroma-embed]')[0];
+                      if (iframe) {
+                        loadAromaEmbed(iframe.id);
+                      }
+                    }
+                  }
+
+                  function finishOpenRoCrateMetadata() {
+                    addTabChangeHandlers();
+                    var openOnAromaTab = $('input[id$="navigateRoCrateToAromaTab"]').val() === 'true';
+                    if (openOnAromaTab) {
+                      window.location.hash = 'aromaTab';
+                      window.expandRoCrateAfterTabChange = false;
+                      var tabView = PF('content');
+                      if (tabView) {
+                        var aromaTargetIndex = findDataIndexOfTab('aromaTab');
+                        if (aromaTargetIndex === undefined || aromaTargetIndex === null) {
+                          var hiddenTabIndex = $('input[id$="datasetSelectedTabIndex"]').val();
+                          if (hiddenTabIndex !== undefined && hiddenTabIndex !== '') {
+                            aromaTargetIndex = hiddenTabIndex;
+                          }
+                        }
+                        if (aromaTargetIndex !== undefined && aromaTargetIndex !== null) {
+                          aromaTargetIndex = parseInt(aromaTargetIndex, 10);
+                          if (tabView.getActiveIndex() !== aromaTargetIndex) {
+                            tabView.select(aromaTargetIndex);
+                          }
+                        }
+                      }
+                      if (typeof loadAromaEmbed === 'function') {
+                        var aromaIframe = $('div.ui-tabs-panel[id$="aromaTab"] iframe[data-aroma-embed]')[0];
+                        if (aromaIframe) {
+                          loadAromaEmbed(aromaIframe.id);
+                        }
+                      }
+                      return;
+                    }
+                    window.location.hash = 'metadataMapTab';
+                    var tabView = PF('content');
+                    if (!tabView) {
+                      expandDatasetRoCrateMetadataPanel();
+                      return;
+                    }
+                    var targetIndex = findDataIndexOfTab('metadataMapTab');
+                    if (targetIndex === undefined || targetIndex === null) {
+                      var hiddenTabIndex = $('input[id$="datasetSelectedTabIndex"]').val();
+                      if (hiddenTabIndex !== undefined && hiddenTabIndex !== '') {
+                        targetIndex = hiddenTabIndex;
+                      }
+                    }
+                    if (targetIndex === undefined || targetIndex === null) {
+                      expandDatasetRoCrateMetadataPanel();
+                      return;
+                    }
+                    targetIndex = parseInt(targetIndex, 10);
+                    if (tabView.getActiveIndex() === targetIndex) {
+                      expandDatasetRoCrateMetadataPanel();
+                      return;
+                    }
+                    window.expandRoCrateAfterTabChange = true;
+                    tabView.select(targetIndex);
                   }
 
                   console.log('++++++ Creating CrossWindowMessenger')

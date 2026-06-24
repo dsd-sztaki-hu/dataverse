@@ -194,6 +194,28 @@
                 </div>
             </div>
         </ui:repeat>
+            <ui:fragment rendered="#{datasetPage and empty editMode and !DatasetPage.workingVersion.deaccessioned and !widgetWrapper.widgetView and (DatasetPage.hasAdditionalRoCrateMetadata() or ((DatasetPage.canUpdateDataset() or permissionsWrapper.canIssueUpdateDatasetCommand(DatasetPage.dataset)) and DatasetPage.openRoCrateMetadataPanel))}">
+                <div class="panel panel-default">
+                    <div data-toggle="collapse" data-target="#panelCollapseMetadataRoCrate" class="panel-heading text-info">
+                        #{bundle['dataset.metadata.additionalRoCrateMetadata']} &#160;<span class="glyphicon #{DatasetPage.openRoCrateMetadataPanel ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'}"/>
+                    </div>
+                    <div id="panelCollapseMetadataRoCrate" class="collapse #{DatasetPage.openRoCrateMetadataPanel ? 'in' : ''}">
+                        <div class="panel-body" style="padding:0;">
+                            <ui:include src="aroma.xhtml">
+                                <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
+                                <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
+                                <ui:param name="focusDataset" value="true"/>
+                                <ui:param name="language" value="#{DatasetPage.language}"/>
+                                <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
+                                <ui:param name="aromaIframeElementId" value="aromaMetadataEmbedIframe"/>
+                                <ui:param name="optionalApiKeyParameter" value="#{DatasetPage.optionalApiKeyParameterForAroma}"/>
+                                <ui:param name="optionalReadonlyParameter" value="#{DatasetPage.optionalReadonlyParameterForAroma}"/>
+                            </ui:include>
+                        </div>
+                    </div>
+                </div>
+            </ui:fragment>
     </div>
     <!-- Edit Mode -->
     <ui:fragment rendered="${(!empty editMode)}">
@@ -476,6 +498,28 @@
                     </div>
                 </div>
             </ui:repeat>
+            <ui:fragment rendered="#{datasetPage and empty editMode and !DatasetPage.workingVersion.deaccessioned and !widgetWrapper.widgetView and (DatasetPage.hasAdditionalRoCrateMetadata() or ((DatasetPage.canUpdateDataset() or permissionsWrapper.canIssueUpdateDatasetCommand(DatasetPage.dataset)) and DatasetPage.openRoCrateMetadataPanel))}">
+                <div class="panel panel-default">
+                    <div data-toggle="collapse" data-target="#panelCollapseMetadataRoCrate" class="panel-heading text-info">
+                        #{bundle['dataset.metadata.additionalRoCrateMetadata']} &#160;<span class="glyphicon #{DatasetPage.openRoCrateMetadataPanel ? 'glyphicon-chevron-up' : 'glyphicon-chevron-down'}"/>
+                    </div>
+                    <div id="panelCollapseMetadataRoCrate" class="collapse #{DatasetPage.openRoCrateMetadataPanel ? 'in' : ''}">
+                        <div class="panel-body" style="padding:0;">
+                            <ui:include src="aroma.xhtml">
+                                <ui:param name="persistentId" value="#{DatasetPage.persistentId}"/>
+                                <ui:param name="userApiKey" value="#{DatasetPage.currentUserApiKeyForAroma}"/>
+                                <ui:param name="aromaAddress" value="#{DatasetPage.aromaAddress}"/>
+                                <ui:param name="focusDataset" value="true"/>
+                                <ui:param name="language" value="#{DatasetPage.language}"/>
+                                <ui:param name="version" value="#{DatasetPage.workingVersion.getFriendlyVersionNumber()}"/>
+                                <ui:param name="aromaIframeElementId" value="aromaMetadataEmbedIframe"/>
+                                <ui:param name="optionalApiKeyParameter" value="#{DatasetPage.optionalApiKeyParameterForAroma}"/>
+                                <ui:param name="optionalReadonlyParameter" value="#{DatasetPage.optionalReadonlyParameterForAroma}"/>
+                            </ui:include>
+                        </div>
+                    </div>
+                </div>
+            </ui:fragment>
         </div>
         </p:fragment>
     </ui:fragment>

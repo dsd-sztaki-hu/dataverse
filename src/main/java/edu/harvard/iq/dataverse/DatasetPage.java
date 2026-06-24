@@ -6,6 +6,7 @@ import edu.harvard.iq.dataverse.globus.Permissions;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
 import edu.harvard.iq.dataverse.api.AbstractApiBean;
@@ -86,6 +87,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -315,7 +317,7 @@ public class DatasetPage implements java.io.Serializable {
     private String aromaAddress = "";
     
     private boolean arpTermsAccepted = false;
-    
+
     private boolean aromaTabSelected = false;
 
     private Dataset dataset = new Dataset();
@@ -328,6 +330,9 @@ public class DatasetPage implements java.io.Serializable {
     private Long versionId;
     private int selectedTabIndex;
     private String selectTab = "";
+    private boolean openRoCrateMetadataPanel = false;
+    private boolean navigateRoCrateToAromaTab = false;
+    private Set<Long> filesWithRoCrateMetadata = Collections.emptySet();
     private List<DataFile> newFiles = new ArrayList<>();
     private List<DataFile> uploadedFiles = new ArrayList<>();
     private MutableBoolean uploadInProgress = new MutableBoolean(false);
@@ -1790,6 +1795,128 @@ public class DatasetPage implements java.io.Serializable {
         this.selectedTabIndex = selectedTabIndex;
     }
 
+    public boolean isOpenRoCrateMetadataPanel() {
+        return openRoCrateMetadataPanel;
+    }
+
+    public void setOpenRoCrateMetadataPanel(boolean openRoCrateMetadataPanel) {
+        this.openRoCrateMetadataPanel = openRoCrateMetadataPanel;
+    }
+
+    public boolean isNavigateRoCrateToAromaTab() {
+        return navigateRoCrateToAromaTab;
+    }
+
+    public void setNavigateRoCrateToAromaTab(boolean navigateRoCrateToAromaTab) {
+        this.navigateRoCrateToAromaTab = navigateRoCrateToAromaTab;
+    }
+
+    public int getMetadataTabIndex() {
+        int index = 0;
+        if (isDataFilesTabRendered()) {
+            index++;
+        }
+        return index;
+    }
+
+    public int getTermsTabIndex() {
+        return getMetadataTabIndex() + 1;
+    }
+
+    public int getVersionsTabIndex() {
+        int index = getMetadataTabIndex() + 1;
+        if (isTermsTabRendered()) {
+            index++;
+        }
+        return index;
+    }
+
+    public int getAromaTabIndex() {
+        int index = getVersionsTabIndex();
+        if (isVersionsTabRendered()) {
+            index++;
+        }
+        return index;
+    }
+
+    private boolean isDataFilesTabRendered() {
+        if (workingVersion == null) {
+            return false;
+        }
+        return (!workingVersion.isDeaccessioned() || canUpdateDataset()) && editMode == null;
+    }
+
+    private boolean isTermsTabRendered() {
+        if (workingVersion == null) {
+            return false;
+        }
+        return !workingVersion.isDeaccessioned()
+                && (editMode == null || editMode == EditMode.LICENSE);
+    }
+
+    private boolean isVersionsTabRendered() {
+        return editMode == null;
+    }
+
+    private boolean isAromaTabRendered() {
+        if (workingVersion == null) {
+            return false;
+        }
+        return !workingVersion.isDeaccessioned()
+                && (editMode == null || editMode == EditMode.METADATA);
+    }
+
+    public void navigateToRoCrateMetadataPanel() {
+        if (hasAdditionalRoCrateMetadata()) {
+            selectedTabIndex = getMetadataTabIndex();
+            openRoCrateMetadataPanel = true;
+            navigateRoCrateToAromaTab = false;
+            setAromaTabSelected(false);
+        } else {
+            selectedTabIndex = getAromaTabIndex();
+            openRoCrateMetadataPanel = false;
+            navigateRoCrateToAromaTab = true;
+            setAromaTabSelected(true);
+        }
+    }
+
+    public boolean fileHasRoCrateMetadata(Long dataFileId) {
+        return dataFileId != null && filesWithRoCrateMetadata.contains(dataFileId);
+    }
+
+    public boolean hasAdditionalRoCrateMetadata() {
+        if (workingVersion == null) {
+            return false;
+        }
+        return roCrateServiceBean.hasAdditionalRoCrateMetadata(workingVersion);
+    }
+
+    public String getFileRoCrateMetadataUrl(FileMetadata fileMetadata) {
+        if (fileMetadata == null || fileMetadata.getDataFile() == null) {
+            return "";
+        }
+        DataFile dataFile = fileMetadata.getDataFile();
+        String idParam = dataFile.getGlobalId() != null
+                ? "persistentId=" + dataFile.getGlobalId().asString()
+                : "fileId=" + dataFile.getId();
+        return "/file.xhtml?" + idParam + "&version=" + workingVersion.getFriendlyVersionNumber()
+                + "&openRoCrate=1#metadataMapTab";
+    }
+
+    private void syncSelectTabForActiveIndex() {
+        if (activeTabIndex == 0 && isDataFilesTabRendered()) {
+            selectTab = "dataFilesTab";
+        } else if (activeTabIndex == getMetadataTabIndex()) {
+            selectTab = "metadataMapTab";
+        } else if (isTermsTabRendered() && activeTabIndex == getTermsTabIndex()) {
+            selectTab = "termsTab";
+        } else if (editMode == null && activeTabIndex == getVersionsTabIndex()) {
+            selectTab = "versionsTab";
+        } else if (isAromaTabRendered() && activeTabIndex == getAromaTabIndex()) {
+            selectTab = "aromaTab";
+        }
+    }
+
     public int getReleaseRadio() {
         return releaseRadio;
     }
@@ -2169,16 +2296,17 @@ public class DatasetPage implements java.io.Serializable {
                     selectedTabIndex = 0;
                     break;
                 case "metadataMapTab":
-                    selectedTabIndex = 1;
+                    selectedTabIndex = getMetadataTabIndex();
                     break;
                 case "termsTab":
-                    selectedTabIndex = 2;
+                    selectedTabIndex = getTermsTabIndex();
                     break;
                 case "versionsTab":
-                    selectedTabIndex = 3;
+                    selectedTabIndex = getVersionsTabIndex();
                     break;
                 case "aromaTab":
-                    selectedTabIndex = 4;
+                    selectedTabIndex = getAromaTabIndex();
+                    setAromaTabSelected(true);
                     break;
 
             }
@@ -2411,6 +2539,18 @@ public class DatasetPage implements java.io.Serializable {
         datasetExploreTools = externalToolService.findDatasetToolsByType(ExternalTool.Type.EXPLORE);
         datasetConfigureTools = externalToolService.findDatasetToolsByType(ExternalTool.Type.CONFIGURE);
         rowsPerPage = 10;
+        if (hasJsonCrate(workingVersion.getFriendlyVersionNumber())) {
+            filesWithRoCrateMetadata = roCrateServiceBean.loadFilesWithRoCrateMetadata(dataset);
+            if (filesWithRoCrateMetadata.isEmpty()) {
+                try {
+                    filesWithRoCrateMetadata = roCrateServiceBean.loadFilesWithRoCrateMetadata(dataset);
+                } catch (Exception e) {
+                    logger.warning("Could not load ro-crate-extras.json: " + e.getMessage());
+                }
+            }
+        } else {
+            filesWithRoCrateMetadata = Collections.emptySet();
+        }
         if (dataset.getId() != null && canUpdateDataset()) {
             hasRestrictedFiles = workingVersion.isHasRestrictedFile();
             hasValidTermsOfAccess = isHasValidTermsOfAccess();
@@ -2421,23 +2561,6 @@ public class DatasetPage implements java.io.Serializable {
         }
         if(isAnonymizedAccess()){
             dataverseHeaderFragment.setBreadcrumbs(new ArrayList<>());
-        }
-        if (dataset.hasJsonCrate(workingVersion.getFriendlyVersionNumber())) {
-            var user = session.getUser();
-            if (user.isAuthenticated()) {
-                AuthenticatedUser authenticatedUser = (AuthenticatedUser) user;
-                if (permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
-                    JH.addMessage(FacesMessage.SEVERITY_WARN,
-                            BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
-                            BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
-                    );
-                    return null;
-                }
-            }
-            JH.addMessage(FacesMessage.SEVERITY_WARN,
-                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
-                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details.no.permission", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
-            );
         }
         return null;
     }
@@ -2836,17 +2959,20 @@ public class DatasetPage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
-        
-        // Handle aroma tab selection without hard-coding the tab index
+        this.selectedTabIndex = tv.getActiveIndex();
+        syncSelectTabForActiveIndex();
         setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
-        
-        if (this.activeTabIndex == 3) {
+        if (this.activeTabIndex != getMetadataTabIndex()) {
+            this.openRoCrateMetadataPanel = false;
+        }
+
+        if (this.activeTabIndex == getVersionsTabIndex()) {
             setVersionTabList(resetVersionTabList());
             setReleasedVersionTabList(resetReleasedVersionTabList());
         } else {
             releasedVersionTabList = new ArrayList<>();
             versionTabList = new ArrayList<>();
-            if(this.activeTabIndex == 0) {
+            if (this.activeTabIndex == 0 && isDataFilesTabRendered()) {
                  init();
             }
         }
@@ -7043,6 +7169,10 @@ public class DatasetPage implements java.io.Serializable {
         this.roCrateMetadataDownload = roCrateMetadataDownload;
     }
     
+    public boolean hasJsonCrate(String versionString) {
+        return roCrateServiceBean.hasJsonCrate(dataset, versionString);
+    }
+
     private Boolean canDownloadRoCrate = null;
 
     // The RO-Crate can only be downloaded if all the files are downloadable for the user.
@@ -7155,6 +7285,14 @@ public class DatasetPage implements java.io.Serializable {
             return "";
         }
         return "&apiKey="+apiKey;
+    }
+
+    public boolean isAromaReadOnly() {
+        return !canUpdateDataset();
+    }
+
+    public String getOptionalReadonlyParameterForAroma() {
+        return isAromaReadOnly() ? "&readonly=true" : "";
     }
 
     public String getLanguage() {

@@ -19,8 +19,7 @@
                     </p:commandLink>
                     <p:commandLink styleClass="btn btn-default btn-access" actionListener="#{DatasetPage.startRoCrateDownload()}"
                                    ajax="false"
-                                   rendered="#{DatasetPage.workingVersion.draft}"
-                                   disabled="#{DatasetPage.dataset.hasJsonCrate(DatasetPage.workingVersion.getFriendlyVersionNumber())}">
+                                   rendered="#{DatasetPage.workingVersion.draft}">
                         #{bundle.ok}
                     </p:commandLink>
                     <button class="btn btn-link" onclick="PF('downloadRoCrate').hide()" type="button">

@@ -9,6 +9,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.*;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
 
 import static edu.harvard.iq.dataverse.DatasetField.createNewEmptyDatasetField;
 import static edu.harvard.iq.dataverse.DatasetFieldCompoundValue.createNewEmptyDatasetFieldCompoundValue;
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.ID_OF_FILES_WITH_METADATA;
 import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_EXTRAS_JSON_NAME;
 import static edu.harvard.iq.dataverse.validation.EMailValidator.isEmailValid;
 import static edu.harvard.iq.dataverse.validation.URLValidator.isURLValid;
@@ -71,7 +73,7 @@ public class RoCrateImportManager {
     DataverseServiceBean dataverseServiceBean;
 
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat",
-            "directoryLabel", "description", "identifier", "@arpPid", "hash");
+            "directoryLabel", "description", "identifier", "@arpPid", "hash", "url", "dateModified", "author");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
 
     private final Cache<String, List<String>> cvvCache = Caffeine.newBuilder()
@@ -1366,6 +1368,12 @@ public class RoCrateImportManager {
             case "hasPart":
                 roCrateContext.put(fieldName, "https://schema.org/hasPart");
                 break;
+            case "dateModified":
+                roCrateContext.put(fieldName, "https://schema.org/dateModified");
+                break;
+            case "url":
+                roCrateContext.put(fieldName, "https://schema.org/url");
+                break;
             default:
                 return false;
         }
@@ -1484,11 +1492,14 @@ public class RoCrateImportManager {
                 .map(DatasetField::getDatasetFieldType).filter(DatasetFieldType::isCompound)
                 .collect(Collectors.toMap(DatasetFieldType::getName, Function.identity()));
         ArrayNode rootHasPart = mapper.createArrayNode();
-        Map<String, ArrayList<String>> extraMetadata = Map.ofEntries(
-                Map.entry("virtualDatasetAdded", new ArrayList<>()),
-                Map.entry("virtualFileAdded", new ArrayList<>()),
-                Map.entry("datasetWithMetadata", new ArrayList<>()),
-                Map.entry("fileWithMetadata", new ArrayList<>()));
+        Map<String, HashSet<String>> extraMetadata = Map.ofEntries(
+                Map.entry("virtualDatasetAdded", new HashSet<>()),
+                Map.entry("virtualFileAdded", new HashSet<>()),
+                Map.entry("datasetWithMetadata", new HashSet<>()),
+                Map.entry("fileWithMetadata", new HashSet<>()),
+                Map.entry(ID_OF_FILES_WITH_METADATA, new HashSet<>())
+                );
+        
 
         // We must take the union of the dataEntities and the contextualEntities,
         // since a single file is considered a dataEntity
@@ -1626,13 +1637,20 @@ public class RoCrateImportManager {
         return false;
     }
 
-    private void writeOutRoCrateExtras(Map<String, ArrayList<String>> extraMetadata, String roCrateFolderPath)
+    private void writeOutRoCrateExtras(Map<String, HashSet<String>> extraMetadata, String roCrateFolderPath)
             throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         ObjectNode resultJsonNode = objectMapper.createObjectNode();
 
-        for (Map.Entry<String, ArrayList<String>> entry : extraMetadata.entrySet()) {
-            resultJsonNode.put(entry.getKey(), entry.getValue().size());
+        for (Map.Entry<String, HashSet<String>> entry : extraMetadata.entrySet()) {
+            if (ID_OF_FILES_WITH_METADATA.equals(entry.getKey())) {
+                ArrayNode fileIdsNode = resultJsonNode.putArray(entry.getKey());
+                for (String fileId : entry.getValue()) {
+                    fileIdsNode.add(Long.parseLong(fileId));
+                }
+            } else {
+                resultJsonNode.put(entry.getKey(), entry.getValue().size());
+            }
         }
 
         objectMapper.writerWithDefaultPrettyPrinter()
@@ -1640,7 +1658,7 @@ public class RoCrateImportManager {
     }
 
     private boolean postProcessDatasetAndFileEntities(RoCrate roCrate, JsonNode parentEntity,
-            List<DataFile> dvDatasetFiles, Map<String, ArrayList<String>> extraMetadata, ObjectNode parentObj,
+            List<DataFile> dvDatasetFiles, Map<String, HashSet<String>> extraMetadata, ObjectNode parentObj,
             ObjectMapper mapper) {
         String oldId = parentEntity.get("@id").textValue();
         var entity = roCrate.getEntityById(oldId);
@@ -1660,6 +1678,9 @@ public class RoCrateImportManager {
 
             if (fileHasExtraMetadata(entityNode)) {
                 extraMetadata.get("fileWithMetadata").add(entityNode.get("@id").textValue());
+                if (!isVirtualFile) {
+                    extraMetadata.get(ID_OF_FILES_WITH_METADATA).add(dataFileOpt.get().getId().toString());
+                }
             }
             return isVirtualFile;
         } else {

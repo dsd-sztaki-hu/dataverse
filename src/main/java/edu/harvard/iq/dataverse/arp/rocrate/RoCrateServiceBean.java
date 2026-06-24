@@ -21,6 +21,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -152,18 +155,65 @@ public class RoCrateServiceBean {
     public String getRoCratePath(DatasetVersion version) {
         return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
+
+    public boolean hasJsonCrate(Dataset dataset, String versionString) {
+        if (dataset == null || dataset.getStorageIdentifier() == null || dataset.getStorageIdentifier().isEmpty()) {
+            return false;
+        }
+        return Files.exists(Paths.get(getRoCratePath(resolveVersion(dataset, versionString))));
+    }
+
+    private DatasetVersion resolveVersion(Dataset dataset, String versionString) {
+        if (versionString == null || versionString.isBlank()) {
+            return dataset.getLatestVersionForCopy();
+        }
+        return dataset.getVersions().stream()
+                .filter(dsv -> dsv.getFriendlyVersionNumber().equals(versionString))
+                .findFirst()
+                .orElseGet(dataset::getLatestVersion);
+    }
     
     public List<String> collectConformsTo(DatasetVersion version) throws IOException {
-        ArrayList<String> urls = new ArrayList<>();
         String roCrateFolderPath = getRoCrateFolder(version);
         Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
-        JsonNode conformsTo = crate.getRootDataEntity().getProperty("conformsTo");
-        if (conformsTo.isObject()) {
-            urls.add(conformsTo.get("@id").textValue());
-        } else {
-            conformsTo.forEach(idObj -> urls.add(idObj.get("@id").textValue()));
+        return extractConformsToIds(crate.getRootDataEntity());
+    }
+
+    public boolean hasAdditionalRoCrateMetadata(DatasetVersion version) {
+        if (version == null || !hasJsonCrate(version.getDataset(), version.getFriendlyVersionNumber())) {
+            return false;
         }
-        return urls;
+        if (!loadFilesWithRoCrateMetadata(version.getDataset()).isEmpty()) {
+            return true;
+        }
+        try {
+            String roCrateFolderPath = getRoCrateFolder(version);
+            Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
+            RootDataEntity rootDataEntity = crate.getRootDataEntity();
+            List<String> conformsToInRoCrate = extractConformsToIds(rootDataEntity);
+            if (conformsToInRoCrate.isEmpty()) {
+                return false;
+            }
+            Set<String> mdbConformsToIds = new HashSet<>(roCrateConformsToProvider.generateConformsToIds(version.getDataset(), rootDataEntity));
+            return conformsToInRoCrate.stream().anyMatch(id -> !mdbConformsToIds.contains(id));
+        } catch (Exception e) {
+            logger.warning("Failed to check for additional RO-Crate metadata: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private List<String> extractConformsToIds(RootDataEntity rootDataEntity) {
+        ArrayList<String> ids = new ArrayList<>();
+        JsonNode conformsTo = rootDataEntity.getProperties().get("conformsTo");
+        if (conformsTo == null) {
+            return ids;
+        }
+        if (conformsTo.isArray()) {
+            conformsTo.forEach(idObj -> ids.add(idObj.get("@id").textValue()));
+        } else {
+            ids.add(conformsTo.get("@id").textValue());
+        }
+        return ids;
     }
 
     public String getRoCrateHtmlPreviewPath(DatasetVersion version) {
@@ -182,6 +232,26 @@ public class RoCrateServiceBean {
 
     public String getRoCrateParentFolder(Dataset dataset) {
         return StorageUtils.getLocalRoCrateDir(dataset);
+    }
+
+    public Set<Long> loadFilesWithRoCrateMetadata(Dataset dataset) {
+        Path extrasPath = Paths.get(getRoCrateParentFolder(dataset), ArpServiceBean.RO_CRATE_EXTRAS_JSON_NAME);
+        if (!Files.exists(extrasPath)) {
+            return Collections.emptySet();
+        }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(extrasPath.toFile());
+            JsonNode fileIds = root.get(ArpServiceBean.ID_OF_FILES_WITH_METADATA);
+            if (fileIds == null || !fileIds.isArray()) {
+                return Collections.emptySet();
+            }
+            Set<Long> result = new HashSet<>();
+            fileIds.forEach(idNode -> result.add(idNode.asLong()));
+            return result;
+        } catch (IOException e) {
+            return Collections.emptySet();
+        }
     }
 
     // We use this generation logic for datasets that are the part of an RO-Crate (folder paths in DV)

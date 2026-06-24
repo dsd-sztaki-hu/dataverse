@@ -45,6 +45,7 @@ import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.harvard.iq.dataverse.util.StringUtil;
 
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.util.SystemConfig;
 
 import java.io.IOException;
@@ -90,6 +91,8 @@ public class FilePage implements java.io.Serializable {
     private DataFile file;   
     private GuestbookResponse guestbookResponse;
     private int selectedTabIndex;
+    private String openRoCrate;
+    private boolean openRoCrateMetadataPanel = false;
     private Dataset editDataset;
     private Dataset dataset;
     private List<DatasetVersion> datasetVersionsForTab;
@@ -127,6 +130,8 @@ public class FilePage implements java.io.Serializable {
     IngestServiceBean ingestService;
     @EJB
     SystemConfig systemConfig;
+    @EJB
+    RoCrateServiceBean roCrateServiceBean;
 
 
     @Inject
@@ -168,7 +173,7 @@ public class FilePage implements java.io.Serializable {
     ArpServiceBean arpService;
 
     private String aromaAddress = "";
-    
+
     private boolean aromaTabSelected = false;
 
     public String init() {
@@ -301,7 +306,26 @@ public class FilePage implements java.io.Serializable {
         }
 
         displayPublishMessage();
+        if (openRoCrateMetadataPanel || "1".equals(openRoCrate) || "true".equalsIgnoreCase(openRoCrate)) {
+            openRoCrateMetadataPanel = true;
+        }
         return null;
+    }
+
+    public String getOpenRoCrate() {
+        return openRoCrate;
+    }
+
+    public void setOpenRoCrate(String openRoCrate) {
+        this.openRoCrate = openRoCrate;
+    }
+
+    public boolean isOpenRoCrateMetadataPanel() {
+        return openRoCrateMetadataPanel;
+    }
+
+    public void setOpenRoCrateMetadataPanel(boolean openRoCrateMetadataPanel) {
+        this.openRoCrateMetadataPanel = openRoCrateMetadataPanel;
     }
     
     private void loadExternalTools() {
@@ -465,6 +489,17 @@ public class FilePage implements java.io.Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public boolean hasJsonCrate(String versionString) {
+        return roCrateServiceBean.hasJsonCrate(dataset, versionString);
+    }
+
+    public boolean fileHasRoCrateMetadata() {
+        if (file == null || file.getId() == null || !hasJsonCrate(version)) {
+            return false;
+        }
+        return roCrateServiceBean.loadFilesWithRoCrateMetadata(dataset).contains(file.getId());
     }
     
     public List< String[]> getExporters(){
@@ -713,14 +748,17 @@ public class FilePage implements java.io.Serializable {
     public void tabChanged(TabChangeEvent event) {
         TabView tv = (TabView) event.getComponent();
         this.activeTabIndex = tv.getActiveIndex();
+        this.selectedTabIndex = tv.getActiveIndex();
+        if (event.getTab() == null || !event.getTab().getId().contains("metadataMapTab")) {
+            this.openRoCrateMetadataPanel = false;
+        }
+        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
         if (this.activeTabIndex == 1 || this.activeTabIndex == 2 ) {
             setFileMetadatasForTab(fileMetadataVersionsHelper.loadFileVersionList(new DataverseRequest(session.getUser(), Faces.getRequest()), fileMetadata));
         } else {
             setFileMetadatasForTab( new ArrayList<>());         
         }
 
-        // Handle aroma tab selection without hard-coding the tab index
-        setAromaTabSelected(event.getTab() != null && "aromaTab".equals(event.getTab().getId()));
     }
     
     public List<FileMetadata> getFileMetadatasForTab() {
@@ -1515,6 +1553,14 @@ public class FilePage implements java.io.Serializable {
         this.aromaAddress = aromaAddress;
     }
 
+    public boolean isAromaTabSelected() {
+        return aromaTabSelected;
+    }
+
+    public void setAromaTabSelected(boolean aromaTabSelected) {
+        this.aromaTabSelected = aromaTabSelected;
+    }
+
     public String getCurrentUserApiKeyForAroma() {
         // Only return apiKey if auth setting allows that
         if (!arpConfig.get("arp.aroma.auth").toLowerCase().equals("apikey")) {
@@ -1523,6 +1569,21 @@ public class FilePage implements java.io.Serializable {
         return arpService.getCurrentUserApiKey(session);
     }
 
+    public String getOptionalApiKeyParameterForAroma() {
+        String apiKey = getCurrentUserApiKeyForAroma();
+        if (apiKey == null) {
+            return "";
+        }
+        return "&apiKey=" + apiKey;
+    }
+
+    public boolean isAromaReadOnly() {
+        return !canUpdateDataset();
+    }
+
+    public String getOptionalReadonlyParameterForAroma() {
+        return isAromaReadOnly() ? "&readonly=true" : "";
+    }
 
     public String getLanguage() {
         return session.getLocaleCode().equals("en") ? "en" : "hu";
@@ -1534,13 +1595,5 @@ public class FilePage implements java.io.Serializable {
 
     public Dataset getDataset() {
         return dataset;
-    }
-
-    public boolean isAromaTabSelected() {
-        return aromaTabSelected;
-    }
-
-    public void setAromaTabSelected(boolean aromaTabSelected) {
-        this.aromaTabSelected = aromaTabSelected;
     }
 }
