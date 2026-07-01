@@ -712,28 +712,14 @@ public class RoCrateExportManager {
 
         // Delete the entities from the RO-CRATE that have been removed from DV
         roCrateFileEntities.forEach(fe -> {
-            
-            String dataFileId = roCrateServiceBean.getDataFileIdFromRoId(fe.get("@id").textValue());
-            Optional<FileMetadata> datasetFile;
-            // importMapping data is only available during RO-Crate .zip uploads
-            if (importMapping != null && !importMapping.isEmpty()) {
-                datasetFile = datasetFiles.stream().filter(fileMetadata ->
-                        Objects.equals(fileMetadata.getDataFile().getStorageIdentifier(), importMapping.get(fe.get("@id").textValue()))
-                ).findFirst();
-            } else {
-                if (roCrateServiceBean.isVirtualFile(fe)) {
-                    return;
-                } else {
-                    datasetFile = datasetFiles.stream().filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString())).findFirst();
-                }
-            }
+            String entityId = fe.get("@id").textValue();
+            Optional<FileMetadata> datasetFile = findMatchingDatasetFile(fe, datasetFiles, importMapping);
 
             if (datasetFile.isPresent()) {
                 var fmd = datasetFile.get();
-                if (importMapping != null) {
-                    String oldFileId = fe.get("@id").textValue();
+                if (roCrateServiceBean.isVirtualFile(fe)) {
                     String newFileId = roCrateServiceBean.createRoIdForDataFile(fmd.getDataFile());
-                    replaceFileIdInHasParts(roCrate, oldFileId, newFileId);
+                    replaceFileIdInHasParts(roCrate, entityId, newFileId);
                     fe.put("@id", newFileId);
                 }
                 fe.put("name", fmd.getLabel());
@@ -742,16 +728,22 @@ public class RoCrateExportManager {
                 }
                 var fmdDirLabel = fmd.getDirectoryLabel();
                 var feDirLabel = fe.has("directoryLabel") ? fe.get("directoryLabel").textValue() : null;
-                if (!Objects.equals(fmdDirLabel, feDirLabel)) {
+                if (!directoryLabelsMatch(fmdDirLabel, feDirLabel)) {
                     fe.put("directoryLabel", fmd.getDirectoryLabel());
                     processModifiedPath(roCrate, feDirLabel, fmdDirLabel, fe.get("@id").textValue());
                 }
 
                 fe.set("tags", mapper.valueToTree(fmd.getCategoriesByName()));
-                String actualDataFileId = importMapping == null ? dataFileId : fmd.getDataFile().getId().toString();
-                datasetFiles.removeIf(fileMetadata -> Objects.equals(actualDataFileId, fileMetadata.getDataFile().getId().toString()));
+                var globalId = fmd.getDataFile().getGlobalId();
+                fe.put("@arpPid", globalId != null ? globalId.toString() : "");
+                fe.put("hash", fmd.getDataFile().getChecksumValue());
+                fe.put("contentSize", String.valueOf(fmd.getDataFile().getFilesize()));
+                String matchedDataFileId = fmd.getDataFile().getId().toString();
+                datasetFiles.removeIf(fileMetadata -> Objects.equals(matchedDataFileId, fileMetadata.getDataFile().getId().toString()));
+            } else if (importMapping == null && roCrateServiceBean.isVirtualFile(fe)) {
+                // AROMA-only virtual files are kept when not reconciling an upload.
+                return;
             } else {
-                String entityId = fe.get("@id").textValue();
                 removeChildContextualEntities(roCrate, entityId);
                 roCrate.deleteEntityById(entityId);
             }
@@ -879,6 +871,65 @@ public class RoCrateExportManager {
                 }
             }
         }
+    }
+
+    private Optional<FileMetadata> findMatchingDatasetFile(ObjectNode fileEntity, List<FileMetadata> datasetFiles,
+            Map<String, String> importMapping) {
+        String entityId = fileEntity.get("@id").textValue();
+
+        if (importMapping != null && !importMapping.isEmpty()) {
+            String storageIdentifier = importMapping.get(entityId);
+            if (storageIdentifier != null) {
+                Optional<FileMetadata> mappedFile = datasetFiles.stream()
+                        .filter(fileMetadata -> Objects.equals(fileMetadata.getDataFile().getStorageIdentifier(), storageIdentifier))
+                        .findFirst();
+                if (mappedFile.isPresent()) {
+                    return mappedFile;
+                }
+            }
+        }
+
+        if (!roCrateServiceBean.isVirtualFile(fileEntity)) {
+            String dataFileId = roCrateServiceBean.getDataFileIdFromRoId(entityId);
+            return datasetFiles.stream()
+                    .filter(fileMetadata -> Objects.equals(dataFileId, fileMetadata.getDataFile().getId().toString()))
+                    .findFirst();
+        }
+
+        return findVirtualFileMatch(fileEntity, datasetFiles);
+    }
+
+    private Optional<FileMetadata> findVirtualFileMatch(ObjectNode fileEntity, List<FileMetadata> datasetFiles) {
+        if (!fileEntity.has("hash")) {
+            return Optional.empty();
+        }
+
+        String hash = fileEntity.get("hash").textValue();
+        String name = fileEntity.has("name") ? fileEntity.get("name").textValue() : null;
+        String directoryLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : null;
+
+        List<FileMetadata> hashMatches = datasetFiles.stream()
+                .filter(fileMetadata -> Objects.equals(hash, fileMetadata.getDataFile().getChecksumValue()))
+                .collect(Collectors.toList());
+
+        if (hashMatches.isEmpty()) {
+            return Optional.empty();
+        }
+        if (hashMatches.size() == 1) {
+            return Optional.of(hashMatches.get(0));
+        }
+
+        return hashMatches.stream()
+                .filter(fileMetadata -> Objects.equals(name, fileMetadata.getLabel())
+                        && directoryLabelsMatch(fileMetadata.getDirectoryLabel(), directoryLabel))
+                .findFirst();
+    }
+
+    private boolean directoryLabelsMatch(String directoryLabel, String otherDirectoryLabel) {
+        return Objects.equals(
+                RoCrateServiceBean.normalizeDirectoryLabel(directoryLabel),
+                RoCrateServiceBean.normalizeDirectoryLabel(otherDirectoryLabel)
+        );
     }
 
     private void replaceFileIdInHasParts(RoCrate roCrate, String oldFileId, String newFileId) {

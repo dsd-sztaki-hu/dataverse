@@ -1482,9 +1482,17 @@ public class ArpApi extends AbstractApiBean {
                     : "unknown";
 
             DatasetVersion version = findUploadedDatasetVersion(uploadResult.version());
-            Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, roCrateFilesContent, filename, type, null, null, null, null, null, version.getDataset().getOwner());
-            CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
-            List<DataFile> filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
+            List<DataFile> filesAdded = List.of();
+            if (roCrateFilesContent != null) {
+                byte[] zipFileBytes = roCrateFilesContent.readAllBytes();
+                zipFileBytes = roCrateImportMappingServiceBean.filterExistingFilesFromZip(
+                        zipFileBytes, (ArrayNode) uploadedRoCrate.get("@graph"), version);
+                if (zipFileBytes != null && zipFileBytes.length > 0) {
+                    Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(req, version, new ByteArrayInputStream(zipFileBytes), filename, type, null, null, null, null, null, version.getDataset().getOwner());
+                    CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
+                    filesAdded = ingestService.saveAndAddFilesToDataset(version, createDataFilesResult.getDataFiles(), null, true, false);
+                }
+            }
 
             // Store the import mapping for the RO-Crate export triggered by the upcoming update command.
             // API requests have no HTTP session, so session-scoped upload state is unavailable.
