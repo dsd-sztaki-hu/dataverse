@@ -71,7 +71,7 @@ public class RoCrateImportManager {
     DataverseServiceBean dataverseServiceBean;
 
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat",
-            "directoryLabel", "description", "identifier", "@arpPid", "hash");
+            "directoryLabel", "description", "identifier", "@arpPid", "hash", "url", "dateModified", "author");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
 
     private final Cache<String, List<String>> cvvCache = Caffeine.newBuilder()
@@ -1365,6 +1365,12 @@ public class RoCrateImportManager {
                 break;
             case "hasPart":
                 roCrateContext.put(fieldName, "https://schema.org/hasPart");
+                break;
+            case "dateModified":
+                roCrateContext.put(fieldName, "https://schema.org/dateModified");
+                break;
+            case "url":
+                roCrateContext.put(fieldName, "https://schema.org/url");
                 break;
             default:
                 return false;

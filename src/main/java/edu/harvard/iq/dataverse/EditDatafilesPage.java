@@ -1,6 +1,7 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportMappingServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
@@ -163,6 +164,8 @@ public class EditDatafilesPage implements java.io.Serializable {
     EditDataFilesPageHelper editDataFilesPageHelper;
     @Inject
     RoCrateUploadServiceBean roCrateUploadService;
+    @Inject
+    RoCrateImportMappingServiceBean roCrateImportMappingService;
 
     private Dataset dataset = new Dataset();
 
@@ -2160,21 +2163,25 @@ public class EditDatafilesPage implements java.io.Serializable {
 
                     if (roCrateInputStream != null) {
                         try {
+                            byte[] zipFileBytes = roCrateInputStream.readAllBytes();
+                            if (dataset.getId() != null) {
+                                zipFileBytes = roCrateImportMappingService.filterExistingFilesFromZip(
+                                        zipFileBytes, roCrateUploadService.getRoCrateGraph(), workingVersion);
+                            }
 
-                            // This is a file upload in the context of creating a brand new
-                            // dataset that does not yet exist in the database. We must
-                            // use the version of the Create New Files constructor that takes
-                            // the parent Dataverse as the extra argument:
+                            if (zipFileBytes != null && zipFileBytes.length > 0) {
+                                // FileUtil.createDataFiles is gone in 6.1, use CreateNewDataFilesCommand instead
+                                //CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
+                                Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(dvRequestService.getDataverseRequest(), workingVersion, new java.io.ByteArrayInputStream(zipFileBytes), roCrateName, roCrateType, null, uploadSessionQuota, null, null, null, workingVersion.getDataset().getOwner());
+                                CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
 
-                            // FileUtil.createDataFiles is gone in 6.1, use CreateNewDataFilesCommand instead
-                            //CreateDataFileResult createDataFilesResult = FileUtil.createDataFiles(workingVersion, roCrateInputStream, roCrateName, roCrateType, null, null, systemConfig);
-                            Command<CreateDataFileResult> cmd = new CreateNewDataFilesCommand(dvRequestService.getDataverseRequest(), workingVersion, roCrateInputStream, roCrateName, roCrateType, null, uploadSessionQuota, null, null, null, workingVersion.getDataset().getOwner());
-                            CreateDataFileResult createDataFilesResult = commandEngine.submit(cmd);
-
-                            dFileList = createDataFilesResult.getDataFiles();
-                            String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
-                            if(createDataFilesError != null) {
-                                errorMessages.add(createDataFilesError);
+                                dFileList = createDataFilesResult.getDataFiles();
+                                String createDataFilesError = editDataFilesPageHelper.getHtmlErrorMessage(createDataFilesResult);
+                                if(createDataFilesError != null) {
+                                    errorMessages.add(createDataFilesError);
+                                }
+                            } else {
+                                dFileList = List.of();
                             }
                         } catch (CommandException ex) {
                             logger.log(Level.SEVERE, "Failed to process and/or save the file"+ roCrateName + "; " + ex.getMessage(), new Object[]{roCrateName});

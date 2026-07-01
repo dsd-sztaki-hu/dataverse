@@ -82,6 +82,17 @@ public class RoCrateServiceBean {
         String pattern = ".*/([A-Za-z0-9]+)/file/([0-9]+)$";
         return !file.get("@id").textValue().matches(pattern);
     }
+    
+    public static String normalizeDirectoryLabel(String directoryLabel) {
+        if (directoryLabel == null || directoryLabel.isBlank()) {
+            return null;
+        }
+        String normalized = directoryLabel;
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized.isEmpty() ? null : normalized;
+    }
 
     public String getTypeAsString(JsonNode jsonNode) {
         JsonNode typeProp = jsonNode.get("@type");

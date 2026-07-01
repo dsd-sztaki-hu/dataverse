@@ -358,4 +358,8 @@ public class RoCrateUploadServiceBean implements Serializable {
     public void setRoCrateGraph(ArrayNode roCrateGraph) {
         this.roCrateGraph = roCrateGraph;
     }
+
+    public ArrayNode getRoCrateGraph() {
+        return roCrateGraph;
+    }
 }
