@@ -3,6 +3,9 @@ package edu.harvard.iq.dataverse.arp.rocrate;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import jakarta.json.*;
+import jakarta.json.stream.JsonGenerator;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.*;
 
 public class RoCrateImportPrepResult {
@@ -59,9 +62,93 @@ public class RoCrateImportPrepResult {
     public JsonObject toJson() {
         NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
         builder.add("strict", isStrict);
-        builder.add("warnings", buildIssuesJson(warnings, "warning"));
-        builder.add("errors", buildIssuesJson(errors, "error"));
+        if (!warnings.isEmpty()) {
+            builder.add("warnings", buildIssuesJson(warnings, "warning"));
+        }
+        if (!errors.isEmpty()) {
+            builder.add("errors", buildIssuesJson(errors, "error"));
+        }
         return builder.build();
+    }
+
+    public JsonObject toApiResponseJson(String status, String message, boolean includeUpdatedRoCrate) {
+        NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder()
+                .add("status", status)
+                .add("message", message)
+                .add("validation", toJson());
+
+        if (includeUpdatedRoCrate && roCrate != null) {
+            builder.add("updatedRoCrate", coerceToJsonValueOrString(roCrate.getJsonMetadata()));
+        }
+
+        return builder.build();
+    }
+
+    public JsonObject toApiResponseJson(String status, String message, String updatedRoCrateJsonString) {
+        NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder()
+                .add("status", status)
+                .add("message", message)
+                .add("validation", toJson())
+                .add("updatedRoCrate", coerceToJsonValueOrString(updatedRoCrateJsonString));
+        return builder.build();
+    }
+
+    public String toApiResponseJsonPrettyString(String status, String message, boolean includeUpdatedRoCrate) {
+        return prettyPrint(toApiResponseJson(status, message, includeUpdatedRoCrate));
+    }
+
+    public String toApiResponseJsonPrettyString(String status, String message, String updatedRoCrateJsonString) {
+        return prettyPrint(toApiResponseJson(status, message, updatedRoCrateJsonString));
+    }
+
+    public boolean hasIssues() {
+        return !errors.isEmpty() || !warnings.isEmpty();
+    }
+
+    public boolean hasOnlyWarningsWithMessage(String message) {
+        if (!errors.isEmpty()) {
+            return false;
+        }
+        if (warnings.isEmpty()) {
+            return false;
+        }
+        return warnings.values().stream()
+                .flatMap(warn -> warn.values().stream())
+                .flatMap(Set::stream)
+                .allMatch(issue -> message.equals(issue.message()));
+    }
+
+    public void removeWarningsWithMessage(String message) {
+        warnings.entrySet().removeIf(entityEntry -> {
+            var fields = entityEntry.getValue();
+            fields.entrySet().removeIf(fieldEntry -> {
+                fieldEntry.getValue().removeIf(issue -> message.equals(issue.message()));
+                return fieldEntry.getValue().isEmpty();
+            });
+            return fields.isEmpty();
+        });
+    }
+
+    private JsonValue coerceToJsonValueOrString(String jsonString) {
+        if (jsonString == null) {
+            return JsonValue.NULL;
+        }
+        try (JsonReader reader = Json.createReader(new StringReader(jsonString))) {
+            JsonStructure parsed = reader.read();
+            return parsed;
+        } catch (RuntimeException ex) {
+            return Json.createValue(jsonString);
+        }
+    }
+
+    private String prettyPrint(JsonStructure structure) {
+        Map<String, Object> config = Map.of(JsonGenerator.PRETTY_PRINTING, true);
+        JsonWriterFactory writerFactory = Json.createWriterFactory(config);
+        StringWriter out = new StringWriter();
+        try (JsonWriter writer = writerFactory.createWriter(out)) {
+            writer.write(structure);
+        }
+        return out.toString();
     }
 
     private JsonArray buildIssuesJson(Map<String, Map<String, Set<IssueDetail>>> issues, String prefix) {

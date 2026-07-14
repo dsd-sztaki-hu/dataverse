@@ -59,6 +59,17 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
     }
 
     public DatasetFieldTypeArp findDatasetFieldTypeArpForFieldType(DatasetFieldType fieldType) {
+        if (fieldType == null) {
+            return null;
+        }
+        if (fieldType.getId() != null) {
+            var query = em.createNamedQuery("DatasetFieldTypeArp.findOneForFieldTypeId", DatasetFieldTypeArp.class);
+            query.setParameter("fieldTypeId", fieldType.getId());
+            var res = query.getResultList();
+            if (!res.isEmpty()) {
+                return res.get(0);
+            }
+        }
         var query = em.createNamedQuery("DatasetFieldTypeArp.findOneForDatasetFieldType", DatasetFieldTypeArp.class);
         query.setParameter("fieldType", fieldType);
         var res = query.getResultList();
@@ -84,6 +95,9 @@ public class ArpMetadataBlockServiceBean implements java.io.Serializable
     }
 
     public MetadataBlockArp findMetadataBlockArpForMetadataBlock(MetadataBlock metadataBlock) {
+        if (metadataBlock == null) {
+            return null;
+        }
         var query = em.createNamedQuery("MetadataBlockArp.findOneForMetadataBlock", MetadataBlockArp.class);
         query.setParameter("metadataBlock", metadataBlock);
         var res = query.getResultList();

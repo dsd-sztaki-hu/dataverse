@@ -9,7 +9,6 @@ import edu.harvard.iq.dataverse.MetadataBlockServiceBean;
 import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,9 +22,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static io.restassured.RestAssured.given;
-import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static jakarta.ws.rs.core.Response.Status.OK;
 
+import static jakarta.ws.rs.core.Response.Status.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -411,10 +409,11 @@ public class ArpApiIT {
         String status = JsonPath.from(body).getString("status");
         assertEquals("OK", status);
         
-        Map<String, String> data = JsonPath.from(body).getMap("data");
-        assertEquals(1, data.size());
-        String message = data.get("message");
+        String message = JsonPath.from(body).getString("data.message");
         assertEquals("OK - RO-Crate is valid", message);
+
+        Map<String, Object> validation = JsonPath.from(body).getMap("data.validation");
+        assertEquals(true, validation.get("strict"));
     }
 
     // If any field have missing entities from the @context but the fields are present in DV, 
@@ -440,10 +439,10 @@ public class ArpApiIT {
 
         String body = response.getBody().asString();
 
-        String message = JsonPath.from(body).get("message");
-        assertEquals("Valid RO-Crate, but missing @context URI-s were added automatically.", message);
+        Map<String, Object> data = JsonPath.from(body).getMap("data");
+        assertEquals("Valid RO-Crate, but missing @context URI-s were added automatically.", data.get("message"));
 
-        Map<String, Object> updatedRoCrate = JsonPath.from(body).getMap("updated RO-Crate");
+        Map<String, Object> updatedRoCrate = JsonPath.from(body).getMap("data.updatedRoCrate");
 
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -472,20 +471,19 @@ public class ArpApiIT {
 
         // Validation without API token is allowed
         Response response = validateRoCrate(null, roCrateContent, true);
-        assertEquals(500, response.getStatusCode());
-        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(400, response.getStatusCode());
+        response.then().assertThat().statusCode(BAD_REQUEST.getStatusCode());
 
         String body = response.getBody().asString();
         String status = JsonPath.from(body).getString("status");
         assertEquals("ERROR", status);
 
-        Map<String, Object> message = JsonPath.from(body).getMap("message");
-        assertEquals(true, message.get("strict"));
+        Map<String, Object> validation = JsonPath.from(body).getMap("data.validation");
+        assertEquals(true, validation.get("strict"));
 
-        List<String> warnings = JsonPath.from(body).getList("message.warnings");
-        assertEquals(0, warnings.size());
+        assertTrue(!validation.containsKey("warnings"));
 
-        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("data.validation.errors");
         assertEquals(2, errors.size());
 
         // Missing @context URI-s for unknown field in the dataset
@@ -524,20 +522,19 @@ public class ArpApiIT {
         }
 
         Response response = validateRoCrate(apiToken, roCrateContent, true);
-        assertEquals(500, response.getStatusCode());
-        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(400, response.getStatusCode());
+        response.then().assertThat().statusCode(BAD_REQUEST.getStatusCode());
 
         String body = response.getBody().asString();
         String status = JsonPath.from(body).getString("status");
         assertEquals("ERROR", status);
 
-        Map<String, Object> message = JsonPath.from(body).getMap("message");
-        assertEquals(true, message.get("strict"));
+        Map<String, Object> validation = JsonPath.from(body).getMap("data.validation");
+        assertEquals(true, validation.get("strict"));
 
-        List<String> warnings = JsonPath.from(body).getList("message.warnings");
-        assertEquals(0, warnings.size());
+        assertTrue(!validation.containsKey("warnings"));
 
-        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("data.validation.errors");
         assertEquals(2, errors.size());
 
         // Check first error for license field
@@ -574,21 +571,21 @@ public class ArpApiIT {
         }
 
         Response response = validateRoCrate(apiToken, roCrateContent, false);
-        assertEquals(500, response.getStatusCode());
-        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(400, response.getStatusCode());
+        response.then().assertThat().statusCode(BAD_REQUEST.getStatusCode());
 
         String body = response.getBody().asString();
         String status = JsonPath.from(body).getString("status");
         assertEquals("ERROR", status);
 
-        Map<String, Object> message = JsonPath.from(body).getMap("message");
-        assertEquals(false, message.get("strict"));
-        
-        List<Map<String, Object>> warnings = JsonPath.from(body).getList("message.warnings");
+        Map<String, List<Map<String, Object>>> validation = JsonPath.from(body).getMap("data.validation");
+
+        assertEquals(false, validation.get("strict"));
+
+        var warnings = validation.get("warnings");
         assertEquals(2, warnings.size());
         
-        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
-        assertEquals(0, errors.size());
+        assertTrue(!validation.containsKey("errors"));
         
         // Check first warning for subject field
         Map<String, Object> firstWarning = warnings.get(0);
@@ -627,20 +624,19 @@ public class ArpApiIT {
         }
 
         Response response = validateRoCrate(apiToken, roCrateContent, true);
-        assertEquals(500, response.getStatusCode());
-        response.then().assertThat().statusCode(INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(400, response.getStatusCode());
+        response.then().assertThat().statusCode(BAD_REQUEST.getStatusCode());
 
         String body = response.getBody().asString();
         String status = JsonPath.from(body).getString("status");
         assertEquals("ERROR", status);
 
-        Map<String, Object> message = JsonPath.from(body).getMap("message");
-        assertEquals(true, message.get("strict"));
+        Map<String, Object> validation = JsonPath.from(body).getMap("data.validation");
+        assertEquals(true, validation.get("strict"));
 
-        List<Map<String, Object>> warnings = JsonPath.from(body).getList("message.warnings");
-        assertEquals(0, warnings.size());
+        assertTrue(!validation.containsKey("warnings"));
 
-        List<Map<String, Object>> errors = JsonPath.from(body).getList("message.errors");
+        List<Map<String, Object>> errors = JsonPath.from(body).getList("data.validation.errors");
         assertEquals(2, errors.size());
 
         // Check first error for subject field

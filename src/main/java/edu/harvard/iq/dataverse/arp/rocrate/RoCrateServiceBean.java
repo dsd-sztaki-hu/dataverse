@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse.arp.rocrate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
@@ -9,26 +10,26 @@ import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
+import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.logging.Logger;
 
 @Stateless
 @Named
 public class RoCrateServiceBean {
+    private static final Logger logger = Logger.getLogger(RoCrateServiceBean.class.getCanonicalName());
 
     @EJB
     DatasetFieldServiceBean fieldService;
@@ -81,6 +82,17 @@ public class RoCrateServiceBean {
         String pattern = ".*/([A-Za-z0-9]+)/file/([0-9]+)$";
         return !file.get("@id").textValue().matches(pattern);
     }
+    
+    public static String normalizeDirectoryLabel(String directoryLabel) {
+        if (directoryLabel == null || directoryLabel.isBlank()) {
+            return null;
+        }
+        String normalized = directoryLabel;
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized.isEmpty() ? null : normalized;
+    }
 
     public String getTypeAsString(JsonNode jsonNode) {
         JsonNode typeProp = jsonNode.get("@type");
@@ -101,7 +113,13 @@ public class RoCrateServiceBean {
 
     public void collectConformsToIds(RootDataEntity rootDataEntity, Dataset dataset, ObjectMapper mapper) {
         var conformsToArray = mapper.createArrayNode();
-        var conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
+        final List<String> conformsToIdsFromMdbs;
+        try {
+            conformsToIdsFromMdbs = roCrateConformsToProvider.generateConformsToIds(dataset, rootDataEntity);
+        } catch (RuntimeException e) {
+            logger.warning("Failed to generate RO-Crate conformsTo ids: " + e.getMessage());
+            return;
+        }
 
         Set<String> existingConformsToIds = new HashSet<>();
         if (rootDataEntity.getProperties().has("conformsTo")) {
@@ -233,5 +251,59 @@ public class RoCrateServiceBean {
         return roid;
 
     }
-    
+
+    /**
+     * Replaces every {@code @id} reference to {@code oldId} with {@code newId} across the whole RO-Crate,
+     * including nested file and folder entities.
+     */
+    public void replaceEntityIdReferences(RoCrate roCrate, String oldId, String newId) {
+        if (oldId == null || newId == null || oldId.equals(newId)) {
+            return;
+        }
+        replaceIdInProperties(roCrate.getRootDataEntity().getProperties(), oldId, newId);
+        roCrate.getAllContextualEntities().forEach(entity -> replaceIdInProperties(entity.getProperties(), oldId, newId));
+        roCrate.getAllDataEntities().forEach(entity -> replaceIdInProperties(entity.getProperties(), oldId, newId));
+        AbstractEntity entity = roCrate.getEntityById(oldId);
+        if (entity != null) {
+            entity.getProperties().put("@id", newId);
+        }
+    }
+
+    private void replaceIdInProperties(ObjectNode properties, String oldId, String newId) {
+        properties.fields().forEachRemaining(field -> {
+            if (propsToIgnore.contains(field.getKey())) {
+                return;
+            }
+            JsonNode value = field.getValue();
+            if (isIdReferenceNode(value)) {
+                replaceIdNode(value, oldId, newId);
+            }
+        });
+    }
+
+    private boolean isIdReferenceNode(JsonNode node) {
+        if (node.isObject() && node.size() == 1 && node.has("@id")) {
+            return true;
+        }
+        if (node.isArray()) {
+            for (JsonNode element : node) {
+                if (!element.isObject() || element.size() != 1 || !element.has("@id")) {
+                    return false;
+                }
+            }
+            return !node.isEmpty();
+        }
+        return false;
+    }
+
+    private void replaceIdNode(JsonNode node, String oldId, String newId) {
+        if (node.isObject()) {
+            if (node.has("@id") && oldId.equals(node.get("@id").textValue())) {
+                ((ObjectNode) node).put("@id", newId);
+            }
+        } else if (node.isArray()) {
+            node.forEach(idObj -> replaceIdNode(idObj, oldId, newId));
+        }
+    }
+
 }

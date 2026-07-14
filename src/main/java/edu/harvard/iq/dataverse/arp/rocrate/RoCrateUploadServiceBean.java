@@ -18,10 +18,6 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
-import jakarta.ws.rs.core.Response;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.primefaces.PrimeFaces;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.file.UploadedFile;
 
@@ -42,6 +38,9 @@ public class RoCrateUploadServiceBean implements Serializable {
 
     @EJB
     DatasetFieldServiceBean fieldService;
+
+    @EJB
+    RoCrateImportMappingServiceBean roCrateImportMappingServiceBean;
 
     private String roCrateJsonString;
     private String roCrateAsBase64;
@@ -319,40 +318,8 @@ public class RoCrateUploadServiceBean implements Serializable {
     
     // Mapping between the fileEntity ids from the RO-CRATE and their uploaded datasetFile representation storageIdentifier
     public void createImportMapping(List<DataFile> importedFiles) {
-        HashMap<String, String> idAndStorageIdentifierMapping = new HashMap<>();
-        // Collect the RO-CRATE fileEntities for easier processing
-        ArrayList<JsonNode> roCrateFiles = new ArrayList<>();
-        roCrateGraph.forEach(jsonNode -> {
-            if (jsonNode.has("@type") && hasType(jsonNode, "File")) {
-                roCrateFiles.add(jsonNode);
-            }
-        });
-        
-        for (var importedFile : importedFiles) {
-            String name = importedFile.getDisplayName();
-            String directoryLabel = importedFile.getDirectoryLabel();
-            String storageIdentifier = importedFile.getStorageIdentifier();
-
-            Optional<JsonNode> correspondingFileEntity = findFileEntity(roCrateFiles, name, directoryLabel);
-            correspondingFileEntity.ifPresent(fileEntity -> idAndStorageIdentifierMapping.put(fileEntity.get("@id").textValue(), storageIdentifier));
-        }
-        
-        setImportMapping(idAndStorageIdentifierMapping);
-    }
-
-    // find the corresponding file in the RO-CRATE for the uploaded datasetFile
-    private Optional<JsonNode> findFileEntity(ArrayList<JsonNode> roCrateFiles, String name, String directoryLabel) {
-        for (JsonNode node : roCrateFiles) {
-            String nodeName = node.has("name") ? node.get("name").textValue() : null;
-            String nodeDirectoryLabel = node.has("directoryLabel") ? node.get("directoryLabel").textValue() : null;
-
-            if (Objects.equals(name, nodeName) &&
-                (directoryLabel == null || Objects.equals(directoryLabel, nodeDirectoryLabel))) {
-                return Optional.of(node);
-            }
-        }
-
-        return Optional.empty();
+        var mapping = roCrateImportMappingServiceBean.createImportMapping(roCrateGraph, importedFiles);
+        setImportMapping(mapping.isEmpty() ? null : new HashMap<>(mapping));
     }
 
     public void reset() {
@@ -390,5 +357,9 @@ public class RoCrateUploadServiceBean implements Serializable {
     
     public void setRoCrateGraph(ArrayNode roCrateGraph) {
         this.roCrateGraph = roCrateGraph;
+    }
+
+    public ArrayNode getRoCrateGraph() {
+        return roCrateGraph;
     }
 }

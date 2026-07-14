@@ -1247,7 +1247,7 @@ span.label-default { background-color: #757575 }
     border-color: #757575;
     margin: 10px 0px 10px 0px;
     padding: 10px;
-    display: inline;
+    display: inline-block;
     }
 
 #datasetForm\:cslLabel {
@@ -1255,8 +1255,25 @@ span.label-default { background-color: #757575 }
     display:block;
 }
 
-#datasetForm\:cslOutput, .csl-bib-body, .csl-right-inline {
-    display:inline;
+#datasetForm\:cslOutput {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+#datasetForm\:cslOutput .csl-bib-body {
+    display: block;
+    white-space: nowrap;
+}
+#datasetForm\:cslOutput .csl-right-inline {
+    display: inline;
+}
+
+#datasetForm\:cslCitation {
+    max-width: 95vw;
+}
+#datasetForm\:cslCitation .ui-dialog-content {
+    max-height: 85vh;
+    overflow: auto;
 }
 
 #datasetForm\:cslCitation .glyphicon-copy{
