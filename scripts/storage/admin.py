@@ -441,7 +441,8 @@ def get_new_args(args={'to_storage': None, 'storage': None, 'recursive': None, '
                  command=None, 
                  storage=None,
                  to_storage=None,
-                 remote_locations=None,):
+                 remote_locations=None,
+                 ):
 	return {
 		'ids': ids,
 		'type': type if type!=None else args['type'],
