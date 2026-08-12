@@ -1213,10 +1213,10 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> {
 
             // Create a custom HTTP client with the desired pool size and other parameters
             Integer poolSize = Integer.getInteger("dataverse.files." + driverId + ".connection-pool-size", 256);
-            Long acquisitionTimeout = Long.getLong("dataverse.files." + driverId + ".connection-acquisition-timeout", 300);
-            Long maxIdleTime = Long.getLong("dataverse.files." + driverId + ".connection-max-idle-time", 300);
-            Long timeToLive = Long.getLong("dataverse.files." + driverId + ".connection-time-to-live", 1200);
-            Long timeout = Long.getLong("dataverse.files." + driverId + ".connection-timeout", 1200);
+            Long acquisitionTimeout = Long.getLong("dataverse.files." + driverId + ".connection-acquisition-timeout", 30);
+            Long maxIdleTime = Long.getLong("dataverse.files." + driverId + ".connection-max-idle-time", 60);
+            Long timeToLive = Long.getLong("dataverse.files." + driverId + ".connection-time-to-live", 60);
+            Long timeout = Long.getLong("dataverse.files." + driverId + ".connection-timeout", 60);
             Builder httpClientBuilder = NettyNioAsyncHttpClient.builder().maxConcurrency(poolSize)
                     .connectionAcquisitionTimeout(Duration.ofSeconds(acquisitionTimeout))
                     .connectionMaxIdleTime(Duration.ofSeconds(maxIdleTime))
