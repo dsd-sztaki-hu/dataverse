@@ -95,6 +95,9 @@ public class RoCrateImportManager {
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream()
                 .collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
 
+        Set<String> presentPropertyNames = collectPresentPropertyNames(rootDataEntity, datasetFieldTypeMap,
+                contextualEntityHashMap.values());
+
         var fieldsIterator = rootDataEntity.getProperties().fields();
         while (fieldsIterator.hasNext()) {
             var field = fieldsIterator.next();
@@ -146,6 +149,102 @@ public class RoCrateImportManager {
                     }
                 }
             }
+        }
+
+        clearFieldsMissingFromRoCrate(updatedVersion, presentPropertyNames);
+    }
+
+    /**
+     * Collects the names of the properties that are present in the RO-Crate.
+     */
+    private Set<String> collectPresentPropertyNames(RootDataEntity rootDataEntity,
+            Map<String, DatasetFieldType> datasetFieldTypeMap,
+            Collection<ContextualEntity> contextualEntities) {
+        Set<String> presentPropertyNames = new HashSet<>();
+        Set<String> compoundRootFieldNames = new HashSet<>();
+
+        var fieldsIterator = rootDataEntity.getProperties().fields();
+        while (fieldsIterator.hasNext()) {
+            var field = fieldsIterator.next();
+            String fieldName = field.getKey();
+            if (fieldName.startsWith("@") || roCrateServiceBean.propsToIgnore.contains(fieldName)) {
+                continue;
+            }
+            presentPropertyNames.add(fieldName);
+            DatasetFieldType datasetFieldType = datasetFieldTypeMap.get(fieldName);
+            if (datasetFieldType != null && datasetFieldType.isCompound()) {
+                compoundRootFieldNames.add(fieldName);
+            }
+        }
+
+        if (compoundRootFieldNames.isEmpty()) {
+            return presentPropertyNames;
+        }
+
+        for (ContextualEntity entity : contextualEntities) {
+            ObjectNode properties = entity.getProperties();
+            if (properties == null || !properties.has("@type")) {
+                continue;
+            }
+            if (!entityTypeMatchesAny(properties.get("@type"), compoundRootFieldNames)) {
+                continue;
+            }
+            properties.fieldNames().forEachRemaining(propName -> {
+                if (!propName.startsWith("@") && !roCrateServiceBean.propsToIgnore.contains(propName)) {
+                    presentPropertyNames.add(propName);
+                }
+            });
+        }
+        return presentPropertyNames;
+    }
+
+    private boolean entityTypeMatchesAny(JsonNode typeProp, Set<String> compoundRootFieldNames) {
+        if (typeProp == null || typeProp.isNull()) {
+            return false;
+        }
+        if (typeProp.isTextual()) {
+            return compoundRootFieldNames.contains(typeProp.textValue());
+        }
+        if (typeProp.isArray()) {
+            for (JsonNode type : typeProp) {
+                if (type.isTextual() && compoundRootFieldNames.contains(type.textValue())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Clears values on the version for fields that exist on
+     * the draft but are absent from the updated RO-Crate.
+     */
+    private void clearFieldsMissingFromRoCrate(DatasetVersion updatedVersion, Set<String> presentPropertyNames) {
+        for (DatasetField existingField : updatedVersion.getDatasetFields()) {
+            DatasetFieldType datasetFieldType = existingField.getDatasetFieldType();
+            String fieldName = datasetFieldType.getName();
+            if (fieldName.startsWith("@") || roCrateServiceBean.propsToIgnore.contains(fieldName)) {
+                continue;
+            }
+            // Child fields are synced via processCompoundFieldValue
+            if (datasetFieldType.isChild()) {
+                continue;
+            }
+            if (presentPropertyNames.contains(fieldName)) {
+                continue;
+            }
+            clearDatasetField(existingField);
+        }
+    }
+
+    private void clearDatasetField(DatasetField field) {
+        DatasetFieldType fieldType = field.getDatasetFieldType();
+        if (fieldType.isCompound()) {
+            field.setDatasetFieldCompoundValues(new ArrayList<>());
+        } else if (fieldType.isAllowControlledVocabulary()) {
+            field.setControlledVocabularyValues(new ArrayList<>());
+        } else {
+            field.setDatasetFieldValues(new ArrayList<>());
         }
     }
 
@@ -344,6 +443,10 @@ public class RoCrateImportManager {
                         fieldValues.add(new DatasetFieldValue(dsfToUpdate, newValue));
                     }
                     index++;
+                }
+                // Drop values removed from the RO-Crate multi-value array
+                if (fieldValues.size() > index) {
+                    fieldValues.subList(index, fieldValues.size()).clear();
                 }
             } else {
                 String newValue;
