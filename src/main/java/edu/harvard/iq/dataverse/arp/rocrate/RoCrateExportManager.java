@@ -453,9 +453,12 @@ public class RoCrateExportManager {
                         // Update RO-Crate entity name based on new compound value. NOTE: the update is coming from
                         // Dataverse (API or UI) so the user cannot control the Ro-Crate name property, we have to
                         // do it automatically.
-                        String entityName = calcRoCrateEntityName(compoundValue, datasetField);
-                        if (entityName != null) {
-                            actEntityToUpdate.addProperty("name", entityName);
+                        String presentName = actEntityToUpdate.getProperty("name").isTextual() ? actEntityToUpdate.getProperty("name").textValue() : null;
+                        if (presentName == null || presentName.isBlank()) {
+                            String entityName = calcRoCrateEntityName(compoundValue, datasetField);
+                            if (entityName != null) {
+                                actEntityToUpdate.addProperty("name", entityName);
+                            }
                         }
                         processControlledVocabularyValues(childControlledVocabValues, actEntityToUpdate, childFieldName, mapper);
                     }
