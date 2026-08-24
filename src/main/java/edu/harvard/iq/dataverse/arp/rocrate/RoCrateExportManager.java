@@ -753,6 +753,7 @@ public class RoCrateExportManager {
             RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
             roCrateContextUpdater.addValuePairToContext("hasPart", "https://schema.org/hasPart");
             roCrateContextUpdater.addValuePairToContext("directoryLabel", "https://dataverse.org/schema/file/directoryLabel");
+            roCrateContextUpdater.addValuePairToContext("tags", RoCrateServiceBean.FILE_TAGS_CONTEXT_URI);
             var fileClassEn = arpServiceBean.getFileClassEn();
             if (fileClassEn != null) {
                 fileClassEn.getAsJsonArray("inputs").forEach(

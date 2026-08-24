@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportMappingServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateImportManager;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateUploadServiceBean;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateExportManager;
 import edu.harvard.iq.dataverse.provenance.ProvPopupFragmentBean;
@@ -146,6 +147,8 @@ public class EditDatafilesPage implements java.io.Serializable {
     IndexServiceBean indexService;
     @EJB
     RoCrateExportManager roCrateExportManager;
+    @EJB
+    RoCrateImportManager roCrateImportManager;
     @Inject
     DataverseRequestServiceBean dvRequestService;
     @Inject
@@ -2187,6 +2190,11 @@ public class EditDatafilesPage implements java.io.Serializable {
                             logger.log(Level.SEVERE, "Failed to process and/or save the file"+ roCrateName + "; " + ex.getMessage(), new Object[]{roCrateName});
                             return;
                         }
+                    }
+
+                    if (dFileList != null && !dFileList.isEmpty()) {
+                        roCrateImportManager.applyFileTagsToImportedFiles(
+                                dFileList, roCrateUploadService.getRoCrateGraph(), workingVersion);
                     }
 
                     // -----------------------------------------------------------

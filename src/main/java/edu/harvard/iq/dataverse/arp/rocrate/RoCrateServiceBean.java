@@ -40,6 +40,8 @@ public class RoCrateServiceBean {
     @EJB
     ArpConfig arpConfig;
 
+    public static final String FILE_TAGS_CONTEXT_URI = "https://dataverse.org/schema/file/tags";
+
     public final List<String> propsToIgnore = List.of("conformsTo", "name", "hasPart", "license");
 
     public Map<String, DatasetFieldType> getDatasetFieldTypeMapByConformsTo(RoCrate roCrate) {

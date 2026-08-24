@@ -1498,6 +1498,8 @@ public class ArpApi extends AbstractApiBean {
             // API requests have no HTTP session, so session-scoped upload state is unavailable.
             var importMapping = roCrateImportMappingServiceBean.createImportMapping((ArrayNode) uploadedRoCrate.get("@graph"), filesAdded);
             roCrateImportMappingStoreBean.put(version.getId(), importMapping);
+            roCrateImportManager.applyFileTagsToImportedFiles(
+                    filesAdded, (ArrayNode) uploadedRoCrate.get("@graph"), version, importMapping);
 
             var updateDatasetVersionCommand = new UpdateDatasetVersionCommand(version.getDataset(), req);
             var updatedDataset = commandEngine.submit(updateDatasetVersionCommand);

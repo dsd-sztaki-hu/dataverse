@@ -70,8 +70,11 @@ public class RoCrateImportManager {
     @EJB
     DataverseServiceBean dataverseServiceBean;
 
+    @EJB
+    RoCrateImportMappingServiceBean roCrateImportMappingServiceBean;
+
     private final List<String> dataverseFileProps = List.of("@id", "@type", "name", "contentSize", "encodingFormat",
-            "directoryLabel", "description", "identifier", "@arpPid", "hash", "url", "dateModified", "author");
+            "directoryLabel", "description", "identifier", "@arpPid", "hash", "url", "dateModified", "author", "tags");
     private final List<String> dataverseDatasetProps = List.of("@id", "@type", "name", "hasPart");
 
     private final Cache<String, List<String>> cvvCache = Caffeine.newBuilder()
@@ -1475,6 +1478,9 @@ public class RoCrateImportManager {
             case "url":
                 roCrateContext.put(fieldName, "https://schema.org/url");
                 break;
+            case "tags":
+                roCrateContext.put(fieldName, RoCrateServiceBean.FILE_TAGS_CONTEXT_URI);
+                break;
             default:
                 return false;
         }
@@ -1510,10 +1516,9 @@ public class RoCrateImportManager {
 
     public List<FileMetadata> updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
         List<FileMetadata> filesToBeDeleted = new ArrayList<>();
-        List<String> fileMetadataHashesAndIds = dataset.getLatestVersion().getFileMetadatas().stream()
-                .map(fmd -> fmd.getDataFile().getChecksumValue() + "-"
-                        + String.valueOf(fmd.getDataFile().getId())
-                                .substring(String.valueOf(fmd.getDataFile().getId()).lastIndexOf("/") + 1))
+        List<FileMetadata> versionFileMetadatas = dataset.getLatestVersion().getFileMetadatas();
+        List<String> fileMetadataHashesAndIds = versionFileMetadatas.stream()
+                .map(this::fileHashAndId)
                 .collect(Collectors.toList());
         List<ObjectNode> roCrateFileEntities = Stream.concat(
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties)
@@ -1530,30 +1535,17 @@ public class RoCrateImportManager {
             String fileEntityId = fileEntity.get("@id").textValue();
             String fileEntityHashAndId = fileEntity.get("hash").textValue() + "-"
                     + fileEntityId.substring(fileEntityId.lastIndexOf("/") + 1);
-            var optionalFmd = dataset.getFiles().stream()
-                    .filter(dataFile -> (dataFile.getChecksumValue() + "-"
-                            + String.valueOf(dataFile.getId())
-                                    .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1))
-                            .equals(fileEntityHashAndId))
+            var optionalFmd = versionFileMetadatas.stream()
+                    .filter(fmd -> fileHashAndId(fmd).equals(fileEntityHashAndId))
                     .findFirst();
             if (optionalFmd.isPresent()) {
-                var fmd = optionalFmd.get().getFileMetadata();
+                var fmd = optionalFmd.get();
                 fmd.setLabel(fileEntity.get("name").textValue());
                 String dirLabel = fileEntity.has("directoryLabel") ? fileEntity.get("directoryLabel").textValue() : "";
                 fmd.setDirectoryLabel(dirLabel);
                 String description = fileEntity.has("description") ? fileEntity.get("description").textValue() : "";
                 fmd.setDescription(description);
-
-                List<String> tags = new ArrayList<>();
-                JsonNode roCrateTags = fileEntity.get("tags");
-                if (roCrateTags != null) {
-                    if (roCrateTags.isArray()) {
-                        roCrateTags.forEach(tag -> tags.add(tag.textValue()));
-                    } else {
-                        tags.add(roCrateTags.textValue());
-                    }
-                    fmd.setCategoriesByName(tags);
-                }
+                applyFileTagsFromRoCrate(fmd, fileEntity);
                 if (!fileMetadataHashesAndIds.removeIf(fmdHash -> fmdHash.equals(fileEntityHashAndId))) {
                     // collect the fmd for files that were deleted in AROMA
                     filesToBeDeleted.add(fmd);
@@ -1570,12 +1562,10 @@ public class RoCrateImportManager {
         
         // find and remove all the remaining files from DV, that were already removed from the RO-Crate
         fileMetadataHashesAndIds.forEach(fileHashAndId -> {
-            var fmd = dataset.getFiles().stream()
-                    .filter(dataFile -> (dataFile.getChecksumValue() + "-"
-                            + String.valueOf(dataFile.getId())
-                            .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1))
-                            .equals(fileHashAndId))
-                    .findFirst().get().getFileMetadata();
+            var fmd = versionFileMetadatas.stream()
+                    .filter(fileMetadata -> fileHashAndId(fileMetadata).equals(fileHashAndId))
+                    .findFirst()
+                    .orElse(null);
             
             if (fmd != null) {
                 filesToBeDeleted.add(fmd);
@@ -1583,6 +1573,118 @@ public class RoCrateImportManager {
         });
         
         return filesToBeDeleted;
+    }
+
+    /**
+     * Applies RO-Crate file {@code tags} as Dataverse file categories (custom tags).
+     * Missing {@code tags} leaves existing categories unchanged. A present value, including
+     * an empty array, replaces the file's categories. When the file is already attached to a
+     * persisted dataset, names are created via {@link Dataset#getCategoryByName(String)}.
+     * Otherwise detached categories are stored on the file and reconnected later by
+     * {@code IngestServiceBean.saveAndAddFilesToDataset}.
+     */
+    public void applyFileTagsFromRoCrate(FileMetadata fileMetadata, JsonNode fileEntity) {
+        if (fileMetadata == null || fileEntity == null || !fileEntity.has("tags") || fileEntity.get("tags").isNull()) {
+            return;
+        }
+        fileMetadata.setCategories(new ArrayList<>());
+        for (String tag : extractFileTags(fileEntity.get("tags"))) {
+            fileMetadata.addCategoryByName(tag);
+        }
+    }
+
+    /**
+     * Applies crate file tags to newly ingested Dataverse files, matching crate File entities
+     * by import mapping ({@code @id} → storage identifier) when provided, otherwise by
+     * name and directoryLabel.
+     */
+    public void applyFileTagsToImportedFiles(List<DataFile> importedFiles, ArrayNode roCrateGraph,
+            DatasetVersion version) {
+        applyFileTagsToImportedFiles(importedFiles, roCrateGraph, version, null);
+    }
+
+    public void applyFileTagsToImportedFiles(List<DataFile> importedFiles, ArrayNode roCrateGraph,
+            DatasetVersion version, Map<String, String> importMapping) {
+        if (importedFiles == null || importedFiles.isEmpty() || roCrateGraph == null) {
+            return;
+        }
+        if (importMapping != null && !importMapping.isEmpty()) {
+            Map<String, DataFile> filesByStorageId = importedFiles.stream()
+                    .filter(file -> file.getStorageIdentifier() != null)
+                    .collect(Collectors.toMap(DataFile::getStorageIdentifier, Function.identity(), (a, b) -> a));
+            for (JsonNode fileEntity : roCrateImportMappingServiceBean.collectFileEntities(roCrateGraph)) {
+                if (!fileEntity.has("@id")) {
+                    continue;
+                }
+                String storageId = importMapping.get(fileEntity.get("@id").textValue());
+                if (storageId == null) {
+                    continue;
+                }
+                DataFile dataFile = filesByStorageId.get(storageId);
+                if (dataFile != null) {
+                    applyFileTagsToImportedFile(dataFile, fileEntity, version);
+                }
+            }
+            return;
+        }
+        for (DataFile importedFile : importedFiles) {
+            FileMetadata fileMetadata = importedFile.getFileMetadata();
+            if (fileMetadata == null) {
+                continue;
+            }
+            Optional<JsonNode> fileEntity = roCrateImportMappingServiceBean.findFileEntity(
+                    roCrateGraph, fileMetadata.getLabel(), fileMetadata.getDirectoryLabel());
+            fileEntity.ifPresent(entity -> applyFileTagsToImportedFile(importedFile, entity, version));
+        }
+    }
+
+    private void applyFileTagsToImportedFile(DataFile dataFile, JsonNode fileEntity, DatasetVersion version) {
+        FileMetadata fileMetadata = dataFile.getFileMetadata();
+        if (fileMetadata == null) {
+            return;
+        }
+        // Do not attach files to an unsaved dataset. CreateNewDatasetCommand would then
+        // persist them without createDate. Detached categories are reconnected later by
+        // IngestServiceBean.saveAndAddFilesToDataset.
+        if (fileMetadata.getDatasetVersion() == null && version != null
+                && version.getDataset() != null && version.getDataset().getId() != null) {
+            fileMetadata.setDatasetVersion(version);
+        }
+        applyFileTagsFromRoCrate(fileMetadata, fileEntity);
+    }
+
+    private List<String> extractFileTags(JsonNode tagsNode) {
+        List<String> tags = new ArrayList<>();
+        if (tagsNode == null || tagsNode.isNull() || tagsNode.isMissingNode()) {
+            return tags;
+        }
+        if (tagsNode.isArray()) {
+            tagsNode.forEach(tag -> {
+                if (tag != null && !tag.isNull()) {
+                    addTagIfNotBlank(tags, tag.textValue());
+                }
+            });
+        } else {
+            addTagIfNotBlank(tags, tagsNode.textValue());
+        }
+        return tags;
+    }
+
+    private void addTagIfNotBlank(List<String> tags, String tag) {
+        if (tag != null && !tag.isBlank()) {
+            tags.add(tag);
+        }
+    }
+
+    private String fileHashAndId(FileMetadata fileMetadata) {
+        DataFile dataFile = fileMetadata.getDataFile();
+        return dataFile.getChecksumValue() + "-"
+                + String.valueOf(dataFile.getId())
+                        .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1);
+    }
+
+    void setRoCrateImportMappingServiceBean(RoCrateImportMappingServiceBean roCrateImportMappingServiceBean) {
+        this.roCrateImportMappingServiceBean = roCrateImportMappingServiceBean;
     }
 
     public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws IOException {

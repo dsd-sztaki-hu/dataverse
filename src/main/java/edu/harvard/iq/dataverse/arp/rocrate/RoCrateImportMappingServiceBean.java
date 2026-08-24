@@ -36,14 +36,7 @@ public class RoCrateImportMappingServiceBean {
         }
 
         HashMap<String, String> idAndStorageIdentifierMapping = new HashMap<>();
-
-        // Collect the RO-Crate fileEntities for easier processing
-        ArrayList<JsonNode> roCrateFiles = new ArrayList<>();
-        roCrateGraph.forEach(jsonNode -> {
-            if (jsonNode.has("@type") && hasType(jsonNode, "File")) {
-                roCrateFiles.add(jsonNode);
-            }
-        });
+        List<JsonNode> roCrateFiles = collectFileEntities(roCrateGraph);
 
         for (var importedFile : importedFiles) {
             String name = importedFile.getDisplayName();
@@ -196,8 +189,25 @@ public class RoCrateImportMappingServiceBean {
         return Objects.equals(typeNode.textValue(), type);
     }
 
+    public List<JsonNode> collectFileEntities(ArrayNode roCrateGraph) {
+        ArrayList<JsonNode> roCrateFiles = new ArrayList<>();
+        if (roCrateGraph == null) {
+            return roCrateFiles;
+        }
+        roCrateGraph.forEach(jsonNode -> {
+            if (jsonNode.has("@type") && hasType(jsonNode, "File")) {
+                roCrateFiles.add(jsonNode);
+            }
+        });
+        return roCrateFiles;
+    }
+
+    public Optional<JsonNode> findFileEntity(ArrayNode roCrateGraph, String name, String directoryLabel) {
+        return findFileEntity(collectFileEntities(roCrateGraph), name, directoryLabel);
+    }
+
     // find the corresponding file in the RO-CRATE for the uploaded datasetFile
-    private Optional<JsonNode> findFileEntity(ArrayList<JsonNode> roCrateFiles, String name, String directoryLabel) {
+    private Optional<JsonNode> findFileEntity(List<JsonNode> roCrateFiles, String name, String directoryLabel) {
         String normalizedDirectoryLabel = RoCrateServiceBean.normalizeDirectoryLabel(directoryLabel);
         for (JsonNode node : roCrateFiles) {
             String nodeName = node.has("name") ? node.get("name").textValue() : null;
