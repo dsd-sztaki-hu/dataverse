@@ -975,12 +975,25 @@ public class RoCrateImportManager {
                 .map(DatasetFieldType::getName)
                 .forEach(requiredFieldNames::add);
 
+        var allowedChildNames = dft.getChildDatasetFieldTypes().stream()
+                .map(DatasetFieldType::getName)
+                .collect(Collectors.toSet());
+
         if (entityProperties.has("conformsTo")) {
             validateConformsTo(entityProperties.get("conformsTo"), entityId, preProcessResult);
         }
 
         entityProperties.fields().forEachRemaining(field -> {
-            requiredFieldNames.remove(field.getKey());
+            var propName = field.getKey();
+            requiredFieldNames.remove(propName);
+            if (propName.startsWith("@") || roCrateServiceBean.propsToIgnore.contains(propName)) {
+                return;
+            }
+            if (!allowedChildNames.contains(propName)) {
+                preProcessResult.addError(entityId, propName, "Invalid property",
+                        "Remove '" + propName + "'. It is not a child field of '" + fieldName + "'.");
+                return;
+            }
             prepareAndValidateField(field, entityId, roCrate,
                     roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true);
         });
