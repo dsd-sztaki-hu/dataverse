@@ -24,8 +24,6 @@ import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.apache.commons.io.FileUtils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +31,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -163,10 +162,11 @@ public class RoCrateExportManager {
     }
 
     public JsonNode readRoCrateJsonFromDisk(DatasetVersion version) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get(roCrateServiceBean.getRoCratePath(version)))) {
-            return mapper.readTree(reader);
-        }
+        return readRoCrateJsonFromDisk(roCrateServiceBean.getRoCratePath(version));
+    }
+
+    public JsonNode readRoCrateJsonFromDisk(String path) throws IOException {
+        return roCrateServiceBean.readRoCrateJson(path);
     }
 
     private DatasetVersion findDeepVersion(DatasetVersion version) {
@@ -1200,7 +1200,7 @@ public class RoCrateExportManager {
     public void deleteDraftVersion(DatasetVersion datasetVersion) throws IOException {
         String draftPath = roCrateServiceBean.getRoCrateFolder(datasetVersion);
         String latestPublishedPath = roCrateServiceBean.getRoCrateFolder(datasetVersion.getDataset().getLatestVersionForCopy());
-        FileUtils.copyDirectory(new File(latestPublishedPath), new File(draftPath));
+        copyRoCrateMetadataFiles(latestPublishedPath, draftPath);
     }
 
     // TODO: when this is called from releaseDataset the dataset won't actually be released yet, so we won't
@@ -1224,14 +1224,39 @@ public class RoCrateExportManager {
         } else {
             destFolderPath = roCrateFolderPath + versionSuffix;
         }
-        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(destFolderPath));
+        copyRoCrateMetadataFiles(roCrateFolderPath, destFolderPath);
     }
 
     public void saveRoCrateDraftVersion(DatasetVersion version) throws IOException {
         String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(version);
         String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
         var draftPath = String.join(File.separator, localDir, "ro-crate-metadata");
-        FileUtils.copyDirectory(new File(roCrateFolderPath), new File(draftPath));
+        copyRoCrateMetadataFiles(roCrateFolderPath, draftPath);
+    }
+
+    /**
+     * Copies only the RO-Crate metadata JSON and HTML preview. Avoids a full
+     * directory walk on s3fs.
+     */
+    void copyRoCrateMetadataFiles(String sourceFolder, String destFolder) throws IOException {
+        if (sourceFolder.equals(destFolder)) {
+            return;
+        }
+        Path src = Paths.get(sourceFolder);
+        Path dest = Paths.get(destFolder);
+        Files.createDirectories(dest);
+        copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME),
+                dest.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+        copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME),
+                dest.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
+    }
+
+    private void copyIfPresent(Path source, Path dest) throws IOException {
+        try {
+            Files.copy(source, dest, StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.nio.file.NoSuchFileException e) {
+            // Preview HTML is optional when copying an incomplete crate folder.
+        }
     }
 
     public void updateRoCrateFileMetadatas(Dataset dataset) throws IOException {
@@ -1311,31 +1336,35 @@ public class RoCrateExportManager {
 
         removeDatasetContactEmail(roCrateWithPreview);
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
-        updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
 
         try {
             Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
-            
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
     }
-    
+
+    /**
+     * Updates {@code datePublished} on the draft crate only. Contact emails stay
+     * on the draft; they are stripped from the published crate separately.
+     */
     public void updateDatePublishedInDraftRoCrate(Dataset dataset) {
+        String draftFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+        Path draftJson = Paths.get(draftFolderPath, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+        if (!Files.exists(draftJson)) {
+            return;
+        }
         RoCrate roCrate;
         try {
-            roCrate = Readers.newFolderReader().readCrate(roCrateServiceBean.getDraftRoCrateFolder(dataset));
+            roCrate = Readers.newFolderReader().readCrate(draftFolderPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
-        String roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
-
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(dataset.getLatestVersion()));
-
         try {
-            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
-
+            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, draftFolderPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

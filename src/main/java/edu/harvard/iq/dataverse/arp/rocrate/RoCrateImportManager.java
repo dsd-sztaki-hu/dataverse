@@ -25,8 +25,10 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -568,10 +570,7 @@ public class RoCrateImportManager {
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
     public RoCrateImportPrepResult preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport, boolean isStrict) throws IOException {
-        String latestVersionRoCrateFolderPath = dataset.getId() != null ? getRoCrateFolderForPreProcess(dataset.getLatestVersion()) : null;
-        RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? 
-                new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(latestVersionRoCrateFolderPath) :
-                null;
+        RoCrate latestVersionRoCrate = dataset.getId() != null ? readCrateForPreProcess(dataset) : null;
         RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate, isStrict);
         RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
         if (roCrateToImport != null) {
@@ -1515,16 +1514,37 @@ public class RoCrateImportManager {
     public String getRoCrateFolderForPreProcess(DatasetVersion version) {
         String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
         var supposedToExistPath = String.join(File.separator, localDir, "ro-crate-metadata");
-        if (!Files.exists(Paths.get(supposedToExistPath))) {
+        Path metadata = Paths.get(supposedToExistPath, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+        if (!Files.exists(metadata)) {
             var latestPublished = version.getDataset().getReleasedVersion();
             if (latestPublished != null) {
                 return roCrateServiceBean.getRoCrateFolder(latestPublished);
-            } else {
-                return null;
             }
-
+            return null;
         }
         return supposedToExistPath;
+    }
+
+    private RoCrate readCrateForPreProcess(Dataset dataset) throws IOException {
+        String localDir = StorageUtils.getLocalRoCrateDir(dataset);
+        String draftFolder = String.join(File.separator, localDir, "ro-crate-metadata");
+        RoCrate crate = tryReadCrateFolder(draftFolder);
+        if (crate != null) {
+            return crate;
+        }
+        var latestPublished = dataset.getReleasedVersion();
+        if (latestPublished != null) {
+            return tryReadCrateFolder(roCrateServiceBean.getRoCrateFolder(latestPublished));
+        }
+        return null;
+    }
+
+    private RoCrate tryReadCrateFolder(String folder) throws IOException {
+        try {
+            return new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(folder);
+        } catch (FileNotFoundException | java.nio.file.NoSuchFileException e) {
+            return null;
+        }
     }
 
     public List<FileMetadata> updateFileMetadatas(Dataset dataset, RoCrate roCrate) {

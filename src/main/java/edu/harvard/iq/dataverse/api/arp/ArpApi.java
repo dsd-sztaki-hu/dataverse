@@ -41,8 +41,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -1053,28 +1051,22 @@ public class ArpApi extends AbstractApiBean {
             }
             
             try {
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
                 String roCratePath = roCrateServiceBean.getRoCratePath(opened);
-                if (!Files.exists(Paths.get(roCratePath))) {
-                    roCrateExportManager.createOrUpdateRoCrate(opened);
-                    if (dataset.getLatestVersion().isPublished()) {
-                        roCrateExportManager.saveRoCrateDraftVersion(opened);
-                        roCrateExportManager.finalizeRoCrateForDatasetVersion(opened);
-                    }
+                JsonNode roCrateJson = null;
+                try {
+                    roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
+                } catch (java.nio.file.NoSuchFileException | FileNotFoundException e) {
+                    // Missing crate is regenerated below.
                 }
-                BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
-                JsonObject roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
                 var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
                 // Check whether something is missing or wrong with this ro crate, in which case we regenerate
                 // or a superuser is requesting a force reload.
-                if (needToRegenerate(roCrateJson) || shouldForceReload) {
+                if (roCrateJson == null || needToRegenerate(JsonParser.parseString(roCrateJson.toString()).getAsJsonObject()) || shouldForceReload) {
                     roCrateExportManager.createOrUpdateRoCrate(opened);
                     if (dataset.getLatestVersion().isPublished()) {
-                        roCrateExportManager.saveRoCrateDraftVersion(opened);
                         roCrateExportManager.finalizeRoCrateForDatasetVersion(opened);
                     }
-                    bufferedReader = new BufferedReader(new FileReader(roCratePath));
-                    roCrateJson = gson.fromJson(bufferedReader, JsonObject.class);
+                    roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
                 }
                 Response.ResponseBuilder resp;
                 // If returning the released version it is readonly
@@ -1095,8 +1087,9 @@ public class ArpApi extends AbstractApiBean {
 //                    ));
                 } else {
                     // the editable version of the requested latest version
-                    BufferedReader br = new BufferedReader(new FileReader(roCrateServiceBean.getDraftRoCrateJson(dataset)));
-                    JsonObject draftRoCrateJson = gson.fromJson(br, JsonObject.class);
+                    String draftPath = roCrateServiceBean.getDraftRoCrateJson(dataset);
+                    JsonNode draftRoCrateJson = roCrateServiceBean.readOpenedOrDraftRoCrateJson(
+                            roCratePath, draftPath, roCrateJson);
                     resp = Response.ok(draftRoCrateJson.toString());
                     
 //                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
@@ -1226,14 +1219,8 @@ public class ArpApi extends AbstractApiBean {
             }
 
             roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
-            String roCratePath = roCrateServiceBean.getRoCratePath(managedVersion);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
-            JsonObject updatedRoCrate = gson.fromJson(bufferedReader, JsonObject.class);
-
-            ObjectMapper mapper = new ObjectMapper();
             jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                    .add("roCrate", JsonUtil.getJsonObject(mapper.readTree(updatedRoCrate.toString()).toString()))
+                    .add("roCrate", JsonUtil.getJsonObject(preProcessedRoCrate.getJsonMetadata()))
                     .build();
             return roCrateOk("RO-Crate updated", data);
 
@@ -1392,9 +1379,7 @@ public class ArpApi extends AbstractApiBean {
             }
 
             roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
-            String roCratePath = roCrateServiceBean.getRoCratePath(managedVersion);
-            BufferedReader bufferedReader = new BufferedReader(new FileReader(roCratePath));
-            uploadedCrate = mapper.readTree(bufferedReader);
+            uploadedCrate = mapper.readTree(preProcessedRoCrate.getJsonMetadata());
             
         } catch (WrappedResponse | ArpException | IOException e) {
             e.printStackTrace();
@@ -1470,10 +1455,13 @@ public class ArpApi extends AbstractApiBean {
         }
         byte[] fileBytes = fileStream.readAllBytes();
         var roCrateFilesContent = roCrateUploadServiceBean.processRoCrateZip(fileBytes);
+        var roCrateString = roCrateUploadServiceBean.getRoCrateJsonString();
+        if (roCrateString == null) {
+            return roCrateError(BAD_REQUEST, "Missing " + ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, null);
+        }
 
         DataverseRequest req = createDataverseRequest(user);
         try {
-            var roCrateString = arpService.extractFileFromZip(new ByteArrayInputStream(fileBytes), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
             RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateString, ownerId, req);
             JsonNode uploadedRoCrate = uploadResult.roCrate();
             String filename = fileDetail.getFileName();
