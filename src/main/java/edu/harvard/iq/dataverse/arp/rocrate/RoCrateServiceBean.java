@@ -171,9 +171,16 @@ public class RoCrateServiceBean {
      * Reads RO-Crate JSON from disk and always closes the reader.
      */
     public JsonNode readRoCrateJson(String path) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get(path))) {
-            return mapper.readTree(reader);
+        try (var t = RoCrateOpLog.startIo("read.json").extra("path", path)) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                try (BufferedReader reader = Files.newBufferedReader(Paths.get(path))) {
+                    return mapper.readTree(reader);
+                }
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
         }
     }
 

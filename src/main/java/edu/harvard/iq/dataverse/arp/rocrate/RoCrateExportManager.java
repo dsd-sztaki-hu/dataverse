@@ -18,8 +18,6 @@ import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.FileEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
-import edu.kit.datamanager.ro_crate.reader.Readers;
-import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Inject;
@@ -81,7 +79,9 @@ public class RoCrateExportManager {
     ArpServiceBean arpServiceBean;
     
     public void createOrUpdate(RoCrate roCrate, DatasetVersion version, boolean isCreation, Map<String, DatasetFieldType> datasetFieldTypeMap) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+        var t = RoCrateOpLog.start("export.fields", version).extra("creation", isCreation);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         RoCrate.RoCrateBuilder roCrateContextUpdater = new RoCrate.RoCrateBuilder(roCrate);
         List<DatasetField> datasetFields = version.getDatasetFields();
@@ -133,6 +133,12 @@ public class RoCrateExportManager {
 
         // MDB-s can only be get via the Dataset and its Dataverse, so we need to pass version.getDataset()
         roCrateServiceBean.collectConformsToIds(version.getDataset(), rootDataEntity);
+        } catch (JsonProcessingException | RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
+        }
     }
 
     /**
@@ -174,47 +180,53 @@ public class RoCrateExportManager {
     }
 
     public void doCreateOrUpdateRoCrate(DatasetVersion version, Map<String, String> importMapping) throws Exception {
-        var dataset = version.getDataset();
-        logger.info("createOrUpdateRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
-        var roCratePath = Paths.get(roCrateServiceBean.getRoCratePath(version));
-        RoCrate roCrate;
-        String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(version);
+        var t = RoCrateOpLog.start("export.createOrUpdate", version);
+        try {
+            var dataset = version.getDataset();
+            var roCratePath = Paths.get(roCrateServiceBean.getRoCratePath(version));
+            RoCrate roCrate;
+            String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(version);
 
-        if (!Files.exists(roCratePath)) {
-            roCrate = new RoCrate.RoCrateBuilder()
-                    .setPreview(new AutomaticPreview())
-                    .build();
-            createOrUpdate(roCrate, version, true, null);
-            Path roCrateFolder = Path.of(roCrateFolderPath);
-            if (!Files.exists(roCrateFolder)) {
-                Files.createDirectories(roCrateFolder);
+            if (!Files.exists(roCratePath)) {
+                roCrate = new RoCrate.RoCrateBuilder()
+                        .setPreview(new AutomaticPreview())
+                        .build();
+                createOrUpdate(roCrate, version, true, null);
+                Path roCrateFolder = Path.of(roCrateFolderPath);
+                if (!Files.exists(roCrateFolder)) {
+                    Files.createDirectories(roCrateFolder);
+                }
+            } else {
+                RoCrate ro = RoCrateOpLog.readCrateFolder(roCrateFolderPath);
+                roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+                Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean.getDatasetFieldTypeMapByConformsTo(roCrate);
+                createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
             }
-        } else {
-            RoCrate ro = Readers.newFolderReader().readCrate(roCrateFolderPath);
-            roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
-            Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean.getDatasetFieldTypeMapByConformsTo(roCrate);
-            createOrUpdate(roCrate, version, false, datasetFieldTypeMap);
-        }
-        processRoCrateFiles(roCrate, version.getFileMetadatas(), importMapping);
-        // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
-        // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
-        // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
-        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
-        // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
-        // addUploadedFileMetadata would do nothing.
+            processRoCrateFiles(roCrate, version.getFileMetadatas(), importMapping);
+            // If the rocrate is generated right after an rocrate zip has been uploaded, make sure we put back the
+            // file and sub-dataset related metadata to the generated metadata from the uploaded ro-crate-metadata.json.
+            // roCrate = roCrateUploadServiceBean.addUploadedFileMetadata(roCrate);
+            RoCrateOpLog.saveCrate(roCrate, roCrateFolderPath);
+            // If rocrate is saved, then we can reset the upload state, so that subsequent calls to
+            // addUploadedFileMetadata would do nothing.
 
-        // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
-        // from the beginning
-        var released = dataset.getReleasedVersion();
-        if (released != null) {
-            var releasedVersion = released.getFriendlyVersionNumber();
-            var releasedPath = roCrateServiceBean.getRoCratePath(released);
-            if (!Files.exists(Paths.get(releasedPath))) {
-                logger.info("createOrUpdateRoCrate: copying draft as "+releasedVersion);
-                saveRoCrateVersion(dataset, releasedVersion, false);
+            // Make sure we have a released version rocrate even for older datasets where we didn't sync rocrate
+            // from the beginning
+            var released = dataset.getReleasedVersion();
+            if (released != null) {
+                var releasedVersion = released.getFriendlyVersionNumber();
+                var releasedPath = roCrateServiceBean.getRoCratePath(released);
+                if (!Files.exists(Paths.get(releasedPath))) {
+                    t.extra("copiedReleasedVersion", releasedVersion);
+                    saveRoCrateVersion(dataset, releasedVersion, false);
+                }
             }
+        } catch (Exception e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
         }
-
     }
 
     private void processPrimitiveFieldType(RoCrate roCrate, RoCrate.RoCrateBuilder roCrateContextUpdater, 
@@ -701,7 +713,12 @@ public class RoCrateExportManager {
     }
 
     public void processRoCrateFiles(RoCrate roCrate, List<FileMetadata> fileMetadatas, Map<String, String> importMapping) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
+        var t = RoCrateOpLog.start("export.processFiles");
+        try {
+            if (fileMetadatas != null) {
+                t.extra("fileCount", fileMetadatas.size());
+            }
+            ObjectMapper mapper = new ObjectMapper();
         List<FileMetadata> datasetFiles = fileMetadatas.stream().map(FileMetadata::createCopy).collect(Collectors.toList());
         List<ObjectNode> roCrateFileEntities = Stream.concat(
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> roCrateServiceBean.getTypeAsString(ce).equals("File")),
@@ -790,6 +807,12 @@ public class RoCrateExportManager {
         // Delete the empty Datasets from the RO-CRATE, this has to be done after adding the new files
         // this way we can keep the original Dataset (folder) ID-s in the RO-CRATE
         deleteEmptyDatasets(roCrate);
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
+        }
     }
 
     private void processModifiedPath(RoCrate roCrate, String originalPath, String modifiedPath, String fileId) {
@@ -1215,16 +1238,25 @@ public class RoCrateExportManager {
 
 
     public void saveRoCrateVersion(Dataset dataset, String versionNumber, boolean isUpdate) throws IOException {
-        String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion());
-        String destFolderPath;
-        String versionSuffix = "_v" + versionNumber;
-        if (isUpdate && roCrateFolderPath.endsWith(versionSuffix)) {
-            destFolderPath = roCrateFolderPath;
-            roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
-        } else {
-            destFolderPath = roCrateFolderPath + versionSuffix;
+        try (var t = RoCrateOpLog.start("export.saveVersion", dataset)
+                .extra("versionNumber", versionNumber)
+                .extra("update", isUpdate)) {
+            try {
+                String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion());
+                String destFolderPath;
+                String versionSuffix = "_v" + versionNumber;
+                if (isUpdate && roCrateFolderPath.endsWith(versionSuffix)) {
+                    destFolderPath = roCrateFolderPath;
+                    roCrateFolderPath = roCrateServiceBean.getDraftRoCrateFolder(dataset);
+                } else {
+                    destFolderPath = roCrateFolderPath + versionSuffix;
+                }
+                copyRoCrateMetadataFiles(roCrateFolderPath, destFolderPath);
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
         }
-        copyRoCrateMetadataFiles(roCrateFolderPath, destFolderPath);
     }
 
     public void saveRoCrateDraftVersion(DatasetVersion version) throws IOException {
@@ -1242,13 +1274,20 @@ public class RoCrateExportManager {
         if (sourceFolder.equals(destFolder)) {
             return;
         }
-        Path src = Paths.get(sourceFolder);
-        Path dest = Paths.get(destFolder);
-        Files.createDirectories(dest);
-        copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME),
-                dest.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
-        copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME),
-                dest.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
+        try (var t = RoCrateOpLog.startIo("copy").extra("from", sourceFolder).extra("to", destFolder)) {
+            try {
+                Path src = Paths.get(sourceFolder);
+                Path dest = Paths.get(destFolder);
+                Files.createDirectories(dest);
+                copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME),
+                        dest.resolve(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME));
+                copyIfPresent(src.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME),
+                        dest.resolve(ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME));
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
+        }
     }
 
     private void copyIfPresent(Path source, Path dest) throws IOException {
@@ -1260,29 +1299,41 @@ public class RoCrateExportManager {
     }
 
     public void updateRoCrateFileMetadatas(Dataset dataset) throws IOException {
-        RoCrate ro = Readers.newFolderReader()
-                .readCrate(roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
-        RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
-        processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), null);
-        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+        try (var t = RoCrateOpLog.start("export.updateFileMetadatas", dataset)) {
+            try {
+                RoCrate ro = RoCrateOpLog.readCrateFolder(roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+                RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+                processRoCrateFiles(roCrate, dataset.getLatestVersion().getFileMetadatas(), null);
+                RoCrateOpLog.saveCrate(roCrate, roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion()));
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
+        }
     }
 
     public void updateRoCrateFileMetadataAfterIngest(List<Long> fileIds) throws IOException {
-        HashSet<Long> parentDsIds = new HashSet<>();
-        // Collect the dataset and the belonging file ids, so we no longer need to assume that every ingest message
-        // contains files that belong to the same dataset as it is assumed here: edu/harvard/iq/dataverse/ingest/IngestMessageBean.java
-        fileIds.forEach(fileId -> {
-            var dsId = datafileService.findCheapAndEasy(fileId).getOwner().getId();
-            parentDsIds.add(dsId);
-        });
-        for (Long dsId : parentDsIds) {
-            var datasetVersion = datasetService.find(dsId).getLatestVersion();
-            RoCrate ro = Readers.newFolderReader()
-                    .readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
-            RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
-            updateFileMetadataAfterIngest(roCrate, datasetVersion);
-            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
-            
+        try (var t = RoCrateOpLog.start("export.updateAfterIngest").extra("fileCount", fileIds == null ? 0 : fileIds.size())) {
+            try {
+                HashSet<Long> parentDsIds = new HashSet<>();
+                // Collect the dataset and the belonging file ids, so we no longer need to assume that every ingest message
+                // contains files that belong to the same dataset as it is assumed here: edu/harvard/iq/dataverse/ingest/IngestMessageBean.java
+                fileIds.forEach(fileId -> {
+                    var dsId = datafileService.findCheapAndEasy(fileId).getOwner().getId();
+                    parentDsIds.add(dsId);
+                });
+                for (Long dsId : parentDsIds) {
+                    var datasetVersion = datasetService.find(dsId).getLatestVersion();
+                    t.dataset(datasetVersion);
+                    RoCrate ro = RoCrateOpLog.readCrateFolder(roCrateServiceBean.getRoCrateFolder(datasetVersion));
+                    RoCrate roCrate = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+                    updateFileMetadataAfterIngest(roCrate, datasetVersion);
+                    RoCrateOpLog.saveCrate(roCrate, roCrateServiceBean.getRoCrateFolder(datasetVersion));
+                }
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
         }
     }
 
@@ -1318,31 +1369,39 @@ public class RoCrateExportManager {
     Upon the dataset's successful publication, removes any sensitive data from the RO-Crate and updates the publicationDate
     */
     public void finalizeRoCrateForDatasetVersion(DatasetVersion datasetVersion) {
-        RoCrate ro = null;
-        String roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
+        var t = RoCrateOpLog.start("export.finalizeVersion", datasetVersion);
         try {
-            if (!Files.exists(Paths.get(roCratePath))) {
-                createOrUpdateRoCrate(datasetVersion);
-//                if (datasetVersion.getDataset().getLatestVersion().isPublished()) {
-//                    saveRoCrateDraftVersion(datasetVersion);
-//                }
+            RoCrate ro = null;
+            String roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
+            try {
+                if (!Files.exists(Paths.get(roCratePath))) {
+                    createOrUpdateRoCrate(datasetVersion);
+    //                if (datasetVersion.getDataset().getLatestVersion().isPublished()) {
+    //                    saveRoCrateDraftVersion(datasetVersion);
+    //                }
+                }
+                ro = RoCrateOpLog.readCrateFolder(roCrateServiceBean.getRoCrateFolder(datasetVersion));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            ro = Readers.newFolderReader().readCrate(roCrateServiceBean.getRoCrateFolder(datasetVersion));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
-        String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(datasetVersion);
+            RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(ro).setPreview(new AutomaticPreview()).build();
+            String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(datasetVersion);
 
-        removeDatasetContactEmail(roCrateWithPreview);
-        updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
+            removeDatasetContactEmail(roCrateWithPreview);
+            updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(datasetVersion));
 
-        try {
-            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, roCrateFolderPath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            try {
+                RoCrateOpLog.saveCrate(roCrateWithPreview, roCrateFolderPath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
         }
-        updateDatePublishedInDraftRoCrate(datasetVersion.getDataset());
     }
 
     /**
@@ -1357,65 +1416,77 @@ public class RoCrateExportManager {
         }
         RoCrate roCrate;
         try {
-            roCrate = Readers.newFolderReader().readCrate(draftFolderPath);
+            roCrate = RoCrateOpLog.readCrateFolder(draftFolderPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         RoCrate roCrateWithPreview = new RoCrate.RoCrateBuilder(roCrate).setPreview(new AutomaticPreview()).build();
         updateDatePublishedInRoCrate(roCrateWithPreview, getDatePublishedForRoCrate(dataset.getLatestVersion()));
         try {
-            Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrateWithPreview, draftFolderPath);
+            RoCrateOpLog.saveCrate(roCrateWithPreview, draftFolderPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void finalizeRoCrateForPublish(DatasetVersion datasetVersion) {
-        // Finalize as usual
-        if (!datasetVersion.isDraft()) {
-            finalizeRoCrateForDatasetVersion(datasetVersion);
-        }
+        var t = RoCrateOpLog.start("export.finalizePublish", datasetVersion);
+        try {
+            // Finalize as usual
+            if (!datasetVersion.isDraft()) {
+                finalizeRoCrateForDatasetVersion(datasetVersion);
+            }
 
-        // If we have local access to the KG (as in case of a demo install) ingest the published
-        // dataset right away for instant findability
-        // cd /var/lib/arp-kg/harvest; ingest.py demo.ini <roCratePath>
-        String ingestCommand = arpConfig.get("arp.kg.ingestCommand");
+            // If we have local access to the KG (as in case of a demo install) ingest the published
+            // dataset right away for instant findability
+            // cd /var/lib/arp-kg/harvest; ingest.py demo.ini <roCratePath>
+            String ingestCommand = arpConfig.get("arp.kg.ingestCommand");
 
-        if (ingestCommand != null) {
-            var roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
-            var fullCommand = ingestCommand + " '" + roCratePath + "'";
+            if (ingestCommand != null) {
+                var roCratePath = roCrateServiceBean.getRoCratePath(datasetVersion);
+                var fullCommand = ingestCommand + " '" + roCratePath + "'";
 
-            try {
-                logger.info("Executing KG ingest command after publish: " + fullCommand);
+                try (var ingestTimer = RoCrateOpLog.start("export.kgIngest", datasetVersion)) {
+                    try {
+                        logger.info("Executing KG ingest command after publish: " + fullCommand);
 
-                // Split command for ProcessBuilder if needed
-                List<String> command = Arrays.asList("bash", "-c", fullCommand);
+                        // Split command for ProcessBuilder if needed
+                        List<String> command = Arrays.asList("bash", "-c", fullCommand);
 
-                ProcessBuilder processBuilder = new ProcessBuilder(command);
-                processBuilder.redirectErrorStream(true); // Redirect stderr to stdout
+                        ProcessBuilder processBuilder = new ProcessBuilder(command);
+                        processBuilder.redirectErrorStream(true); // Redirect stderr to stdout
 
-                Process process = processBuilder.start();
+                        Process process = processBuilder.start();
 
-                // Read the process output
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        logger.info(line); // Log the command output
+                        // Read the process output
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                logger.info(line); // Log the command output
+                            }
+                        }
+
+                        int exitCode = process.waitFor();
+                        ingestTimer.extra("exitCode", exitCode);
+                        if (exitCode != 0) {
+                            ingestTimer.fail(new RuntimeException("Ingest command failed with exit code: " + exitCode));
+                            logger.severe("Ingest command failed with exit code: " + exitCode);
+                        } else {
+                            logger.info("Ingest command executed successfully.");
+                        }
+                    } catch (IOException | InterruptedException e) {
+                        ingestTimer.fail(e);
+                        logger.severe("Error executing ingest command: " + e.getMessage());
+                        Thread.currentThread().interrupt(); // Restore interrupt status if interrupted
                     }
                 }
-
-                int exitCode = process.waitFor();
-                if (exitCode != 0) {
-                    logger.severe("Ingest command failed with exit code: " + exitCode);
-                } else {
-                    logger.info("Ingest command executed successfully.");
-                }
-            } catch (IOException | InterruptedException e) {
-                logger.severe("Error executing ingest command: " + e.getMessage());
-                Thread.currentThread().interrupt(); // Restore interrupt status if interrupted
             }
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
         }
-
     }
 
     public void updateDatePublishedInRoCrate(RoCrate roCrate, String datePublished) {
@@ -1426,17 +1497,30 @@ public class RoCrateExportManager {
     }
 
     public void saveUploadedRoCrate(Dataset dataset, String roCrateJsonString) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String roCratePath = roCrateServiceBean.getRoCratePath(dataset.getLatestVersion());
-        JsonNode parsedRoCrate = objectMapper.readTree(roCrateJsonString);
-        File roCrate = new File(roCratePath);
+        try (var t = RoCrateOpLog.start("export.saveUploaded", dataset)) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                String roCratePath = roCrateServiceBean.getRoCratePath(dataset.getLatestVersion());
+                JsonNode parsedRoCrate = objectMapper.readTree(roCrateJsonString);
+                File roCrate = new File(roCratePath);
 
-        if (!roCrate.getParentFile().exists()) {
-            if (!roCrate.getParentFile().mkdirs()) {
-                throw new RuntimeException("Failed to save uploaded RO-CRATE for dataset: " + dataset.getIdentifierForFileStorage());
+                if (!roCrate.getParentFile().exists()) {
+                    if (!roCrate.getParentFile().mkdirs()) {
+                        throw new RuntimeException("Failed to save uploaded RO-CRATE for dataset: " + dataset.getIdentifierForFileStorage());
+                    }
+                }
+                try (var writeTimer = RoCrateOpLog.startIo("write.json", dataset).extra("path", roCratePath)) {
+                    try {
+                        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(roCratePath), parsedRoCrate);
+                    } catch (IOException | RuntimeException e) {
+                        writeTimer.fail(e);
+                        throw e;
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
             }
         }
-        objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(roCratePath), parsedRoCrate);
-        logger.info("saveUploadedRoCrate called for dataset " + dataset.getIdentifierForFileStorage());
     }
 }

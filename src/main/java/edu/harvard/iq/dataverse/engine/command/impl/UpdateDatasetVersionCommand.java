@@ -35,6 +35,7 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
     private boolean validateLenient = false;
     private final DatasetVersion clone;
     final FileMetadata fmVarMet;
+    private boolean skipRoCrateExport = false;
     
     public UpdateDatasetVersionCommand(Dataset theDataset, DataverseRequest aRequest) {
         super(aRequest, theDataset);
@@ -92,6 +93,15 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
 
     public void setValidateLenient(boolean validateLenient) {
         this.validateLenient = validateLenient;
+    }
+
+    /**
+     * Skip the onSuccess RO-Crate export when the caller will write the crate
+     * itself (AROMA postprocess). Avoids a second Writers.save() and preview HTTP call.
+     */
+    public UpdateDatasetVersionCommand skipRoCrateExport() {
+        this.skipRoCrateExport = true;
+        return this;
     }
 
     @Override
@@ -301,6 +311,9 @@ public class UpdateDatasetVersionCommand extends AbstractDatasetCommand<Dataset>
         // (it will be scheduled then for later indexing of the newest version).
         // See the documentation of asyncIndexDataset method for more details.
         ctxt.index().asyncIndexDataset((Dataset) r, true);
+        if (skipRoCrateExport) {
+            return true;
+        }
         RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
         try {
             roCrateExportManager.createOrUpdateRoCrate(((Dataset) r).getLatestVersion());

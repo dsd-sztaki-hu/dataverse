@@ -1,6 +1,7 @@
 package edu.kit.datamanager.ro_crate.preview;
 
 import edu.harvard.iq.dataverse.arp.ArpConfig;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateOpLog;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -51,15 +52,23 @@ public class PreviewGenerator {
      * Generates the HTML preview from in-memory metadata JSON so the file is not re-read from disk.
      */
     public static void generatePreview(String location, String roCrateMetadataJson) throws Exception {
-        String previewGeneratorAddress = ArpConfig.instance.get("arp.rocrate.previewgenerator.address");
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(previewGeneratorAddress))
-                .POST(HttpRequest.BodyPublishers.ofString(roCrateMetadataJson, StandardCharsets.UTF_8))
-                .build();
-        HttpResponse<String> resp = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        if (resp.statusCode() != 200) {
-            throw new Exception("Failed to generate HTML preview for the roCrate with path: " + location + "\n" + resp.body());
+        try (var t = RoCrateOpLog.startIo("preview.http").extra("location", location)) {
+            try {
+                String previewGeneratorAddress = ArpConfig.instance.get("arp.rocrate.previewgenerator.address");
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(new URI(previewGeneratorAddress))
+                        .POST(HttpRequest.BodyPublishers.ofString(roCrateMetadataJson, StandardCharsets.UTF_8))
+                        .build();
+                HttpResponse<String> resp = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+                t.extra("httpStatus", resp.statusCode());
+                if (resp.statusCode() != 200) {
+                    throw new Exception("Failed to generate HTML preview for the roCrate with path: " + location + "\n" + resp.body());
+                }
+                Files.writeString(Paths.get(location, "ro-crate-preview.html"), resp.body(), StandardCharsets.UTF_8);
+            } catch (Exception e) {
+                t.fail(e);
+                throw e;
+            }
         }
-        Files.writeString(Paths.get(location, "ro-crate-preview.html"), resp.body(), StandardCharsets.UTF_8);
     }
 }

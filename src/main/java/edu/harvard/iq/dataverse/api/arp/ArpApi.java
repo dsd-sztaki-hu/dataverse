@@ -977,21 +977,24 @@ public class ArpApi extends AbstractApiBean {
             @QueryParam("strict") @DefaultValue("false") boolean isStrict,
             String roCrateJson)
     {
-        try {
-            RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
+        try (var t = RoCrateOpLog.start("validate").extra("strict", isStrict)) {
+            try {
+                RoCrateImportPrepResult roCrateImportPrepResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJson, null, isStrict);
 
-            PrepIssuesDecision decision = decidePrepIssues(roCrateImportPrepResult, true);
-            if (decision != null) {
-                jakarta.json.JsonObject data = JsonUtil.getJsonObject(decision.bodyPrettyJson);
-                String msg = data.getString("message", decision.ok ? MISSING_CONTEXT_FIXED_MESSAGE : VALIDATION_FAILED_MESSAGE);
-                return decision.ok
-                        ? roCrateOk(msg, data)
-                        : roCrateError(Response.Status.BAD_REQUEST, msg, data);
+                PrepIssuesDecision decision = decidePrepIssues(roCrateImportPrepResult, true);
+                if (decision != null) {
+                    jakarta.json.JsonObject data = JsonUtil.getJsonObject(decision.bodyPrettyJson);
+                    String msg = data.getString("message", decision.ok ? MISSING_CONTEXT_FIXED_MESSAGE : VALIDATION_FAILED_MESSAGE);
+                    return decision.ok
+                            ? roCrateOk(msg, data)
+                            : roCrateError(Response.Status.BAD_REQUEST, msg, data);
+                }
+                return roCrateOk("OK - RO-Crate is valid", buildRoCrateApiData(roCrateImportPrepResult, false));
+            } catch (RuntimeException e) {
+                t.fail(e);
+                e.printStackTrace();
+                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
             }
-            return roCrateOk("OK - RO-Crate is valid", buildRoCrateApiData(roCrateImportPrepResult, false));
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
         }
     }
     
@@ -1050,67 +1053,79 @@ public class ArpApi extends AbstractApiBean {
                 }
             }
             
-            try {
-                String roCratePath = roCrateServiceBean.getRoCratePath(opened);
-                JsonNode roCrateJson = null;
+            try (var t = RoCrateOpLog.start("open", opened)) {
                 try {
-                    roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
-                } catch (java.nio.file.NoSuchFileException | FileNotFoundException e) {
-                    // Missing crate is regenerated below.
-                }
-                var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
-                // Check whether something is missing or wrong with this ro crate, in which case we regenerate
-                // or a superuser is requesting a force reload.
-                if (roCrateJson == null || needToRegenerate(JsonParser.parseString(roCrateJson.toString()).getAsJsonObject()) || shouldForceReload) {
-                    roCrateExportManager.createOrUpdateRoCrate(opened);
-                    if (dataset.getLatestVersion().isPublished()) {
-                        roCrateExportManager.finalizeRoCrateForDatasetVersion(opened);
+                    String roCratePath = roCrateServiceBean.getRoCratePath(opened);
+                    JsonNode roCrateJson = null;
+                    try {
+                        roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
+                    } catch (java.nio.file.NoSuchFileException | FileNotFoundException e) {
+                        // Missing crate is regenerated below.
                     }
-                    roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
-                }
-                Response.ResponseBuilder resp;
-                // If returning the released version it is readonly
-                // In any other case the user is already checked to have access to a draft version and can edit
-                // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
-                if (privateUrlUser || authenticatedUser == null || (dataset.isLocked() && !dataset.isLockedFor(DatasetLock.Reason.InReview)) 
-                        || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset) 
-                        || (opened.isReleased() && !dataset.getLatestVersion().equals(opened))) {
-                    resp = Response.ok(roCrateJson.toString());
-                    resp = resp.header("X-Arp-RoCrate-Readonly", true)
-                            .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
-//                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-//                            .add("roCrate", JsonUtil.getJsonObject(roCrateJson.toString()))
-//                            .build();
-//                    return roCrateOk("OK", data, Map.of(
-//                            "X-Arp-RoCrate-Readonly", true,
-//                            "Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly"
-//                    ));
-                } else {
-                    // the editable version of the requested latest version
-                    String draftPath = roCrateServiceBean.getDraftRoCrateJson(dataset);
-                    JsonNode draftRoCrateJson = roCrateServiceBean.readOpenedOrDraftRoCrateJson(
-                            roCratePath, draftPath, roCrateJson);
-                    resp = Response.ok(draftRoCrateJson.toString());
-                    
-//                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-//                            .add("roCrate", JsonUtil.getJsonObject(draftRoCrateJson.toString()))
-//                            .build();
-//                    return roCrateOk("OK", data);
-                }
+                    var shouldForceReload = forceReload && authenticatedUser != null && authenticatedUser.isSuperuser();
+                    boolean regenerated = roCrateJson == null
+                            || needToRegenerate(JsonParser.parseString(roCrateJson.toString()).getAsJsonObject())
+                            || shouldForceReload;
+                    // Check whether something is missing or wrong with this ro crate, in which case we regenerate
+                    // or a superuser is requesting a force reload.
+                    if (regenerated) {
+                        roCrateExportManager.createOrUpdateRoCrate(opened);
+                        if (dataset.getLatestVersion().isPublished()) {
+                            roCrateExportManager.finalizeRoCrateForDatasetVersion(opened);
+                        }
+                        roCrateJson = roCrateExportManager.readRoCrateJsonFromDisk(opened);
+                    }
+                    t.extra("regenerated", regenerated);
+                    Response.ResponseBuilder resp;
+                    // If returning the released version it is readonly
+                    // In any other case the user is already checked to have access to a draft version and can edit
+                    // Note: need to add Access-Control-Expose-Headers to make X-Arp-RoCrate-Readonly accessible via CORS
+                    boolean readonly = privateUrlUser || authenticatedUser == null
+                            || (dataset.isLocked() && !dataset.isLockedFor(DatasetLock.Reason.InReview))
+                            || !permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)
+                            || (opened.isReleased() && !dataset.getLatestVersion().equals(opened));
+                    t.extra("readonly", readonly);
+                    if (readonly) {
+                        resp = Response.ok(roCrateJson.toString());
+                        resp = resp.header("X-Arp-RoCrate-Readonly", true)
+                                .header("Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly");
+    //                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+    //                            .add("roCrate", JsonUtil.getJsonObject(roCrateJson.toString()))
+    //                            .build();
+    //                    return roCrateOk("OK", data, Map.of(
+    //                            "X-Arp-RoCrate-Readonly", true,
+    //                            "Access-Control-Expose-Headers", "X-Arp-RoCrate-Readonly"
+    //                    ));
+                    } else {
+                        // the editable version of the requested latest version
+                        String draftPath = roCrateServiceBean.getDraftRoCrateJson(dataset);
+                        JsonNode draftRoCrateJson = roCrateServiceBean.readOpenedOrDraftRoCrateJson(
+                                roCratePath, draftPath, roCrateJson);
+                        resp = Response.ok(draftRoCrateJson.toString());
 
-                return resp.build();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-//                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
-                return Response.serverError().entity(e.getMessage()).build();
-            } catch (WrappedResponse ex) {
-                ex.printStackTrace();
-//                return roCrateError(FORBIDDEN, "Authorized users only.", null);
-                return error(FORBIDDEN, "Authorized users only.");
-            } catch (Exception e) {
-                e.printStackTrace();
-//                return roCrateError(INTERNAL_SERVER_ERROR, e.getLocalizedMessage(), null);
-                return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+    //                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+    //                            .add("roCrate", JsonUtil.getJsonObject(draftRoCrateJson.toString()))
+    //                            .build();
+    //                    return roCrateOk("OK", data);
+                    }
+
+                    return resp.build();
+                } catch (FileNotFoundException e) {
+                    t.fail(e);
+                    e.printStackTrace();
+    //                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
+                    return Response.serverError().entity(e.getMessage()).build();
+                } catch (WrappedResponse ex) {
+                    t.fail(ex);
+                    ex.printStackTrace();
+    //                return roCrateError(FORBIDDEN, "Authorized users only.", null);
+                    return error(FORBIDDEN, "Authorized users only.");
+                } catch (Exception e) {
+                    t.fail(e);
+                    e.printStackTrace();
+    //                return roCrateError(INTERNAL_SERVER_ERROR, e.getLocalizedMessage(), null);
+                    return error(Response.Status.INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+                }
             }
         }, getRequestUser(crc));
     }
@@ -1142,95 +1157,102 @@ public class ArpApi extends AbstractApiBean {
             @PathParam("persistentId") String persistentId,
             String roCrateJson
     ) {
-        Dataset dataset;
-        RoCrateImportPrepResult preProcessResult;
-        RoCrate preProcessedRoCrate;
-        AuthenticatedUser user;
-        try {
-            user = getRequestAuthenticatedUserOrDie(crc);
-            dataset = datasetService.findByGlobalId(persistentId);
-            if (dataset.isLocked()) {
-                throw new RuntimeException(
-                        BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
+        try (var t = RoCrateOpLog.start("save")) {
+            Dataset dataset;
+            RoCrateImportPrepResult preProcessResult;
+            RoCrate preProcessedRoCrate;
+            AuthenticatedUser user;
+            try {
+                user = getRequestAuthenticatedUserOrDie(crc);
+                dataset = datasetService.findByGlobalId(persistentId);
+                t.dataset(dataset);
+                if (dataset.isLocked()) {
+                    throw new RuntimeException(
+                            BundleUtil.getStringFromBundle("dataset.message.locked.editNotAllowed"));
+                }
+                preProcessResult = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson, true);
+                PrepIssuesDecision decision = decidePrepIssues(preProcessResult, true);
+                if (decision != null && !decision.ok) {
+                    jakarta.json.JsonObject data = JsonUtil.getJsonObject(decision.bodyPrettyJson);
+                    String msg = data.getString("message", VALIDATION_FAILED_MESSAGE);
+                    return roCrateError(BAD_REQUEST, msg, data);
+                }
+                preProcessedRoCrate = preProcessResult.getRoCrate();
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                e.printStackTrace();
+                return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
             }
-            preProcessResult = roCrateImportManager.preProcessRoCrateFromAroma(dataset, roCrateJson, true);
-            PrepIssuesDecision decision = decidePrepIssues(preProcessResult, true);
-            if (decision != null && !decision.ok) {
-                jakarta.json.JsonObject data = JsonUtil.getJsonObject(decision.bodyPrettyJson);
-                String msg = data.getString("message", VALIDATION_FAILED_MESSAGE);
-                return roCrateError(BAD_REQUEST, msg, data);
+            catch (WrappedResponse ex) {
+                t.fail(ex);
+                ex.printStackTrace();
+                return roCrateError(FORBIDDEN, "Authorized users only.", null);
             }
-            preProcessedRoCrate = preProcessResult.getRoCrate();
-        } catch (IOException | RuntimeException e) {
-            e.printStackTrace();
-            return roCrateError(INTERNAL_SERVER_ERROR, e.getMessage(), null);
-        } 
-        catch (WrappedResponse ex) {
-            ex.printStackTrace();
-            return roCrateError(FORBIDDEN, "Authorized users only.", null);
-        }
 
-        boolean updateDraft = dataset.getLatestVersion().isDraft();
-        DatasetVersion newVersion;
-        if (updateDraft) {
-            newVersion = dataset.getOrCreateEditVersion();
-        } else {
-            newVersion = new DatasetVersion();
-            newVersion.setDataset(dataset);
-            newVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
-        }
-        newVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
-        newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
-        boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(newVersion.getTermsOfUseAndAccess(), null);
-        if (!hasValidTerms) {
-            return roCrateError(CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"), null);
-        }
-        roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
-
-        try {
-            DataverseRequest req = createDataverseRequest(user);
-            DatasetVersion managedVersion;
-            Dataset managedDataset;
+            boolean updateDraft = dataset.getLatestVersion().isDraft();
+            DatasetVersion newVersion;
             if (updateDraft) {
-                var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(newVersion.getDataset(), preProcessedRoCrate);
-                if (!filesToBeDeleted.isEmpty()) {
-                    for (FileMetadata markedForDelete : filesToBeDeleted) {
-                        if (markedForDelete.getId() != null) {
-                            dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
-                        }
-                    }
-                    managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted));
-                } else {
-                    managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req));
-                }
-                managedVersion = managedDataset.getOrCreateEditVersion();
+                newVersion = dataset.getOrCreateEditVersion();
             } else {
-                var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(dataset, preProcessedRoCrate);
-                managedVersion = execCommand(new CreateDatasetVersionCommand(req, dataset, newVersion));
-                if (!filesToBeDeleted.isEmpty()) {
-                    for (FileMetadata markedForDelete : filesToBeDeleted) {
-                        if (markedForDelete.getId() != null) {
-                            managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
-                        }
-                    }
-                    managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
-                }
-                // Avoid triggering indexing from ARP here; Dataverse core will index as needed.
+                newVersion = new DatasetVersion();
+                newVersion.setDataset(dataset);
+                newVersion.setVersionState(DatasetVersion.VersionState.DRAFT);
             }
+            newVersion.setTermsOfUseAndAccess(dataset.getLatestVersion().getTermsOfUseAndAccess());
+            newVersion.getTermsOfUseAndAccess().setDatasetVersion(newVersion);
+            boolean hasValidTerms = TermsOfUseAndAccessValidator.isTOUAValid(newVersion.getTermsOfUseAndAccess(), null);
+            if (!hasValidTerms) {
+                return roCrateError(CONFLICT, BundleUtil.getStringFromBundle("dataset.message.toua.invalid"), null);
+            }
+            roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
 
-            roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
-            jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                    .add("roCrate", JsonUtil.getJsonObject(preProcessedRoCrate.getJsonMetadata()))
-                    .build();
-            return roCrateOk("RO-Crate updated", data);
+            try {
+                DataverseRequest req = createDataverseRequest(user);
+                DatasetVersion managedVersion;
+                Dataset managedDataset;
+                if (updateDraft) {
+                    var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(newVersion.getDataset(), preProcessedRoCrate);
+                    if (!filesToBeDeleted.isEmpty()) {
+                        for (FileMetadata markedForDelete : filesToBeDeleted) {
+                            if (markedForDelete.getId() != null) {
+                                dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                            }
+                        }
+                        managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted).skipRoCrateExport());
+                    } else {
+                        managedDataset = execCommand(new UpdateDatasetVersionCommand(dataset, req).skipRoCrateExport());
+                    }
+                    managedVersion = managedDataset.getOrCreateEditVersion();
+                } else {
+                    var filesToBeDeleted = roCrateImportManager.updateFileMetadatas(dataset, preProcessedRoCrate);
+                    managedVersion = execCommand(new CreateDatasetVersionCommand(req, dataset, newVersion));
+                    if (!filesToBeDeleted.isEmpty()) {
+                        for (FileMetadata markedForDelete : filesToBeDeleted) {
+                            if (markedForDelete.getId() != null) {
+                                managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
+                            }
+                        }
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted).skipRoCrateExport()).getOrCreateEditVersion();
+                    }
+                    // Avoid triggering indexing from ARP here; Dataverse core will index as needed.
+                }
 
-        } catch (WrappedResponse ex) {
-            ex.printStackTrace();
-            return ex.getResponse();
-        } catch (IOException ex ) {
-            ex.printStackTrace();
-            logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
-            return roCrateError(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage(), null);
+                roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
+                jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+                        .add("roCrate", JsonUtil.getJsonObject(preProcessedRoCrate.getJsonMetadata()))
+                        .build();
+                return roCrateOk("RO-Crate updated", data);
+
+            } catch (WrappedResponse ex) {
+                t.fail(ex);
+                ex.printStackTrace();
+                return ex.getResponse();
+            } catch (IOException ex ) {
+                t.fail(ex);
+                ex.printStackTrace();
+                logger.severe("Error occurred during post processing RO-Crate from AROMA" + ex.getMessage());
+                return roCrateError(BAD_REQUEST, "Error occurred during post processing RO-Crate from AROMA" + ex.getMessage(), null);
+            }
         }
     }
 
@@ -1257,24 +1279,30 @@ public class ArpApi extends AbstractApiBean {
         }
 
         DataverseRequest req = createDataverseRequest(user);
-        try {
-            RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateJson, ownerId, req);
-            jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                    .add("roCrate", JsonUtil.getJsonObject(uploadResult.roCrate().toString()))
-                    .build();
-            return roCrateOk("RO-Crate uploaded", data);
-        } catch (ArpException e) {
-            e.printStackTrace();
-            logger.severe(e.getMessage());
+        try (var t = RoCrateOpLog.start("upload.json").extra("ownerId", ownerId)) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode parsed = mapper.readTree(e.getMessage());
+                RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateJson, ownerId, req);
+                if (uploadResult.version() != null) {
+                    t.dataset(uploadResult.version());
+                }
                 jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
-                        .add("details", JsonUtil.getJsonObject(parsed.toString()))
+                        .add("roCrate", JsonUtil.getJsonObject(uploadResult.roCrate().toString()))
                         .build();
-                return roCrateError(BAD_REQUEST, "RO-Crate upload failed", data);
-            } catch (RuntimeException | JsonProcessingException ex) {
-                return roCrateError(BAD_REQUEST, e.getMessage(), null);
+                return roCrateOk("RO-Crate uploaded", data);
+            } catch (ArpException e) {
+                t.fail(e);
+                e.printStackTrace();
+                logger.severe(e.getMessage());
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode parsed = mapper.readTree(e.getMessage());
+                    jakarta.json.JsonObject data = NullSafeJsonBuilder.jsonObjectBuilder()
+                            .add("details", JsonUtil.getJsonObject(parsed.toString()))
+                            .build();
+                    return roCrateError(BAD_REQUEST, "RO-Crate upload failed", data);
+                } catch (RuntimeException | JsonProcessingException ex) {
+                    return roCrateError(BAD_REQUEST, e.getMessage(), null);
+                }
             }
         }
     }
@@ -1345,9 +1373,9 @@ public class ArpApi extends AbstractApiBean {
                                 dataset.getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
                             }
                         }
-                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted)).getOrCreateEditVersion();
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req, filesToBeDeleted).skipRoCrateExport()).getOrCreateEditVersion();
                     } else {
-                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req)).getOrCreateEditVersion();
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(dataset, req).skipRoCrateExport()).getOrCreateEditVersion();
                     }
                 } else {
                     newVersion = new DatasetVersion();
@@ -1368,14 +1396,14 @@ public class ArpApi extends AbstractApiBean {
                                 managedVersion.getDataset().getOrCreateEditVersion().getFileMetadatas().remove(markedForDelete);
                             }
                         }
-                        managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted)).getOrCreateEditVersion();
+                        managedVersion = execCommand(new UpdateDatasetVersionCommand(managedVersion.getDataset(), req, filesToBeDeleted).skipRoCrateExport()).getOrCreateEditVersion();
                     }
                     // Avoid triggering indexing from ARP here; Dataverse core will index as needed.
                 }
                 
             } else {
                 roCrateImportManager.importRoCrate(preProcessedRoCrate, newVersion);
-                managedVersion = execCommand(new CreateNewDatasetCommand(dataset, req)).getOrCreateEditVersion();;
+                managedVersion = execCommand(new CreateNewDatasetCommand(dataset, req).skipRoCrateExport()).getOrCreateEditVersion();
             }
 
             roCrateImportManager.postProcessRoCrateFromAroma(managedVersion.getDataset(), preProcessedRoCrate);
@@ -1461,6 +1489,7 @@ public class ArpApi extends AbstractApiBean {
         }
 
         DataverseRequest req = createDataverseRequest(user);
+        try (var t = RoCrateOpLog.start("upload.zip").extra("ownerId", ownerId)) {
         try {
             RoCrateJsonUploadResult uploadResult = uploadRoCrateJson(roCrateString, ownerId, req);
             JsonNode uploadedRoCrate = uploadResult.roCrate();
@@ -1470,6 +1499,7 @@ public class ArpApi extends AbstractApiBean {
                     : "unknown";
 
             DatasetVersion version = findUploadedDatasetVersion(uploadResult.version());
+            t.dataset(version);
             List<DataFile> filesAdded = List.of();
             if (roCrateFilesContent != null) {
                 byte[] zipFileBytes = roCrateFilesContent.readAllBytes();
@@ -1501,13 +1531,16 @@ public class ArpApi extends AbstractApiBean {
                     .build());
             
         } catch (ArpException | CommandException | IOException e) {
+            t.fail(e);
             e.printStackTrace();
             logger.severe(e.getMessage());
             return roCrateError(BAD_REQUEST, e.getMessage(), null);
         } catch (Exception e) {
+            t.fail(e);
             e.printStackTrace();
             logger.severe(e.getMessage());
             return roCrateError(BAD_REQUEST, e.getMessage(), null);
+        }
         }
     }
 
