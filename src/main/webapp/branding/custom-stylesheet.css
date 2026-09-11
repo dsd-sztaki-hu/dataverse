@@ -579,3 +579,14 @@ a:focus-visible img {
     box-shadow: none !important;
     border: 0 !important;
 }
+
+#featuredDataversesList .item a {
+	display: grid;
+	height: 100%;
+}
+#featuredDataversesList .item a img {
+	margin-left: auto;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: 5px;
+}
