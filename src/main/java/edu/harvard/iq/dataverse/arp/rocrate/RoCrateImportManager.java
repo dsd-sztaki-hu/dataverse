@@ -19,14 +19,15 @@ import edu.kit.datamanager.ro_crate.entities.contextual.ContextualEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
 import edu.kit.datamanager.ro_crate.preview.AutomaticPreview;
 import edu.kit.datamanager.ro_crate.reader.CrateReader;
-import edu.kit.datamanager.ro_crate.writer.Writers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -92,8 +93,10 @@ public class RoCrateImportManager {
 
     // Handles the importing of the RO-Crates (mainly sent by AROMA)
     public void importRoCrate(RoCrate roCrate, DatasetVersion updatedVersion) {
-        Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean
-                .getDatasetFieldTypeMapByConformsTo(roCrate);
+        var t = RoCrateOpLog.start("import", updatedVersion);
+        try {
+            Map<String, DatasetFieldType> datasetFieldTypeMap = roCrateServiceBean
+                    .getDatasetFieldTypeMapByConformsTo(roCrate);
         RootDataEntity rootDataEntity = roCrate.getRootDataEntity();
         Map<String, ContextualEntity> contextualEntityHashMap = roCrate.getAllContextualEntities().stream()
                 .collect(Collectors.toMap(ContextualEntity::getId, Function.identity()));
@@ -155,6 +158,12 @@ public class RoCrateImportManager {
         }
 
         clearFieldsMissingFromRoCrate(updatedVersion, presentPropertyNames);
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
+        }
     }
 
     /**
@@ -568,16 +577,20 @@ public class RoCrateImportManager {
 
     // Prepare the RO-Crate from AROMA to be imported into Dataverse
     public RoCrateImportPrepResult preProcessRoCrateFromAroma(Dataset dataset, String roCrateJsonToImport, boolean isStrict) throws IOException {
-        String latestVersionRoCrateFolderPath = dataset.getId() != null ? getRoCrateFolderForPreProcess(dataset.getLatestVersion()) : null;
-        RoCrate latestVersionRoCrate = latestVersionRoCrateFolderPath != null ? 
-                new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(latestVersionRoCrateFolderPath) :
-                null;
-        RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate, isStrict);
-        RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
-        if (roCrateToImport != null) {
-            roCrateServiceBean.collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
+        try (var t = RoCrateOpLog.start("preprocess", dataset).extra("strict", isStrict)) {
+            try {
+                RoCrate latestVersionRoCrate = dataset.getId() != null ? readCrateForPreProcess(dataset) : null;
+                RoCrateImportPrepResult roCrateImportPrepResult = prepareRoCrateForDataverseImport(roCrateJsonToImport, latestVersionRoCrate, isStrict);
+                RoCrate roCrateToImport = roCrateImportPrepResult.getRoCrate();
+                if (roCrateToImport != null) {
+                    roCrateServiceBean.collectConformsToIds(dataset, roCrateToImport.getRootDataEntity());
+                }
+                return roCrateImportPrepResult;
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
         }
-        return roCrateImportPrepResult;
     }
 
     public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString, boolean isStrict) {
@@ -621,7 +634,9 @@ public class RoCrateImportManager {
     // Prepare a given RO-Crate JSON String to be imported into Dataverse
     // This includes validation by the schema (mdbs) and removing unprocessable fields
     public RoCrateImportPrepResult prepareRoCrateForDataverseImport(String roCrateJsonString, RoCrate latestRoCrate, boolean isStrict) {
-        RoCrateImportPrepResult preProcessResult = new RoCrateImportPrepResult(isStrict);
+        var t = RoCrateOpLog.start("prepare").extra("strict", isStrict);
+        try {
+            RoCrateImportPrepResult preProcessResult = new RoCrateImportPrepResult(isStrict);
         ObjectMapper mapper = new ObjectMapper();
         CrateReader<String> roCrateStringReader = new CrateReader<>(new ReadStringStrategy());
         arpService.getFileClassEn().getAsJsonArray("inputs").forEach(
@@ -736,8 +751,15 @@ public class RoCrateImportManager {
     
             return preProcessResult;
         } catch (IOException e) {
+            t.fail(e);
             logger.severe("Error processing ro-crate string: " + e.getMessage());
             throw new RuntimeException(e);
+        }
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
         }
     }
 
@@ -975,12 +997,25 @@ public class RoCrateImportManager {
                 .map(DatasetFieldType::getName)
                 .forEach(requiredFieldNames::add);
 
+        var allowedChildNames = dft.getChildDatasetFieldTypes().stream()
+                .map(DatasetFieldType::getName)
+                .collect(Collectors.toSet());
+
         if (entityProperties.has("conformsTo")) {
             validateConformsTo(entityProperties.get("conformsTo"), entityId, preProcessResult);
         }
 
         entityProperties.fields().forEachRemaining(field -> {
-            requiredFieldNames.remove(field.getKey());
+            var propName = field.getKey();
+            requiredFieldNames.remove(propName);
+            if (propName.startsWith("@") || roCrateServiceBean.propsToIgnore.contains(propName)) {
+                return;
+            }
+            if (!allowedChildNames.contains(propName)) {
+                preProcessResult.addError(entityId, propName, "Invalid property",
+                        "Remove '" + propName + "'. It is not a child field of '" + fieldName + "'.");
+                return;
+            }
             prepareAndValidateField(field, entityId, roCrate,
                     roCrateContext, roCrateContextUpdater, preProcessResult, roCrateEntityIdsAndTypes, true);
         });
@@ -1502,20 +1537,49 @@ public class RoCrateImportManager {
     public String getRoCrateFolderForPreProcess(DatasetVersion version) {
         String localDir = StorageUtils.getLocalRoCrateDir(version.getDataset());
         var supposedToExistPath = String.join(File.separator, localDir, "ro-crate-metadata");
-        if (!Files.exists(Paths.get(supposedToExistPath))) {
+        Path metadata = Paths.get(supposedToExistPath, ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
+        if (!Files.exists(metadata)) {
             var latestPublished = version.getDataset().getReleasedVersion();
             if (latestPublished != null) {
                 return roCrateServiceBean.getRoCrateFolder(latestPublished);
-            } else {
-                return null;
             }
-
+            return null;
         }
         return supposedToExistPath;
     }
 
+    private RoCrate readCrateForPreProcess(Dataset dataset) throws IOException {
+        String localDir = StorageUtils.getLocalRoCrateDir(dataset);
+        String draftFolder = String.join(File.separator, localDir, "ro-crate-metadata");
+        RoCrate crate = tryReadCrateFolder(draftFolder);
+        if (crate != null) {
+            return crate;
+        }
+        var latestPublished = dataset.getReleasedVersion();
+        if (latestPublished != null) {
+            return tryReadCrateFolder(roCrateServiceBean.getRoCrateFolder(latestPublished));
+        }
+        return null;
+    }
+
+    private RoCrate tryReadCrateFolder(String folder) throws IOException {
+        try (var t = RoCrateOpLog.startIo("read.folder").extra("path", folder)) {
+            try {
+                return new CrateReader<>(new edu.kit.datamanager.ro_crate.reader.ReadFolderStrategy()).readCrate(folder);
+            } catch (FileNotFoundException | java.nio.file.NoSuchFileException e) {
+                t.extra("missing", true);
+                return null;
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
+        }
+    }
+
     public List<FileMetadata> updateFileMetadatas(Dataset dataset, RoCrate roCrate) {
-        List<FileMetadata> filesToBeDeleted = new ArrayList<>();
+        var t = RoCrateOpLog.start("updateFileMetadatas", dataset);
+        try {
+            List<FileMetadata> filesToBeDeleted = new ArrayList<>();
         List<FileMetadata> versionFileMetadatas = dataset.getLatestVersion().getFileMetadatas();
         List<String> fileMetadataHashesAndIds = versionFileMetadatas.stream()
                 .map(this::fileHashAndId)
@@ -1573,6 +1637,124 @@ public class RoCrateImportManager {
         });
         
         return filesToBeDeleted;
+        } catch (RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
+        }
+    }
+
+    /**
+     * Applies RO-Crate file {@code tags} as Dataverse file categories (custom tags).
+     * Missing {@code tags} leaves existing categories unchanged. A present value, including
+     * an empty array, replaces the file's categories. When the file is already attached to a
+     * persisted dataset, names are created via {@link Dataset#getCategoryByName(String)}.
+     * Otherwise detached categories are stored on the file and reconnected later by
+     * {@code IngestServiceBean.saveAndAddFilesToDataset}.
+     */
+    public void applyFileTagsFromRoCrate(FileMetadata fileMetadata, JsonNode fileEntity) {
+        if (fileMetadata == null || fileEntity == null || !fileEntity.has("tags") || fileEntity.get("tags").isNull()) {
+            return;
+        }
+        fileMetadata.setCategories(new ArrayList<>());
+        for (String tag : extractFileTags(fileEntity.get("tags"))) {
+            fileMetadata.addCategoryByName(tag);
+        }
+    }
+
+    /**
+     * Applies crate file tags to newly ingested Dataverse files, matching crate File entities
+     * by import mapping ({@code @id} → storage identifier) when provided, otherwise by
+     * name and directoryLabel.
+     */
+    public void applyFileTagsToImportedFiles(List<DataFile> importedFiles, ArrayNode roCrateGraph,
+            DatasetVersion version) {
+        applyFileTagsToImportedFiles(importedFiles, roCrateGraph, version, null);
+    }
+
+    public void applyFileTagsToImportedFiles(List<DataFile> importedFiles, ArrayNode roCrateGraph,
+            DatasetVersion version, Map<String, String> importMapping) {
+        if (importedFiles == null || importedFiles.isEmpty() || roCrateGraph == null) {
+            return;
+        }
+        if (importMapping != null && !importMapping.isEmpty()) {
+            Map<String, DataFile> filesByStorageId = importedFiles.stream()
+                    .filter(file -> file.getStorageIdentifier() != null)
+                    .collect(Collectors.toMap(DataFile::getStorageIdentifier, Function.identity(), (a, b) -> a));
+            for (JsonNode fileEntity : roCrateImportMappingServiceBean.collectFileEntities(roCrateGraph)) {
+                if (!fileEntity.has("@id")) {
+                    continue;
+                }
+                String storageId = importMapping.get(fileEntity.get("@id").textValue());
+                if (storageId == null) {
+                    continue;
+                }
+                DataFile dataFile = filesByStorageId.get(storageId);
+                if (dataFile != null) {
+                    applyFileTagsToImportedFile(dataFile, fileEntity, version);
+                }
+            }
+            return;
+        }
+        for (DataFile importedFile : importedFiles) {
+            FileMetadata fileMetadata = importedFile.getFileMetadata();
+            if (fileMetadata == null) {
+                continue;
+            }
+            Optional<JsonNode> fileEntity = roCrateImportMappingServiceBean.findFileEntity(
+                    roCrateGraph, fileMetadata.getLabel(), fileMetadata.getDirectoryLabel());
+            fileEntity.ifPresent(entity -> applyFileTagsToImportedFile(importedFile, entity, version));
+        }
+    }
+
+    private void applyFileTagsToImportedFile(DataFile dataFile, JsonNode fileEntity, DatasetVersion version) {
+        FileMetadata fileMetadata = dataFile.getFileMetadata();
+        if (fileMetadata == null) {
+            return;
+        }
+        // Do not attach files to an unsaved dataset. CreateNewDatasetCommand would then
+        // persist them without createDate. Detached categories are reconnected later by
+        // IngestServiceBean.saveAndAddFilesToDataset.
+        if (fileMetadata.getDatasetVersion() == null && version != null
+                && version.getDataset() != null && version.getDataset().getId() != null) {
+            fileMetadata.setDatasetVersion(version);
+        }
+        applyFileTagsFromRoCrate(fileMetadata, fileEntity);
+    }
+
+    private List<String> extractFileTags(JsonNode tagsNode) {
+        List<String> tags = new ArrayList<>();
+        if (tagsNode == null || tagsNode.isNull() || tagsNode.isMissingNode()) {
+            return tags;
+        }
+        if (tagsNode.isArray()) {
+            tagsNode.forEach(tag -> {
+                if (tag != null && !tag.isNull()) {
+                    addTagIfNotBlank(tags, tag.textValue());
+                }
+            });
+        } else {
+            addTagIfNotBlank(tags, tagsNode.textValue());
+        }
+        return tags;
+    }
+
+    private void addTagIfNotBlank(List<String> tags, String tag) {
+        if (tag != null && !tag.isBlank()) {
+            tags.add(tag);
+        }
+    }
+
+    private String fileHashAndId(FileMetadata fileMetadata) {
+        DataFile dataFile = fileMetadata.getDataFile();
+        return dataFile.getChecksumValue() + "-"
+                + String.valueOf(dataFile.getId())
+                        .substring(String.valueOf(dataFile.getId()).lastIndexOf("/") + 1);
+    }
+
+    void setRoCrateImportMappingServiceBean(RoCrateImportMappingServiceBean roCrateImportMappingServiceBean) {
+        this.roCrateImportMappingServiceBean = roCrateImportMappingServiceBean;
     }
 
     /**
@@ -1688,7 +1870,9 @@ public class RoCrateImportManager {
     }
 
     public void postProcessRoCrateFromAroma(Dataset dataset, RoCrate roCrate) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
+        var t = RoCrateOpLog.start("postprocess", dataset);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
         String roCrateFolderPath = roCrateServiceBean.getRoCrateFolder(dataset.getLatestVersion());
         ObjectNode rootDataEntityProperties = roCrate.getRootDataEntity().getProperties();
         Map<String, DatasetFieldType> compoundFields = dataset.getLatestVersion().getDatasetFields().stream()
@@ -1797,8 +1981,14 @@ public class RoCrateImportManager {
                 rootDataEntityProperties, mapper));
 
         roCrate.setRoCratePreview(new AutomaticPreview());
-        Writers.newFolderWriter().withAutomaticProvenance(null).save(roCrate, roCrateFolderPath);
+        RoCrateOpLog.saveCrate(roCrate, roCrateFolderPath);
         writeOutRoCrateExtras(extraMetadata, roCrateServiceBean.getRoCrateParentFolder(dataset));
+        } catch (IOException | RuntimeException e) {
+            t.fail(e);
+            throw e;
+        } finally {
+            t.close();
+        }
     }
 
     // Updates the id-s of the properties to follow the

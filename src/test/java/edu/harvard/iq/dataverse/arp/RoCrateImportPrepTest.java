@@ -197,6 +197,53 @@ public class RoCrateImportPrepTest {
         Assertions.assertTrue(processResult.getErrors().isEmpty());
         Assertions.assertTrue(processResult.getWarnings().isEmpty());
     }
+
+    /*
+    * Compound entities may only contain child properties of that dataset field type.
+    * keywordValue exists as a DFT of a different compound. northLongitude is not a child of author.
+    *
+    * Diff:
+    *  + @graph author entity.keywordValue
+          "not a child of author"
+    *  + @graph author entity.northLongitude
+          "33"
+    */
+    @Test
+    public void testInvalidCompoundChildProperties() throws JsonProcessingException {
+        String roCrateJsonString = null;
+        try {
+            roCrateJsonString = Files.readString(Paths.get("src/test/resources/arp/roCrateImportPrep/ro-crate-metadata-invalid-compound-children.json"));
+        } catch (IOException e) {
+            logger.warning(e.getMessage());
+            Assertions.assertEquals(0, 1);
+        }
+        var processResult = roCrateImportManager.prepareRoCrateForDataverseImport(roCrateJsonString, true);
+        logger.info(processResult.toJson().toString());
+
+        Assertions.assertFalse(processResult.getErrors().isEmpty());
+
+        Map<String, Map<String, Set<RoCrateImportPrepResult.IssueDetail>>> errors = processResult.getErrors();
+        String authorEntityId = "https://w3id.org/arp/dev/ro-id/doi:10.5072/FK2/UWPDNR/author/98";
+        Assertions.assertTrue(errors.containsKey(authorEntityId));
+        Map<String, Set<RoCrateImportPrepResult.IssueDetail>> authorErrors = errors.get(authorEntityId);
+
+        Assertions.assertTrue(authorErrors.containsKey("keywordValue"));
+        RoCrateImportPrepResult.IssueDetail keywordError = authorErrors.get("keywordValue").iterator().next();
+        Assertions.assertEquals("Invalid property", keywordError.message());
+        Assertions.assertEquals("Remove 'keywordValue'. It is not a child field of 'author'.",
+                keywordError.suggestion());
+
+        Assertions.assertTrue(authorErrors.containsKey("northLongitude"));
+        RoCrateImportPrepResult.IssueDetail longitudeError = authorErrors.get("northLongitude").iterator().next();
+        Assertions.assertEquals("Invalid property", longitudeError.message());
+        Assertions.assertEquals("Remove 'northLongitude'. It is not a child field of 'author'.",
+                longitudeError.suggestion());
+
+        Assertions.assertFalse(authorErrors.containsKey("authorName"));
+        Assertions.assertFalse(authorErrors.containsKey("authorAffiliation"));
+        Assertions.assertEquals(2, authorErrors.size());
+        Assertions.assertEquals(1, errors.size());
+    }
     
     /*
     * Test that multiple values are only allowed where they are allowed by the scheme.
@@ -568,6 +615,7 @@ public class RoCrateImportPrepTest {
         DatasetFieldType dsDescriptionType = datasetFieldTypeSvc.add(new DatasetFieldType("dsDescription", DatasetFieldType.FieldType.TEXT, false));
         Set<DatasetFieldType> dsDescriptionTypes = new HashSet<>();
         dsDescriptionTypes.add(datasetFieldTypeSvc.add(new DatasetFieldType("dsDescriptionValue", DatasetFieldType.FieldType.TEXT, false)));
+        dsDescriptionTypes.add(datasetFieldTypeSvc.add(new DatasetFieldType("dsDescriptionDate", DatasetFieldType.FieldType.DATE, false)));
         for (DatasetFieldType t : dsDescriptionTypes) {
             t.setParentDatasetFieldType(dsDescriptionType);
         }

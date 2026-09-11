@@ -8,19 +8,20 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.util.StorageUtils;
 import edu.harvard.iq.dataverse.arp.ArpConfig;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
-import edu.kit.datamanager.ro_crate.Crate;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import edu.kit.datamanager.ro_crate.entities.AbstractEntity;
 import edu.kit.datamanager.ro_crate.entities.data.RootDataEntity;
-import edu.kit.datamanager.ro_crate.reader.Readers;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -165,16 +166,66 @@ public class RoCrateServiceBean {
     public String getRoCratePath(DatasetVersion version) {
         return String.join(File.separator, getRoCrateFolder(version), ArpServiceBean.RO_CRATE_METADATA_JSON_NAME);
     }
+
+    /**
+     * Reads RO-Crate JSON from disk and always closes the reader.
+     */
+    public JsonNode readRoCrateJson(String path) throws IOException {
+        try (var t = RoCrateOpLog.startIo("read.json").extra("path", path)) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                try (BufferedReader reader = Files.newBufferedReader(Paths.get(path))) {
+                    return mapper.readTree(reader);
+                }
+            } catch (IOException | RuntimeException e) {
+                t.fail(e);
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Returns the opened version JSON when it is the same file as the draft,
+     * otherwise reads the draft file. Avoids a second open on s3fs for drafts.
+     */
+    public JsonNode readOpenedOrDraftRoCrateJson(String openedPath, String draftPath, JsonNode alreadyReadOpened)
+            throws IOException {
+        if (openedPath.equals(draftPath)) {
+            return alreadyReadOpened;
+        }
+        return readRoCrateJson(draftPath);
+    }
     
     public List<String> collectConformsTo(DatasetVersion version) throws IOException {
         ArrayList<String> urls = new ArrayList<>();
-        String roCrateFolderPath = getRoCrateFolder(version);
-        Crate crate = Readers.newFolderReader().readCrate(roCrateFolderPath);
-        JsonNode conformsTo = crate.getRootDataEntity().getProperty("conformsTo");
-        if (conformsTo.isObject()) {
-            urls.add(conformsTo.get("@id").textValue());
-        } else {
-            conformsTo.forEach(idObj -> urls.add(idObj.get("@id").textValue()));
+        JsonNode crate = readRoCrateJson(getRoCratePath(version));
+        JsonNode graph = crate.get("@graph");
+        if (graph == null || !graph.isArray()) {
+            return urls;
+        }
+        for (JsonNode elem : graph) {
+            JsonNode id = elem.get("@id");
+            if (id == null || !"./".equals(id.asText())) {
+                continue;
+            }
+            JsonNode conformsTo = elem.get("conformsTo");
+            if (conformsTo == null) {
+                return urls;
+            }
+            if (conformsTo.isObject()) {
+                JsonNode conformsToId = conformsTo.get("@id");
+                if (conformsToId != null) {
+                    urls.add(conformsToId.textValue());
+                }
+            } else {
+                conformsTo.forEach(idObj -> {
+                    JsonNode conformsToId = idObj.get("@id");
+                    if (conformsToId != null) {
+                        urls.add(conformsToId.textValue());
+                    }
+                });
+            }
+            return urls;
         }
         return urls;
     }

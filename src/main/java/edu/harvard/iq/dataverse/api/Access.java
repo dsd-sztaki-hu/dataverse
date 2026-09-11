@@ -14,6 +14,7 @@ import edu.harvard.iq.dataverse.arp.ArpConfig;
 
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.rocrate.RoCrateOpLog;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.authorization.DataverseRole;
 import edu.harvard.iq.dataverse.authorization.Permission;
@@ -2159,11 +2160,14 @@ public class Access extends AbstractApiBean {
             @Override
             public void write(OutputStream os) throws IOException,
                     WebApplicationException {
-                String fileIdParams[] = fileIds.split(",");
-                DataFileZipper zipper = null;
-                String fileManifest = "";
-                long sizeTotal = 0L;
-                var dataset = datasetService.findByGlobalId(datasetIdtf);
+                try (var t = RoCrateOpLog.startIo("download.zip").extra("version", version)) {
+                    try {
+                        String fileIdParams[] = fileIds.split(",");
+                        DataFileZipper zipper = null;
+                        String fileManifest = "";
+                        long sizeTotal = 0L;
+                        var dataset = datasetService.findByGlobalId(datasetIdtf);
+                        t.dataset(dataset);
 
                 if (fileIdParams != null && fileIdParams.length > 0) {
                     logger.fine(fileIdParams.length + " tokens;");
@@ -2293,6 +2297,11 @@ public class Access extends AbstractApiBean {
 
                 //os.flush();
                 //os.close();
+                    } catch (IOException | RuntimeException e) {
+                        t.fail(e);
+                        throw e;
+                    }
+                }
             }
         };
 

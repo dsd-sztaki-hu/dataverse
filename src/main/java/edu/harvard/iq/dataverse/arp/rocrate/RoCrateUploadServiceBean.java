@@ -196,6 +196,7 @@ public class RoCrateUploadServiceBean implements Serializable {
     }
 
     public ByteArrayInputStream processRoCrateZip(byte[] roCrateBytes) {
+        setRoCrateJsonString(null);
         List<String> entryNamesToDelete = List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -219,7 +220,7 @@ public class RoCrateUploadServiceBean implements Serializable {
                     while ((bytesRead = zipInputStream.read(buffer)) != -1) {
                         cs.write(buffer, 0, bytesRead);
                     }
-                    var jsonString = cs.toString();
+                    var jsonString = cs.toString(java.nio.charset.StandardCharsets.UTF_8);
                     setRoCrateJsonString(jsonString);
                 }
             }

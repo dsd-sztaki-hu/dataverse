@@ -34,6 +34,7 @@ public abstract class AbstractCreateDatasetCommand extends AbstractDatasetComman
     
     final protected boolean harvested;
     final protected boolean validate;
+    private boolean skipRoCrateExport = false;
     
     public AbstractCreateDatasetCommand(Dataset theDataset, DataverseRequest aRequest) {
         this(theDataset, aRequest, false);
@@ -49,6 +50,15 @@ public abstract class AbstractCreateDatasetCommand extends AbstractDatasetComman
         super(aRequest, theDataset);
         harvested=isHarvested;
         this.validate = validate;
+    }
+
+    /**
+     * Skip the onSuccess RO-Crate export when the caller will write the crate
+     * itself (AROMA postprocess).
+     */
+    public AbstractCreateDatasetCommand skipRoCrateExport() {
+        this.skipRoCrateExport = true;
+        return this;
     }
    
     protected void additionalParameterTests(CommandContext ctxt) throws CommandException {
@@ -173,6 +183,9 @@ public abstract class AbstractCreateDatasetCommand extends AbstractDatasetComman
     @Override
     public boolean onSuccess(CommandContext ctxt, Object r) {
         Dataset dataset = (Dataset) r;
+        if (skipRoCrateExport) {
+            return true;
+        }
         try {
             RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
             roCrateExportManager.createOrUpdateRoCrate(dataset.getLatestVersion());

@@ -1211,7 +1211,7 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> {
             // Always enable multipart upload. It is only used when necessary
             s3CB.multipartEnabled(true);
 
-            // Create a custom HTTP client with the desired pool size and other parameters
+            // Create a custom HTTP client with the desired pool size
             Integer poolSize = Integer.getInteger("dataverse.files." + driverId + ".connection-pool-size", 256);
             Long acquisitionTimeout = Long.getLong("dataverse.files." + driverId + ".connection-acquisition-timeout", 30);
             Long maxIdleTime = Long.getLong("dataverse.files." + driverId + ".connection-max-idle-time", 60);
