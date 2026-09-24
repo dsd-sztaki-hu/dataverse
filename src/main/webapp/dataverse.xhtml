@@ -355,14 +355,42 @@
                                                                    actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id)}">
                                                          <h:outputText value="#{bundle['dataverse.field.set.tip']}" />
                                                      </p:commandLink>
-                                                     <p:commandLink id="viewDSFT" style="margin-left:1em;"
-                                                                    update="@widgetVar(optionBlock)"
-                                                                    process="@this"
-                                                                    rendered="#{!mdb.showDatasetFieldTypes and (!mdb.selected or DataversePage.inheritMetadataBlockFromParent)   and !DataversePage.openMetadataBlock}"
-                                                                    actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id, false)}">
+                                                    <p:commandLink id="viewDSFT" style="margin-left:1em;"
+                                                                   update="@widgetVar(optionBlock)"
+                                                                   process="@this"
+                                                                   rendered="#{!mdb.showDatasetFieldTypes and (!mdb.selected or DataversePage.inheritMetadataBlockFromParent)   and !DataversePage.openMetadataBlock}"
+                                                                   actionListener="#{DataversePage.showDatasetFieldTypes(mdb.id, false)}">
                                                          <h:outputText value="#{bundle['dataverse.field.set.view']}" />
                                                      </p:commandLink>
                                                 </label>
+                                                <span jsf:rendered="#{dataverseSession.user.superuser and DataversePage.isCedarTemplateInSync(mdb.id)}"
+                                                      class="text-muted"
+                                                      style="margin-left:1em;"
+                                                      data-toggle="tooltip"
+                                                      data-placement="auto right"
+                                                      data-original-title="#{bundle['dataverse.arpSync.inSync.tip']}"
+                                                      title="#{bundle['dataverse.arpSync.inSync.tip']}">
+                                                    #{bundle['dataverse.arpSync.inSync']}
+                                                </span>
+                                                <p:commandLink id="cedarSyncUpdate"
+                                                               style="margin-left:1em;"
+                                                               styleClass="bootstrap-button-tooltip highlightBold"
+                                                               title="#{bundle['dataverse.arpSync.update.tip']}"
+                                                               update=":dataverseForm, :messagePanel"
+                                                               process="@this"
+                                                               rendered="#{dataverseSession.user.superuser and DataversePage.isCedarTemplateUpdate(mdb.id)}"
+                                                               action="#{DataversePage.updateCedarTemplate(mdb.id)}">
+                                                    <h:outputText value="#{bundle['dataverse.arpSync.update']}" />
+                                                </p:commandLink>
+                                                <span jsf:rendered="#{dataverseSession.user.superuser and DataversePage.isCedarTemplateSyncError(mdb.id)}"
+                                                      class="text-muted"
+                                                      style="margin-left:1em;"
+                                                      data-toggle="tooltip"
+                                                      data-placement="auto right"
+                                                      data-original-title="#{DataversePage.getCedarSyncErrorTip(mdb.id)}"
+                                                      title="#{DataversePage.getCedarSyncErrorTip(mdb.id)}">
+                                                    #{bundle['dataverse.arpSync.error']}
+                                                </span>
                                             </div>
                                             <div id="metadataFieldOptionsPanel-Block" jsf:rendered="#{mdb.showDatasetFieldTypes}">
                                                 <div class="panel panel-default">
@@ -406,10 +434,22 @@
                                                 </p:commandLink>
                                             </div>
                                         </ui:repeat>
+                                        <div class="button-block margin-top-half"
+                                             jsf:rendered="#{dataverseSession.user.superuser and DataversePage.showUpdateAllCedarTemplates}">
+                                            <p:commandButton id="cedarUpdateAllButton" styleClass="btn btn-default"
+                                                             value="#{bundle['dataverse.arpSync.updateAll']}"
+                                                             title="#{bundle['dataverse.arpSync.updateAll.tip']}"
+                                                             process="@this"
+                                                             update=":dataverseForm, :messagePanel"
+                                                             action="#{DataversePage.updateAllOutOfSyncCedarTemplates}"
+                                                             onerror="window.scrollTo(0, 0);"/>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </p:panel>
+                        <!-- ARP CEDAR Import Panel -->
+                        <ui:include src="arp-import-panel.xhtml"/>
                         <!-- Facets Panel -->
                         <p:panel id="editFacets" styleClass="panelLayoutBlock padding-none" widgetVar="editFacets">
                             <div class="row">

@@ -5,9 +5,10 @@ set -euo pipefail
 # Set some defaults as documented
 DATAVERSE_URL=${DATAVERSE_URL:-"http://dataverse:8080"}
 export DATAVERSE_URL
+DATAVERSE_ADMIN_PASSWORD=${DATAVERSE_ADMIN_PASSWORD:-admin1}
 
 echo "Running base setup-all.sh (INSECURE MODE)..."
-"${BOOTSTRAP_DIR}"/base/setup-all.sh --insecure -p=admin1 | tee /tmp/setup-all.sh.out
+"${BOOTSTRAP_DIR}"/base/setup-all.sh --insecure -p="${DATAVERSE_ADMIN_PASSWORD}" | tee /tmp/setup-all.sh.out
 
 echo "Setting DOI provider to \"FAKE\"..."
 curl "${DATAVERSE_URL}/api/admin/settings/:DoiProvider" -X PUT -d FAKE

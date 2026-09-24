@@ -1562,7 +1562,8 @@ public class ArpApi extends AbstractApiBean {
             @QueryParam("cedarUrl") String cedarUrl,
             @Context HttpHeaders incomingHeaders
     ) {
-        String subdomain = "resource." + arpConfig.get("arp.cedar.domain");
+        String cedarDomain = arpConfig.get("arp.cedar.domain");
+        String expectedHost = "resource." + cedarDomain;
         String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
 
         if (cedarUrl == null || cedarUrl.isBlank()) {
@@ -1574,8 +1575,12 @@ public class ArpApi extends AbstractApiBean {
         try {
             HttpClient proxyClient = createHttpClient(executorService);
 
-            URI uri = new URI(cedarUrl);
-            if (!uri.getHost().endsWith(subdomain)) {
+            String rewrittenUrl = ArpServiceBean.rewriteCedarUrlToDomain(cedarUrl, cedarDomain);
+            if (!rewrittenUrl.equals(cedarUrl)) {
+                logger.info("/cedarResourceProxy: rewrote " + cedarUrl + " -> " + rewrittenUrl);
+            }
+            URI uri = new URI(rewrittenUrl);
+            if (uri.getHost() == null || !uri.getHost().equalsIgnoreCase(expectedHost)) {
                 logger.severe("/cedarResourceProxy: Invalid URL: " + uri);
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid URL").build();
             }

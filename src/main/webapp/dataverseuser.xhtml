@@ -403,6 +403,12 @@
                                                     <h:outputFormat value="#{bundle['notification.email.apiTokenGenerated.subject']}" escape="false">
                                                     </h:outputFormat>
                                                 </ui:fragment>
+                                                <ui:fragment rendered="#{item.type == 'HARVESTREGISTRYMISSING'}">
+                                                    <span class="icon-dataverse text-icon-inline text-muted"></span>
+                                                    <h:outputFormat value="#{bundle['notification.harvestRegistryMissing']}" escape="false">
+                                                        <f:param value="#{item.additionalInfo}"/>
+                                                    </h:outputFormat>
+                                                </ui:fragment>
                                                 <ui:fragment rendered="#{item.type == 'INGESTCOMPLETED'}">
                                                     <i class="icon-dataset text-icon-inline text-muted"></i>
                                                     <h:outputFormat value="#{bundle['notification.ingestCompleted']}" escape="false">

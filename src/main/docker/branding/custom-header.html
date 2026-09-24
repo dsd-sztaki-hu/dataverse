@@ -1,0 +1,58 @@
+<script src="/branding/branding-config.js"></script>
+<script>
+  // Show top logo when header is scrolled out
+  $(document).ready(function () {
+    var navbarIcon = document.getElementsByClassName("custom-logo")[0];
+	
+    if(/*(URL=="/") || ((URL.indexOf("dataverse.xhtml")!=-1)
+	|| (URL.indexOf("dataset.xhtml")!=-1) 
+	|| (URL.indexOf("file.xhtml")!=-1) 
+	|| (URL.indexOf("editdatafiles.xhtml")!=-1)
+	|| (URL.indexOf("dataverse-")!=-1)	
+	|| (URL.indexOf("/dataverse/")!=-1)
+	|| (URL.indexOf("/loginpage.xhtml")!=-1)
+	|| (URL.indexOf("/dashboard.xhtml")!=-1)
+	|| (URL.indexOf("/harvestsets.xhtml")!=-1)
+	|| (URL.indexOf("/harvestclients.xhtml")!=-1)
+	|| (URL.indexOf("/dataverseuser.xhtml")!=-1))*/ true){
+		navbarIcon.classList.add("hidden-logo");
+   	  window.onscroll=function(){
+	    var prevScrollpos = window.pageYOffset;
+	     if (prevScrollpos > 100) {
+		 navbarIcon.classList.remove("hidden-logo");
+	     } else {
+ 	         navbarIcon.classList.add("hidden-logo");
+	     }
+
+	  }
+	}
+    else{
+	    navbarIcon.classList.remove("hidden-logo");
+	}
+})
+</script>
+
+<div id="topcustomheader" class="container">
+    <a href="/" id="sitelogo"><img src="/branding/topbanner_hunverse_002.png" width="100%" /></a><div id="customHeaderLinks"><ul><li id="portallink"><a href="https://researchdata.hu/" target="_blank"><img src="/branding/hunverse_portal2_btn.png" width="158" height="50"/><span class="textlink">ARP Portál</span></a></li><li id="searchlink"><a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Közös kereső</span></a></li></ul></div>
+</div>
+
+<div id="headerspacer"></div>
+
+<script>
+  var branding = window.DV_BRANDING || {};
+  var lang = document.documentElement.getAttribute('lang') === 'hu' ? 'hu' : 'en';
+  var portallink = document.getElementById('portallink');
+  var searchlink = document.getElementById('searchlink');
+  var sitelogo = document.getElementById('sitelogo');
+  var banner = (branding.topbanner && (branding.topbanner[lang] || branding.topbanner.en)) || '/branding/topbanner_hunverse_002_eng.png';
+  if (sitelogo) {
+    sitelogo.innerHTML = '<img src="' + banner + '" width="100%" alt="" />';
+  }
+  if (lang === 'hu') {
+    portallink.innerHTML = '<a href="https://researchdata.hu/" target="_blank"><img src="/branding/hunverse_portal2_btn.png" width="158" height="50"/><span class="textlink">ARP Portál</span></a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/unified_search_btn.png" width="158" height="50"/><span class="textlink">Közös kereső</span></a>';
+  } else {
+    portallink.innerHTML = '<a href="https://researchdata.hu/en" target="_blank"><img src="/branding/hunverse_portal_button_en_001.png" width="158" height="50"/><span class="textlink">ARP Portal</span></a>';
+    searchlink.innerHTML = '<a href="https://search.researchdata.hu/" target="_blank"><img src="/branding/federated_search_button_en_003.png" width="158" height="50"/><span class="textlink">Federated Search</span></a>';
+  }
+</script>

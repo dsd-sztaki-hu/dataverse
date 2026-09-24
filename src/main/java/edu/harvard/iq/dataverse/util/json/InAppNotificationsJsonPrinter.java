@@ -132,6 +132,9 @@ public class InAppNotificationsJsonPrinter {
             case DATASETMENTIONED:
                 addDatasetMentionedFields(notificationJson, userNotification);
                 break;
+            case HARVESTREGISTRYMISSING:
+                addAdditionalInfoAsString(notificationJson, userNotification);
+                break;
         }
     }
 
@@ -265,6 +268,13 @@ public class InAppNotificationsJsonPrinter {
     private void addIngestFields(final NullSafeJsonBuilder notificationJson, final UserNotification userNotification) {
         addDatasetFields(notificationJson, userNotification);
         addGuidesFields(notificationJson, GUIDES_SECTION_PATH_DATASET_MANAGEMENT_TABULAR_FILES_HTML);
+    }
+
+    private void addAdditionalInfoAsString(final NullSafeJsonBuilder notificationJson, final UserNotification userNotification) {
+        final String additionalInfo = userNotification.getAdditionalInfo();
+        if (additionalInfo != null && !additionalInfo.isEmpty()) {
+            notificationJson.add(KEY_ADDITIONAL_INFO, additionalInfo);
+        }
     }
 
     private void addDatasetMentionedFields(final NullSafeJsonBuilder notificationJson, final UserNotification userNotification) {

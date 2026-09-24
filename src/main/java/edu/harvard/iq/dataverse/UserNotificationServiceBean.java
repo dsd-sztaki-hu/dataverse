@@ -130,6 +130,19 @@ public class UserNotificationServiceBean {
         TypedQuery<UserNotification> query = em.createQuery("select object(o) from UserNotification as o where o.readNotification = 'false' and o.emailed = 'false'", UserNotification.class);
         return query.getResultList();
     }
+
+    public boolean hasUnreadOfType(Long userId, Type type) {
+        if (userId == null || type == null) {
+            return false;
+        }
+        TypedQuery<Long> query = em.createQuery(
+                "select count(un) from UserNotification un "
+                        + "where un.user.id = :userId and un.type = :type and un.readNotification = false",
+                Long.class);
+        query.setParameter("userId", userId);
+        query.setParameter("type", type);
+        return query.getSingleResult() > 0;
+    }
     
     public UserNotification find(Object pk) {
         return em.find(UserNotification.class, pk);

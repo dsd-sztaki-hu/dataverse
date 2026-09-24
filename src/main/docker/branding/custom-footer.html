@@ -1,0 +1,44 @@
+<script src="/branding/branding-config.js"></script>
+<script>
+  var branding = window.DV_BRANDING || {};
+  var lang = document.documentElement.getAttribute('lang') === 'hu' ? 'hu' : 'en';
+  var navbarIcon = document.getElementsByClassName("custom-logo")[0];
+  var navbarLogo = branding.navbarLogo && (branding.navbarLogo[lang] || branding.navbarLogo.en);
+  if (navbarIcon) {
+    navbarIcon.classList.add("hidden-logo");
+    if (navbarLogo) {
+      navbarIcon.src = navbarLogo;
+    }
+  }
+
+  function escapeAttr(value) {
+    return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  function stampsColumnHtml() {
+    var stamps = branding.footerstamps || [];
+    if (!stamps.length) {
+      return '';
+    }
+    var images = stamps.map(function (stamp) {
+      var img = '<img src="' + escapeAttr(stamp.src) + '" width="' + (stamp.width || 85) + '" class="footerstamp" alt="' + escapeAttr(stamp.alt) + '">';
+      if (!stamp.href) {
+        return img;
+      }
+      return '<a href="' + escapeAttr(stamp.href) + '" target="_blank" rel="noopener">' + img + '</a>';
+    }).join('');
+    return '<div class="col-sm-3 small text-center"><p class="nobr">' + images + '</p></div>';
+  }
+
+  var copyrightHu = 'Copyright &#169; 2026 HUNVERSE | <a href="https://researchdata.hu/pid-policy" target="_blank">PID policy</a> | <a href="https://researchdata.hu/portal-adatkezelesi-tajekoztato" rel="noopener" target="_blank">Adatvédelmi Szabályzat</a> | <a href="https://researchdata.hu/altalanos-felhasznalasi-feltetelek" target="_blank">Felhasználási Szabályzat</a>';
+  var copyrightEn = 'Copyright &#169; 2026 HUNVERSE | <a href="https://researchdata.hu/en/pid-policy" target="_blank">PID policy</a> | <a href="https://researchdata.hu/en/portal-privacy-policy" rel="noopener" target="_blank">Privacy Policy</a> | <a href="https://researchdata.hu/altalanos-felhasznalasi-feltetelek" target="_blank">General Terms of Use</a>';
+  var stampsHtml = stampsColumnHtml();
+  var copyClass = stampsHtml ? 'col-sm-5' : 'col-sm-8';
+  var copyText = lang === 'hu' ? copyrightHu : copyrightEn;
+
+  var dvfooter = document.getElementById('dvfooter');
+  var copyCol = dvfooter && dvfooter.querySelector('.row > div');
+  if (copyCol) {
+    copyCol.outerHTML = '<div class="' + copyClass + ' small"><p>' + copyText + '</p></div>' + stampsHtml;
+  }
+</script>

@@ -551,6 +551,7 @@ public class DataverseUserPage implements java.io.Serializable {
                     break;
 
                 case APIGENERATED:
+                case HARVESTREGISTRYMISSING:
                     userNotification.setTheObject(userNotification.getUser());
                     break;
 

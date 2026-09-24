@@ -29,5 +29,21 @@
             <directory>src/main/docker/scripts</directory>
             <outputDirectory>scripts</outputDirectory>
         </fileSet>
+        <!-- Hunverse English + Hungarian UI/metadata language packs -->
+        <fileSet>
+            <directory>src/main/docker/langBundles</directory>
+            <outputDirectory>langBundles</outputDirectory>
+            <includes>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
+        <!-- Hunverse look. Dockerfile copies this over WAR ARP branding. -->
+        <fileSet>
+            <directory>src/main/docker/branding</directory>
+            <outputDirectory>hunverse-branding</outputDirectory>
+            <excludes>
+                <exclude>README.md</exclude>
+            </excludes>
+        </fileSet>
     </fileSets>
 </assembly>

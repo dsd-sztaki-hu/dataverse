@@ -1,0 +1,331 @@
+version: "2.4"
+
+# Distributable Hunverse stack. Uses the hosted CEDAR Schema Registry
+# (https://cedar.schema.researchdata.hu) and the AROMA UI bundled in Dataverse
+# at /aroma.
+#
+# See README.hunverse.md. Copy .env.example to .env, set ARP_CEDAR_PROXY_API_KEY, then:
+#   docker compose up
+
+
+services:
+
+  dataverse:
+    container_name: "dataverse"
+    hostname: dataverse
+    image: ${DATAVERSE_IMAGE:-harbor.sztaki.hu/arp/hunverse:6.9}
+    restart: on-failure
+    user: payara
+    environment:
+      DATAVERSE_SITEURL: "http://${MACHINE_IP:-localhost}:8080"
+      DATAVERSE_DB_HOST: postgres
+      DATAVERSE_DB_PASSWORD: ${DATAVERSE_DB_PASSWORD:-secret}
+      DATAVERSE_DB_USER: ${DATAVERSE_DB_USER:-dataverse}
+      DATAVERSE_FEATURE_API_BEARER_AUTH: "1"
+      DATAVERSE_FEATURE_INDEX_HARVESTED_METADATA_SOURCE: "1"
+      DATAVERSE_FEATURE_API_BEARER_AUTH_PROVIDE_MISSING_CLAIMS: "1"
+      DATAVERSE_MAIL_SYSTEM_EMAIL: "dataverse@localhost"
+      DATAVERSE_MAIL_MTA_HOST: "smtp"
+      # Login is username/password (builtin) only unless this is set to "1".
+      DATAVERSE_SPI_EXPORTERS_DIRECTORY: "/dv/exporters"
+      DATAVERSE_CORS_ORIGIN: "${DATAVERSE_CORS_ORIGIN:-*}"
+      DATAVERSE_CORS_HEADERS_ALLOW: "Accept,Content-Type,X-Dataverse-key,Authorization,cedar-client-session-id,cedar-debug"
+      # Hosted ARP Schema Registry (CEDAR). ArpConfig reads these env vars.
+      ARP_CEDAR_DOMAIN: ${ARP_CEDAR_DOMAIN:-schema.researchdata.hu}
+      ARP_CEDAR_PROXY_API_KEY: ${ARP_CEDAR_PROXY_API_KEY:-}
+      ARP_AROMA_ADDRESS: ${ARP_AROMA_ADDRESS:-http://localhost:8080/aroma}
+      TERMINOLOGY_URL_BRANCHES: "${TERMINOLOGY_URL_BRANCHES:-https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes/%s/descendants?page=1&pageSize=500}"
+      TERMINOLOGY_URL_VALUESETS: "${TERMINOLOGY_URL_VALUESETS:-https://terminology.schema.researchdata.hu/bioportal/vs-collections/%s/value-sets/%s/values?page=1&pageSize=%s}"
+      TERMINOLOGY_URL_ONTOLOGIES: "${TERMINOLOGY_URL_ONTOLOGIES:-https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes?page=1&pageSize=500}"
+      ARP_W3ID_BASE: ${ARP_W3ID_BASE:-https://w3id.org/arp/dev}
+      # Optional. After startup, notify superusers if DATAVERSE_SITEURL is not
+      # listed at https://search.researchdata.hu/stats. Default off.
+      ARP_HARVEST_REGISTRY_CHECK_ENABLED: ${ARP_HARVEST_REGISTRY_CHECK_ENABLED:-1}
+      # Language packs from GitHub. Overlay en_US/hu_HU onto /dv/langBundles.
+      ARP_LANG_PACKS_REPOURL: ${ARP_LANG_PACKS_REPO_URL:-https://github.com/dsd-sztaki-hu/dataverse-language-packs}
+      ARP_LANG_PACKS_REF: ${ARP_LANG_PACKS_REF:-develop-hu-concorda-v6.9}
+      ARP_LANG_PACKS_UPDATEONSTART: ${ARP_LANG_PACKS_UPDATE_ON_START:-true}
+      # Local file store + fake DOI provider (authority/shoulder). Replaces the
+      # legacy :Protocol/:Authority/:Shoulder/:DoiProvider database settings.
+      JVM_ARGS: -Ddataverse.files.storage-driver-id=file1
+        -Ddataverse.files.file1.type=file
+        -Ddataverse.files.file1.label=Filesystem
+        -Ddataverse.files.file1.directory=/dv/store
+        -Ddataverse.lang.directory=/dv/langBundles
+        -Ddataverse.pid.providers=fake
+        -Ddataverse.pid.default-provider=fake
+        -Ddataverse.pid.fake.type=FAKE
+        -Ddataverse.pid.fake.label=FakeDOIProvider
+        -Ddataverse.pid.fake.authority=${DATAVERSE_PID_FAKE_AUTHORITY:-10.5072}
+        -Ddataverse.pid.fake.shoulder=${DATAVERSE_PID_FAKE_SHOULDER:-FK2/}
+        -Darp.aroma.address=${ARP_AROMA_ADDRESS:-http://localhost:8080/aroma}
+    ports:
+      - "8080:8080" # HTTP (Dataverse Application)
+      - "8686:8686" # JMX
+    networks:
+      - dataverse
+    depends_on:
+      - postgres
+      - solr
+      - dv_initializer
+    volumes:
+      - dv_data:/dv
+      - dv_secrets:/secrets
+      # Hunverse is baked into the image. Uncomment to overlay local files.
+      # Set BRANDING_DIR in .env first (e.g. ./branding).
+      # Header/footer/CSS are read from /var/www/...;
+      # /branding/*.png URLs are served from the WAR path.
+      # - ${BRANDING_DIR}:/var/www/dataverse/branding:ro
+      # - ${BRANDING_DIR}:/opt/payara/deployments/dataverse/branding:ro
+    tmpfs:
+      - /dumps:mode=770,size=2052M,uid=1000,gid=1000
+      - /tmp:mode=770,size=2052M,uid=1000,gid=1000
+    mem_limit: 2147483648 # 2 GiB
+    mem_reservation: 1024m
+    privileged: false
+
+  bootstrap:
+    container_name: "bootstrap"
+    image: gdcc/configbaker:unstable
+    restart: "no"
+    environment:
+      - TIMEOUT=7m
+      # Read by /scripts/bootstrap/dev/init.sh inside gdcc/configbaker (no host bind mount).
+      - DATAVERSE_ADMIN_PASSWORD=${DATAVERSE_ADMIN_PASSWORD:-admin1}
+    command:
+      - bootstrap.sh
+      - dev
+    networks:
+      - dataverse
+    depends_on:
+      - dataverse
+
+  # One-shot: Dataverse admin settings are HTTP PUTs and can only run after the app is up.
+  # Same pattern as bootstrap. `docker compose up` runs this automatically.
+  arp-setup:
+    container_name: "arp-setup"
+    image: gdcc/configbaker:unstable
+    restart: "no"
+    environment:
+      - DATAVERSE_URL=http://dataverse:8080
+      - TIMEOUT=10m
+      - ARP_CEDAR_DOMAIN=${ARP_CEDAR_DOMAIN:-schema.researchdata.hu}
+      - ARP_CEDAR_PROXY_API_KEY=${ARP_CEDAR_PROXY_API_KEY:-}
+      - ARP_AROMA_ADDRESS=${ARP_AROMA_ADDRESS:-http://localhost:8080/aroma}
+      - ARP_W3ID_BASE=${ARP_W3ID_BASE:-https://w3id.org/arp/dev}
+      - CEDAR_IMPORT_DV=${CEDAR_IMPORT_DV:-root}
+      - CEDAR_IMPORT_FOLDER_ID=${CEDAR_IMPORT_FOLDER_ID:-https://repo.schema.researchdata.hu/folders/49ba90b3-86ee-45b8-a623-d4a7a7df926c}
+      - LOGO_CUSTOMIZATION_FILE=${LOGO_CUSTOMIZATION_FILE:-/branding/topbanner_hunverse_002_dark425.png}
+      - "TERMINOLOGY_URL_TEMPLATE=${TERMINOLOGY_URL_TEMPLATE:-https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes/%s/descendants?pageSize=500}"
+      - "TERMINOLOGY_URL_BRANCHES=${TERMINOLOGY_URL_BRANCHES:-https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes/%s/descendants?page=1&pageSize=500}"
+      - "TERMINOLOGY_URL_VALUESETS=${TERMINOLOGY_URL_VALUESETS:-https://terminology.schema.researchdata.hu/bioportal/vs-collections/%s/value-sets/%s/values?page=1&pageSize=%s}"
+      - "TERMINOLOGY_URL_ONTOLOGIES=${TERMINOLOGY_URL_ONTOLOGIES:-https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes?page=1&pageSize=500}"
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        echo "Waiting for $${DATAVERSE_URL} (max $${TIMEOUT})..."
+        wait4x http "$${DATAVERSE_URL}/api/info/version" -i 8s -t "$${TIMEOUT}" --expect-status-code 200
+        echo "Waiting for root dataverse (bootstrap)..."
+        wait4x http "$${DATAVERSE_URL}/api/dataverses/:root" -i 8s -t "$${TIMEOUT}" --expect-status-code 200
+        echo "Root dataverse is ready."
+        put() { echo "Setting $$1..."; curl -sS -f -X PUT -d "$$2" "$${DATAVERSE_URL}/api/admin/settings/$$1" >/dev/null; }
+        put ":FilePIDsEnabled" "true"
+        put ":AllowEnablingFilePIDsPerCollection" "true"
+        put "arp.w3id.base" "$${ARP_W3ID_BASE}"
+        put "terminology.url.template" "$${TERMINOLOGY_URL_TEMPLATE}"
+        put "terminology.url.branches" "$${TERMINOLOGY_URL_BRANCHES}"
+        put "terminology.url.valueSets" "$${TERMINOLOGY_URL_VALUESETS}"
+        put "terminology.url.ontologies" "$${TERMINOLOGY_URL_ONTOLOGIES}"
+        put "arp.cedar.domain" "$${ARP_CEDAR_DOMAIN}"
+        put "arp.aroma.address" "$${ARP_AROMA_ADDRESS}"
+        if [ -n "$${ARP_CEDAR_PROXY_API_KEY}" ]; then
+          cedar_key=$${ARP_CEDAR_PROXY_API_KEY#apiKey }
+          put "arp.cedar.proxyApiKey" "$${cedar_key}"
+        else
+          echo "ARP_CEDAR_PROXY_API_KEY is empty; skipping arp.cedar.proxyApiKey."
+        fi
+        put ":HeaderCustomizationFile" "/var/www/dataverse/branding/custom-header.html"
+        put ":FooterCustomizationFile" "/var/www/dataverse/branding/custom-footer.html"
+        put ":StyleCustomizationFile" "/var/www/dataverse/branding/custom-stylesheet.css"
+        put ":LogoCustomizationFile" "$${LOGO_CUSTOMIZATION_FILE}"
+        put ":Languages" '[{"locale":"en","title":"English"},{"locale":"hu","title":"Magyar"}]'
+        put ":MetadataLanguages" '[{"locale":"en","title":"English"},{"locale":"hu","title":"Magyar"}]'
+        echo "ARP settings applied."
+
+        # Import latest templates from child folders of CEDAR_IMPORT_FOLDER_ID.
+        # Read-only CEDAR access; does not call syncMdbsWithCedar.
+        if [ -z "$${ARP_CEDAR_PROXY_API_KEY}" ] || [ -z "$${CEDAR_IMPORT_FOLDER_ID}" ]; then
+          echo "Skipping CEDAR template import: set ARP_CEDAR_PROXY_API_KEY and CEDAR_IMPORT_FOLDER_ID in .env."
+        else
+          echo "Importing CEDAR templates from folder $${CEDAR_IMPORT_FOLDER_ID} into dataverse $${CEDAR_IMPORT_DV}..."
+          body=$$(jq -n --arg folderId "$${CEDAR_IMPORT_FOLDER_ID}" --arg dvIdtf "$${CEDAR_IMPORT_DV}" '{folderId:$$folderId, dvIdtf:$$dvIdtf}')
+          http_code=$$(curl -sS -o /tmp/cedar-import.json -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -d "$${body}" \
+            "$${DATAVERSE_URL}/api/admin/arp/importTemplatesFromCedarFolder" || true)
+          if [ "$${http_code}" = "404" ]; then
+            echo "CEDAR import endpoint returned 404. The Dataverse image must be built from this repo (mvn -Pct clean package), not upstream gdcc/dataverse." >&2
+            cat /tmp/cedar-import.json >&2 || true
+            exit 1
+          fi
+          if [ -z "$${http_code}" ] || [ "$${http_code}" -lt 200 ] || [ "$${http_code}" -ge 300 ]; then
+            echo "CEDAR folder import failed (HTTP $${http_code:-000})." >&2
+            cat /tmp/cedar-import.json >&2 || true
+            exit 1
+          fi
+          cat /tmp/cedar-import.json
+          echo
+          echo "CEDAR folder import complete."
+        fi
+    networks:
+      - dataverse
+    depends_on:
+      - dataverse
+      - bootstrap
+
+  dv_initializer:
+    container_name: "dv_initializer"
+    image: gdcc/configbaker:unstable
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - "mkdir -p /dv/langBundles && fix-fs-perms.sh dv"
+    volumes:
+      - dv_data:/dv
+
+  postgres:
+    container_name: "postgres"
+    hostname: postgres
+    image: postgres:16
+    restart: on-failure
+    environment:
+      - POSTGRES_USER=${DATAVERSE_DB_USER:-dataverse}
+      - POSTGRES_PASSWORD=${DATAVERSE_DB_PASSWORD:-secret}
+    ports:
+      - "5432:5432"
+    networks:
+      - dataverse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  solr_initializer:
+    container_name: "solr_initializer"
+    image: gdcc/configbaker:unstable
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - "fix-fs-perms.sh solr && cp -a /template/* /solr-template"
+    volumes:
+      - solr_data:/var/solr
+      - solr_conf:/solr-template
+
+  solr:
+    container_name: "solr"
+    hostname: "solr"
+    image: solr:9.8.0
+    depends_on:
+      - solr_initializer
+    restart: on-failure
+    ports:
+      - "8983:8983"
+    networks:
+      - dataverse
+    command:
+      - "solr-precreate"
+      - "collection1"
+      - "/template"
+    volumes:
+      - solr_data:/var/solr
+      - solr_conf:/template
+
+  smtp:
+    container_name: "smtp"
+    hostname: "smtp"
+    image: maildev/maildev:2.0.5
+    restart: on-failure
+    ports:
+      - "25:25" # smtp server
+      - "1080:1080" # web ui
+    environment:
+      - MAILDEV_SMTP_PORT=25
+      - MAILDEV_MAIL_DIRECTORY=/mail
+    networks:
+      - dataverse
+    tmpfs:
+      - /mail:mode=770,size=128M,uid=1000,gid=1000
+
+
+  solr-updater:
+    hostname: "solr-updater"
+    image: ${SOLR_UPDATER_IMAGE:-harbor.sztaki.hu/arp/dataverse-solr-updater:6.9}
+    container_name: "dv-solr-updater"
+    environment:
+      - DATAVERSE_URL=http://dataverse:8080
+      - SOLR_URL=http://solr:8983
+      - SOLR_SCHEMA_XML_PATH=/var/solr/data/collection1/conf/schema.xml
+    ports:
+      - "8984:3000"
+    volumes:
+      - solr_data:/var/solr
+    networks:
+      - dataverse
+    depends_on:
+      - solr
+      - dataverse
+
+  dataverse-rocrate-preview:
+    hostname: "rocrate-preview"
+    image: ${ROCRATE_PREVIEW_IMAGE:-harbor.sztaki.hu/arp/dataverse-rocrate-preview:6.9}
+    ports:
+      - "8985:8082"
+    networks:
+      - dataverse
+
+  previewers-provider:
+    container_name: previewers-provider
+    hostname: previewers-provider
+    image: trivadis/dataverse-previewers-provider:latest
+    ports:
+      - "9080:9080"
+    networks:
+      - dataverse
+    environment:
+      - NGINX_HTTP_PORT=9080
+      - PREVIEWERS_PROVIDER_URL=http://${MACHINE_IP:-localhost}:9080
+      - VERSIONS="v1.4,betatest"
+    platform: linux/amd64
+
+  register-previewers:
+    container_name: register-previewers
+    hostname: register-previewers
+    image: trivadis/dataverse-deploy-previewers:latest
+    networks:
+      - dataverse
+    environment:
+      - DATAVERSE_URL=http://dataverse:8080
+      - TIMEOUT=10m
+      - PREVIEWERS_PROVIDER_URL=http://${MACHINE_IP:-localhost}:9080
+      - EXCLUDE_PREVIEWERS=
+      - REMOVE_EXISTING=true
+    command:
+      - deploy
+    restart: "no"
+    platform: linux/amd64
+    depends_on:
+      - dataverse
+      - previewers-provider
+
+networks:
+  dataverse:
+    driver: bridge
+
+volumes:
+  dv_data:
+  dv_secrets:
+  postgres_data:
+  solr_data:
+  solr_conf:

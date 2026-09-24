@@ -35,6 +35,7 @@ services:
         -Ddataverse.files.file1.type=file
         -Ddataverse.files.file1.label=Filesystem
         -Ddataverse.files.file1.directory=${STORAGE_DIR}/store
+        -Ddataverse.lang.directory=/dv/langBundles
         -Ddataverse.files.localstack1.type=s3
         -Ddataverse.files.localstack1.label=LocalStack
         -Ddataverse.files.localstack1.custom-endpoint-url=http://localstack:4566
@@ -185,6 +186,30 @@ services:
       - dataverse
     volumes:
       - ./docker-dev-volumes/solr/data:/var/solr
+
+  # Always-run: bootstrap skips on existing DBs, so language settings live here.
+  dev_lang_setup:
+    container_name: "dev_lang_setup"
+    image: gdcc/configbaker:unstable
+    restart: "no"
+    environment:
+      - DATAVERSE_URL=http://dataverse:8080
+      - TIMEOUT=10m
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        echo "Waiting for $${DATAVERSE_URL} (max $${TIMEOUT})..."
+        wait4x http "$${DATAVERSE_URL}/api/info/version" -i 8s -t "$${TIMEOUT}" --expect-status-code 200
+        put() { echo "Setting $$1..."; curl -sS -f -X PUT -d "$$2" "$${DATAVERSE_URL}/api/admin/settings/$$1" >/dev/null; }
+        put ":Languages" '[{"locale":"en","title":"English"},{"locale":"hu","title":"Magyar"}]'
+        put ":MetadataLanguages" '[{"locale":"en","title":"English"},{"locale":"hu","title":"Magyar"}]'
+        echo "English and Hungarian enabled."
+    networks:
+      - dataverse
+    depends_on:
+      - dev_dataverse
 
   dev_dv_initializer:
     container_name: "dev_dv_initializer"

@@ -36,6 +36,7 @@ import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -60,6 +61,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -353,6 +355,421 @@ public class ArpServiceBean implements java.io.Serializable {
         }
 
         return folderId.get();
+    }
+
+    /**
+     * Lists a hosted CEDAR folder, walks its direct child folders, and imports
+     * templates from those children as metadata blocks (published or not).
+     * Templates that sit directly in the parent folder are ignored.
+     * Per-template failures are recorded in the result; parent listing errors throw.
+     */
+    public JsonObjectBuilder importTemplatesFromCedarFolder(String folderId, String dvIdtf, String cedarDomain, String apiKey) throws Exception {
+        if (folderId == null || folderId.isBlank()) {
+            throw new IllegalArgumentException("folderId is required");
+        }
+        if (dvIdtf == null || dvIdtf.isBlank()) {
+            dvIdtf = "root";
+        }
+        if (cedarDomain == null || cedarDomain.isBlank()) {
+            cedarDomain = arpConfig.get("arp.cedar.domain");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            apiKey = arpConfig.get("arp.cedar.proxyApiKey");
+        } else {
+            apiKey = ArpConfig.normalizeCedarApiKey(apiKey);
+        }
+        if (cedarDomain == null || cedarDomain.isBlank()) {
+            throw new IllegalArgumentException("CEDAR domain is not set (arp.cedar.domain)");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalArgumentException("CEDAR API key is not set (arp.cedar.proxyApiKey)");
+        }
+        assertFolderMatchesCedarDomain(folderId, cedarDomain);
+
+        HttpClient client = getUnsafeHttpClient();
+        ObjectMapper mapper = new ObjectMapper();
+        JsonArrayBuilder templatesJson = Json.createArrayBuilder();
+        int imported = 0;
+        int failed = 0;
+        int childFolderCount = 0;
+
+        logger.info("Listing child folders of CEDAR folder " + folderId);
+        List<JsonNode> parentContents = listCedarFolderContents(client, folderId, cedarDomain, apiKey);
+
+        for (JsonNode resource : parentContents) {
+            if (!"folder".equals(nodeText(resource, "resourceType"))) {
+                continue;
+            }
+            childFolderCount++;
+            String childFolderId = nodeText(resource, "@id");
+            String childFolderName = nodeText(resource, "schema:name");
+            logger.info("Listing templates in child folder '" + childFolderName + "' (" + childFolderId + ")");
+
+            List<JsonNode> childContents;
+            try {
+                childContents = listCedarFolderContents(client, childFolderId, cedarDomain, apiKey);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Failed to list child folder " + childFolderId, e);
+                failed++;
+                templatesJson.add(Json.createObjectBuilder()
+                        .add("folderId", childFolderId)
+                        .add("folderName", childFolderName)
+                        .add("status", "failed")
+                        .add("error", exceptionMessage(e)));
+                continue;
+            }
+
+            for (JsonNode childResource : childContents) {
+                if (!"template".equals(nodeText(childResource, "resourceType"))) {
+                    continue;
+                }
+                String templateId = nodeText(childResource, "@id");
+                String templateName = nodeText(childResource, "schema:name");
+                logger.info("Importing CEDAR template " + templateId + " (" + templateName + ") into dataverse " + dvIdtf);
+                try {
+                    String templateJson = fetchCedarTemplate(client, templateId, cedarDomain, apiKey);
+                    String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, templateJson);
+                    imported++;
+                    JsonObjectBuilder entry = Json.createObjectBuilder()
+                            .add("id", templateId)
+                            .add("name", templateName)
+                            .add("folderId", childFolderId)
+                            .add("status", "imported");
+                    if (metadataBlockName != null) {
+                        entry.add("metadataBlock", metadataBlockName);
+                    }
+                    templatesJson.add(entry);
+                } catch (Exception e) {
+                    logger.log(Level.SEVERE, "Failed to import CEDAR template " + templateId, e);
+                    failed++;
+                    templatesJson.add(Json.createObjectBuilder()
+                            .add("id", templateId)
+                            .add("name", templateName)
+                            .add("folderId", childFolderId)
+                            .add("status", "failed")
+                            .add("error", exceptionMessage(e)));
+                }
+            }
+        }
+
+        logger.info("CEDAR folder import complete: childFolders=" + childFolderCount + " imported=" + imported + " failed=" + failed);
+        return Json.createObjectBuilder()
+                .add("folderId", folderId)
+                .add("dvIdtf", dvIdtf)
+                .add("childFolders", childFolderCount)
+                .add("imported", imported)
+                .add("failed", failed)
+                .add("templates", templatesJson);
+    }
+
+    private List<JsonNode> listCedarFolderContents(HttpClient client, String folderId, String cedarDomain, String apiKey) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        List<JsonNode> all = new ArrayList<>();
+        int offset = 0;
+        int limit = 100;
+        while (true) {
+            String encodedFolderId = encodeURLParameter(folderId);
+            String url = "https://resource." + cedarDomain + "/folders/" + encodedFolderId
+                    + "/contents?limit=" + limit + "&offset=" + offset
+                    + "&publication_status=all&resource_types=template,folder&sort=name&version=latest";
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Authorization", "apiKey " + apiKey)
+                    .header("Accept", "application/json")
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, ofString());
+            if (response.statusCode() != 200) {
+                throw new Exception("CEDAR folder listing failed (" + response.statusCode() + ") for " + folderId + ": "
+                        + summarizeCedarError(response.body()));
+            }
+            JsonNode root = mapper.readTree(response.body());
+            if (root.get("errorMessage") != null && !root.get("errorMessage").isNull()) {
+                throw new Exception("Error received from CEDAR: " + response.body());
+            }
+            JsonNode resources = root.get("resources");
+            if (resources == null || !resources.isArray() || resources.size() == 0) {
+                break;
+            }
+            for (JsonNode resource : resources) {
+                all.add(resource);
+            }
+            offset += resources.size();
+            int totalCount = root.path("totalCount").asInt(0);
+            if (totalCount > 0 && offset >= totalCount) {
+                break;
+            }
+            if (resources.size() < limit) {
+                break;
+            }
+        }
+        return all;
+    }
+
+    private String fetchCedarTemplate(HttpClient client, String templateId, String cedarDomain, String apiKey) throws Exception {
+        String encoded = encodeURLParameter(templateId);
+        String url = "https://resource." + cedarDomain + "/templates/" + encoded;
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Authorization", "apiKey " + apiKey)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        HttpResponse<String> response = client.send(request, ofString());
+        if (response.statusCode() != 200) {
+            throw new Exception("Failed to fetch CEDAR template " + templateId + " (" + response.statusCode() + "): " + response.body());
+        }
+        return response.body();
+    }
+
+    private HttpResponse<String> fetchCedarTemplateDetails(HttpClient client, String templateId, String cedarDomain, String apiKey) throws Exception {
+        String encoded = encodeURLParameter(templateId);
+        String url = "https://resource." + cedarDomain + "/templates/" + encoded + "/details";
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .timeout(Duration.ofSeconds(10))
+                .header("Authorization", "apiKey " + apiKey)
+                .header("Accept", "application/json")
+                .GET()
+                .build();
+        return client.send(request, ofString());
+    }
+
+    public String fetchCedarTemplateJson(String templateId) throws Exception {
+        String cedarDomain = arpConfig.get("arp.cedar.domain");
+        String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
+        if (cedarDomain == null || cedarDomain.isBlank()) {
+            throw new IllegalArgumentException("CEDAR domain is not set (arp.cedar.domain)");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalArgumentException("CEDAR API key is not set (arp.cedar.proxyApiKey)");
+        }
+        return fetchCedarTemplate(getUnsafeHttpClient(), templateId, cedarDomain, apiKey);
+    }
+
+    /**
+     * Compare this metadata block's stored CEDAR {@code pav:lastUpdatedOn} with
+     * {@code GET /templates/{id}/details}. Failures are logged and returned as
+     * {@link CedarTemplateSyncStatus#ERROR} so the General Information tab still renders.
+     */
+    public CedarTemplateSyncResult checkTemplateSyncStatus(MetadataBlock mdb) {
+        if (mdb == null || mdb.getId() == null) {
+            return CedarTemplateSyncResult.none();
+        }
+        try {
+            MetadataBlockArp mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlockById(mdb.getId());
+            if (mdbArp == null || mdbArp.getCedarDefinition() == null || mdbArp.getCedarDefinition().isBlank()) {
+                return CedarTemplateSyncResult.none();
+            }
+            JsonNode root;
+            try {
+                root = new ObjectMapper().readTree(mdbArp.getCedarDefinition());
+            } catch (Exception e) {
+                logger.log(Level.WARNING, "Invalid cedarDefinition for metadata block " + mdb.getName(), e);
+                return CedarTemplateSyncResult.error(BundleUtil.getStringFromBundle("dataverse.arpSync.error.invalidStored"));
+            }
+            String templateId = nodeText(root, "@id");
+            if (templateId.isEmpty()) {
+                return CedarTemplateSyncResult.none();
+            }
+            String storedLastUpdatedOn = nodeText(root, "pav:lastUpdatedOn");
+            String cedarDomain = arpConfig.get("arp.cedar.domain");
+            String apiKey = arpConfig.get("arp.cedar.proxyApiKey");
+            if (cedarDomain == null || cedarDomain.isBlank()) {
+                throw new IllegalArgumentException("CEDAR domain is not set (arp.cedar.domain)");
+            }
+            if (apiKey == null || apiKey.isBlank()) {
+                throw new IllegalArgumentException("CEDAR API key is not set (arp.cedar.proxyApiKey)");
+            }
+            HttpResponse<String> response = fetchCedarTemplateDetails(getUnsafeHttpClient(), templateId, cedarDomain, apiKey);
+            if (response.statusCode() != 200) {
+                logger.log(Level.WARNING, "CEDAR template details for metadata block " + mdb.getName()
+                        + " returned HTTP " + response.statusCode());
+                return CedarTemplateSyncResult.error(CedarTemplateSyncResult.messageForHttpStatus(response.statusCode()));
+            }
+            String body = response.body();
+            JsonNode details = (body == null || body.isBlank()) ? null : new ObjectMapper().readTree(body);
+            if (isEmptyCedarDetails(body, details)) {
+                logger.log(Level.WARNING, "CEDAR template details for metadata block " + mdb.getName()
+                        + " returned HTTP 200 with no template object");
+                return CedarTemplateSyncResult.error(BundleUtil.getStringFromBundle("dataverse.arpSync.error.unavailable"));
+            }
+            String cedarLastUpdatedOn = nodeText(details, "pav:lastUpdatedOn");
+            if (cedarLastUpdatedOn.isEmpty()) {
+                return CedarTemplateSyncResult.error(BundleUtil.getStringFromBundle("dataverse.arpSync.error.missingTimestamp"));
+            }
+            CedarTemplateSyncStatus status = CedarTemplateSyncStatus.compareLastUpdatedOn(
+                    storedLastUpdatedOn.isEmpty() ? null : storedLastUpdatedOn,
+                    cedarLastUpdatedOn);
+            if (status == CedarTemplateSyncStatus.ERROR) {
+                return CedarTemplateSyncResult.error(BundleUtil.getStringFromBundle("dataverse.arpSync.error.invalidTimestamp"));
+            }
+            return CedarTemplateSyncResult.of(status);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to check CEDAR sync status for metadata block "
+                    + mdb.getName(), e);
+            return CedarTemplateSyncResult.error(CedarTemplateSyncResult.describeException(e));
+        }
+    }
+
+    /**
+     * Same persist path as arp-setup {@code importTemplatesFromCedarFolder}:
+     * load the template into the Dataverse database, then enable the metadata
+     * block (Solr) once the row is visible.
+     *
+     * @return {@code schema:identifier} of the imported metadata block, or null
+     */
+    String importCedarTemplateIntoDataverse(String dvIdtf, String templateJson) throws Exception {
+        createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, false);
+        JsonNode identifierNode = new ObjectMapper().readTree(templateJson).get("schema:identifier");
+        String metadataBlockName = identifierNode == null || identifierNode.isNull() ? null : identifierNode.textValue();
+        if (metadataBlockName != null && !metadataBlockName.isBlank()) {
+            updateMetadataBlockInNewTransaction(dvIdtf, metadataBlockName);
+        }
+        return metadataBlockName;
+    }
+
+    /**
+     * Look up the metadata block by database id, fetch its latest CEDAR template,
+     * and re-import it the same way arp-setup does.
+     *
+     * @return metadata block name ({@code schema:identifier}) of the updated template
+     */
+    public String updateMdbFromLatestCedarTemplate(String dvAlias, Long mdbId) throws Exception {
+        if (mdbId == null) {
+            throw new IllegalArgumentException("Metadata block id is required");
+        }
+        MetadataBlock mdb = metadataBlockService.findById(mdbId);
+        if (mdb == null) {
+            throw new IllegalArgumentException("Metadata block not found: " + mdbId);
+        }
+        MetadataBlockArp mdbArp = arpMetadataBlockServiceBean.findMetadataBlockArpForMetadataBlockById(mdbId);
+        if (mdbArp == null || mdbArp.getCedarDefinition() == null || mdbArp.getCedarDefinition().isBlank()) {
+            throw new IllegalArgumentException("Metadata block has no CEDAR template: " + mdb.getName());
+        }
+        JsonNode stored;
+        try {
+            stored = new ObjectMapper().readTree(mdbArp.getCedarDefinition());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid cedarDefinition for metadata block: " + mdb.getName(), e);
+        }
+        String templateId = nodeText(stored, "@id");
+        if (templateId.isEmpty()) {
+            throw new IllegalArgumentException("Metadata block has no CEDAR template id: " + mdb.getName());
+        }
+        String templateJson = fetchCedarTemplateJson(templateId);
+        String metadataBlockName = importCedarTemplateIntoDataverse(dvAlias, templateJson);
+        return metadataBlockName != null && !metadataBlockName.isBlank() ? metadataBlockName : mdb.getName();
+    }
+
+    private static String nodeText(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value == null || value.isNull() ? "" : value.asText();
+    }
+
+    /**
+     * CEDAR may return HTTP 200 with an empty body or empty JSON when the template
+     * is gone. Treat that as unavailable rather than a missing timestamp.
+     */
+    static boolean isEmptyCedarDetails(String body, JsonNode details) {
+        if (body == null || body.isBlank()) {
+            return true;
+        }
+        if (details == null || details.isNull() || details.isMissingNode()) {
+            return true;
+        }
+        if (details.isArray()) {
+            return details.isEmpty();
+        }
+        if (details.isObject()) {
+            return details.isEmpty();
+        }
+        return details.isTextual() && details.asText().isBlank();
+    }
+
+    private static String exceptionMessage(Exception e) {
+        return e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+    }
+
+    /**
+     * Hosted compose talks to schema.researchdata.hu. A repo.arp.orgx folder URL
+     * is from local dockerized CEDAR and will not resolve on the hosted registry.
+     */
+    static void assertFolderMatchesCedarDomain(String folderId, String cedarDomain) {
+        if (folderId == null || cedarDomain == null || !folderId.startsWith("http")) {
+            return;
+        }
+        URI folderUri;
+        try {
+            folderUri = URI.create(folderId);
+        } catch (IllegalArgumentException e) {
+            return;
+        }
+        String host = folderUri.getHost();
+        if (host == null) {
+            return;
+        }
+        String expectedRepo = "repo." + cedarDomain;
+        String expectedResource = "resource." + cedarDomain;
+        boolean cedarHost = host.startsWith("repo.") || host.startsWith("resource.");
+        if (cedarHost && !host.equalsIgnoreCase(expectedRepo) && !host.equalsIgnoreCase(expectedResource)) {
+            throw new IllegalArgumentException("folderId host '" + host + "' does not match arp.cedar.domain '"
+                    + cedarDomain + "'. Use a folder from https://" + expectedRepo + "/folders/<uuid> "
+                    + "(not a local *.arp.orgx URL).");
+        }
+    }
+
+    /**
+     * AROMA builds CEDAR URLs from its own baked-in domain (often {@code arp.orgx}).
+     * Rewrite {@code resource.*} and {@code repo.*} hosts to {@code arp.cedar.domain}
+     * so the resource proxy talks to the configured registry.
+     */
+    public static String rewriteCedarUrlToDomain(String cedarUrl, String cedarDomain) {
+        if (cedarUrl == null || cedarDomain == null || cedarDomain.isBlank()) {
+            return cedarUrl;
+        }
+        URI uri;
+        try {
+            uri = URI.create(cedarUrl);
+        } catch (IllegalArgumentException e) {
+            return cedarUrl;
+        }
+        String host = uri.getHost();
+        if (host == null || !host.startsWith("resource.")) {
+            return cedarUrl;
+        }
+        String expectedHost = "resource." + cedarDomain;
+        if (host.equalsIgnoreCase(expectedHost)) {
+            return cedarUrl;
+        }
+        String oldDomain = host.substring("resource.".length());
+        if (oldDomain.isEmpty()) {
+            return cedarUrl;
+        }
+        return cedarUrl
+                .replace("resource." + oldDomain, expectedHost)
+                .replace("repo." + oldDomain, "repo." + cedarDomain);
+    }
+
+    static String summarizeCedarError(String body) {
+        if (body == null || body.isBlank()) {
+            return "(empty body)";
+        }
+        try {
+            JsonNode n = new ObjectMapper().readTree(body);
+            String msg = n.path("message").asText("");
+            String key = n.path("errorKey").asText("");
+            String nested = n.path("originalException").path("errorPack").path("message").asText("");
+            if (!msg.isEmpty() && !nested.isEmpty() && !nested.equals(msg)) {
+                return (key.isEmpty() ? msg : key + ": " + msg) + " (" + nested + ")";
+            }
+            if (!msg.isEmpty()) {
+                return key.isEmpty() ? msg : key + ": " + msg;
+            }
+        } catch (Exception ignored) {
+            // fall through to a truncated raw body
+        }
+        return body.length() > 300 ? body.substring(0, 300) + "..." : body;
     }
 
     public String createFolder(String name, String description, String parentFolderId, String cedarDomain, String apiKey, HttpClient client) throws Exception {
@@ -1522,9 +1939,15 @@ public class ArpServiceBean implements java.io.Serializable {
     }
 
     public void updateEnabledMetadataBlocks(String dvIdtf, String metadataBlockName) throws Exception {
-        Dataverse dataverse = dataverseService.findAll().stream().filter(dv -> dv.getAlias().equals(dvIdtf)).findFirst().get();
+        Dataverse dataverse = dataverseService.findByAlias(dvIdtf);
+        if (dataverse == null) {
+            throw new IllegalArgumentException("Dataverse not found: " + dvIdtf);
+        }
         List<MetadataBlock> metadataBlocks = dataverse.getMetadataBlocks();
         MetadataBlock enabledMdb = findMetadataBlock(metadataBlockName);
+        if (enabledMdb == null) {
+            throw new IllegalArgumentException("Metadata block not found: " + metadataBlockName);
+        }
         if (!metadataBlocks.contains(enabledMdb)) {
             metadataBlocks.add(enabledMdb);
         }

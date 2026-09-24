@@ -100,6 +100,7 @@ This enables additional settings for each user in the notifications tab of their
 * ``DATASETCREATED`` Dataset was created by user
 * ``FILESYSTEMIMPORT`` Dataset has been successfully uploaded and verified
 * ``GRANTFILEACCESS`` Access to file is granted
+* ``HARVESTREGISTRYMISSING`` Repository is not registered in ARP Federated Search
 * ``INGESTCOMPLETEDWITHERRORS`` Ingest completed with errors
 * ``INGESTCOMPLETED`` Ingest is completed
 * ``PUBLISHEDDS`` Dataset is published
