@@ -94,6 +94,31 @@ DATAVERSE_PID_FAKE_AUTHORITY=10.5072
 DATAVERSE_PID_FAKE_SHOULDER=FK2/
 ```
 
+### AROMA client config
+
+The AROMA bundle store the client values in one object, `globalThis.__AROMA_CONFIG__`. When a browser loads an `/aroma` JavaScript file, Dataverse replaces the following properties in that object from the running configuration:
+
+| AROMA property | Taken from |
+|---|---|
+| `VITE_REACT_APP_DV_HOST` | `DATAVERSE_SITEURL` (`http://${MACHINE_IP}:8080`), trailing slash removed |
+| `VITE_REACT_APP_CEDAR_DOMAIN` | `arp.cedar.domain` (`ARP_CEDAR_DOMAIN`) |
+| `VITE_REACT_APP_W3ID_BASE` | `arp.w3id.base` (`ARP_W3ID_BASE`), trailing slash removed |
+| `VITE_REACT_APP_CEDAR_PROXY` | `{DATAVERSE_SITEURL}/api/arp/cedarResourceProxy/` |
+
+`arp-setup` writes `arp.cedar.domain` and `arp.w3id.base` into the database. Those database values have precedence over the environment variables. After you change `ARP_CEDAR_DOMAIN` or `ARP_W3ID_BASE` in `.env`, run 
+```bash
+docker compose up arp-setup
+```
+then reload AROMA. A reload is enough. You do not recreate the Dataverse container for those two.
+
+`DATAVERSE_SITEURL` is not a database setting. It comes from `MACHINE_IP` in `.env`. Change that, then recreate Dataverse:
+
+```bash
+docker compose up -d dataverse
+```
+
+The host and the CEDAR proxy both follow the new site URL.
+
 ### Branding
 
 The Hunverse look is already in the Dataverse image. You do not need a local branding folder to run the stack.
