@@ -17,7 +17,7 @@ If you set the key now, paste the hex only (no `apiKey ` prefix) from your CEDAR
 To run the stack:
 
 ```bash
-docker compose up
+docker compose -f hunverse-compose.yml up
 ```
 
 The Hunverse look is already in the image. See Branding if you want to change banners, CSS, or logos.
@@ -33,18 +33,18 @@ pass: admin1
 To stop the stack:
 
 ```bash
-docker compose down # stop
-docker compose down -v  # stop and delete data
+docker compose -f hunverse-compose.yml down # stop
+docker compose -f hunverse-compose.yml down -v  # stop and delete data
 ```
 
-## Configure compose.yml
+## Configure hunverse-compose.yml
 
-Copy `.env.example` to `.env` and uncomment a line to override it. Defaults below match the `${VAR:-...}` values in `compose.yml`. <br/>
+Copy `.env.example` to `.env` and uncomment a line to override it. Defaults below match the `${VAR:-...}` values in `hunverse-compose.yml`. <br/>
 Customizable vars grouped by services are listed below:
 
 ### Change before production
 
-These demo values are unsafe on a public or shared host. Set them in `.env`. Remaining hardcoded items must be edited in `compose.yml`.
+These demo values are unsafe on a public or shared host. Set them in `.env`. Remaining hardcoded items must be edited in `hunverse-compose.yml`.
 
 ```bash
 DATAVERSE_ADMIN_PASSWORD=admin1  # bootstrap; builtin dataverseAdmin password
@@ -55,9 +55,9 @@ DATAVERSE_PID_FAKE_AUTHORITY=10.5072  # fake DOI authority
 DATAVERSE_PID_FAKE_SHOULDER=FK2/  # fake DOI shoulder
 ```
 
-Changing `DATAVERSE_DB_USER` or `DATAVERSE_DB_PASSWORD` after the first start has no effect unless you recreate the Postgres volume (`docker compose down -v`).
+Changing `DATAVERSE_DB_USER` or `DATAVERSE_DB_PASSWORD` after the first start has no effect unless you recreate the Postgres volume (`docker compose -f hunverse-compose.yml down -v`).
 
-Hardcoded in `compose.yml`:
+Hardcoded in `hunverse-compose.yml`:
 
 - Published ports `5432` (Postgres), `8983` (Solr), `8686` (JMX)
 - `DATAVERSE_SITEURL` is HTTP via `MACHINE_IP` (no TLS)
@@ -107,14 +107,14 @@ The AROMA bundle store the client values in one object, `globalThis.__AROMA_CONF
 
 `arp-setup` writes `arp.cedar.domain` and `arp.w3id.base` into the database. Those database values have precedence over the environment variables. After you change `ARP_CEDAR_DOMAIN` or `ARP_W3ID_BASE` in `.env`, run 
 ```bash
-docker compose up arp-setup
+docker compose -f hunverse-compose.yml up arp-setup
 ```
 then reload AROMA. A reload is enough. You do not recreate the Dataverse container for those two.
 
 `DATAVERSE_SITEURL` is not a database setting. It comes from `MACHINE_IP` in `.env`. Change that, then recreate Dataverse:
 
 ```bash
-docker compose up -d dataverse
+docker compose -f hunverse-compose.yml up -d dataverse
 ```
 
 The host and the CEDAR proxy both follow the new site URL.
@@ -139,7 +139,7 @@ docker cp dataverse:/opt/payara/deployments/dataverse/branding ./branding
 BRANDING_DIR=./branding
 ```
 
-4. In `compose.yml`, uncomment the two branding volume lines:
+4. In `hunverse-compose.yml`, uncomment the two branding volume lines:
 
 ```yaml
 - ${BRANDING_DIR}:/var/www/dataverse/branding:ro
@@ -149,10 +149,10 @@ BRANDING_DIR=./branding
 5. Recreate Dataverse and refresh the browser:
 
 ```bash
-docker compose up -d dataverse
+docker compose -f hunverse-compose.yml up -d dataverse
 ```
 
-CSS and PNGs apply on refresh. If you rename the navbar logo file, set `LOGO_CUSTOMIZATION_FILE` (for example `/branding/mylogo.png`) and run `docker compose up arp-setup`.
+CSS and PNGs apply on refresh. If you rename the navbar logo file, set `LOGO_CUSTOMIZATION_FILE` (for example `/branding/mylogo.png`) and run `docker compose -f hunverse-compose.yml up arp-setup`.
 
 | File | Role |
 |---|---|
@@ -217,7 +217,7 @@ Only applied when the `postgres_data` volume is first created.
 
 ## arp-setup
 
-`docker compose up` runs it after Dataverse and `bootstrap` are ready.
+`docker compose -f hunverse-compose.yml up` runs it after Dataverse and `bootstrap` are ready.
 
 It waits for `/api/info/version` and the root dataverse, then PUTs:
 
@@ -232,7 +232,7 @@ If `ARP_CEDAR_PROXY_API_KEY` and `CEDAR_IMPORT_FOLDER_ID` are set, it also impor
 Re-run after changing those `.env` values, after a failed first import, or after changing the navbar logo filename:
 
 ```bash
-docker compose up arp-setup
+docker compose -f hunverse-compose.yml up arp-setup
 ```
 
 ## Config endpoints
@@ -283,7 +283,7 @@ curl -X POST 'http://localhost:8080/api/admin/arp/importTemplatesFromCedarFolder
 
 ## Volumes
 
-Named volumes (persist until `docker compose down -v`):
+Named volumes (persist until `docker compose -f hunverse-compose.yml down -v`):
 
 | Volume | Mount | What |
 |---|---|---|
@@ -293,7 +293,7 @@ Named volumes (persist until `docker compose down -v`):
 | `solr_data` | `/var/solr` | Solr index |
 | `solr_conf` | Solr template | Solr config copied by `solr_initializer` |
 
-Optional bind mounts (commented out in `compose.yml`; see Branding to overlay a custom look):
+Optional bind mounts (commented out in `hunverse-compose.yml`; see Branding to overlay a custom look):
 
 ```
 ${BRANDING_DIR} → /var/www/dataverse/branding
