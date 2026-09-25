@@ -4,6 +4,17 @@ This Docker Compose stack is made to let the users run Hunverse on their systems
 
 ## Running
 
+To run the stack you do not need to download the whole repository. Just download these two files into an empty directory, then follow the steps below.
+
+- [hunverse-compose.yml](https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads/hunverse-6.9/hunverse-compose.yml)
+- [.env.example](https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads/hunverse-6.9/.env.example)
+
+```bash
+mkdir hunverse && cd hunverse
+curl -fsSLO https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads/hunverse-6.9/hunverse-compose.yml
+curl -fsSLO https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads/hunverse-6.9/.env.example
+```
+
 Most settings have defaults, so the stack can be started right after you copy `.env.example` to `.env` and set your `ARP_CEDAR_PROXY_API_KEY`. <br/>
 Setting the API key is optional, but recommended before first use so `arp-setup` can import CEDAR metadata blocks. <br/>
 You can skip it, try the UI, then set the key later and import via the API (see Config endpoints).
