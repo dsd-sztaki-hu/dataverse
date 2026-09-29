@@ -90,6 +90,8 @@ The stack can be started without setting the API key, but the `arp-setup` will n
 docker compose -f hunverse-compose.yml up
 ```
 
+Startup takes several minutes. Wait until the logs print the **HUNVERSE READY!** banner before you open the site.
+
 Default login:
 
 ```
