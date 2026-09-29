@@ -3,6 +3,16 @@ Dataverse&#174;
 
 ![Dataverse-logo](https://github.com/IQSS/dataverse-frontend/assets/7512607/6c4d79e4-7be5-4102-88bd-dfa167dc79d3)
 
+## Hunverse
+
+[<img src="hunverse-icon.png" alt="" width="14" height="14"> Hunverse](README.hunverse.md) is the Hungarian Dataverse. It is the open-source release of this software, extended in the Adatrepozitórium Platform (ARP) project and localized for the Hungarian research community. A Hunverse installation includes the ARP service integrations by default.
+
+See the [Hunverse README](README.hunverse.md) for how to run and configure it.
+
+## This README
+
+The rest of this file is the Dataverse README. It is still valid and holds for Dataverse: what it is, how to try it, installation, community, and contributing.
+
 ## Table of Contents
 
 1. [❓ What is Dataverse?](#what-is-dataverse)

@@ -1,8 +1,93 @@
 # Hunverse
 
+<img src="src/main/docker/branding/hunverse-readme-logo.png" alt="Hunverse" width="2432">
+
+Hunverse — the Hungarian Dataverse.
+
+In the Adatrepozitórium Platform (ARP) project we built a service environment on the Dataverse research data repository software. At its center is a version of Dataverse extended with our own developments and localized for Hungarian, complemented by other services: a schema registry, an RO-Crate editor, and a common search.
+
+Hunverse is the open-source release of this extended Dataverse software, made for the Hungarian research community.
+
+It matches the instance running in ARP in every respect. Any researcher or institution can now install and use it with the ARP service integrations included by default. Every Hunverse user works with schemas stored in the same schema registry and can share those schemas with others. They can describe their data in more detail with RO-Crate — down to the file level — in the way already familiar from ARP. Data packages created in a Hunverse installation automatically become searchable in the [ARP Common Search](https://search.researchdata.hu), the federated collection point for Hungarian research data.
+
+Hunverse can be customized for each institution, both in appearance and in some of its services, using the options Dataverse provides by default. Custom authentication, a persistent identifier service, or other convenience add-ons can be installed as needed.
+
+The ARP project continuously keeps Hunverse up to date with newer Dataverse releases.
+
 This Docker Compose stack is made to let the users run Hunverse on their systems. The stack uses the hosted CEDAR registry at https://cedar.schema.researchdata.hu and the self-hosted AROMA UI at `/aroma`.
 
+## Components
+
+`hunverse-compose.yml` starts twelve services on one Docker network. The diagram reads left to right: jobs that run once, the Dataverse application, then the services that stay up with it.
+
+```mermaid
+%%{init: {'flowchart': {'nodeSpacing': 18, 'rankSpacing': 90, 'padding': 16}, 'theme': 'base', 'themeVariables': {'fontFamily': 'ui-sans-serif, system-ui, sans-serif', 'fontSize': '15px', 'lineColor': '#8b97a8', 'textColor': '#1c2430'}}}%%
+flowchart LR
+  subgraph once ["Runs once"]
+    direction TB
+    dvInit("dv_initializer<br/>file store")
+    solrInit("solr_initializer<br/>Solr config")
+    boot("bootstrap<br/>admin and root")
+    arp("arp-setup<br/>ARP settings")
+    reg("register-previewers<br/>previewers")
+  end
+  dv(["dataverse<br/>Hunverse · :8080"])
+  subgraph live ["Stays running"]
+    direction TB
+    pg("postgres<br/>database · :5432")
+    solr("solr<br/>search index · :8983")
+    upd("solr-updater<br/>schema sync · :8984")
+    smtp("smtp<br/>mail catcher · :1080")
+    rocrate("dataverse-rocrate-preview<br/>RO-Crate · :8985")
+    pv("previewers-provider<br/>file preview · :9080")
+  end
+  once -->|"prepares"| dv -->|"runs with"| live
+  class dvInit,solrInit,boot,arp,reg startup
+  class dv hub
+  class pg,solr,upd,smtp,rocrate,pv companion
+  classDef startup fill:#f6f3fb,stroke:#d4c6ea,color:#241c33
+  classDef hub fill:#e8f1fc,stroke:#3d6fad,color:#122033,stroke-width:1.5px
+  classDef companion fill:#f4f7f8,stroke:#c9d3da,color:#1c2428
+  style once fill:#fcfbfe,stroke:#e4dced,color:#3a3150
+  style live fill:#fbfcfc,stroke:#dce3e8,color:#243038
+```
+
+**dataverse** is the Hunverse application. The repository UI and API listen on port 8080, and JMX listens on 8686. AROMA, the RO-Crate editor, is served by the same application at `/aroma`. Uploaded files and language bundles are stored on the `dv_data` volume.
+
+**postgres** is PostgreSQL 16 on port 5432. It stores collections, datasets, users, and settings.
+
+**solr** is Solr 9.8 on port 8983. It holds the search index in `collection1`. 
+
+**solr-updater**, on host port 8984, keeps that index schema in step with Dataverse metadata fields. The two services share the Solr data volume.
+
+**smtp** is MailDev. It catches mail the application sends. SMTP is on port 25, and the inbox UI is on port 1080. Messages are discarded when the container stops.
+
+**dataverse-rocrate-preview**, on port 8985, builds RO-Crate previews when Dataverse asks for them. 
+
+**previewers-provider**, on port 9080, hosts the file previewers used in the browser.
+
+**dv_initializer** prepares the file-store volume and the language-bundle directory before Dataverse starts. 
+
+**solr_initializer** prepares the Solr volume and copies its config. 
+
+**bootstrap** then creates the `dataverseAdmin` user and the root collection. 
+
+**arp-setup** writes the Hunverse settings — English and Magyar, branding, CEDAR, terminology, and the AROMA address — and imports CEDAR templates when an API key is set. 
+
+**register-previewers** registers the file previewers with Dataverse.
+
+The CEDAR schema registry, the terminology service, and the language packs are not containers in this file. The stack calls them over the network.
+
 ## Running
+
+### Prerequisites
+
+Install these tools before you download the files or start the stack:
+
+- [Docker](https://docs.docker.com/get-docker/), including the Compose plugin (`docker compose`). Docker Desktop includes it. On Linux, install Docker Engine and the `docker-compose-plugin` package.
+- [curl](https://curl.se/), used in the download commands below.
+
+The host needs outbound internet access so Compose can pull the images and Hunverse can reach the CEDAR registry, the terminology service, and the language packs.
 
 To run the stack you do not need to download the whole repository. Just download these two files into an empty directory, then follow the steps below.
 
@@ -15,23 +100,25 @@ curl -fsSLO https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads
 curl -fsSLO https://raw.githubusercontent.com/dsd-sztaki-hu/dataverse/refs/heads/hunverse-6.9/.env.example
 ```
 
-Most settings have defaults, so the stack can be started right after you copy `.env.example` to `.env` and set your `ARP_CEDAR_PROXY_API_KEY`. <br/>
-Setting the API key is optional, but recommended before first use so `arp-setup` can import CEDAR metadata blocks. <br/>
-You can skip it, try the UI, then set the key later and import via the API (see Config endpoints).
+Most settings have defaults, so the stack can be started right after you copy `.env.example` to `.env` and set your `ARP_CEDAR_PROXY_API_KEY`.
 
 ```bash
 cp .env.example .env
 ```
 
-If you set the key now, paste the hex only (no `apiKey ` prefix) from your CEDAR profile at https://cedar.schema.researchdata.hu to the `.env` file.
+### Finding your CEDAR API Key
 
-To run the stack:
+Register at https://cedar.schema.researchdata.hu. <br/>
+Open your profile and copy the hex part of the API key (without the `apiKey ` prefix). <br/>
+Paste that hex into `ARP_CEDAR_PROXY_API_KEY` in `.env`.
+
+The stack can be started without setting the API key, but the `arp-setup` will not synchronize the CEDAR metadata blocks. This means that only the UI will work and no other Hunverse functionalities until the CEDAR metadata blocks are synchronized. You can set the CEDAR API key later and run the metadata block import, check the [CEDAR templates](#cedar-templates) section.
+
+### To run the stack:
 
 ```bash
 docker compose -f hunverse-compose.yml up
 ```
-
-The Hunverse look is already in the image. See Branding if you want to change banners, CSS, or logos.
 
 Default login:
 
@@ -75,6 +162,8 @@ Hardcoded in `hunverse-compose.yml`:
 - SMTP is MailDev, not a real mail server
 - Bootstrap runs in insecure mode (admin API from the host needs no unblock key)
 
+You can further configure the installation and make it more secure by following [Securing Your Installation](https://guides.dataverse.org/en/6.9/installation/config.html#securing-your-installation) in the Dataverse 6.9 configuration guide.
+
 ### CEDAR
 
 ```bash
@@ -88,7 +177,7 @@ CEDAR_IMPORT_FOLDER_ID=https://repo.schema.researchdata.hu/folders/49ba90b3-86ee
 DATAVERSE_IMAGE=harbor.sztaki.hu/arp/hunverse:6.9
 MACHINE_IP=localhost  # site URL becomes http://${MACHINE_IP}:8080; set a reachable IP if you open Hunverse from another machine
 ARP_CEDAR_DOMAIN=schema.researchdata.hu  # hosted schema registry
-ARP_CEDAR_PROXY_API_KEY=  # see Recommended before first use
+ARP_CEDAR_PROXY_API_KEY=  # see Finding your CEDAR API Key
 ARP_AROMA_ADDRESS=http://localhost:8080/aroma  # AROMA UI bundled in Dataverse
 TERMINOLOGY_URL_BRANCHES=https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes/%s/descendants?page=1&pageSize=500
 TERMINOLOGY_URL_VALUESETS=https://terminology.schema.researchdata.hu/bioportal/vs-collections/%s/value-sets/%s/values?page=1&pageSize=%s
@@ -187,7 +276,7 @@ CSS and PNGs apply on refresh. If you rename the navbar logo file, set `LOGO_CUS
 
 ```bash
 ARP_CEDAR_DOMAIN=schema.researchdata.hu
-ARP_CEDAR_PROXY_API_KEY=  # see Recommended; skips import and arp.cedar.proxyApiKey when empty
+ARP_CEDAR_PROXY_API_KEY=  # see Finding your CEDAR API Key; skips import and arp.cedar.proxyApiKey when empty
 ARP_AROMA_ADDRESS=http://localhost:8080/aroma
 ARP_W3ID_BASE=https://w3id.org/arp/dev
 CEDAR_IMPORT_DV=root  # collection that receives imported CEDAR templates
