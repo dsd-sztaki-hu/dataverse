@@ -20,37 +20,7 @@ This Docker Compose stack is made to let the users run Hunverse on their systems
 
 `hunverse-compose.yml` starts twelve services on one Docker network. The diagram reads left to right: jobs that run once, the Dataverse application, then the services that stay up with it.
 
-```mermaid
-%%{init: {'flowchart': {'nodeSpacing': 18, 'rankSpacing': 90, 'padding': 16}, 'theme': 'base', 'themeVariables': {'fontFamily': 'ui-sans-serif, system-ui, sans-serif', 'fontSize': '15px', 'lineColor': '#8b97a8', 'textColor': '#1c2430'}}}%%
-flowchart LR
-  subgraph once ["Runs once"]
-    direction TB
-    dvInit("dv_initializer<br/>file store")
-    solrInit("solr_initializer<br/>Solr config")
-    boot("bootstrap<br/>admin and root")
-    arp("arp-setup<br/>ARP settings")
-    reg("register-previewers<br/>previewers")
-  end
-  dv(["dataverse<br/>Hunverse · :8080"])
-  subgraph live ["Stays running"]
-    direction TB
-    pg("postgres<br/>database · :5432")
-    solr("solr<br/>search index · :8983")
-    upd("solr-updater<br/>schema sync · :8984")
-    smtp("smtp<br/>mail catcher · :1080")
-    rocrate("dataverse-rocrate-preview<br/>RO-Crate · :8985")
-    pv("previewers-provider<br/>file preview · :9080")
-  end
-  once -->|"prepares"| dv -->|"runs with"| live
-  class dvInit,solrInit,boot,arp,reg startup
-  class dv hub
-  class pg,solr,upd,smtp,rocrate,pv companion
-  classDef startup fill:#f6f3fb,stroke:#d4c6ea,color:#241c33
-  classDef hub fill:#e8f1fc,stroke:#3d6fad,color:#122033,stroke-width:1.5px
-  classDef companion fill:#f4f7f8,stroke:#c9d3da,color:#1c2428
-  style once fill:#fcfbfe,stroke:#e4dced,color:#3a3150
-  style live fill:#fbfcfc,stroke:#dce3e8,color:#243038
-```
+<img src="hunverse-compose.png" alt="Hunverse Compose. Five one-time jobs — dv_initializer, solr_initializer, bootstrap, arp-setup, and register-previewers — prepare dataverse (Hunverse, port 8080). It runs with postgres :5432, solr :8983, solr-updater :8984, smtp :1080, dataverse-rocrate-preview :8985, and previewers-provider :9080." width="1440">
 
 **dataverse** is the Hunverse application. The repository UI and API listen on port 8080, and JMX listens on 8686. AROMA, the RO-Crate editor, is served by the same application at `/aroma`. Uploaded files and language bundles are stored on the `dv_data` volume.
 
