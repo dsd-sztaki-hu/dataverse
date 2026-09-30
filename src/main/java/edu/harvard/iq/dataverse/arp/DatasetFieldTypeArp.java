@@ -1,7 +1,6 @@
 package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.DatasetFieldType;
-import edu.harvard.iq.dataverse.MetadataBlock;
 
 import jakarta.persistence.*;
 import java.io.Serializable;
@@ -16,7 +15,7 @@ import java.io.Serializable;
         @NamedQuery(name = "DatasetFieldTypeArp.findOneForFieldTypeId",
                 query = "SELECT o FROM DatasetFieldTypeArp o WHERE o.fieldType.id=:fieldTypeId ORDER BY o.id"),
         @NamedQuery(name = "DatasetFieldTypeArp.findAllByMetadataBlock",
-                query = "SELECT o FROM DatasetFieldTypeArp o JOIN DatasetFieldType dft ON dft.id=o.id JOIN MetadataBlock mdb ON mdb.id=dft.id WHERE mdb=:metadataBlock ORDER BY mdb.id, dft.id")
+                query = "SELECT o FROM DatasetFieldTypeArp o JOIN o.fieldType dft JOIN dft.metadataBlock mdb WHERE mdb=:metadataBlock ORDER BY mdb.id, dft.id")
 })
 @Entity
 @Table(indexes = {@Index(columnList="field_type_id")})
@@ -29,6 +28,7 @@ public class DatasetFieldTypeArp implements Serializable
     private Long id;
 
     @OneToOne
+    @JoinColumn(name = "field_type_id")
     private DatasetFieldType fieldType;
 
     @OneToOne

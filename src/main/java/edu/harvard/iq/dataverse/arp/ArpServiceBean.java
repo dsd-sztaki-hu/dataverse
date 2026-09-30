@@ -82,6 +82,8 @@ import static java.net.http.HttpResponse.BodyHandlers.ofString;
 @Named
 public class ArpServiceBean implements java.io.Serializable {
     private static final Logger logger = Logger.getLogger(ArpServiceBean.class.getCanonicalName());
+    /** One CEDAR template download can be large. Wait long enough for a slow link. */
+    private static final Duration CEDAR_HTTP_TIMEOUT = Duration.ofMinutes(3);
 
     @EJB
     protected MetadataBlockServiceBean metadataBlockSvc;
@@ -474,6 +476,7 @@ public class ArpServiceBean implements java.io.Serializable {
                     + "&publication_status=all&resource_types=template,folder&sort=name&version=latest";
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(url))
+                    .timeout(CEDAR_HTTP_TIMEOUT)
                     .header("Authorization", "apiKey " + apiKey)
                     .header("Accept", "application/json")
                     .GET()
@@ -511,6 +514,7 @@ public class ArpServiceBean implements java.io.Serializable {
         String url = "https://resource." + cedarDomain + "/templates/" + encoded;
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(url))
+                .timeout(CEDAR_HTTP_TIMEOUT)
                 .header("Authorization", "apiKey " + apiKey)
                 .header("Accept", "application/json")
                 .GET()
@@ -527,7 +531,7 @@ public class ArpServiceBean implements java.io.Serializable {
         String url = "https://resource." + cedarDomain + "/templates/" + encoded + "/details";
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(url))
-                .timeout(Duration.ofSeconds(10))
+                .timeout(CEDAR_HTTP_TIMEOUT)
                 .header("Authorization", "apiKey " + apiKey)
                 .header("Accept", "application/json")
                 .GET()
@@ -1170,6 +1174,7 @@ public class ArpServiceBean implements java.io.Serializable {
         SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(null, trustAllCerts, new SecureRandom());
         return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(30))
                 .sslContext(sslContext)
                 .build();
     }
@@ -2062,9 +2067,10 @@ public class ArpServiceBean implements java.io.Serializable {
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateMetadataBlockInNewTransaction(String dvIdtf, String metadataBlockName) throws Exception {
         // Initial delay in milliseconds
-        int delay = 1000;
+        int delay = 2000;
+        int maxDelay = 15000;
         // Maximum number of retries
-        int maxRetries = 5;
+        int maxRetries = 8;
         Exception lastException = null;
         
         for (int attempt = 0; attempt < maxRetries; attempt++) {
@@ -2076,13 +2082,13 @@ public class ArpServiceBean implements java.io.Serializable {
                 MetadataBlock verifiedMdb = metadataBlockService.findByName(metadataBlockName);
                 if (verifiedMdb == null) {
                     logger.warning("Attempt " + (attempt+1) + ": Metadata block not found yet. Retrying in " + delay + "ms...");
-                    delay *= 2; // Exponential backoff
+                    delay = Math.min(delay * 2, maxDelay);
                     continue;
                 }
                 
                 if (verifiedMdb.getDatasetFieldTypes() == null || verifiedMdb.getDatasetFieldTypes().isEmpty()) {
                     logger.warning("Attempt " + (attempt+1) + ": Dataset field types not found yet. Retrying in " + delay + "ms...");
-                    delay *= 2; // Exponential backoff
+                    delay = Math.min(delay * 2, maxDelay);
                     continue;
                 }
                 
@@ -2099,7 +2105,7 @@ public class ArpServiceBean implements java.io.Serializable {
             } catch (Exception e) {
                 lastException = e;
                 logger.warning("Attempt " + (attempt+1) + " failed: " + e.getMessage());
-                delay *= 2; // Exponential backoff
+                delay = Math.min(delay * 2, maxDelay);
             }
         }
         

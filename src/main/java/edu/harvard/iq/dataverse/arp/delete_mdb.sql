@@ -48,7 +48,7 @@ BEGIN
                                           (SELECT id FROM public.datasetfieldtype WHERE metadatablock_id = p_metadatablock_id);
 
     -- Delete from datasetfieldtypearp and datasetfieldtypeoverride which depend on datasetfieldtype
-    DELETE FROM public.datasetfieldtypearp WHERE fieldtype_id IN
+    DELETE FROM public.datasetfieldtypearp WHERE field_type_id IN
                                                  (SELECT id FROM public.datasetfieldtype WHERE metadatablock_id = p_metadatablock_id);
 
     DELETE FROM public.datasetfieldtypeoverride WHERE metadatablock_id = p_metadatablock_id;
