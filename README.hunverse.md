@@ -1,5 +1,7 @@
 # Hunverse
 
+[English](README.hunverse.md) · [Magyar](README.hunverse.hu.md)
+
 <img src="src/main/docker/branding/hunverse-readme-logo.png" alt="Hunverse" width="2432">
 
 Hunverse — the Hungarian Dataverse.

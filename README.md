@@ -7,7 +7,7 @@ Dataverse&#174;
 
 [<img src="hunverse-icon.png" alt="" width="14" height="14"> Hunverse](README.hunverse.md) is the Hungarian Dataverse. It is the open-source release of this software, extended in the Adatrepozitórium Platform (ARP) project and localized for the Hungarian research community. A Hunverse installation includes the ARP service integrations by default.
 
-See the [Hunverse README](README.hunverse.md) for how to run and configure it.
+See the [Hunverse README](README.hunverse.md) ([magyarul](README.hunverse.hu.md)) for how to run and configure it.
 
 ## This README
 
