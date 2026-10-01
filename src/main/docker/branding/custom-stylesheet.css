@@ -253,6 +253,10 @@ nav>li>a:focus, .navbar-default .navbar-nav>li>a:hover, #navbarFixed form.navbar
 	color: #b8df49;
 }
 
+.navbar-default .navbar-nav > .open > #lnk_header_account_dropdown span.text-danger {
+	color: #333333;
+}
+
 table[id$='resultsTable'] td > div.datasetResult, table[id$='resultsTable'] td > div.dataverseResult {
 	border-radius: 10px;
 }
