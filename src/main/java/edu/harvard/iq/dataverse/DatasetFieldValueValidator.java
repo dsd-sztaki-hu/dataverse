@@ -72,11 +72,11 @@ public class DatasetFieldValueValidator implements ConstraintValidator<ValidateD
             Optional<String> failureMessage = validateChildConstraints(value.getDatasetField());
             if (failureMessage.isPresent()) {
                 try {
-                    context.buildConstraintViolationWithTemplate(dsfType.getParentDatasetFieldType().getDisplayName() +  "  " +
-                            BundleUtil.getStringFromBundle(failureMessage.get()) ).addConstraintViolation();
+                    String localizedFailure = dsfType.getParentDatasetFieldType().getDisplayName() + "  " + failureMessage.get();
+                    context.buildConstraintViolationWithTemplate(localizedFailure).addConstraintViolation();
 
                     // save the failure message in the parent so we don't keep validating the children
-                    value.getDatasetField().getParentDatasetFieldCompoundValue().getParentDatasetField().setValidationMessage(failureMessage.get());
+                    value.getDatasetField().getParentDatasetFieldCompoundValue().getParentDatasetField().setValidationMessage(localizedFailure);
 
                 } catch (NullPointerException npe) {
                 }
@@ -241,6 +241,11 @@ public class DatasetFieldValueValidator implements ConstraintValidator<ValidateD
         return valid;
     }
 
+    private static String localizedBundleMessage(String key) {
+        String localized = BundleUtil.getStringFromBundle(key);
+        return localized != null ? localized : key;
+    }
+
     // Validate child fields against each other and return failure message or Optional.empty() if success
     public Optional<String> validateChildConstraints(DatasetField dsf) {
         final String fieldName = dsf.getDatasetFieldType().getName() != null ? dsf.getDatasetFieldType().getName() : "";
@@ -250,7 +255,7 @@ public class DatasetFieldValueValidator implements ConstraintValidator<ValidateD
         // validate the four points of the box to insure proper layout
         if (fieldName.equals(DatasetFieldConstant.northLatitude) || fieldName.equals(DatasetFieldConstant.westLongitude)
                 || fieldName.equals(DatasetFieldConstant.eastLongitude) || fieldName.equals(DatasetFieldConstant.southLatitude)) {
-            final String failureMessage = "dataset.metadata.invalidGeospatialCoordinates";
+            final String failureMessage = localizedBundleMessage("dataset.metadata.invalidGeospatialCoordinates");
 
             try {
                 final Map<String, String> coords = new HashMap<>();

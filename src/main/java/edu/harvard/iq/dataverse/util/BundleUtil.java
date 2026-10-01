@@ -2,7 +2,9 @@ package edu.harvard.iq.dataverse.util;
 
 import java.io.File;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
@@ -13,6 +15,7 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.HashMap;
 import jakarta.faces.context.FacesContext;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class BundleUtil {
 
@@ -21,6 +24,105 @@ public class BundleUtil {
     private static final String defaultBundleFile = "Bundle";
 
     private static final Map<String, ClassLoader> classLoaderCache = new HashMap<String, ClassLoader>();
+
+    /** Locale for the current API request, when the UI language is not a JSF view. */
+    private static final ThreadLocal<Locale> requestLocale = new ThreadLocal<>();
+
+    public static void setRequestLocale(Locale locale) {
+        if (locale == null) {
+            requestLocale.remove();
+        } else {
+            requestLocale.set(locale);
+        }
+    }
+
+    public static void clearRequestLocale() {
+        requestLocale.remove();
+    }
+
+    public static Locale getRequestLocale() {
+        return requestLocale.get();
+    }
+
+    /**
+     * Uses {@code lang} on this HTTP request, or on the page URL that sent it.
+     * @return true when this call set the locale and the caller must clear it
+     */
+    public static boolean applyLocaleFrom(HttpServletRequest request) {
+        if (requestLocale.get() != null || request == null) {
+            return false;
+        }
+        String lang = request.getParameter("lang");
+        if (lang == null || lang.isBlank()) {
+            lang = langFromUrl(request.getHeader("Referer"));
+        }
+        Locale locale = localeFromCode(lang);
+        if (locale == null) {
+            return false;
+        }
+        requestLocale.set(locale);
+        return true;
+    }
+
+    private static String langFromUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        int queryStart = url.indexOf('?');
+        if (queryStart < 0 || queryStart == url.length() - 1) {
+            return null;
+        }
+        String query = url.substring(queryStart + 1);
+        int hash = query.indexOf('#');
+        if (hash >= 0) {
+            query = query.substring(0, hash);
+        }
+        for (String part : query.split("&")) {
+            int eq = part.indexOf('=');
+            if (eq <= 0) {
+                continue;
+            }
+            if ("lang".equals(part.substring(0, eq))) {
+                try {
+                    return URLDecoder.decode(part.substring(eq + 1), StandardCharsets.UTF_8);
+                } catch (IllegalArgumentException ex) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Turns a UI language code such as {@code hu}, {@code en}, or {@code hu-HU} into a locale
+     * that matches the language bundle file names.
+     */
+    public static Locale localeFromCode(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+        String trimmed = code.trim();
+        int comma = trimmed.indexOf(',');
+        if (comma > 0) {
+            trimmed = trimmed.substring(0, comma);
+        }
+        int semi = trimmed.indexOf(';');
+        if (semi > 0) {
+            trimmed = trimmed.substring(0, semi);
+        }
+        trimmed = trimmed.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if ("en_US".equalsIgnoreCase(trimmed) || "en-US".equalsIgnoreCase(trimmed)) {
+            return new Locale("en");
+        }
+        Locale locale = Locale.forLanguageTag(trimmed.replace('_', '-'));
+        if (locale.getLanguage() == null || locale.getLanguage().isEmpty()) {
+            return null;
+        }
+        return locale;
+    }
 
     public static String getStringFromBundle(String key) {
         return getStringFromBundle(key, (List<String>)null);
@@ -140,6 +242,10 @@ public class BundleUtil {
     }
 
     public static Locale getCurrentLocale() {
+        Locale override = requestLocale.get();
+        if (override != null) {
+            return override;
+        }
         if (FacesContext.getCurrentInstance() == null) {
             String localeEnvVar = System.getenv().get("LANG");
             if (localeEnvVar != null) {

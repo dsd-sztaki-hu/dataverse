@@ -24,6 +24,7 @@ import edu.harvard.iq.dataverse.pidproviders.doi.fake.FakeDOIProvider;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 
 import java.sql.Timestamp;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Set;
@@ -107,6 +108,9 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
      * validation failed.
      */
     protected void validateOrDie(DatasetVersion dsv, Boolean lenient) throws CommandException {
+        HttpServletRequest httpRequest = getRequest() == null ? null : getRequest().getHttpServletRequest();
+        boolean appliedLocale = BundleUtil.applyLocaleFrom(httpRequest);
+        try {
         Set<ConstraintViolation> constraintViolations = dsv.validate();
         if (!constraintViolations.isEmpty()) {
             if (lenient) {
@@ -122,9 +126,10 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
                     .map(cv -> cv.getMessage() + " (Invalid value:" + cv.getInvalidValue() + ")")
                     .collect(joining(", ", "Validation Failed: ", "."));
                 
-                validationMessage  += constraintViolations.stream()
+                validationMessage += constraintViolations.stream()
                     .filter(cv -> cv.getRootBean() instanceof TermsOfUseAndAccess)
-                    .map(cv -> cv.toString());
+                    .map(cv -> cv.toString())
+                    .collect(joining(" "));
                 
                 for (ConstraintViolation cv : constraintViolations){
                     if (cv.getRootBean() instanceof TermsOfUseAndAccess){
@@ -133,6 +138,11 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
                 }
 
                 throw new IllegalCommandException(validationMessage, this);
+            }
+        }
+        } finally {
+            if (appliedLocale) {
+                BundleUtil.clearRequestLocale();
             }
         }
     }
