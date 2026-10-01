@@ -507,10 +507,10 @@ tmpfs (a konténer leállításakor törlődik): a Dataverse `/dumps` és `/tmp`
 | Szolgáltatás | Image |
 |---|---|
 | `dataverse` | `harbor.sztaki.hu/arp/hunverse:6.9` |
-| `bootstrap` | `gdcc/configbaker:unstable` |
-| `arp-setup` | `gdcc/configbaker:unstable` |
-| `dv_initializer` | `gdcc/configbaker:unstable` |
-| `solr_initializer` | `gdcc/configbaker:unstable` |
+| `bootstrap` | `gdcc/configbaker:6.9-noble-r6` |
+| `arp-setup` | `gdcc/configbaker:6.9-noble-r6` |
+| `dv_initializer` | `gdcc/configbaker:6.9-noble-r6` |
+| `solr_initializer` | `gdcc/configbaker:6.9-noble-r6` |
 | `postgres` | `postgres:16` |
 | `solr` | `solr:9.8.0` |
 | `smtp` | `maildev/maildev:2.0.5` |
