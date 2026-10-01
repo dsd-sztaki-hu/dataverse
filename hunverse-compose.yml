@@ -95,7 +95,7 @@ services:
 
   bootstrap:
     container_name: "bootstrap"
-    image: gdcc/configbaker:unstable
+    image: gdcc/configbaker:6.9-noble-r6
     restart: "no"
     environment:
       - TIMEOUT=20m
@@ -114,7 +114,7 @@ services:
   # Same pattern as bootstrap. `docker compose up` runs this automatically.
   arp-setup:
     container_name: "arp-setup"
-    image: gdcc/configbaker:unstable
+    image: gdcc/configbaker:6.9-noble-r6
     restart: "no"
     environment:
       - DATAVERSE_URL=http://dataverse:8080
@@ -234,7 +234,7 @@ services:
 
   dv_initializer:
     container_name: "dv_initializer"
-    image: gdcc/configbaker:unstable
+    image: gdcc/configbaker:6.9-noble-r6
     restart: "no"
     command:
       - sh
@@ -266,7 +266,7 @@ services:
 
   solr_initializer:
     container_name: "solr_initializer"
-    image: gdcc/configbaker:unstable
+    image: gdcc/configbaker:6.9-noble-r6
     restart: "no"
     command:
       - sh
