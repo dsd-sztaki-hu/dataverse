@@ -76,6 +76,40 @@ Most settings have defaults, so the stack can be started right after you copy `.
 cp .env.example .env
 ```
 
+### Docker limits for production
+
+Set Docker's memory and disk before you start the stack. `hunverse-compose.yml` does not set a memory limit on the Dataverse container. The memory you give Docker is the limit for the whole stack.
+
+Payara sizes the Java heap to 70% of the RAM it can see (`MaxRAMPercentage=70`). On Docker Desktop, set that RAM under Settings → Resources → Memory. On Linux, it is the host's RAM.
+
+`/tmp` and `/dumps` are memory-backed. With no `size`, Linux caps each mount at half of that same RAM. Only bytes actually written consume memory. Upload, unzip, and tabular ingest write temporary copies under `/tmp`, so a large file uses RAM until processing finishes. Deposited files are stored on `dv_data` and use disk.
+
+#### Memory
+
+Start at **16 GB**. That covers Hunverse, Postgres, and Solr when files stay within a few hundred MB and only a few uploads run at once.
+
+The heap may grow until 30% of Docker's memory remains. That remainder has to hold `/tmp`, Postgres, and Solr. Ingest often keeps about three copies of a file on `/tmp`. Reserve about 4 GB of the remainder for Postgres and Solr.
+
+```text
+Docker memory (GB) ≈ (3 × largest file in GB + 4) / 0.3
+```
+
+| Largest file | Docker memory |
+|---|---|
+| 1 GB | 24 GB |
+| 2 GB | 34 GB |
+| 4 GB | 54 GB |
+
+To keep a smaller machine, cap the heap so it does not take 70% of Docker's RAM. Set `MEM_MAX_RAM_PERCENTAGE` on the `dataverse` service. On 16 GB, a value of `40` limits the heap to about 6 GB and leaves about 10 GB for `/tmp` and the other services. After that, the largest file that can be ingested is whatever still fits in the memory left over.
+
+`MEM_MAX_RAM_PERCENTAGE` is one of the base image tunables. The [Dataverse 6.9 base image tunables](https://guides.dataverse.org/en/6.9/container/base-image.html#tunables) list the other environment variables you can set on the `dataverse` service to tune the JVM, dumps, and Payara.
+
+`/dumps` receives a heap dump only when `ENABLE_DUMPS=1`. The dump needs about as much free RAM as the heap, and the mount stops at half of Docker's memory.
+
+#### Disk
+
+Set Docker's disk to the size of the repository you expect to store, plus about 30 GB for images, Postgres, and Solr. On Docker Desktop this is Settings → Resources → Disk image size. On Linux it is the filesystem that holds `/var/lib/docker`. Grow the disk before `dv_data` fills it. Temporary files do not use this disk.
+
 ### Finding your CEDAR API Key
 
 Register at https://cedar.schema.researchdata.hu. <br/>
@@ -372,7 +406,7 @@ ${BRANDING_DIR} → /var/www/dataverse/branding
 ${BRANDING_DIR} → /opt/payara/deployments/dataverse/branding
 ```
 
-tmpfs (wiped on container stop): Dataverse `/dumps` and `/tmp`, smtp `/mail`.
+tmpfs (wiped on container stop): Dataverse `/dumps` and `/tmp`, smtp `/mail`. `/dumps` and `/tmp` have no `size` in `hunverse-compose.yml`. See [Docker limits for production](#docker-limits-for-production).
 
 ## Ports
 

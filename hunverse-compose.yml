@@ -87,10 +87,8 @@ services:
       # - ${BRANDING_DIR}:/var/www/dataverse/branding:ro
       # - ${BRANDING_DIR}:/opt/payara/deployments/dataverse/branding:ro
     tmpfs:
-      - /dumps:mode=770,size=2052M,uid=1000,gid=1000
-      - /tmp:mode=770,size=2052M,uid=1000,gid=1000
-    mem_limit: 2147483648 # 2 GiB
-    mem_reservation: 1024m
+      - /dumps:mode=770,uid=1000,gid=1000
+      - /tmp:mode=770,uid=1000,gid=1000
     privileged: false
 
   bootstrap:
