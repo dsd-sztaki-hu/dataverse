@@ -30,7 +30,7 @@ This Docker Compose stack is made to let the users run Hunverse on their systems
 
 **solr-updater**, on host port 8984, keeps that index schema in step with Dataverse metadata fields. The two services share the Solr data volume.
 
-**smtp** is MailDev. It catches mail the application sends. SMTP is on port 25, and the inbox UI is on port 1080. Messages are discarded when the container stops.
+**smtp** is a test inbox (MailDev). On a local trial, signup links and password resets show up at http://localhost:1080 and disappear when the container stops. When other people use the site, point Hunverse at your own mail server instead. See [Mail](#mail).
 
 **dataverse-rocrate-preview**, on port 8985, builds RO-Crate previews when Dataverse asks for them. 
 
@@ -165,7 +165,7 @@ Hardcoded in `hunverse-compose.yml`:
 
 - Published ports `5432` (Postgres), `8983` (Solr), `8686` (JMX)
 - `DATAVERSE_SITEURL` is HTTP via `MACHINE_IP` (no TLS)
-- SMTP is MailDev, not a real mail server
+- The `smtp` service (MailDev) and its published ports 25 and 1080. See [Mail](#mail).
 - Bootstrap runs in insecure mode (admin API from the host needs no unblock key)
 
 You can further configure the installation and make it more secure by following [Securing Your Installation](https://guides.dataverse.org/en/6.9/installation/config.html#securing-your-installation) in the Dataverse 6.9 configuration guide.
@@ -321,6 +321,55 @@ DATAVERSE_DB_PASSWORD=secret  # POSTGRES_PASSWORD; must match dataverse
 
 Only applied when the `postgres_data` volume is first created.
 
+### Mail
+
+Hunverse sends mail when someone signs up, resets a password, or uses a contact form.
+
+With the defaults, Hunverse uses the test inbox, MailDev: server name `smtp`, port 25, no login, sender `dataverse@localhost`. Open http://localhost:1080 to read signup links and password resets. Stopping the stack clears the inbox. 
+
+
+For production usage, customize the .env described below.
+
+Put this in `.env` and replace the example values with the fields from your mailbox. Quote a value that contains spaces. If the password contains `$`, write it as `$$`.
+
+```bash
+# The sender. Use the mailbox address itself.
+DATAVERSE_MAIL_SYSTEM_EMAIL="Hunverse <noreply@example.org>"
+
+# Where the Support form is delivered. Optional.
+# Leave it unset and support mail uses the sender address above.
+DATAVERSE_MAIL_SUPPORT_EMAIL=support@example.org
+
+# Outgoing server name and port, copied from the mail program.
+DATAVERSE_MAIL_MTA_HOST=smtp.example.org
+DATAVERSE_MAIL_MTA_PORT=587
+
+# Username and password, copied from the mail program.
+# The username is often the mailbox address.
+DATAVERSE_MAIL_MTA_AUTH=true
+DATAVERSE_MAIL_MTA_USER=noreply@example.org
+DATAVERSE_MAIL_MTA_PASSWORD=mailpassword
+
+# Port 587 uses this line.
+DATAVERSE_MAIL_MTA_STARTTLS_ENABLE=true
+# Port 465 uses this line instead. Comment out the STARTTLS line above.
+# DATAVERSE_MAIL_MTA_SSL_ENABLE=true
+```
+
+After setting the values for production use, disable the test inbox in the stack, by comment out the service named `smtp` in the `hunverse-compose.yml`.
+
+Hunverse keeps the mail connection until the container is created again. Apply your new settings with:
+
+```bash
+docker compose -f hunverse-compose.yml up -d --remove-orphans
+```
+
+This removes the test inbox container after its service is commented out.
+
+Check it with a password reset for an account whose mailbox you can open. The message should arrive there.
+
+If it does not, add `DATAVERSE_MAIL_DEBUG=true` to `.env`, run the command above again, and read the Dataverse logs. More mail settings are listed in [SMTP/Email Configuration](https://guides.dataverse.org/en/6.9/installation/config.html#smtp-email-configuration).
+
 ## arp-setup
 
 `docker compose -f hunverse-compose.yml up` runs it after Dataverse and `bootstrap` are ready.
@@ -413,7 +462,7 @@ tmpfs (wiped on container stop): Dataverse `/dumps` and `/tmp`, smtp `/mail`. `/
 | Port | What |
 |---|---|
 | 8080 | Dataverse |
-| 1080 | Mail UI |
+| 1080 | Test inbox for local mail. See [Mail](#mail). |
 | 8983 | Solr |
 | 5432 | Postgres |
 | 8984 | Solr updater |
