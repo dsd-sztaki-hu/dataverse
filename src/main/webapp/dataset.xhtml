@@ -962,8 +962,8 @@
                         </ui:fragment>
                         <p:tabView id="tabView" widgetVar="content" activeIndex="#{DatasetPage.selectedTabIndex}"
                                    rendered="#{empty DatasetPage.editMode or (DatasetPage.editMode == 'METADATA' or DatasetPage.editMode == 'LICENSE')}">
-                            <!-- oncomplete we reset the tab change handler -->
-                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this" />
+                            <!-- update="@this" replaces the tab headers, so the hash is written again in oncomplete -->
+                            <p:ajax event="tabChange" listener="#{DatasetPage.tabChanged}" update="@this" oncomplete="updateTabHash()" />
                             <p:tab id="dataFilesTab" title="#{bundle.files}" 
                                    rendered="#{(!deaccessioned 
                                                 or (deaccessioned and canUpdateDataset)) 
@@ -2428,20 +2428,37 @@
                 <script>
                   //<![CDATA[
 
-                  // Note: we call addTabChangeHandlers both at onready time and every time a tab is clicked,
-                  // because the click removes the handlers and need to be put back
+                  function tabIdFromHeader(anchor) {
+                    var hrefAttr = anchor.attr('href');
+                    if (!hrefAttr) {
+                      return null;
+                    }
+                    return hrefAttr.substring(hrefAttr.lastIndexOf(':') + 1);
+                  }
+
+                  function setTabHash(tabId) {
+                    if (!tabId || window.location.hash === '#' + tabId) {
+                      return;
+                    }
+                    window.location.hash = tabId;
+                  }
+
+                  // Delegated so the handler survives tabChange, which replaces the tab headers.
                   function addTabChangeHandlers() {
-                    $('#datasetForm\\:tabView .ui-tabs-nav li a').click(function(e) {
-                      // Prevent the default action of the anchor tag
-                      //e.preventDefault();
-
-                      // Get the href attribute and extract the last part after the colon
-                      var hrefAttr = $(this).attr('href');
-                      var lastPart = hrefAttr.substring(hrefAttr.lastIndexOf(':') + 1);
-
-                      // Change the URL hash
-                      window.location.hash = lastPart;
+                    $(document).off('click.datasetTabHash', '#datasetForm\\:tabView .ui-tabs-nav li a');
+                    $(document).on('click.datasetTabHash', '#datasetForm\\:tabView .ui-tabs-nav li a', function() {
+                      var header = $(this).closest('li');
+                      if (header.hasClass('ui-state-disabled')) {
+                        return;
+                      }
+                      setTabHash(tabIdFromHeader($(this)));
                     });
+                  }
+
+                  // Enter/Space on a tab header selects it without clicking the anchor.
+                  function updateTabHash() {
+                    var anchor = $('#datasetForm\\:tabView .ui-tabs-nav li.ui-state-active a').first();
+                    setTabHash(tabIdFromHeader(anchor));
                   }
 
                   function selectTabByName(tabViewWidgetVar, tabName) {
