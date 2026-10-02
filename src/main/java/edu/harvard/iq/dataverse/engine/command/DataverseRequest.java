@@ -4,9 +4,11 @@ import edu.harvard.iq.dataverse.api.AbstractApiBean;
 import edu.harvard.iq.dataverse.authorization.groups.impl.ipaddress.ip.IpAddress;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
+import edu.harvard.iq.dataverse.util.BundleUtil;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +27,8 @@ public class DataverseRequest {
     private final IpAddress sourceAddress;
     private final String invocationId;
     private final HttpServletRequest httpServletRequest;
+    /** Language captured while the servlet request was still active. */
+    private Locale locale;
     
     private static final String undefined = "0.0.0.0";
     
@@ -149,6 +153,10 @@ public class DataverseRequest {
         }
         
         sourceAddress = address;
+        locale = BundleUtil.localeFrom(aHttpServletRequest);
+        if (locale == null) {
+            locale = BundleUtil.localeFromFaces();
+        }
     }
 
     public DataverseRequest( User aUser, IpAddress aSourceAddress ) {
@@ -156,6 +164,7 @@ public class DataverseRequest {
         sourceAddress = aSourceAddress;
         invocationId=null;
         httpServletRequest=null;
+        locale = null;
     }
     
     public User getUser() {
@@ -194,6 +203,20 @@ public class DataverseRequest {
     
     public HttpServletRequest getHttpServletRequest() {
         return httpServletRequest;
+    }
+
+    public Locale getLocale() {
+        return locale;
+    }
+
+    /**
+     * Keeps a locale resolved on the servlet thread so a later background
+     * command can still format messages in that language.
+     */
+    public void rememberLocale(Locale locale) {
+        if (locale != null) {
+            this.locale = locale;
+        }
     }
     
     public String getSystemMetadataBlockKeyFor(String blockName) {

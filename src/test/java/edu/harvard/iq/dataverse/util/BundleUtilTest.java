@@ -4,11 +4,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.MissingResourceException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BundleUtilTest {
 
@@ -90,5 +95,42 @@ public class BundleUtilTest {
     @Test
     void testNoErrorNonExistentStringBundle() {
         assertDoesNotThrow(() -> BundleUtil.getStringFromBundle("FAKE", null, BundleUtil.getResourceBundle("MimeTypeFacets")));
+    }
+
+    @Test
+    void applyLocaleFromUsesLangParameter() {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(request.getParameter("lang")).thenReturn("hu");
+        try {
+            assertTrue(BundleUtil.applyLocaleFrom(request));
+            assertEquals("hu", BundleUtil.getRequestLocale().getLanguage());
+        } finally {
+            BundleUtil.clearRequestLocale();
+        }
+    }
+
+    @Test
+    void applyLocaleFromIgnoresRequestOutsideServlet() {
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(request.getParameter("lang")).thenThrow(new IllegalStateException(
+                "WELD-000710: Cannot inject HttpServletRequest outside of a Servlet request"));
+        try {
+            assertNull(BundleUtil.localeFrom(request));
+            assertFalse(BundleUtil.applyLocaleFrom(request));
+            assertNull(BundleUtil.getRequestLocale());
+        } finally {
+            BundleUtil.clearRequestLocale();
+        }
+    }
+
+    @Test
+    void applyLocaleKeepsAnExistingLocale() {
+        BundleUtil.setRequestLocale(BundleUtil.localeFromCode("hu"));
+        try {
+            assertFalse(BundleUtil.applyLocale(BundleUtil.localeFromCode("en")));
+            assertEquals("hu", BundleUtil.getRequestLocale().getLanguage());
+        } finally {
+            BundleUtil.clearRequestLocale();
+        }
     }
 }

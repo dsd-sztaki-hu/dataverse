@@ -46,18 +46,68 @@ public class BundleUtil {
 
     /**
      * Uses {@code lang} on this HTTP request, or on the page URL that sent it.
+     * A request held past the servlet call (dataset publication finalize runs
+     * on an EJB thread) cannot be read. That case leaves the locale unchanged.
      * @return true when this call set the locale and the caller must clear it
      */
     public static boolean applyLocaleFrom(HttpServletRequest request) {
-        if (requestLocale.get() != null || request == null) {
-            return false;
+        return applyLocale(localeFrom(request));
+    }
+
+    /**
+     * Reads a locale from the request without changing the current thread.
+     * Returns null when the request has no language, or when it can no longer
+     * be read.
+     */
+    public static Locale localeFrom(HttpServletRequest request) {
+        if (request == null) {
+            return null;
         }
-        String lang = request.getParameter("lang");
-        if (lang == null || lang.isBlank()) {
-            lang = langFromUrl(request.getHeader("Referer"));
+        String lang;
+        try {
+            lang = request.getParameter("lang");
+            if (lang == null || lang.isBlank()) {
+                lang = langFromUrl(request.getHeader("Referer"));
+            }
+        } catch (IllegalStateException ex) {
+            // CDI injects HttpServletRequest as a proxy. Calling it outside a
+            // servlet request throws WELD-000710 and aborts the command.
+            logger.fine("No servlet request available for locale: " + ex.getMessage());
+            return null;
         }
-        Locale locale = localeFromCode(lang);
-        if (locale == null) {
+        return localeFromCode(lang);
+    }
+
+    /**
+     * Locale of the current JSF view, when this thread is still inside that view.
+     */
+    public static Locale localeFromFaces() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces == null) {
+            return null;
+        }
+        if (faces.getViewRoot() != null && faces.getViewRoot().getLocale() != null) {
+            Locale locale = faces.getViewRoot().getLocale();
+            if (locale.getLanguage() == null || locale.getLanguage().isEmpty()) {
+                return null;
+            }
+            if ("en_US".equals(locale.getLanguage())) {
+                return new Locale("en");
+            }
+            return locale;
+        }
+        if (faces.getExternalContext() == null) {
+            return null;
+        }
+        return faces.getExternalContext().getRequestLocale();
+    }
+
+    /**
+     * Sets the locale for this thread when one is not already set.
+     * @return true when this call set the locale and the caller must clear it
+     */
+    public static boolean applyLocale(Locale locale) {
+        if (locale == null || requestLocale.get() != null) {
             return false;
         }
         requestLocale.set(locale);
