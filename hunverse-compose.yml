@@ -52,7 +52,7 @@ services:
       ARP_HARVEST_REGISTRY_CHECK_ENABLED: ${ARP_HARVEST_REGISTRY_CHECK_ENABLED:-1}
       # Language packs from GitHub. Overlay en_US/hu_HU onto /dv/langBundles.
       ARP_LANG_PACKS_REPOURL: ${ARP_LANG_PACKS_REPO_URL:-https://github.com/dsd-sztaki-hu/dataverse-language-packs}
-      ARP_LANG_PACKS_REF: ${ARP_LANG_PACKS_REF:-develop-hu-concorda-v6.9}
+      ARP_LANG_PACKS_REF: ${ARP_LANG_PACKS_REF:-hunverse-v6.9}
       ARP_LANG_PACKS_UPDATEONSTART: ${ARP_LANG_PACKS_UPDATE_ON_START:-true}
       # Local file store + fake DOI provider (authority/shoulder). Replaces the
       # legacy :Protocol/:Authority/:Shoulder/:DoiProvider database settings.

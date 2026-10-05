@@ -194,7 +194,7 @@ ARP_W3ID_BASE=https://w3id.org/arp/dev
 ARP_HARVEST_REGISTRY_CHECK_ENABLED=0  # set 1 to notify superusers if DATAVERSE_SITEURL is missing from https://search.researchdata.hu/stats
 ARP_LANG_PACKS_UPDATE_ON_START=true  # overlay en_US / hu_HU from GitHub onto /dv/langBundles
 ARP_LANG_PACKS_REPO_URL=https://github.com/dsd-sztaki-hu/dataverse-language-packs
-ARP_LANG_PACKS_REF=develop-hu-concorda-v6.9
+ARP_LANG_PACKS_REF=hunverse-v6.9
 DATAVERSE_DB_USER=dataverse  # must match postgres
 DATAVERSE_DB_PASSWORD=secret  # must match postgres
 DATAVERSE_CORS_ORIGIN=*  # change before production
@@ -418,7 +418,7 @@ Overlays `en_US` / `hu_HU` from GitHub onto `/dv/langBundles`. Does not delete C
 ```bash
 curl -X POST 'http://localhost:8080/api/admin/langPacks/update' \
   -H 'Content-Type: application/json' \
-  -d '{"repoUrl":"https://github.com/dsd-sztaki-hu/dataverse-language-packs","ref":"develop-hu-concorda-v6.9"}'
+  -d '{"repoUrl":"https://github.com/dsd-sztaki-hu/dataverse-language-packs","ref":"hunverse-v6.9"}'
 ```
 
 
