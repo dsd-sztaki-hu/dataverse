@@ -568,6 +568,9 @@ div.headerless-table .ui-datatable-tablewrapper table > thead {display:none;}
 /* -------- POPUP -------- */
 div.ui-dialog.smallPopUp {max-width:600px;}
 div.ui-dialog.largePopUp {min-width:60%; max-width:80%; max-height:80%; overflow-y:scroll;}
+/* Keep the RO-Crate upload warning readable; the resize handle otherwise stops at the title bar. */
+#datasetForm\:roCrateMetaJsonUploadedPopup {min-height:420px;}
+#datasetForm\:roCrateMetaJsonUploadedPopup .ui-dialog-content {min-height:320px;}
 div.ui-dialog .ui-datatable-scrollable table {table-layout: auto !important;}
 div.ui-dialog .ui-datatable-scrollable table colgroup col {max-width:1000px;}
 .ui-dialog.ui-widget.ui-widget-content {min-width:600px;}
