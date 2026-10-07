@@ -588,3 +588,22 @@ a:focus-visible img {
     box-shadow: none !important;
     border: 0 !important;
 }
+
+/* Full-width wrapper stays the page color. The warning fill stays on the text box. */
+#harvest-registry-alert,
+#status-alert {
+	background-color: transparent;
+	background-image: none;
+	border: 0;
+	box-shadow: none;
+}
+
+#harvest-registry-alert .alert,
+#status-alert div.alert {
+	color: #8a6d3b;
+	background-color: #fcf8e3;
+	background-image: linear-gradient(to bottom, #fcf8e3 0%, #f8efc0 100%);
+	background-repeat: repeat-x;
+	border: 1px solid #f5e79e;
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+}
