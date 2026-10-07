@@ -35,8 +35,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Optional startup check: if this installation's public site URL is not among
- * the harvest-registry {@code link} values, notify superusers in-app only.
+ * If this installation's public site URL is not among the harvest-registry
+ * {@code link} values, keep a warning for superusers and notify them in-app
+ * once per unregistered gap. The check repeats about once an hour so the
+ * warning goes away after the site is listed.
  */
 @Startup
 @Singleton
@@ -45,18 +47,20 @@ public class HarvestRegistryCheckService {
     private static final Logger logger = Logger.getLogger(HarvestRegistryCheckService.class.getCanonicalName());
 
     static final String STATS_URL = "https://search.researchdata.hu/stats";
-    static final String CONFIG_KEY_ENABLED = "arp.harvest.registry.check.enabled";
 
     private static final long INITIAL_DELAY_MS = 120_000L;
+    private static final long RECHECK_DELAY_MS = 3_600_000L;
     private static final long RETRY_DELAY_MS = 60_000L;
     private static final int MAX_RETRIES = 5;
     private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(15);
 
+    private boolean harvestRegistryMissing;
+    private String missingSiteUrl;
+    /** True after superusers were notified for the current unregistered gap. */
+    private boolean notifiedThisGap;
+
     @Resource
     jakarta.ejb.TimerService timerService;
-
-    @EJB
-    ArpConfig arpConfig;
 
     @EJB
     AuthenticationServiceBean authenticationService;
@@ -66,10 +70,6 @@ public class HarvestRegistryCheckService {
 
     @PostConstruct
     public void init() {
-        if (!isEnabled()) {
-            logger.info("Skipping harvest registry check (disabled)");
-            return;
-        }
         logger.info("Scheduling harvest registry check");
         timerService.createSingleActionTimer(INITIAL_DELAY_MS, new TimerConfig(Integer.valueOf(0), false));
     }
@@ -81,18 +81,27 @@ public class HarvestRegistryCheckService {
         if (info instanceof Integer) {
             attempt = (Integer) info;
         }
+        boolean scheduled = false;
         try {
-            runCheck(attempt);
+            scheduled = runCheck(attempt);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Harvest registry check failed", e);
         }
+        if (!scheduled) {
+            scheduleRecheck();
+        }
     }
 
-    void runCheck(int attempt) {
+    /**
+     * @return true when this attempt scheduled its own follow-up timer
+     */
+    boolean runCheck(int attempt) {
         String siteUrl = SystemConfig.getDataverseSiteUrlStatic();
         if (siteUrl == null || siteUrl.isBlank()) {
             logger.warning("Harvest registry check skipped: site URL could not be determined");
-            return;
+            applyRegistryResult(null, null);
+            scheduleRecheck();
+            return true;
         }
 
         String body;
@@ -100,7 +109,9 @@ public class HarvestRegistryCheckService {
             body = fetchStatsJson();
         } catch (Exception e) {
             logger.log(Level.WARNING, "Harvest registry check skipped: could not fetch " + STATS_URL, e);
-            return;
+            applyRegistryResult(null, null);
+            scheduleRecheck();
+            return true;
         }
 
         List<String> links;
@@ -108,28 +119,84 @@ public class HarvestRegistryCheckService {
             links = extractLinks(body);
         } catch (Exception e) {
             logger.log(Level.WARNING, "Harvest registry check skipped: could not parse stats JSON", e);
-            return;
+            applyRegistryResult(null, null);
+            scheduleRecheck();
+            return true;
         }
 
-        if (urlsMatch(siteUrl, links)) {
+        boolean listed = urlsMatch(siteUrl, links);
+        boolean notify = applyRegistryResult(listed, siteUrl);
+        if (listed) {
             logger.info("Harvest registry lists this installation: " + siteUrl);
-            return;
+            scheduleRecheck();
+            return true;
+        }
+
+        logger.warning("Harvest registry does not list this installation: " + siteUrl);
+        if (!notify) {
+            scheduleRecheck();
+            return true;
         }
 
         List<AuthenticatedUser> superUsers = authenticationService.findSuperUsers();
         if (superUsers == null || superUsers.isEmpty()) {
+            // The miss was recorded, but nobody could be told yet. Leave the latch
+            // open so a later attempt can still create the inbox notice.
+            notifiedThisGap = false;
             if (attempt < MAX_RETRIES) {
                 logger.info("Harvest registry check: no superusers yet, retrying");
                 timerService.createSingleActionTimer(RETRY_DELAY_MS, new TimerConfig(Integer.valueOf(attempt + 1), false));
-            } else {
-                logger.warning("Harvest registry check: site URL is not registered (" + siteUrl
-                        + ") but no superusers were found to notify");
+                return true;
             }
-            return;
+            logger.warning("Harvest registry check: site URL is not registered (" + siteUrl
+                    + ") but no superusers were found to notify");
+            scheduleRecheck();
+            return true;
         }
 
-        logger.warning("Harvest registry does not list this installation: " + siteUrl);
         notifySuperusers(superUsers, siteUrl);
+        scheduleRecheck();
+        return true;
+    }
+
+    /**
+     * Records one concluded check.
+     *
+     * @param listed {@code null} when the fetch or parse produced no result.
+     *               That leaves the previous banner state in place.
+     * @param siteUrl installation URL to show while the site is missing
+     * @return {@code true} when this is a new unregistered gap and superusers
+     *         should receive an inbox notice
+     */
+    boolean applyRegistryResult(Boolean listed, String siteUrl) {
+        if (listed == null) {
+            return false;
+        }
+        if (listed) {
+            harvestRegistryMissing = false;
+            missingSiteUrl = null;
+            notifiedThisGap = false;
+            return false;
+        }
+        missingSiteUrl = siteUrl;
+        harvestRegistryMissing = true;
+        if (notifiedThisGap) {
+            return false;
+        }
+        notifiedThisGap = true;
+        return true;
+    }
+
+    public boolean isHarvestRegistryMissing() {
+        return harvestRegistryMissing;
+    }
+
+    public String getMissingSiteUrl() {
+        return missingSiteUrl;
+    }
+
+    private void scheduleRecheck() {
+        timerService.createSingleActionTimer(RECHECK_DELAY_MS, new TimerConfig(Integer.valueOf(0), false));
     }
 
     private void notifySuperusers(List<AuthenticatedUser> superUsers, String siteUrl) {
@@ -153,10 +220,6 @@ public class HarvestRegistryCheckService {
             }
             userNotificationService.save(notification);
         }
-    }
-
-    private boolean isEnabled() {
-        return isTruthy(arpConfig.get(CONFIG_KEY_ENABLED));
     }
 
     String fetchStatsJson() throws Exception {

@@ -204,7 +204,6 @@ TERMINOLOGY_URL_BRANCHES=https://terminology.schema.researchdata.hu/bioportal/on
 TERMINOLOGY_URL_VALUESETS=https://terminology.schema.researchdata.hu/bioportal/vs-collections/%s/value-sets/%s/values?page=1&pageSize=%s
 TERMINOLOGY_URL_ONTOLOGIES=https://terminology.schema.researchdata.hu/bioportal/ontologies/%s/classes?page=1&pageSize=500
 ARP_W3ID_BASE=https://w3id.org/arp/dev
-ARP_HARVEST_REGISTRY_CHECK_ENABLED=0  # 1: értesíti a szuperfelhasználókat, ha a DATAVERSE_SITEURL hiányzik a https://search.researchdata.hu/stats oldalról
 ARP_LANG_PACKS_UPDATE_ON_START=true  # en_US / hu_HU ráhelyezése a GitHubról a /dv/langBundles könyvtárra
 ARP_LANG_PACKS_REPO_URL=https://github.com/dsd-sztaki-hu/dataverse-language-packs
 ARP_LANG_PACKS_REF=hunverse-v6.9

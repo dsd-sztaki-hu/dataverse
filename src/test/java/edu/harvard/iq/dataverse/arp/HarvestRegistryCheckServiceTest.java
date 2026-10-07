@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HarvestRegistryCheckServiceTest {
@@ -87,6 +88,51 @@ public class HarvestRegistryCheckServiceTest {
                 HarvestRegistryCheckService.normalizeRepoUrl("http://example.org"),
                 HarvestRegistryCheckService.normalizeRepoUrl("http://example.org:80/"));
         assertEquals("example.org:8080", HarvestRegistryCheckService.normalizeRepoUrl("https://EXAMPLE.ORG:8080/"));
+    }
+
+    @Test
+    public void registryResultTracksBannerAndNotificationLatch() {
+        HarvestRegistryCheckService service = new HarvestRegistryCheckService();
+        String siteUrl = "http://localhost:8080";
+
+        assertFalse(service.isHarvestRegistryMissing());
+        assertNull(service.getMissingSiteUrl());
+
+        assertTrue(service.applyRegistryResult(false, siteUrl));
+        assertTrue(service.isHarvestRegistryMissing());
+        assertEquals(siteUrl, service.getMissingSiteUrl());
+
+        assertFalse(service.applyRegistryResult(false, siteUrl));
+        assertTrue(service.isHarvestRegistryMissing());
+        assertEquals(siteUrl, service.getMissingSiteUrl());
+
+        assertFalse(service.applyRegistryResult(true, siteUrl));
+        assertFalse(service.isHarvestRegistryMissing());
+        assertNull(service.getMissingSiteUrl());
+
+        assertTrue(service.applyRegistryResult(false, siteUrl));
+        assertTrue(service.isHarvestRegistryMissing());
+        assertEquals(siteUrl, service.getMissingSiteUrl());
+    }
+
+    @Test
+    public void inconclusiveCheckLeavesPreviousResultInPlace() {
+        HarvestRegistryCheckService service = new HarvestRegistryCheckService();
+        String siteUrl = "http://localhost:8080";
+
+        assertFalse(service.applyRegistryResult(null, null));
+        assertFalse(service.isHarvestRegistryMissing());
+        assertNull(service.getMissingSiteUrl());
+
+        service.applyRegistryResult(false, siteUrl);
+        assertFalse(service.applyRegistryResult(null, siteUrl));
+        assertTrue(service.isHarvestRegistryMissing());
+        assertEquals(siteUrl, service.getMissingSiteUrl());
+
+        service.applyRegistryResult(true, siteUrl);
+        assertFalse(service.applyRegistryResult(null, null));
+        assertFalse(service.isHarvestRegistryMissing());
+        assertNull(service.getMissingSiteUrl());
     }
 
     @Test
