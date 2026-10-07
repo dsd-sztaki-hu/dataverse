@@ -28,6 +28,7 @@ body .ui-widget {font-size: inherit;}
 #navbarFixed .dropdown.accountName a:focus {outline: -webkit-focus-ring-color 5px auto;}
 #navbarFixed form.navbar-form.navbar-form-link {margin:0; padding:0;}
 #navbarFixed form.navbar-form-link a.ui-commandlink, #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle {display:block; padding:15px; color: #777;}
+#navbarFixed form.navbar-form-link a.ui-commandlink {text-shadow: 0 1px 0 rgba(255,255,255,.25);}
 #navbarFixed form.navbar-form-link a.ui-commandlink:hover, #navbarFixed form.navbar-form-link a.ui-commandlink:focus,
 #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle:hover, #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle:focus {color: #262626; text-decoration: none;}
 #navbarFixed .dropdown-menu.navbar-search {padding:12px; min-width:350px;}
