@@ -46,6 +46,7 @@ import edu.harvard.iq.dataverse.util.SystemConfig;
 
 // ARP specific
 import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME;
 import java.util.Optional;
 
 /**
@@ -1042,10 +1043,19 @@ public class Dataset extends DvObjectContainer {
             actVersion = dsVersion.orElseGet(this::getLatestVersion);
         }
         return actVersion.getFileMetadatas().stream().anyMatch(fileMetadata ->
-                fileMetadata != null &&
-                Objects.equals(fileMetadata.getDataFile().getDisplayName(), RO_CRATE_METADATA_JSON_NAME) &&
-                (fileMetadata.getDataFile().getDirectoryLabel() == null || fileMetadata.getDataFile().getDirectoryLabel().isBlank())
+                fileMetadata != null && isRootLevelRoCrateControlFile(fileMetadata.getDataFile())
         );
+    }
+
+    private boolean isRootLevelRoCrateControlFile(DataFile dataFile) {
+        if (dataFile == null) {
+            return false;
+        }
+        String displayName = dataFile.getDisplayName();
+        boolean isControlFile = Objects.equals(displayName, RO_CRATE_METADATA_JSON_NAME)
+                || Objects.equals(displayName, RO_CRATE_PREVIEW_HTML_NAME);
+        String directoryLabel = dataFile.getDirectoryLabel();
+        return isControlFile && (directoryLabel == null || directoryLabel.isBlank());
     }
 
 }

@@ -2423,20 +2423,24 @@ public class DatasetPage implements java.io.Serializable {
             dataverseHeaderFragment.setBreadcrumbs(new ArrayList<>());
         }
         if (dataset.hasJsonCrate(workingVersion.getFriendlyVersionNumber())) {
+            List<String> roCrateWarningArgs = List.of(
+                    ArpServiceBean.RO_CRATE_METADATA_JSON_NAME,
+                    BundleUtil.getStringFromBundle("file.metadataTab.fileMetadata.hierarchy.label"),
+                    ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME);
             var user = session.getUser();
             if (user.isAuthenticated()) {
                 AuthenticatedUser authenticatedUser = (AuthenticatedUser) user;
                 if (permissionService.userOn(authenticatedUser, dataset).has(Permission.EditDataset)) {
                     JH.addMessage(FacesMessage.SEVERITY_WARN,
                             BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
-                            BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
+                            BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details", roCrateWarningArgs)
                     );
                     return null;
                 }
             }
             JH.addMessage(FacesMessage.SEVERITY_WARN,
                     BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.summary"),
-                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details.no.permission", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME))
+                    BundleUtil.getStringFromBundle("arp.rocrate.functionalities.disabled.details.no.permission", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME))
             );
         }
         return null;
