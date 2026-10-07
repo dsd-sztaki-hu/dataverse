@@ -12,7 +12,7 @@ Hunverse is the open-source release of this extended Dataverse software, made fo
 
 It matches the instance running in ARP in every respect. Any researcher or institution can now install and use it with the ARP service integrations included by default. Every Hunverse user works with schemas stored in the same schema registry and can share those schemas with others. They can describe their data in more detail with RO-Crate — down to the file level — in the way already familiar from ARP. Data packages created in a Hunverse installation automatically become searchable in the [ARP Common Search](https://search.researchdata.hu), the federated collection point for Hungarian research data.
 
-Hunverse can be customized for each institution, both in appearance and in some of its services, using the options Dataverse provides by default. Custom authentication, a persistent identifier service, or other convenience add-ons can be installed as needed.
+Hunverse can be customized for each institution, both in appearance and in some of its services, using the options Dataverse provides by default. Custom authentication, a persistent identifier service, or other convenience add-ons can be installed as needed. See the [Dataverse 6.9 Installation Guide](https://guides.dataverse.org/en/6.9/installation/index.html).
 
 The ARP project continuously keeps Hunverse up to date with newer Dataverse releases.
 

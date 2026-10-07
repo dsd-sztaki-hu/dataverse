@@ -12,7 +12,7 @@ A Hunverse ennek a kibővített Dataverse szoftvernek a magyar kutatói közöss
 
 Ez mindenben megegyezik az ARP-ban is futó példánnyal, viszont most minden kutatónak és intézménynek lehetővé válik ennek telepítése és használata oly módon, hogy alapból megkapják az integrációt az ARP szolgáltatásaival. Vagyis, minden Hunverse felhasználó ugyanazon séma regiszterben tárolt sémával tud dolgozni, azokat meg tudják  osztani egymással, az ARP-ban megismert módon tudják az adataikat RO-Crate segítségével - akár fájl szinten is - még részletesebben metaadatolni, valamint egy adott Hunverse installációban keletkező adatcsomagok automatikusan kereshetővé válnak az ARP Közös Keresőben, ami a magyar kutatási adatok federált gyűjtőhelye.
 
-A Hunverse minden intézmény számára testreszabható mind a kinézetét, mind egyes szolgáltatásait tekintve a Dataverse által alapból nyújtott lehetőségek segítségével. Így saját autentikáció, perzisztens azonosító szolgáltatás, vagy egyéb kényelmi kiegészíthetők telepíthetők a Hunversebe igény szerint.
+A Hunverse minden intézmény számára testreszabható mind a kinézetét, mind egyes szolgáltatásait tekintve a Dataverse által alapból nyújtott lehetőségek segítségével. Így saját autentikáció, perzisztens azonosító szolgáltatás, vagy egyéb kényelmi kiegészíthetők telepíthetők a Hunversebe igény szerint. Lásd a [Dataverse 6.9 telepítési útmutatót](https://guides.dataverse.org/en/6.9/installation/index.html).
 
 Az ARP projekt folyamatosan biztosítja a Hunverse frissítését az újabb és újabb Dataverse kiadásoknak megfelelően.
 
