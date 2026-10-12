@@ -18,6 +18,7 @@ import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.arp.rocrate.RoCrateServiceBean;
 import edu.harvard.iq.dataverse.dataset.DatasetUtil;
 import edu.harvard.iq.dataverse.export.ExportService;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
@@ -137,7 +138,7 @@ public class SignpostingResources {
 
         String licenseString = DatasetUtil.getLicenseURI(workingDatasetVersion);
 
-        JsonArrayBuilder mediaTypes = Json.createArrayBuilder();
+        JsonArrayBuilder mediaTypes = JsonUtil.createArrayBuilder();
         mediaTypes.add(
                 jsonObjectBuilder().add(
                         "href",
@@ -166,13 +167,13 @@ public class SignpostingResources {
                 logger.warning("Could not look up exporter based on " + formatName + ". Exception: " + ex);
             }
         }
-        JsonArrayBuilder linksetJsonObj = Json.createArrayBuilder();
+        JsonArrayBuilder linksetJsonObj = JsonUtil.createArrayBuilder();
 
         JsonObjectBuilder mandatory;
         mandatory = jsonObjectBuilder().add("anchor", landingPage)
-                .add("cite-as", Json.createArrayBuilder().add(jsonObjectBuilder().add("href", ds.getPersistentURL())))
+                .add("cite-as", JsonUtil.createArrayBuilder().add(jsonObjectBuilder().add("href", ds.getPersistentURL())))
                 .add("type",
-                        Json.createArrayBuilder().add(jsonObjectBuilder().add("href", "https://schema.org/AboutPage"))
+                        JsonUtil.createArrayBuilder().add(jsonObjectBuilder().add("href", "https://schema.org/AboutPage"))
                                 .add(jsonObjectBuilder().add("href", defaultFileTypeValue)));
 
         if (authors != null) {
@@ -193,7 +194,7 @@ public class SignpostingResources {
         for (FileMetadata fm : workingDatasetVersion.getFileMetadatas()) {
             DataFile df = fm.getDataFile();
             JsonObjectBuilder itemAnchor = jsonObjectBuilder().add("anchor", getPublicDownloadUrl(df));
-            itemAnchor.add("collection", Json.createArrayBuilder().add(jsonObjectBuilder()
+            itemAnchor.add("collection", JsonUtil.createArrayBuilder().add(jsonObjectBuilder()
                     .add("href", landingPage)));
             linksetJsonObj.add(itemAnchor);
         }
@@ -279,7 +280,7 @@ public class SignpostingResources {
         if(datasetAuthorURLs.isEmpty()) {
             return null;
         }
-        JsonArrayBuilder authors = Json.createArrayBuilder();
+        JsonArrayBuilder authors = JsonUtil.createArrayBuilder();
         for (String authorURL : datasetAuthorURLs) {
                 authors.add(jsonObjectBuilder().add("href", authorURL));
         }
@@ -305,7 +306,7 @@ public class SignpostingResources {
     }
 
     private JsonArrayBuilder getJsonItems() {
-        JsonArrayBuilder items = Json.createArrayBuilder();
+        JsonArrayBuilder items = JsonUtil.createArrayBuilder();
         for (FileMetadata fm : workingDatasetVersion.getFileMetadatas()) {
             DataFile df = fm.getDataFile();
             items.add(jsonObjectBuilder().add("href", getPublicDownloadUrl(df)).add("type", df.getContentType()));

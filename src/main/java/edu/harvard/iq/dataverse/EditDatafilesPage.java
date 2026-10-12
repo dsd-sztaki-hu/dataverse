@@ -51,6 +51,8 @@ import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 import java.io.*;
 import java.util.*;
 import java.util.logging.Logger;
+
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
 import jakarta.faces.application.FacesMessage;
@@ -1468,9 +1470,7 @@ public class EditDatafilesPage implements java.io.Serializable {
         // -----------------------------------------------------------
         // Read JSON object from the output of the DropBox Chooser: 
         // -----------------------------------------------------------
-        JsonReader dbJsonReader = Json.createReader(new StringReader(dropBoxSelection));
-        JsonArray dbArray = dbJsonReader.readArray();
-        dbJsonReader.close();
+        JsonArray dbArray = JsonUtil.getJsonArray(dropBoxSelection);
 
         // -----------------------------------------------------------
         // Iterate through the Dropbox file information (JSON)

@@ -2,6 +2,8 @@ package edu.harvard.iq.dataverse.locality;
 
 import java.io.Serializable;
 import java.util.Objects;
+
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.json.Json;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.persistence.Column;
@@ -129,7 +131,7 @@ public class StorageSite implements Serializable {
     }
 
     public JsonObjectBuilder toJsonObjectBuilder() {
-        return Json.createObjectBuilder()
+        return JsonUtil.createObjectBuilder()
                 .add(ID, id)
                 .add(HOSTNAME, hostname)
                 .add(NAME, name)

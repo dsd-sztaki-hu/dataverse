@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import jakarta.json.Json;
 import jakarta.json.JsonArrayBuilder;
@@ -1821,10 +1822,10 @@ public final class DatasetVersionDifference {
         job.add("newVersion", jobVersion);
 
         if (!this.detailDataByBlock.isEmpty()) {
-            JsonArrayBuilder jabMetadata = Json.createArrayBuilder();
+            JsonArrayBuilder jabMetadata = JsonUtil.createArrayBuilder();
             for (List<DatasetField[]> blocks : detailDataByBlock) {
                 JsonObjectBuilder jobMetadata = new NullSafeJsonBuilder();
-                JsonArrayBuilder jab = Json.createArrayBuilder();
+                JsonArrayBuilder jab = JsonUtil.createArrayBuilder();
                 String blockDisplay = blocks.get(0)[0].getDatasetFieldType().getMetadataBlock().getDisplayName();
                 for (DatasetField[] dsfArray : blocks) {
                     JsonObjectBuilder jb = new NullSafeJsonBuilder();
@@ -1849,23 +1850,23 @@ public final class DatasetVersionDifference {
         }
 
         // Format added, removed, and modified files
-        JsonArrayBuilder jabDiffFiles = Json.createArrayBuilder();
+        JsonArrayBuilder jabDiffFiles = JsonUtil.createArrayBuilder();
         if (!addedFiles.isEmpty()) {
-            JsonArrayBuilder jab = Json.createArrayBuilder();
+            JsonArrayBuilder jab = JsonUtil.createArrayBuilder();
             addedFiles.forEach(f -> {
                 jab.add(filesDiffJson(f));
             });
             job.add("filesAdded", jab);
         }
         if (!removedFiles.isEmpty()) {
-            JsonArrayBuilder jab = Json.createArrayBuilder();
+            JsonArrayBuilder jab = JsonUtil.createArrayBuilder();
             removedFiles.forEach(f -> {
                 jab.add(filesDiffJson(f));
             });
             job.add("filesRemoved", jab);
         }
         if (!replacedFiles.isEmpty()) {
-            JsonArrayBuilder jabReplaced = Json.createArrayBuilder();
+            JsonArrayBuilder jabReplaced = JsonUtil.createArrayBuilder();
             replacedFiles.forEach(fm -> {
                 if (fm.length == 2) {
                     JsonObjectBuilder jobReplaced = new NullSafeJsonBuilder();
@@ -1878,7 +1879,7 @@ public final class DatasetVersionDifference {
         }
         if (!changedFileMetadata.isEmpty()) {
             changedFileMetadataDiff.entrySet().forEach(entry -> {
-                JsonArrayBuilder jab = Json.createArrayBuilder();
+                JsonArrayBuilder jab = JsonUtil.createArrayBuilder();
                 JsonObjectBuilder jobChanged = new NullSafeJsonBuilder();
                 jobChanged.add("fileName", entry.getKey().getDataFile().getDisplayName());
                 jobChanged.add(entry.getKey().getDataFile().getChecksumType().name(), entry.getKey().getDataFile().getChecksumValue());
@@ -1899,7 +1900,7 @@ public final class DatasetVersionDifference {
         // Format Terms Of Access changes
         if (!changedTermsAccess.isEmpty()) {
             JsonObjectBuilder jobTOA = new NullSafeJsonBuilder();
-            JsonArrayBuilder jab = Json.createArrayBuilder();
+            JsonArrayBuilder jab = JsonUtil.createArrayBuilder();
             changedTermsAccess.forEach(toa -> {
                 JsonObjectBuilder jobValue = new NullSafeJsonBuilder();
                 jobValue.add("fieldName",toa[0]);
@@ -1924,12 +1925,12 @@ public final class DatasetVersionDifference {
                 .add("description", fileMetadata.getDescription())
                 .add("isRestricted", df.isRestricted());
         if (fileMetadata.getCategories() != null && !fileMetadata.getCategories().isEmpty()) {
-            JsonArrayBuilder jabCategories = Json.createArrayBuilder();
+            JsonArrayBuilder jabCategories = JsonUtil.createArrayBuilder();
             fileMetadata.getCategories().forEach(c -> jabCategories.add(c.getName()));
             job.add("categories", jabCategories);
         }
         if (df.getTags() != null && !df.getTags().isEmpty()) {
-            JsonArrayBuilder jabTags = Json.createArrayBuilder();
+            JsonArrayBuilder jabTags = JsonUtil.createArrayBuilder();
             df.getTags().forEach(t -> jabTags.add(t.getTypeLabel()));
             job.add("tags", jabTags);
         }
