@@ -1213,7 +1213,15 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> {
 
             // Create a custom HTTP client with the desired pool size
             Integer poolSize = Integer.getInteger("dataverse.files." + driverId + ".connection-pool-size", 256);
-            Builder httpClientBuilder = NettyNioAsyncHttpClient.builder().maxConcurrency(poolSize);
+            Long acquisitionTimeout = Long.getLong("dataverse.files." + driverId + ".connection-acquisition-timeout", 30);
+            Long maxIdleTime = Long.getLong("dataverse.files." + driverId + ".connection-max-idle-time", 60);
+            Long timeToLive = Long.getLong("dataverse.files." + driverId + ".connection-time-to-live", 60);
+            Long timeout = Long.getLong("dataverse.files." + driverId + ".connection-timeout", 60);
+            Builder httpClientBuilder = NettyNioAsyncHttpClient.builder().maxConcurrency(poolSize)
+                    .connectionAcquisitionTimeout(Duration.ofSeconds(acquisitionTimeout))
+                    .connectionMaxIdleTime(Duration.ofSeconds(maxIdleTime))
+                    .connectionTimeToLive(Duration.ofSeconds(timeToLive))
+                    .connectionTimeout(Duration.ofSeconds(timeout));
 
             // Apply the custom HTTP client to the S3AsyncClientBuilder
             s3CB.httpClientBuilder(httpClientBuilder);
@@ -1239,7 +1247,7 @@ public class S3AccessIO<T extends DvObject> extends StorageIO<T> {
 
             // Configure credentials
             s3CB.credentialsProvider(getCredentialsProvider(driverId));
-
+            
             // Build the client
             S3AsyncClient client = s3CB.build();
             driverClientMap.put(driverId, client);
