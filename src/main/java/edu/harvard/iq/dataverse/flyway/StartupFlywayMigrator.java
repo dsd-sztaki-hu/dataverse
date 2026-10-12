@@ -25,6 +25,8 @@ public class StartupFlywayMigrator {
             throw new NullPointerException("Failed to migrate, cannot connect to database");
         }
 
+        Arp6901FlywayHistoryRepair.repairIfNeeded(dataSource);
+
         Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(

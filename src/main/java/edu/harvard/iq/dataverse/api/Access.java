@@ -2357,8 +2357,6 @@ public class Access extends AbstractApiBean {
         String customZipServiceUrl = settingsService.getValueForKey(SettingsServiceBean.Key.CustomZipDownloadServiceUrl);
         boolean useCustomZipService = customZipServiceUrl != null;
 
-        User apiTokenUser = findAPITokenUser(user); //for use in adding gb records if necessary
-
         Boolean getOrig = false;
         for (String key : uriInfo.getQueryParameters().keySet()) {
             String value = uriInfo.getQueryParameters().getFirst(key);
@@ -2370,7 +2368,7 @@ public class Access extends AbstractApiBean {
         if (useCustomZipService) {
             URI redirect_uri = null;
             try {
-                redirect_uri = handleCustomZipDownload(user, customZipServiceUrl, fileIds, apiTokenUser, uriInfo, headers, false, true);
+                redirect_uri = handleCustomZipDownload(user, customZipServiceUrl, fileIds.split(","), uriInfo, headers, false, true);
             } catch (WebApplicationException wae) {
                 throw wae;
             }
@@ -2419,7 +2417,7 @@ public class Access extends AbstractApiBean {
                                     logger.fine("adding datafile (id=" + file.getId() + ") to the download list of the ZippedDownloadInstance.");
                                     //downloadInstance.addDataFile(file);
                                     if (false != true && file.isReleased()){
-                                        GuestbookResponse  gbr = guestbookResponseService.initAPIGuestbookResponse(file.getOwner(), file, session, apiTokenUser);
+                                        GuestbookResponse  gbr = guestbookResponseService.initAPIGuestbookResponse(file.getOwner(), file, session, user);
                                         guestbookResponseService.save(gbr);
                                         MakeDataCountEntry entry = new MakeDataCountEntry(uriInfo, headers, dvRequestService, file);
                                         mdcLogService.logEntry(entry);

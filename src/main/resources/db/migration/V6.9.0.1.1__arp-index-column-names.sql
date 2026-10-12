@@ -1,3 +1,6 @@
+-- ARP migrations add a subversion after the latest Dataverse script.
+-- Latest upstream here is V6.9.0.1, so this is V6.9.0.1.1.
+
 -- EclipseLink created fieldtype_id and cedartoken from the Java field names.
 -- The entity indexes ask for field_type_id and cedar_token. Rename existing
 -- columns so those indexes, and the new @JoinColumn / @Column names, match.

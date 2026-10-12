@@ -719,7 +719,7 @@ public class RoCrateExportManager {
                 t.extra("fileCount", fileMetadatas.size());
             }
             ObjectMapper mapper = new ObjectMapper();
-        List<FileMetadata> datasetFiles = fileMetadatas.stream().map(FileMetadata::createCopy).collect(Collectors.toList());
+        List<FileMetadata> datasetFiles = new ArrayList<>(fileMetadatas);
         List<ObjectNode> roCrateFileEntities = Stream.concat(
                 roCrate.getAllContextualEntities().stream().map(AbstractEntity::getProperties).filter(ce -> roCrateServiceBean.getTypeAsString(ce).equals("File")),
                 roCrate.getAllDataEntities().stream().map(AbstractEntity::getProperties).filter(de -> roCrateServiceBean.getTypeAsString(de).equals("File"))
