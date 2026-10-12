@@ -205,6 +205,9 @@ public class DatasetVersion implements Serializable {
     @Transient 
     private JsonObject archivalCopyLocationJson;
 
+    @Transient
+    private Boolean hasFiles = null;
+
     //@OneToMany(mappedBy="datasetVersion", cascade={CascadeType.REMOVE, CascadeType.MERGE, CascadeType.PERSIST})
     private List<DatasetVersionStorageSite> storageSites;
     
@@ -2211,6 +2214,13 @@ public class DatasetVersion implements Serializable {
         }
 
         this.versionNote = note;
+    }
+
+    public Boolean hasFiles() {
+        return hasFiles;
+    }
+    public void setHasFiles(Boolean hasFiles) {
+        this.hasFiles =  hasFiles;
     }
 }
 

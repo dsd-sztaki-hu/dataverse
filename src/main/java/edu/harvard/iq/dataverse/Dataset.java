@@ -667,6 +667,10 @@ public class Dataset extends DvObjectContainer {
         return retVal;         
     }
 
+    public String getGlobalIdForFileStorageAsString() {
+        return getProtocolForFileStorage() + ":" + getAuthorityForFileStorage() + "/" + getIdentifierForFileStorage();
+    }
+
     public String getNextMajorVersionString() {
         // Never need to get the next major version for harvested studies.
         if (isHarvested()) {
@@ -762,6 +766,10 @@ public class Dataset extends DvObjectContainer {
 
     public void setThumbnailFile(DataFile thumbnailFile) {
         this.thumbnailFile = thumbnailFile;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailFile != null ? SystemConfig.getDataverseSiteUrlStatic() + "/api/datasets/" + this.getId() + "/logo" : null;
     }
 
     public boolean isUseGenericThumbnail() {
