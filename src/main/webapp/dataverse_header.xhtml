@@ -201,8 +201,8 @@
         <o:form class="form-inline">
             <ui:fragment rendered="#{!empty dataverseHeaderFragment.bannerMessages}">
                 <ui:repeat value="#{dataverseHeaderFragment.bannerMessages}" var="message" varStatus="status">                
-                    <div id="status-alert" class="bg-warning" jsf:rendered="#{!empty message.displayValue }">
-                        <div class="alert alert-dismissible container text-warning">
+                    <div id="status-alert" jsf:rendered="#{!empty message.displayValue }">
+                        <div class="alert alert-warning alert-dismissible container text-warning">
                             <p:commandButton class="close" id="closeButton" actionListener="#{dataverseSession.dismissMessage(message)}" update="@form" value="&#215;"/>
                             <h:outputText rendered="#{!empty message.displayValue }" value=" #{message.displayValue }" escape="false"/>
                         </div>
@@ -211,8 +211,8 @@
             </ui:fragment>
         </o:form>
         <ui:fragment rendered="#{dataverseSession.user.superuser and dataverseHeaderFragment.harvestRegistryMissing}">
-            <div id="harvest-registry-alert" class="bg-warning">
-                <div class="alert container text-warning">
+            <div id="harvest-registry-alert">
+                <div class="alert alert-warning container text-warning">
                     <h:outputFormat value="#{bundle['notification.harvestRegistryMissing']}" escape="false">
                         <f:param value="#{dataverseHeaderFragment.harvestRegistryMissingSiteUrl}"/>
                     </h:outputFormat>
