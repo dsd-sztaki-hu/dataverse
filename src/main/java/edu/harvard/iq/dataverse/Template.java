@@ -31,6 +31,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import edu.harvard.iq.dataverse.util.DateUtil;
@@ -39,7 +40,6 @@ import javax.persistence.ManyToMany;
 
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import org.hibernate.validator.constraints.NotBlank;
 
 /**
  *

@@ -24,15 +24,12 @@ import edu.harvard.iq.dataverse.engine.command.CommandContext;
 import edu.harvard.iq.dataverse.engine.command.DataverseRequest;
 import edu.harvard.iq.dataverse.engine.command.RequiredPermissions;
 import edu.harvard.iq.dataverse.engine.command.exception.CommandException;
-import edu.harvard.iq.dataverse.export.ExportService;
 import edu.harvard.iq.dataverse.pidproviders.PidProvider;
-import edu.harvard.iq.dataverse.pidproviders.PidUtil;
 import edu.harvard.iq.dataverse.privateurl.PrivateUrl;
-import edu.harvard.iq.dataverse.settings.SettingsServiceBean;
 import edu.harvard.iq.dataverse.util.BundleUtil;
+import edu.harvard.iq.dataverse.workflow.WorkflowContext;
 import edu.harvard.iq.dataverse.workflow.WorkflowContext.TriggerType;
 
-import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.*;
@@ -47,7 +44,6 @@ import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.util.Strings;
 import org.apache.solr.client.solrj.SolrServerException;
-
 
 /**
  *
@@ -246,17 +242,9 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
         //Remove any pre-pub workflow lock (not needed as WorkflowServiceBean.workflowComplete() should already have removed it after setting the finalizePublication lock?)
         ctxt.datasets().removeDatasetLocks(ds, DatasetLock.Reason.Workflow);
         
-        //Should this be in onSuccess()?
-        ctxt.workflows().getDefaultWorkflow(TriggerType.PostPublishDataset).ifPresent(wf -> {
-            try {
-                ctxt.workflows().start(wf, buildContext(ds, TriggerType.PostPublishDataset, datasetExternallyReleased), false);
-            } catch (CommandException ex) {
-                ctxt.datasets().removeDatasetLocks(ds, DatasetLock.Reason.Workflow);
-                logger.log(Level.SEVERE, "Error invoking post-publish workflow: " + ex.getMessage(), ex);
-            }
-        });
-
         Dataset readyDataset = ctxt.em().merge(ds);
+        
+        setDataset(readyDataset);
         
         // Finally, unlock the dataset (leaving any post-publish workflow lock in place)
         ctxt.datasets().removeDatasetLocks(readyDataset, DatasetLock.Reason.finalizePublication);
@@ -288,7 +276,26 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             notifyUsersDatasetPublishStatus(ctxt, dataset, UserNotification.Type.PUBLISHEDDS);
         } catch (Exception e) {
             logger.warning("Failure to send dataset published messages for : " + dataset.getId() + " : " + e.getMessage());
-        }         
+        }
+
+        final Dataset ds = dataset;
+        ctxt.workflows().getDefaultWorkflow(TriggerType.PostPublishDataset).ifPresent(wf -> {
+            // Build context with the lock attached
+            WorkflowContext context = buildContext(ds, TriggerType.PostPublishDataset, datasetExternallyReleased);
+            try {
+                ctxt.workflows().start(wf, context, false);
+            } catch (CommandException e) {
+                logger.log(Level.SEVERE, "Error invoking post-publish workflow: " + e.getMessage(), e);
+            }
+        });
+        // Metadata export:
+        ctxt.datasets().reExportDatasetAsync(dataset);
+        
+        ctxt.index().asyncIndexDataset(dataset, true);
+
+        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
+        RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
+        roCrateExportManager.finalizeRoCrateForPublish(dataset.getLatestVersion());
         
         //re-indexing dataverses that have additional subjects
         if (!dataversesToIndex.isEmpty()){
@@ -304,27 +311,6 @@ public class FinalizeDatasetPublicationCommand extends AbstractPublishDatasetCom
             }
         }
 
-        // Metadata export:
-        
-        try {
-            ExportService instance = ExportService.getInstance();
-            instance.exportAllFormats(dataset);
-            dataset = ctxt.datasets().merge(dataset); 
-        } catch (Exception ex) {
-            // Something went wrong!
-            // Just like with indexing, a failure to export is not a fatal
-            // condition. We'll just log the error as a warning and keep
-            // going:
-            logger.log(Level.WARNING, "Finalization: exception caught while exporting: "+ex.getMessage(), ex);
-            // ... but it is important to only update the export time stamp if the 
-            // export was indeed successful.
-        }
-        ctxt.index().asyncIndexDataset(dataset, true);
-
-        // We are not in a managed bean so roCrateExportManager cannot be injected directly, need to lookup
-        RoCrateExportManager roCrateExportManager = CDI.current().select(RoCrateExportManager.class).get();
-        roCrateExportManager.finalizeRoCrateForPublish(dataset.getLatestVersion());
-        
         return retVal;
     }
 
