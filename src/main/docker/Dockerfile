@@ -33,13 +33,27 @@ ENV MP_CONFIG_PROFILE=ct
 # defaults for glassfish-web.xml and other places.
 ENV DATAVERSE_FILES_UPLOADS="${STORAGE_DIR}/uploads"
 ENV DATAVERSE_FILES_DOCROOT="${STORAGE_DIR}/docroot"
+# Hunverse English + Hungarian packs. Seeded to /dv/langBundles at start
+# (STORAGE_DIR is a volume, so files COPY'd there would be hidden).
+ENV dataverse_lang_directory="${STORAGE_DIR}/langBundles"
 
 # Copy app and deps from assembly in proper layers
 COPY --chown=payara:payara maven/deps ${DEPLOY_DIR}/dataverse/WEB-INF/lib/
 COPY --chown=payara:payara maven/app ${DEPLOY_DIR}/dataverse/
 COPY --chown=payara:payara maven/supplements ${DEPLOY_DIR}/dataverse/supplements/
 COPY --chown=payara:payara maven/scripts ${SCRIPT_DIR}/
+COPY --chown=payara:payara maven/langBundles ${HOME_DIR}/langBundles
 RUN chmod +x "${SCRIPT_DIR}"/*
+
+# Replace WAR ARP branding with Hunverse. Optional compose BRANDING_DIR overlay
+# can still bind-mount over these paths. Must run as root: the base image USER
+# is payara, who cannot mkdir under /var/www.
+USER root
+RUN rm -rf "${DEPLOY_DIR}/dataverse/branding"
+COPY --chown=payara:payara maven/hunverse-branding ${DEPLOY_DIR}/dataverse/branding
+RUN mkdir -p /var/www/dataverse && \
+    ln -sfn "${DEPLOY_DIR}/dataverse/branding" /var/www/dataverse/branding
+USER payara
 
 # Create symlinks for jHove
 RUN ln -s "${DEPLOY_DIR}/dataverse/supplements/jhove.conf" "${PAYARA_DIR}/glassfish/domains/${DOMAIN_NAME}/config/jhove.conf" && \

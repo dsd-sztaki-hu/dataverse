@@ -838,6 +838,7 @@ public abstract class AbstractApiBean {
      * @see #response(java.util.concurrent.Callable)
      */
     protected <T> T execCommand( Command<T> cmd ) throws WrappedResponse {
+        boolean appliedLocale = BundleUtil.applyLocaleFrom(httpRequest);
         try {
             return engineSvc.submit(cmd);
 
@@ -888,6 +889,10 @@ public abstract class AbstractApiBean {
         } catch (CommandException ex) {
             Logger.getLogger(AbstractApiBean.class.getName()).log(Level.SEVERE, "Error while executing command " + cmd, ex);
             throw new WrappedResponse(ex, error(Status.INTERNAL_SERVER_ERROR, ex.getMessage()));
+        } finally {
+            if (appliedLocale) {
+                BundleUtil.clearRequestLocale();
+            }
         }
     }
 

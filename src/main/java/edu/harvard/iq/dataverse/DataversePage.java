@@ -1,6 +1,11 @@
 package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.UserNotification.Type;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.harvard.iq.dataverse.arp.ArpServiceBean;
+import edu.harvard.iq.dataverse.arp.CedarTemplateErrorsException;
+import edu.harvard.iq.dataverse.arp.CedarTemplateSyncResult;
+import edu.harvard.iq.dataverse.arp.CedarTemplateSyncStatus;
 import edu.harvard.iq.dataverse.authorization.Permission;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
@@ -122,6 +127,8 @@ public class DataversePage implements java.io.Serializable {
     PidProviderFactoryBean pidProviderFactoryBean;
     @EJB
     CacheFactoryBean cacheFactory;
+    @EJB
+    ArpServiceBean arpService;
 
     private Dataverse dataverse = new Dataverse();  
 
@@ -141,6 +148,13 @@ public class DataversePage implements java.io.Serializable {
     private List<SelectItem> linkingDVSelectItems;
     private Dataverse linkingDataverse;
     private List<ControlledVocabularyValue> selectedSubjects;
+
+    private String arpTemplateJson;
+    private String arpTemplateId;
+    private String arpTemplateName;
+    private String arpTemplateIdentifier;
+    private String arpTemplateDescription;
+    private String arpTemplateParseError;
 
     public List<ControlledVocabularyValue> getSelectedSubjects() {
         return selectedSubjects;
@@ -406,6 +420,7 @@ public class DataversePage implements java.io.Serializable {
         updateDataverseSubjectSelectItems();
         initFacets();
         refreshAllMetadataBlocks();
+        refreshCedarTemplateSyncStatuses();
     }
 
     private Long facetMetadataBlockId;
@@ -953,6 +968,7 @@ public class DataversePage implements java.io.Serializable {
         return !dataverseService.hasData(dataverse);
     }
     private List<MetadataBlock> allMetadataBlocks;
+    private Map<Long, CedarTemplateSyncResult> cedarTemplateSyncStatuses = new HashMap<>();
 
     public List<MetadataBlock> getAllMetadataBlocks() {
         return this.allMetadataBlocks;
@@ -960,6 +976,181 @@ public class DataversePage implements java.io.Serializable {
 
     public void setAllMetadataBlocks(List<MetadataBlock> inBlocks) {
         this.allMetadataBlocks = inBlocks;
+    }
+
+    public CedarTemplateSyncStatus getCedarSyncStatus(Long mdbId) {
+        if (mdbId == null || cedarTemplateSyncStatuses == null) {
+            return CedarTemplateSyncStatus.NONE;
+        }
+        CedarTemplateSyncResult result = cedarTemplateSyncStatuses.get(mdbId);
+        return result == null ? CedarTemplateSyncStatus.NONE : result.getStatus();
+    }
+
+    public boolean isCedarTemplateInSync(Long mdbId) {
+        return getCedarSyncStatus(mdbId) == CedarTemplateSyncStatus.IN_SYNC;
+    }
+
+    public boolean isCedarTemplateUpdate(Long mdbId) {
+        return getCedarSyncStatus(mdbId) == CedarTemplateSyncStatus.UPDATE;
+    }
+
+    public boolean isCedarTemplateSyncError(Long mdbId) {
+        return getCedarSyncStatus(mdbId) == CedarTemplateSyncStatus.ERROR;
+    }
+
+    public int getCedarTemplatesNeedingUpdateCount() {
+        if (cedarTemplateSyncStatuses == null) {
+            return 0;
+        }
+        int count = 0;
+        for (CedarTemplateSyncResult result : cedarTemplateSyncStatuses.values()) {
+            if (result != null && result.getStatus() == CedarTemplateSyncStatus.UPDATE) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public boolean isShowUpdateAllCedarTemplates() {
+        return getCedarTemplatesNeedingUpdateCount() > 1;
+    }
+
+    public String getCedarSyncErrorTip(Long mdbId) {
+        String base = BundleUtil.getStringFromBundle("dataverse.arpSync.error.tip");
+        if (mdbId == null || cedarTemplateSyncStatuses == null) {
+            return base;
+        }
+        CedarTemplateSyncResult result = cedarTemplateSyncStatuses.get(mdbId);
+        if (result == null || result.getErrorDetail() == null || result.getErrorDetail().isBlank()) {
+            return base;
+        }
+        return base + " " + result.getErrorDetail();
+    }
+
+    void refreshCedarTemplateSyncStatuses() {
+        cedarTemplateSyncStatuses = new HashMap<>();
+        if (session.getUser() == null || !session.getUser().isSuperuser()) {
+            return;
+        }
+        if (allMetadataBlocks == null) {
+            return;
+        }
+        for (MetadataBlock mdb : allMetadataBlocks) {
+            if (mdb == null || mdb.getId() == null) {
+                continue;
+            }
+            CedarTemplateSyncResult result = arpService.checkTemplateSyncStatus(mdb);
+            if (result != null && result.getStatus() != CedarTemplateSyncStatus.NONE) {
+                cedarTemplateSyncStatuses.put(mdb.getId(), result);
+            }
+        }
+    }
+
+    public void updateCedarTemplate(Long mdbId) {
+        if (session.getUser() == null || !session.getUser().isSuperuser()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.superuserOnly"));
+            return;
+        }
+        if (dataverse == null || dataverse.getId() == null || dataverse.getAlias() == null) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.noDataverse"));
+            return;
+        }
+        MetadataBlock mdb = findMetadataBlockById(mdbId);
+        if (mdb == null) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.update.failure"));
+            return;
+        }
+        try {
+            String displayName = reimportCedarTemplate(mdb.getId());
+            dataverse = dataverseService.find(dataverse.getId());
+            refreshAllMetadataBlocks();
+            refreshCedarTemplateSyncStatuses();
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.update.successNamed",
+                    List.of(displayName)));
+        } catch (CedarTemplateErrorsException cte) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.update.failure") + " " + cte.getErrors().toJson());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "CEDAR template update failed for metadata block " + mdb.getName(), e);
+            String msg = e.getMessage() == null
+                    ? BundleUtil.getStringFromBundle("dataverse.arpSync.update.failure")
+                    : e.getMessage();
+            JsfHelper.addErrorMessage(msg);
+        }
+    }
+
+    public void updateAllOutOfSyncCedarTemplates() {
+        if (session.getUser() == null || !session.getUser().isSuperuser()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.superuserOnly"));
+            return;
+        }
+        if (dataverse == null || dataverse.getId() == null || dataverse.getAlias() == null) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.noDataverse"));
+            return;
+        }
+        List<MetadataBlock> toUpdate = findMetadataBlocksNeedingCedarUpdate();
+        if (toUpdate.isEmpty()) {
+            return;
+        }
+        int succeeded = 0;
+        int failed = 0;
+        for (MetadataBlock mdb : toUpdate) {
+            try {
+                reimportCedarTemplate(mdb.getId());
+                succeeded++;
+            } catch (Exception e) {
+                failed++;
+                logger.log(Level.SEVERE, "CEDAR template update failed for metadata block " + mdb.getName(), e);
+                String msg = e.getMessage() == null
+                        ? BundleUtil.getStringFromBundle("dataverse.arpSync.update.failure")
+                        : e.getMessage();
+                JsfHelper.addErrorMessage(mdb.getName() + ": " + msg);
+            }
+        }
+        dataverse = dataverseService.find(dataverse.getId());
+        refreshAllMetadataBlocks();
+        refreshCedarTemplateSyncStatuses();
+        if (succeeded > 0 && failed == 0) {
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.updateAll.success",
+                    List.of(String.valueOf(succeeded))));
+        } else if (succeeded > 0) {
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.updateAll.partial",
+                    List.of(String.valueOf(succeeded), String.valueOf(failed))));
+        } else {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpSync.updateAll.failure"));
+        }
+    }
+
+    private List<MetadataBlock> findMetadataBlocksNeedingCedarUpdate() {
+        List<MetadataBlock> toUpdate = new ArrayList<>();
+        if (allMetadataBlocks == null) {
+            return toUpdate;
+        }
+        for (MetadataBlock mdb : allMetadataBlocks) {
+            if (mdb != null && mdb.getId() != null && isCedarTemplateUpdate(mdb.getId())) {
+                toUpdate.add(mdb);
+            }
+        }
+        return toUpdate;
+    }
+
+    /**
+     * Re-import one CEDAR-backed metadata block by database id. Uses the same
+     * fetch, persist, and Solr-enable path as arp-setup folder import.
+     */
+    private String reimportCedarTemplate(Long mdbId) throws Exception {
+        return arpService.updateMdbFromLatestCedarTemplate(dataverse.getAlias(), mdbId);
+    }
+
+    private MetadataBlock findMetadataBlockById(Long mdbId) {
+        if (allMetadataBlocks == null || mdbId == null) {
+            return null;
+        }
+        for (MetadataBlock mdb : allMetadataBlocks) {
+            if (mdbId.equals(mdb.getId())) {
+                return mdb;
+            }
+        }
+        return null;
     }
 
     private void refreshAllMetadataBlocks() {
@@ -1357,6 +1548,163 @@ public class DataversePage implements java.io.Serializable {
                 dsft.isInclude(), 
                 dsft.getLocalDisplayOnCreate()
             ));
+        }
+    }
+
+    // CEDAR Template Import
+
+    public String getArpTemplateJson() {
+        return arpTemplateJson;
+    }
+
+    public void setArpTemplateJson(String arpTemplateJson) {
+        this.arpTemplateJson = arpTemplateJson;
+    }
+
+    public String getArpTemplateId() {
+        return arpTemplateId;
+    }
+
+    public void setArpTemplateId(String arpTemplateId) {
+        this.arpTemplateId = arpTemplateId;
+    }
+
+    public String getArpTemplateName() {
+        return arpTemplateName;
+    }
+
+    public String getArpTemplateIdentifier() {
+        return arpTemplateIdentifier;
+    }
+
+    public String getArpTemplateDescription() {
+        return arpTemplateDescription;
+    }
+
+    public String getArpTemplateParseError() {
+        return arpTemplateParseError;
+    }
+
+    public String getArpImportButtonLabel() {
+        if (arpTemplateName != null && !arpTemplateName.trim().isEmpty()) {
+            return BundleUtil.getStringFromBundle("dataverse.arpImport.importNamed", List.of(arpTemplateName));
+        }
+        return BundleUtil.getStringFromBundle("dataverse.arpImport.import");
+    }
+
+    public void parseArpTemplateJson() {
+        arpTemplateName = null;
+        arpTemplateIdentifier = null;
+        arpTemplateDescription = null;
+        arpTemplateParseError = null;
+
+        if (arpTemplateJson == null || arpTemplateJson.trim().isEmpty()) {
+            return;
+        }
+
+        try {
+            var root = new ObjectMapper().readTree(arpTemplateJson);
+            var nameNode = root.get("schema:name");
+            var identifierNode = root.get("schema:identifier");
+            var descriptionNode = root.get("schema:description");
+
+            arpTemplateName = nameNode != null && !nameNode.isNull() ? nameNode.asText() : null;
+            arpTemplateIdentifier = identifierNode != null && !identifierNode.isNull() ? identifierNode.asText() : null;
+            arpTemplateDescription = descriptionNode != null && !descriptionNode.isNull() ? descriptionNode.asText() : null;
+        } catch (Exception e) {
+            arpTemplateParseError = BundleUtil.getStringFromBundle("dataverse.arpImport.parseError");
+        }
+    }
+
+    public void importArpTemplate() {
+        if (session.getUser() == null || !session.getUser().isSuperuser()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.superuserOnly"));
+            return;
+        }
+
+        if (dataverse == null || dataverse.getId() == null || dataverse.getAlias() == null) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.noDataverse"));
+            return;
+        }
+
+        if (arpTemplateJson == null || arpTemplateJson.trim().isEmpty()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.empty"));
+            return;
+        }
+
+        try {
+            if (arpTemplateName == null && arpTemplateIdentifier == null && arpTemplateDescription == null) {
+                parseArpTemplateJson();
+            }
+            if (arpTemplateParseError != null) {
+                JsfHelper.addErrorMessage(arpTemplateParseError);
+                return;
+            }
+            arpService.createOrUpdateMdbFromCedarTemplate(dataverse.getAlias(), arpTemplateJson, false);
+            String metadataBlockName = new ObjectMapper().readTree(arpTemplateJson).get("schema:identifier").textValue();
+            arpService.updateMetadataBlockInNewTransaction(dataverse.getAlias(), metadataBlockName);
+            dataverse = dataverseService.find(dataverse.getId());
+            refreshAllMetadataBlocks();
+            refreshCedarTemplateSyncStatuses();
+            String displayName = arpTemplateName != null && !arpTemplateName.trim().isEmpty()
+                    ? arpTemplateName
+                    : metadataBlockName;
+            arpTemplateJson = "";
+            arpTemplateName = null;
+            arpTemplateIdentifier = null;
+            arpTemplateDescription = null;
+            arpTemplateParseError = null;
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.successNamed", List.of(displayName)));
+        } catch (CedarTemplateErrorsException cte) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.failure") + " " + cte.getErrors().toJson());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "CEDAR template import failed", e);
+            String msg = e.getMessage() == null
+                    ? BundleUtil.getStringFromBundle("dataverse.arpImport.failure")
+                    : e.getMessage();
+            JsfHelper.addErrorMessage(msg);
+        }
+    }
+
+    public void importArpTemplateById() {
+        if (session.getUser() == null || !session.getUser().isSuperuser()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.superuserOnly"));
+            return;
+        }
+
+        if (dataverse == null || dataverse.getId() == null || dataverse.getAlias() == null) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.noDataverse"));
+            return;
+        }
+
+        if (arpTemplateId == null || arpTemplateId.trim().isEmpty()) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.emptyId"));
+            return;
+        }
+
+        try {
+            String templateJson = arpService.fetchCedarTemplateJson(arpTemplateId.trim());
+            arpService.createOrUpdateMdbFromCedarTemplate(dataverse.getAlias(), templateJson, false);
+            var root = new ObjectMapper().readTree(templateJson);
+            String metadataBlockName = root.get("schema:identifier").textValue();
+            arpService.updateMetadataBlockInNewTransaction(dataverse.getAlias(), metadataBlockName);
+            dataverse = dataverseService.find(dataverse.getId());
+            refreshAllMetadataBlocks();
+            refreshCedarTemplateSyncStatuses();
+            var nameNode = root.get("schema:name");
+            String displayName = nameNode != null && !nameNode.isNull() && !nameNode.asText().isBlank()
+                    ? nameNode.asText()
+                    : metadataBlockName;
+            arpTemplateId = "";
+            JsfHelper.addSuccessMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.successNamed", List.of(displayName)));
+        } catch (CedarTemplateErrorsException cte) {
+            JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("dataverse.arpImport.failure") + " " + cte.getErrors().toJson());
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "CEDAR template import by id failed", e);
+            String msg = e.getMessage() == null
+                    ? BundleUtil.getStringFromBundle("dataverse.arpImport.failure")
+                    : e.getMessage();
+            JsfHelper.addErrorMessage(msg);
         }
     }
 }

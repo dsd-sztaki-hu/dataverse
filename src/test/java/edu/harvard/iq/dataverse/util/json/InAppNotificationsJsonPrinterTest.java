@@ -748,4 +748,15 @@ public class InAppNotificationsJsonPrinterTest {
         // Assert
         verifyNoInteractions(notificationJson);
     }
+
+    @Test
+    @DisplayName("HARVESTREGISTRYMISSING: should add additionalInfo site URL")
+    public void testAddFieldsByType_harvestRegistryMissing() {
+        userNotification.setType(UserNotification.Type.HARVESTREGISTRYMISSING);
+        userNotification.setAdditionalInfo("https://example.org/dataverse");
+
+        sut.addFieldsByType(notificationJson, authenticatedUser, userNotification);
+
+        verify(notificationJson).add(KEY_ADDITIONAL_INFO, "https://example.org/dataverse");
+    }
 }

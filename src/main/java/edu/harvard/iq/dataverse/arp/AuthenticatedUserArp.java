@@ -30,6 +30,7 @@ public class AuthenticatedUserArp implements Serializable
     @OneToOne
     private AuthenticatedUser user;
 
+    @Column(name = "cedar_token")
     private String cedarToken;
 
     public Long getId()

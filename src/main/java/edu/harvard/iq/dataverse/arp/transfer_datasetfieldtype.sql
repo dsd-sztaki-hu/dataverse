@@ -152,7 +152,7 @@ BEGIN
 
     -- ARP / override rows must be removed before datasetfieldtype
     DELETE FROM public.datasetfieldtypearp
-    WHERE fieldtype_id = v_original_id;
+    WHERE field_type_id = v_original_id;
 
     DELETE FROM public.datasetfieldtypeoverride
     WHERE original_id = v_original_id;

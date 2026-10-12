@@ -107,6 +107,14 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
      * validation failed.
      */
     protected void validateOrDie(DatasetVersion dsv, Boolean lenient) throws CommandException {
+        boolean appliedLocale = false;
+        if (getRequest() != null) {
+            appliedLocale = BundleUtil.applyLocale(getRequest().getLocale());
+            if (!appliedLocale && BundleUtil.getRequestLocale() == null) {
+                appliedLocale = BundleUtil.applyLocaleFrom(getRequest().getHttpServletRequest());
+            }
+        }
+        try {
         Set<ConstraintViolation> constraintViolations = dsv.validate();
         if (!constraintViolations.isEmpty()) {
             if (lenient) {
@@ -118,13 +126,21 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
 
             } else {
                 // explode with a helpful message
+                String failedPrefix = BundleUtil.getStringFromBundle("dataset.metadata.validationFailed");
+                if (failedPrefix == null || failedPrefix.isBlank()) {
+                    failedPrefix = "Validation Failed:";
+                }
+                if (!failedPrefix.endsWith(" ")) {
+                    failedPrefix = failedPrefix + " ";
+                }
                 String validationMessage = constraintViolations.stream()
                     .map(cv -> cv.getMessage() + " (Invalid value:" + cv.getInvalidValue() + ")")
-                    .collect(joining(", ", "Validation Failed: ", "."));
+                    .collect(joining(", ", failedPrefix, "."));
                 
-                validationMessage  += constraintViolations.stream()
+                validationMessage += constraintViolations.stream()
                     .filter(cv -> cv.getRootBean() instanceof TermsOfUseAndAccess)
-                    .map(cv -> cv.toString());
+                    .map(cv -> cv.toString())
+                    .collect(joining(" "));
                 
                 for (ConstraintViolation cv : constraintViolations){
                     if (cv.getRootBean() instanceof TermsOfUseAndAccess){
@@ -133,6 +149,11 @@ public abstract class AbstractDatasetCommand<T> extends AbstractCommand<T> {
                 }
 
                 throw new IllegalCommandException(validationMessage, this);
+            }
+        }
+        } finally {
+            if (appliedLocale) {
+                BundleUtil.clearRequestLocale();
             }
         }
     }

@@ -5,6 +5,7 @@
  */
 package edu.harvard.iq.dataverse;
 
+import edu.harvard.iq.dataverse.arp.HarvestRegistryCheckService;
 import edu.harvard.iq.dataverse.authorization.groups.GroupServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.authorization.users.User;
@@ -53,6 +54,9 @@ public class DataverseHeaderFragment implements java.io.Serializable {
     
     @EJB
     BannerMessageServiceBean bannerMessageService;
+
+    @EJB
+    HarvestRegistryCheckService harvestRegistryCheckService;
 
     @Inject
     DataverseSession dataverseSession;
@@ -313,6 +317,14 @@ public class DataverseHeaderFragment implements java.io.Serializable {
 
     public void setBannerMessages(List<BannerMessage> bannerMessages) {
         this.bannerMessages = bannerMessages;
+    }
+
+    public boolean isHarvestRegistryMissing() {
+        return harvestRegistryCheckService.isHarvestRegistryMissing();
+    }
+
+    public String getHarvestRegistryMissingSiteUrl() {
+        return harvestRegistryCheckService.getMissingSiteUrl();
     }
 
     public String getSignupUrl(String loginRedirect) {

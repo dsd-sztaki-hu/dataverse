@@ -64,3 +64,4 @@ src/main/webapp/resources/images/dataverseproject.png.thumb140
 /conf/keycloak/docker-dev-volumes
 /docker-dev-volumes
 /.vs
+/.env

@@ -1523,6 +1523,14 @@ public class FilePage implements java.io.Serializable {
         return arpService.getCurrentUserApiKey(session);
     }
 
+    public String getOptionalApiKeyParameterForAroma() {
+        String apiKey = getCurrentUserApiKeyForAroma();
+        if (apiKey == null) {
+            return "";
+        }
+        return "&apiKey="+apiKey;
+    }
+
 
     public String getLanguage() {
         return session.getLocaleCode().equals("en") ? "en" : "hu";

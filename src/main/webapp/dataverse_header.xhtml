@@ -210,7 +210,16 @@
                 </ui:repeat>
             </ui:fragment>
         </o:form>
-        
+        <ui:fragment rendered="#{dataverseSession.user.superuser and dataverseHeaderFragment.harvestRegistryMissing}">
+            <div id="harvest-registry-alert" class="bg-warning">
+                <div class="alert container text-warning">
+                    <h:outputFormat value="#{bundle['notification.harvestRegistryMissing']}" escape="false">
+                        <f:param value="#{dataverseHeaderFragment.harvestRegistryMissingSiteUrl}"/>
+                    </h:outputFormat>
+                </div>
+            </div>
+        </ui:fragment>
+
         <!-- Header Panel -->
         <!-- FIXME: Rather than hard-coding "FFFFFF", get it from the backend (ThemeWidgetFragment.DEFAULT_BACKGROUND_COLOR). -->
         <div id="dataverseHeader" class="container bg-muted"

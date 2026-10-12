@@ -2,11 +2,14 @@ package edu.harvard.iq.dataverse.api;
 
 import edu.harvard.iq.dataverse.*;
 import edu.harvard.iq.dataverse.api.arp.ArpInitialSetupParams;
+import edu.harvard.iq.dataverse.api.arp.ImportTemplatesFromCedarFolderParams;
 import edu.harvard.iq.dataverse.api.arp.SetCedarKeyParams;
+import edu.harvard.iq.dataverse.api.arp.UpdateLanguagePacksParams;
 import edu.harvard.iq.dataverse.api.auth.AuthRequired;
 import edu.harvard.iq.dataverse.arp.ArpCedarAuthenticationServiceBean;
 import edu.harvard.iq.dataverse.arp.ArpServiceBean;
 import edu.harvard.iq.dataverse.arp.AuthenticatedUserArp;
+import edu.harvard.iq.dataverse.arp.LanguagePackUpdateService;
 import edu.harvard.iq.dataverse.settings.JvmSettings;
 import edu.harvard.iq.dataverse.settings.SettingsValidationException;
 import edu.harvard.iq.dataverse.util.StringUtil;
@@ -2665,6 +2668,42 @@ public class Admin extends AbstractApiBean {
 	@EJB
     ArpServiceBean arpService;
 
+	@EJB
+	LanguagePackUpdateService languagePackUpdateService;
+
+	/**
+	 * Overlay English and Hungarian UI translations from a GitHub language-packs
+	 * repo into {@code dataverse.lang.directory}. CEDAR UUID property files are
+	 * not removed. repoUrl and ref are optional and fall back to ArpConfig.
+	 *
+	 * curl -X POST 'http://localhost:8080/api/admin/langPacks/update' \
+	 *   -H 'Content-Type: application/json' \
+	 *   -d '{"repoUrl":"https://github.com/dsd-sztaki-hu/dataverse-language-packs","ref":"develop-hu-concorda-v6.9"}'
+	 */
+	@POST
+	@Path("langPacks/update")
+	@Consumes("application/json")
+	public Response updateLanguagePacks(UpdateLanguagePacksParams params) {
+		String repoUrl = params == null ? null : params.repoUrl;
+		String ref = params == null ? null : params.ref;
+		try {
+			LanguagePackUpdateService.UpdateResult result = languagePackUpdateService.update(repoUrl, ref);
+			JsonArrayBuilder files = Json.createArrayBuilder();
+			for (String file : result.writtenFiles) {
+				files.add(file);
+			}
+			return ok(jsonObjectBuilder()
+					.add("repoUrl", result.repoUrl)
+					.add("ref", result.ref)
+					.add("writtenFiles", files));
+		} catch (IllegalArgumentException | IllegalStateException ex) {
+			return error(Status.BAD_REQUEST, ex.getMessage());
+		} catch (Exception ex) {
+			Logger.getLogger(Admin.class.getName()).log(Level.SEVERE, "Language pack update failed", ex);
+			return Response.serverError().entity(ex.getLocalizedMessage()).build();
+		}
+	}
+
 	@POST
 	@Path("arp/initialSetup")
 	@Consumes("application/json")
@@ -2672,6 +2711,33 @@ public class Admin extends AbstractApiBean {
 	{
 		return Response.status(Status.NOT_FOUND).entity("/api/admin/arp/initialSetup has been deprecated, use "+
 				"/api/admin/arp/syncMdbsWithCedar instead").build();
+	}
+
+	/**
+	 * Imports latest CEDAR templates from the direct child folders of
+	 * the given hosted CEDAR folder as metadata blocks. Read-only CEDAR access.
+	 * Idempotent: existing metadata blocks are updated.
+	 *
+	 * curl -X POST 'http://localhost:8080/api/admin/arp/importTemplatesFromCedarFolder' \
+	 *   -H 'Content-Type: application/json' \
+	 *   -d '{"folderId":"https://repo.schema.researchdata.hu/folders/<uuid>","dvIdtf":"root"}'
+	 */
+	@POST
+	@Path("arp/importTemplatesFromCedarFolder")
+	@Consumes("application/json")
+	public Response importTemplatesFromCedarFolder(ImportTemplatesFromCedarFolderParams params) {
+		if (params == null || params.folderId == null || params.folderId.isBlank()) {
+			return error(Status.BAD_REQUEST, "folderId is required");
+		}
+		String dvIdtf = (params.dvIdtf == null || params.dvIdtf.isBlank()) ? "root" : params.dvIdtf;
+		try {
+			return ok(arpService.importTemplatesFromCedarFolder(params.folderId, dvIdtf, params.cedarDomain, params.apiKey));
+		} catch (IllegalArgumentException ex) {
+			return error(Status.BAD_REQUEST, ex.getMessage());
+		} catch (Throwable ex) {
+			Logger.getLogger(Admin.class.getName()).log(Level.SEVERE, "CEDAR folder import failed", ex);
+			return Response.serverError().entity(ex.getLocalizedMessage()).build();
+		}
 	}
 
 	/**

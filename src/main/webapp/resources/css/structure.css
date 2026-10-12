@@ -28,6 +28,7 @@ body .ui-widget {font-size: inherit;}
 #navbarFixed .dropdown.accountName a:focus {outline: -webkit-focus-ring-color 5px auto;}
 #navbarFixed form.navbar-form.navbar-form-link {margin:0; padding:0;}
 #navbarFixed form.navbar-form-link a.ui-commandlink, #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle {display:block; padding:15px; color: #777;}
+#navbarFixed form.navbar-form-link a.ui-commandlink {text-shadow: 0 1px 0 rgba(255,255,255,.25);}
 #navbarFixed form.navbar-form-link a.ui-commandlink:hover, #navbarFixed form.navbar-form-link a.ui-commandlink:focus,
 #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle:hover, #navbarFixed ul.navbar-nav li.dropdown span.dropdown-toggle:focus {color: #262626; text-decoration: none;}
 #navbarFixed .dropdown-menu.navbar-search {padding:12px; min-width:350px;}
@@ -109,6 +110,22 @@ td.col-select-width, th.col-select-width {width:36px;}
 .clear-both {clear:both;}
 
 table.selectManyCheckboxBlock input {margin-right:4px;}
+
+/* Controlled Vocabulary Autocomplete / Slow Mode */
+.vocab-slow-link {
+    font-size: 0.85em;
+    color: #666;
+    display: block;
+    margin-top: 4px;
+    text-align: right;
+}
+.vocab-slow-link:hover {
+    color: #333;
+    text-decoration: underline;
+}
+body .no-selectall .ui-selectcheckboxmenu-header .ui-chkbox {
+    display: none;
+}
 table.selectManyCheckboxBlock label {font-weight:normal;}
 .normal-text {font-weight:normal;}
 .normal-text input {margin-right:4px;}
@@ -552,6 +569,9 @@ div.headerless-table .ui-datatable-tablewrapper table > thead {display:none;}
 /* -------- POPUP -------- */
 div.ui-dialog.smallPopUp {max-width:600px;}
 div.ui-dialog.largePopUp {min-width:60%; max-width:80%; max-height:80%; overflow-y:scroll;}
+#datasetForm\:roCrateMetaJsonUploadedPopup.ui-dialog {height:auto !important; min-height:0 !important; max-height:none; overflow:hidden; background-color:#fff;}
+#datasetForm\:roCrateMetaJsonUploadedPopup.ui-dialog > .ui-dialog-titlebar {background-color:#fff;}
+#datasetForm\:roCrateMetaJsonUploadedPopup.ui-dialog > .ui-dialog-content {height:auto !important; min-height:0 !important; max-height:70vh; overflow-x:hidden; overflow-y:auto; box-sizing:border-box; background-color:#fff;}
 div.ui-dialog .ui-datatable-scrollable table {table-layout: auto !important;}
 div.ui-dialog .ui-datatable-scrollable table colgroup col {max-width:1000px;}
 .ui-dialog.ui-widget.ui-widget-content {min-width:600px;}
@@ -1000,6 +1020,7 @@ div.ui-autocomplete > ul, div.ui-autocomplete > ul > li > input {width:100%;} /*
 span.ui-autocomplete {width:100%;} /* FIX WIDTH FOR AUTOCOMPLETE IN P:FRAGMENT */
 span.ui-autocomplete input.ui-autocomplete-input {width:100%;}
 .ui-autocomplete input {padding:6px 12px; margin:0;}
+.ui-autocomplete-moretext {padding:6px 12px; pointer-events:none; font-weight:normal; color:#333; text-decoration:none;}
 
 /* Overwrite Bootstrap */
 .btn, .input-group-btn {white-space: normal !important;}

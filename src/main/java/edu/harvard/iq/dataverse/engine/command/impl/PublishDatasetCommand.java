@@ -258,6 +258,12 @@ public class PublishDatasetCommand extends AbstractPublishDatasetCommand<Publish
         }
 
         if (dataset != null) {
+            if (request != null) {
+                request.rememberLocale(BundleUtil.getRequestLocale());
+                if (request.getLocale() == null) {
+                    request.rememberLocale(BundleUtil.localeFromFaces());
+                }
+            }
             Optional<Workflow> prePubWf = ctxt.workflows().getDefaultWorkflow(TriggerType.PrePublishDataset);
             //A pre-publication workflow will call FinalizeDatasetPublicationCommand itself when it completes
             if (! prePubWf.isPresent() ) {

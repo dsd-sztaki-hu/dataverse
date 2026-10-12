@@ -19,7 +19,7 @@ import java.io.Serializable;
                 query = "SELECT mdbArp FROM MetadataBlockArp mdbArp WHERE mdbArp.roCrateConformsToId=:roCrateConformsToId")
 })
 @Entity
-@Table(indexes = {@Index(columnList="field_type_id")})
+@Table(indexes = {@Index(columnList="metadatablock_id")})
 public class MetadataBlockArp implements Serializable
 {
     private static final long serialVersionUID = 1L;
@@ -29,6 +29,7 @@ public class MetadataBlockArp implements Serializable
     private Long id;
 
     @OneToOne
+    @JoinColumn(name = "metadatablock_id")
     private MetadataBlock metadataBlock;
 
     private String roCrateConformsToId;

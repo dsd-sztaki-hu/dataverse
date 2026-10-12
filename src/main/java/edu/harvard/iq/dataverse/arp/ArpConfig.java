@@ -117,7 +117,27 @@ public class ArpConfig
             value = defaultProperties.getProperty(key);
         }
 
+        if ("arp.cedar.proxyApiKey".equals(key)) {
+            value = normalizeCedarApiKey(value);
+        }
+
         return value;
+    }
+
+    /**
+     * CEDAR Authorization is built as {@code apiKey <hex>}. Values copied from
+     * the CEDAR UI sometimes already include that prefix; strip it so we do not
+     * send {@code apiKey apiKey <hex>}.
+     */
+    public static String normalizeCedarApiKey(String apiKey) {
+        if (apiKey == null) {
+            return null;
+        }
+        String trimmed = apiKey.trim();
+        if (trimmed.regionMatches(true, 0, "apiKey ", 0, 7)) {
+            return trimmed.substring(7).trim();
+        }
+        return trimmed;
     }
 
     private  String dotNotationToEnvVar(String input) {

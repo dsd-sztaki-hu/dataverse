@@ -68,6 +68,11 @@ env -0 | grep -z -Ee "^(dataverse|doi)_" | while IFS='=' read -r -d '' k v; do
     inject "create-system-properties ${KEY}=${v}"
 done
 
+# The CEDAR folder import is one HTTP request that writes every template.
+# Hold the listener open long enough for a slow host to finish that request.
+inject "set server-config.network-config.protocols.protocol.http-listener-1.http.request-timeout-seconds=3600"
+inject "set server-config.network-config.protocols.protocol.http-listener-2.http.request-timeout-seconds=3600"
+
 # 4. Add the commands to the existing postboot file, but insert BEFORE deployment
 cat "$NEW_POSTBOOT_COMMANDS" "$EXISTING_DEPLOY_COMMANDS" > "${POSTBOOT_COMMANDS_FILE}"
 echo "DEBUG: postboot contains the following commands:"

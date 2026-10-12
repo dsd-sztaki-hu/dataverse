@@ -52,6 +52,7 @@ import edu.harvard.iq.dataverse.util.EjbUtil;
 import edu.harvard.iq.dataverse.util.FileMetadataUtil;
 
 import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_METADATA_JSON_NAME;
+import static edu.harvard.iq.dataverse.arp.ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME;
 import static edu.harvard.iq.dataverse.util.JsfHelper.JH;
 
 import java.io.*;
@@ -1751,10 +1752,18 @@ public class EditDatafilesPage implements java.io.Serializable {
 
         // Add the file(s) added during this last upload event, single or multiple, 
         // to the full list of new files, and the list of filemetadatas 
-        // used to render the page:
+        // used to render the page. The RO-Crate warning is based on this batch
+        // only, so a later finish with no new files does not open the popup again.
+        List<String> uploadedRoCrateNames = new ArrayList<>();
         for (DataFile dataFile : uploadedFiles) {
             fileMetadatas.add(dataFile.getFileMetadata());
             newFiles.add(dataFile);
+            if (isRoCrateMetaJsonFile(dataFile) && !uploadedRoCrateNames.contains(RO_CRATE_METADATA_JSON_NAME)) {
+                uploadedRoCrateNames.add(RO_CRATE_METADATA_JSON_NAME);
+            }
+            if (isRoCratePreviewHtmlFile(dataFile) && !uploadedRoCrateNames.contains(RO_CRATE_PREVIEW_HTML_NAME)) {
+                uploadedRoCrateNames.add(RO_CRATE_PREVIEW_HTML_NAME);
+            }
         }
 
         if (uploadInProgress.isTrue()) {
@@ -1805,9 +1814,9 @@ public class EditDatafilesPage implements java.io.Serializable {
             PrimeFaces.current().executeScript("PF('fileAlreadyExistsPopup').show();");
         }
 
-        if (newFiles.stream().anyMatch(this::isRoCrateMetaJsonFile)) {
-            setWarningMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.warning", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME)));
-            setHelpMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.help", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, BundleUtil.getStringFromBundle("file.metadataTab.fileMetadata.hierarchy.label"))));
+        if (!uploadedRoCrateNames.isEmpty()) {
+            setWarningMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.warning", List.of(String.join(", ", uploadedRoCrateNames))));
+            setHelpMessageForRoCrateMetaJsonUploadedPopUp(BundleUtil.getStringFromBundle("arp.rocrate.uploaded.popup.help", List.of(ArpServiceBean.RO_CRATE_METADATA_JSON_NAME, BundleUtil.getStringFromBundle("file.metadataTab.fileMetadata.hierarchy.label"), ArpServiceBean.RO_CRATE_PREVIEW_HTML_NAME)));
             PrimeFaces.current().ajax().update("datasetForm:roCrateMetaJsonUploadedPopup");
             PrimeFaces.current().executeScript("PF('roCrateMetaJsonUploadedPopup').show();");
         }
@@ -1865,15 +1874,23 @@ public class EditDatafilesPage implements java.io.Serializable {
         this.helpMessageForRoCrateMetaJsonUploadedPopUp = helpMessageForRoCrateMetaJsonUploadedPopUp;
     }
 
-    private boolean isRoCrateMetaJsonFile(DataFile dataFile) {
-        return dataFile.getDisplayName().equals(RO_CRATE_METADATA_JSON_NAME) &&
+    private boolean isRootLevelFile(DataFile dataFile, String fileName) {
+        return fileName.equals(dataFile.getDisplayName()) &&
                 (dataFile.getDirectoryLabel() == null || dataFile.getDirectoryLabel().isBlank());
+    }
+
+    private boolean isRoCrateMetaJsonFile(DataFile dataFile) {
+        return isRootLevelFile(dataFile, RO_CRATE_METADATA_JSON_NAME);
+    }
+
+    private boolean isRoCratePreviewHtmlFile(DataFile dataFile) {
+        return isRootLevelFile(dataFile, RO_CRATE_PREVIEW_HTML_NAME);
     }
 
     public void deleteRoCrateMetaJsonFiles() {
         List<FileMetadata> filesForDelete = new ArrayList<>();
         for (DataFile df : newFiles) {
-            if (isRoCrateMetaJsonFile(df)) {
+            if (isRoCrateMetaJsonFile(df) || isRoCratePreviewHtmlFile(df)) {
                 filesForDelete.add(df.getFileMetadata());
             }
         }
