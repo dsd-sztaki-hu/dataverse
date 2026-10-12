@@ -2901,7 +2901,7 @@ public class Admin extends AbstractApiBean {
 		String ref = params == null ? null : params.ref;
 		try {
 			LanguagePackUpdateService.UpdateResult result = languagePackUpdateService.update(repoUrl, ref);
-			JsonArrayBuilder files = Json.createArrayBuilder();
+			JsonArrayBuilder files = JsonUtil.createArrayBuilder();
 			for (String file : result.writtenFiles) {
 				files.add(file);
 			}

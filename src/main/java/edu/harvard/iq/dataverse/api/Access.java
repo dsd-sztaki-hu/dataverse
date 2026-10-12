@@ -2669,12 +2669,23 @@ public class Access extends AbstractApiBean {
         }
 
         if (useCustomZipService) {
-            URI redirect_uri = null;
-            try {
-                redirect_uri = handleCustomZipDownload(user, customZipServiceUrl, fileIds.split(","), uriInfo, headers, false, true);
-            } catch (WebApplicationException wae) {
-                throw wae;
+            List<DataFile> authorizedDatafiles = new ArrayList<>();
+            for (String token : fileIds.split(",")) {
+                if (token == null || token.isBlank()) {
+                    continue;
+                }
+                Long fileId;
+                try {
+                    fileId = Long.parseLong(token.trim());
+                } catch (NumberFormatException nfe) {
+                    continue;
+                }
+                DataFile file = dataFileService.find(fileId);
+                if (file != null && isAccessAuthorized(user, file)) {
+                    authorizedDatafiles.add(file);
+                }
             }
+            URI redirect_uri = handleCustomZipDownload(user, customZipServiceUrl, authorizedDatafiles, uriInfo, headers, false, true);
 
             Response redirect = Response.seeOther(redirect_uri).build();
             logger.fine("Issuing redirect to the file location on S3.");

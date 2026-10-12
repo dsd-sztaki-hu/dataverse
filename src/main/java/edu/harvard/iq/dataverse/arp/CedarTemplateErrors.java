@@ -2,7 +2,7 @@ package edu.harvard.iq.dataverse.arp;
 
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 
-import jakarta.json.Json;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.json.JsonArrayBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,19 +23,19 @@ public class CedarTemplateErrors {
         NullSafeJsonBuilder builder = NullSafeJsonBuilder.jsonObjectBuilder();
 
         if (!unprocessableElements.isEmpty()) {
-            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+            JsonArrayBuilder jsonArrayBuilder = JsonUtil.createArrayBuilder();
             unprocessableElements.forEach(jsonArrayBuilder::add);
             builder.add("unprocessableElements", jsonArrayBuilder);
         }
 
         if (!invalidNames.isEmpty()) {
-            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+            JsonArrayBuilder jsonArrayBuilder = JsonUtil.createArrayBuilder();
             invalidNames.forEach(jsonArrayBuilder::add);
             builder.add("invalidNames", jsonArrayBuilder);
         }
 
         if (!errors.isEmpty()) {
-            JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+            JsonArrayBuilder jsonArrayBuilder = JsonUtil.createArrayBuilder();
             errors.forEach(jsonArrayBuilder::add);
             builder.add("errors", jsonArrayBuilder);
         }
@@ -45,7 +45,7 @@ public class CedarTemplateErrors {
     }
     
     public jakarta.json.JsonArray warningsAsJson() {
-        JsonArrayBuilder jsonArrayBuilder = Json.createArrayBuilder();
+        JsonArrayBuilder jsonArrayBuilder = JsonUtil.createArrayBuilder();
         if (!warnings.isEmpty()) {
             warnings.forEach(jsonArrayBuilder::add);
         }

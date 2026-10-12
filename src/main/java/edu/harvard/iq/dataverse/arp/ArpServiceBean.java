@@ -34,7 +34,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.inject.Named;
-import jakarta.json.Json;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import javax.net.ssl.SSLContext;
@@ -390,7 +390,7 @@ public class ArpServiceBean implements java.io.Serializable {
 
         HttpClient client = getUnsafeHttpClient();
         ObjectMapper mapper = new ObjectMapper();
-        JsonArrayBuilder templatesJson = Json.createArrayBuilder();
+        JsonArrayBuilder templatesJson = JsonUtil.createArrayBuilder();
         int imported = 0;
         int failed = 0;
         int childFolderCount = 0;
@@ -413,7 +413,7 @@ public class ArpServiceBean implements java.io.Serializable {
             } catch (Exception e) {
                 logger.log(Level.SEVERE, "Failed to list child folder " + childFolderId, e);
                 failed++;
-                templatesJson.add(Json.createObjectBuilder()
+                templatesJson.add(JsonUtil.createObjectBuilder()
                         .add("folderId", childFolderId)
                         .add("folderName", childFolderName)
                         .add("status", "failed")
@@ -432,7 +432,7 @@ public class ArpServiceBean implements java.io.Serializable {
                     String templateJson = fetchCedarTemplate(client, templateId, cedarDomain, apiKey);
                     String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, templateJson);
                     imported++;
-                    JsonObjectBuilder entry = Json.createObjectBuilder()
+                    JsonObjectBuilder entry = JsonUtil.createObjectBuilder()
                             .add("id", templateId)
                             .add("name", templateName)
                             .add("folderId", childFolderId)
@@ -444,7 +444,7 @@ public class ArpServiceBean implements java.io.Serializable {
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to import CEDAR template " + templateId, e);
                     failed++;
-                    templatesJson.add(Json.createObjectBuilder()
+                    templatesJson.add(JsonUtil.createObjectBuilder()
                             .add("id", templateId)
                             .add("name", templateName)
                             .add("folderId", childFolderId)
@@ -455,7 +455,7 @@ public class ArpServiceBean implements java.io.Serializable {
         }
 
         logger.info("CEDAR folder import complete: childFolders=" + childFolderCount + " imported=" + imported + " failed=" + failed);
-        return Json.createObjectBuilder()
+        return JsonUtil.createObjectBuilder()
                 .add("folderId", folderId)
                 .add("dvIdtf", dvIdtf)
                 .add("childFolders", childFolderCount)
@@ -1475,7 +1475,7 @@ public class ArpServiceBean implements java.io.Serializable {
         String splitBy = "\t";
         int lineNumber = 0;
         DatasetFieldServiceApi.HeaderType header = null;
-        JsonArrayBuilder responseArr = Json.createArrayBuilder();
+        JsonArrayBuilder responseArr = JsonUtil.createArrayBuilder();
         String[] values;
         Gson gson = new Gson();
         JsonObject cedarTemplate = gson.fromJson(templateJson, JsonObject.class);
@@ -1506,7 +1506,7 @@ public class ArpServiceBean implements java.io.Serializable {
                     switch (header) {
                         case METADATABLOCK:
                             var mdb = parseMetadataBlock(values);
-                            responseArr.add( Json.createObjectBuilder()
+                            responseArr.add( JsonUtil.createObjectBuilder()
                                     .add("name", mdb.getName())
                                     .add("type", "MetadataBlock"));
                             // Add/update MetadataBlockArp values
@@ -1523,7 +1523,7 @@ public class ArpServiceBean implements java.io.Serializable {
                         case DATASETFIELD:
                             var dsf = parseDatasetField(values);
                             var fieldName = dsf.getName();
-                            responseArr.add( Json.createObjectBuilder()
+                            responseArr.add( JsonUtil.createObjectBuilder()
                                     .add("name", fieldName)
                                     .add("type", "DatasetField") );
                             // Add/update DatasetFieldTypeArp value
@@ -1561,7 +1561,7 @@ public class ArpServiceBean implements java.io.Serializable {
                             break;
 
                         case CONTROLLEDVOCABULARY:
-                            responseArr.add( Json.createObjectBuilder()
+                            responseArr.add( JsonUtil.createObjectBuilder()
                                     .add("name", parseControlledVocabulary(values))
                                     .add("type", "Controlled Vocabulary") );
                             break;

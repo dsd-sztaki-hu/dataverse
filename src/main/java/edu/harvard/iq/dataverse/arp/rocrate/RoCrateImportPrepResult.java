@@ -1,5 +1,6 @@
 package edu.harvard.iq.dataverse.arp.rocrate;
 
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
 import jakarta.json.*;
@@ -133,17 +134,17 @@ public class RoCrateImportPrepResult {
         if (jsonString == null) {
             return JsonValue.NULL;
         }
-        try (JsonReader reader = Json.createReader(new StringReader(jsonString))) {
+        try (JsonReader reader = JsonUtil.createReader(new StringReader(jsonString))) {
             JsonStructure parsed = reader.read();
             return parsed;
         } catch (RuntimeException ex) {
-            return Json.createValue(jsonString);
+            return JsonUtil.createValue(jsonString);
         }
     }
 
     private String prettyPrint(JsonStructure structure) {
         Map<String, Object> config = Map.of(JsonGenerator.PRETTY_PRINTING, true);
-        JsonWriterFactory writerFactory = Json.createWriterFactory(config);
+        JsonWriterFactory writerFactory = JsonUtil.createWriterFactory(config);
         StringWriter out = new StringWriter();
         try (JsonWriter writer = writerFactory.createWriter(out)) {
             writer.write(structure);
@@ -152,15 +153,15 @@ public class RoCrateImportPrepResult {
     }
 
     private JsonArray buildIssuesJson(Map<String, Map<String, Set<IssueDetail>>> issues, String prefix) {
-        JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+        JsonArrayBuilder arrayBuilder = JsonUtil.createArrayBuilder();
 
         for (Map.Entry<String, Map<String, Set<IssueDetail>>> entry : issues.entrySet()) {
             String id = entry.getKey();
-            JsonArrayBuilder fieldIssuesArray = Json.createArrayBuilder();
+            JsonArrayBuilder fieldIssuesArray = JsonUtil.createArrayBuilder();
 
             for (Set<IssueDetail> issueDetails : entry.getValue().values()) {
                 for (IssueDetail detail : issueDetails) {
-                    JsonObjectBuilder issueJson = Json.createObjectBuilder()
+                    JsonObjectBuilder issueJson = JsonUtil.createObjectBuilder()
                             .add(prefix + "Field", detail.fieldName())
                             .add(prefix + "Message", detail.message());
                     if (detail.suggestion() != null) {
@@ -170,7 +171,7 @@ public class RoCrateImportPrepResult {
                 }
             }
 
-            JsonObjectBuilder entityJson = Json.createObjectBuilder()
+            JsonObjectBuilder entityJson = JsonUtil.createObjectBuilder()
                     .add(prefix + "Entity", id)
                     .add(prefix + "s", fieldIssuesArray);
 

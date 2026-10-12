@@ -176,7 +176,9 @@ public class RoCrateExportManager {
     }
 
     private DatasetVersion findDeepVersion(DatasetVersion version) {
-        return datasetVersionService.findDeep(version.getId());
+        // findDeep was removed; files are batch-fetched when first used.
+        DatasetVersion loaded = datasetVersionService.find(version.getId());
+        return loaded != null ? loaded : version;
     }
 
     public void doCreateOrUpdateRoCrate(DatasetVersion version, Map<String, String> importMapping) throws Exception {

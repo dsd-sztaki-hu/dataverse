@@ -6,6 +6,7 @@ import edu.harvard.iq.dataverse.UserNotificationServiceBean;
 import edu.harvard.iq.dataverse.authorization.AuthenticationServiceBean;
 import edu.harvard.iq.dataverse.authorization.users.AuthenticatedUser;
 import edu.harvard.iq.dataverse.util.SystemConfig;
+import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
@@ -14,13 +15,10 @@ import jakarta.ejb.Startup;
 import jakarta.ejb.Timeout;
 import jakarta.ejb.Timer;
 import jakarta.ejb.TimerConfig;
-import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
 
-import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -257,16 +255,14 @@ public class HarvestRegistryCheckService {
         if (json == null || json.isBlank()) {
             return links;
         }
-        try (JsonReader reader = Json.createReader(new StringReader(json))) {
-            JsonArray array = reader.readArray();
-            for (JsonValue value : array) {
-                if (value.getValueType() != JsonValue.ValueType.OBJECT) {
-                    continue;
-                }
-                JsonObject object = value.asJsonObject();
-                if (object.containsKey("link") && !object.isNull("link")) {
-                    links.add(object.getString("link"));
-                }
+        JsonArray array = JsonUtil.getJsonArray(json);
+        for (JsonValue value : array) {
+            if (value.getValueType() != JsonValue.ValueType.OBJECT) {
+                continue;
+            }
+            JsonObject object = value.asJsonObject();
+            if (object.containsKey("link") && !object.isNull("link")) {
+                links.add(object.getString("link"));
             }
         }
         return links;

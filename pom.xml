@@ -134,6 +134,14 @@
             <groupId>edu.kit.datamanager</groupId>
             <artifactId>ro-crate-java</artifactId>
             <version>2.1.0-rc3</version>
+            <exclusions>
+                <!-- JSON-P 2.0 API. It lands ahead of jakarta.json-api 2.1 on the test
+                     classpath and hides Json.createValue(Number), which forbiddenapis requires. -->
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>jakarta.json</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.thetransactioncompany/cors-filter -->

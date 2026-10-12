@@ -130,7 +130,6 @@ import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import java.lang.reflect.InvocationTargetException;
 
 // ARP specific
-import java.io.StringReader;
 import edu.harvard.iq.dataverse.util.JsfHelper;
 import edu.harvard.iq.dataverse.engine.command.impl.AddDatasetVersionStorageSiteCommand;
 import edu.harvard.iq.dataverse.engine.command.impl.EditDatasetVersionStorageSiteCommand;
@@ -859,11 +858,11 @@ public class Datasets extends AbstractApiBean {
              Class<? extends Command> commandClass,
              String successMessage
     ) {
-		try ( StringReader rdr = new StringReader(storageSiteJson) ) {
+		try {
 			if(":draft".equals(versionId))
 				return error( Response.Status.BAD_REQUEST, "Not allowed to assign/edit storage sites for a draft version!");
 
-			jakarta.json.JsonObject storageSiteJsonObj = Json.createReader(rdr).readObject();
+			jakarta.json.JsonObject storageSiteJsonObj = JsonUtil.getJsonObject(storageSiteJson);
 			DatasetVersion dsv = getDatasetVersionOrDie(req, versionId, findDatasetOrDie(datasetId), uriInfo, headers);
 			DatasetVersionStorageSite storageSite = jsonParser().parseDatasetVersionStorageSite(storageSiteJsonObj);
 
@@ -1626,7 +1625,7 @@ public class Datasets extends AbstractApiBean {
                         JsfHelper.addErrorMessage(BundleUtil.getStringFromBundle("arp.rocrate.version.save.error"));
                     }
 
-                    return Response.ok(Json.createObjectBuilder()
+                    return Response.ok(JsonUtil.createObjectBuilder()
                             .add("status", ApiConstants.STATUS_OK)
                             .add("status_details", successMsg)
                             .add("data", json(ds)).build())

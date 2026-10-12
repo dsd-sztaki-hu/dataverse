@@ -26,7 +26,6 @@ import edu.harvard.iq.dataverse.util.file.CreateDataFileResult;
 import edu.harvard.iq.dataverse.util.json.JsonUtil;
 import edu.harvard.iq.dataverse.util.json.NullSafeJsonBuilder;
 import edu.kit.datamanager.ro_crate.RoCrate;
-import jakarta.json.Json;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
@@ -110,16 +109,16 @@ public class ArpApi extends AbstractApiBean {
         if (jsonString == null) {
             return JsonValue.NULL;
         }
-        try (JsonReader reader = Json.createReader(new java.io.StringReader(jsonString))) {
+        try (JsonReader reader = JsonUtil.createReader(new java.io.StringReader(jsonString))) {
             JsonStructure parsed = reader.read();
             return parsed;
         } catch (RuntimeException ex) {
-            return Json.createValue(jsonString);
+            return JsonUtil.createValue(jsonString);
         }
     }
 
     private jakarta.json.JsonObject withMessage(String message, jakarta.json.JsonObject data) {
-        var b = Json.createObjectBuilder();
+        var b = JsonUtil.createObjectBuilder();
         String payloadMessage = null;
         if (data != null && data.containsKey("message") && data.get("message") != null) {
             JsonValue m = data.get("message");
@@ -144,7 +143,7 @@ public class ArpApi extends AbstractApiBean {
     }
 
     private Response roCrateOk(String message, jakarta.json.JsonObject data) {
-        return Response.ok(Json.createObjectBuilder()
+        return Response.ok(JsonUtil.createObjectBuilder()
                         .add("status", STATUS_OK)
                         .add("data", withMessage(message, data))
                         .build())
@@ -153,7 +152,7 @@ public class ArpApi extends AbstractApiBean {
     }
 
     private Response roCrateOk(String message, jakarta.json.JsonObject data, Map<String, Object> headers) {
-        Response.ResponseBuilder builder = Response.ok(Json.createObjectBuilder()
+        Response.ResponseBuilder builder = Response.ok(JsonUtil.createObjectBuilder()
                         .add("status", STATUS_OK)
                         .add("data", withMessage(message, data))
                         .build())
@@ -1426,7 +1425,7 @@ public class ArpApi extends AbstractApiBean {
         if (versionId != null) {
             for (int attempt = 0; attempt < 10; attempt++) {
                 try {
-                    DatasetVersion version = datasetVersionService.findDeep(versionId);
+                    DatasetVersion version = datasetVersionService.find(versionId);
                     if (version != null) {
                         return version;
                     }
@@ -1445,7 +1444,7 @@ public class ArpApi extends AbstractApiBean {
             Dataset dataset = datasetService.findByGlobalId(versionFromUpload.getDataset().getGlobalId().asString());
             if (dataset != null && dataset.getLatestVersion() != null) {
                 try {
-                    return datasetVersionService.findDeep(dataset.getLatestVersion().getId());
+                    return datasetVersionService.find(dataset.getLatestVersion().getId());
                 } catch (RuntimeException ignored) {
                     return dataset.getLatestVersion();
                 }

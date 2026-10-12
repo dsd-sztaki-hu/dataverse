@@ -1773,7 +1773,7 @@ public class JsonPrinter {
     }
 
     public static JsonArrayBuilder dvstsJson(Collection<DatasetVersionStorageSite> dsvstCollection) {
-        JsonArrayBuilder bld = Json.createArrayBuilder();
+        JsonArrayBuilder bld = JsonUtil.createArrayBuilder();
         for(DatasetVersionStorageSite dsvst: dsvstCollection){
             bld.add(json(dsvst));
         }
