@@ -231,7 +231,6 @@ public class CedarTemplateToDvMdbConverter {
         Map<String, String> cedarDataverseFieldTypes = Map.of(
             "textfield", "text",
             "temporal", "date",
-            "numeric", "int-float",
             "richtext", "textbox",
             "textarea", "textbox",
             "link", "url",
@@ -241,25 +240,27 @@ public class CedarTemplateToDvMdbConverter {
             "email", "email"
         );
 
-        String dataverseFieldType = null;
         String fieldType = Optional.ofNullable(getJsonElement(templateField, "_ui.inputType")).map(JsonElement::getAsString).orElse(null);
 
-        if (fieldType != null && cedarDataverseFieldTypes.containsKey(fieldType)) {
-            if (Objects.equals(fieldType, "numeric")) {
-                String numericType = Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.numberType")).map(JsonElement::getAsString).orElse(null);
-                if (Objects.equals(numericType, "xsd:decimal")) {
-                    dataverseFieldType = cedarDataverseFieldTypes.get(fieldType).split("-")[0];
-                } else {
-                    dataverseFieldType = cedarDataverseFieldTypes.get(fieldType).split("-")[1];
-                }
-            } else {
-                dataverseFieldType = cedarDataverseFieldTypes.get(fieldType);
-            }
-        } else {
-            dataverseFieldType = "none";
+        if (Objects.equals(fieldType, "numeric")) {
+            String numericType = Optional.ofNullable(getJsonElement(templateField, "_valueConstraints.numberType")).map(JsonElement::getAsString).orElse(null);
+            return dataverseTypeForCedarNumber(numericType);
         }
+        if (fieldType != null && cedarDataverseFieldTypes.containsKey(fieldType)) {
+            return cedarDataverseFieldTypes.get(fieldType);
+        }
+        return "none";
+    }
 
-        return dataverseFieldType;
+    /**
+     * CEDAR integer types become Dataverse int. Decimal, double, and float can have a fractional part, so they become float.
+     * A missing or unknown number type also becomes float, so a fraction is not truncated.
+     */
+    static String dataverseTypeForCedarNumber(String numericType) {
+        if (Objects.equals(numericType, "xsd:int") || Objects.equals(numericType, "xsd:long")) {
+            return "int";
+        }
+        return "float";
     }
 
     private static class ProcessedCedarTemplateValues {
