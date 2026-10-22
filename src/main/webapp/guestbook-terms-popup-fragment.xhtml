@@ -26,14 +26,18 @@
         </ui:fragment>
         <div class="form-horizontal terms">
         <div class="form-group">
+            <label jsf:for="fdDataUseAgreement" class="col-sm-3 control-label">
+                #{bundle['arp.file.dataFilesTab.terms.list.dataUseAgreement']} </label>
+            <div class="col-sm-9 help-block">
+                <h:outputText
+                    value="#{bundle['arp.file.dataFilesTab.terms.list.dataUseAgreement.description']}"
+                    escape="false" />
+            </div>
+        </div>
+        <div class="form-group">
             <label jsf:for="fdLicense" class="col-sm-3 control-label">
-                #{bundle['file.dataFilesTab.terms.list.license']} </label>
+                #{bundle['arp.file.dataFilesTab.terms.list.licenseOnly']} </label>
             <div class="col-sm-9">
-                <p class="help-block">
-                    <h:outputText
-                        value="#{bundle['file.dataFilesTab.terms.list.license.view.description']}"
-                        escape="false" />
-                </p>
                 <p>
                     <o:importFunctions
                         type="edu.harvard.iq.dataverse.dataset.DatasetUtil" />
