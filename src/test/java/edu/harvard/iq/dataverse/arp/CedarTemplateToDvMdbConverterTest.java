@@ -1,8 +1,8 @@
 package edu.harvard.iq.dataverse.arp;
 
+import com.google.gson.JsonObject;
 import edu.harvard.iq.dataverse.api.arp.CedarTemplateToDvMdbConverter;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.when;
@@ -43,5 +43,28 @@ public class CedarTemplateToDvMdbConverterTest {
         String modifiedTsv = Files.readString(Paths.get("src/test/resources/arp/citation_modified_arp_values.tsv"));
         String generatedModifiedMdbTsv = cedarTemplateToDvMdbConverter.processCedarTemplate(modifiedSchema, new HashSet<>());
         assertEquals(modifiedTsv.toLowerCase(), generatedModifiedMdbTsv.toLowerCase().trim());
+    }
+
+    @Test
+    public void testNumericFieldTypeMapping() {
+        assertEquals("int", numericFieldType("xsd:int"));
+        assertEquals("int", numericFieldType("xsd:long"));
+        assertEquals("float", numericFieldType("xsd:decimal"));
+        assertEquals("float", numericFieldType("xsd:double"));
+        assertEquals("float", numericFieldType("xsd:float"));
+        assertEquals("float", numericFieldType(null));
+    }
+
+    private static String numericFieldType(String numberType) {
+        JsonObject field = new JsonObject();
+        JsonObject ui = new JsonObject();
+        ui.addProperty("inputType", "numeric");
+        field.add("_ui", ui);
+        if (numberType != null) {
+            JsonObject constraints = new JsonObject();
+            constraints.addProperty("numberType", numberType);
+            field.add("_valueConstraints", constraints);
+        }
+        return cedarTemplateToDvMdbConverter.getDataverseFieldType(field);
     }
 }
