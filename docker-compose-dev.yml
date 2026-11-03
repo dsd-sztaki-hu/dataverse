@@ -27,7 +27,7 @@ services:
       DATAVERSE_AUTH_OIDC_AUTH_SERVER_URL: http://keycloak.mydomain.com:8090/realms/test
       DATAVERSE_SPI_EXPORTERS_DIRECTORY: "/dv/exporters"
       DATAVERSE_CORS_ORIGIN: "*"
-      DATAVERSE_CORS_HEADERS_ALLOW: "Accept,Content-Type,X-Dataverse-key,Authorization,cedar-client-session-id,cedar-debug"
+      DATAVERSE_CORS_HEADERS_ALLOW: "Accept,Content-Type,X-Dataverse-key,Range,Authorization,cedar-client-session-id,cedar-debug"
       # These two oai settings are here to get HarvestingServerIT to pass
       dataverse_oai_server_maxidentifiers: "2"
       dataverse_oai_server_maxrecords: "2"
@@ -62,6 +62,10 @@ services:
         -Ddataverse.pid.fake.label=FakeDOIProvider
         -Ddataverse.pid.fake.authority=10.5072
         -Ddataverse.pid.fake.shoulder=FK2/
+        -Ddataverse.cors.origin=*
+        -Ddataverse.cors.methods=GET,POST,PUT,DELETE,OPTIONS
+        -Ddataverse.cors.headers.allow=Accept,Content-Type,X-Dataverse-key,Range,Authorization,cedar-client-session-id,cedar-debug
+        -Ddataverse.cors.headers.expose=content-encoding,content-range,accept-ranges
         -Ddataverse.files.sztaki.type=s3
         -Ddataverse.files.sztaki.label=SZTAKI
         -Ddataverse.files.sztaki.custom-endpoint-url=http://minio:9000
