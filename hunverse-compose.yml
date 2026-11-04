@@ -99,7 +99,7 @@ services:
 
   bootstrap:
     container_name: "bootstrap"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.12-noble-r2
     restart: "no"
     environment:
       - TIMEOUT=20m
@@ -118,7 +118,7 @@ services:
   # Same pattern as bootstrap. `docker compose up` runs this automatically.
   arp-setup:
     container_name: "arp-setup"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.12-noble-r2
     restart: "no"
     environment:
       - DATAVERSE_URL=http://dataverse:8080
@@ -238,7 +238,7 @@ services:
 
   dv_initializer:
     container_name: "dv_initializer"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.12-noble-r2
     restart: "no"
     command:
       - sh
@@ -247,10 +247,46 @@ services:
     volumes:
       - dv_data:/dv
 
+  # One-shot: upgrades Postgres 16 data to 17 with dump/restore.
+  # Dumps the database to postgres_upgrade and empties postgres_data.
+  # postgres then restores the dump on its first init (docker-entrypoint-initdb.d).
+  postgres_upgrade:
+    container_name: "postgres_upgrade"
+    image: postgres:16
+    restart: "no"
+    environment:
+      - POSTGRES_USER=${DATAVERSE_DB_USER:-dataverse}
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        PGDATA=/var/lib/postgresql/data
+        version=$$(cat "$${PGDATA}/PG_VERSION" 2>/dev/null || true)
+        if [ -z "$${version}" ]; then echo "No existing Postgres data. Nothing to upgrade."; exit 0; fi
+        if [ "$${version}" = "17" ]; then
+          if [ -f /upgrade/dataverse.sql ]; then
+            mkdir -p /upgrade/backup
+            mv /upgrade/dataverse.sql "/upgrade/backup/dataverse-$$(date +%Y%m%d%H%M%S).sql"
+          fi
+          echo "Postgres data is already on 17."; exit 0
+        fi
+        if [ "$${version}" != "16" ]; then echo "Cannot upgrade Postgres $${version} data. Only 16 is supported." >&2; exit 1; fi
+        echo "Upgrading Postgres 16 data to 17..."
+        gosu postgres pg_ctl -D "$${PGDATA}" -w start -o "-c listen_addresses=''"
+        gosu postgres pg_dump -U "$${POSTGRES_USER}" -d "$${POSTGRES_USER}" --clean --if-exists > /upgrade/dataverse.sql.tmp
+        gosu postgres pg_ctl -D "$${PGDATA}" -w -m fast stop
+        mv /upgrade/dataverse.sql.tmp /upgrade/dataverse.sql
+        find "$${PGDATA}" -mindepth 1 -delete
+        echo "Dump saved. Postgres 17 will restore it on first start."
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_upgrade:/upgrade
+
   postgres:
     container_name: "postgres"
     hostname: postgres
-    image: postgres:16
+    image: postgres:17
     restart: on-failure
     environment:
       - POSTGRES_USER=${DATAVERSE_DB_USER:-dataverse}
@@ -259,18 +295,23 @@ services:
       - "5432:5432"
     networks:
       - dataverse
+    depends_on:
+      postgres_upgrade:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATAVERSE_DB_USER:-dataverse} -d postgres"]
+      # TCP check: the init-time server (which runs the restore) listens on the socket only.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${DATAVERSE_DB_USER:-dataverse} -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 10s
+      start_period: 600s
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_upgrade:/docker-entrypoint-initdb.d:ro
 
   solr_initializer:
     container_name: "solr_initializer"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.12-noble-r2
     restart: "no"
     command:
       - sh
@@ -397,5 +438,6 @@ volumes:
   dv_data:
   dv_secrets:
   postgres_data:
+  postgres_upgrade:
   solr_data:
   solr_conf:
