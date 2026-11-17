@@ -183,12 +183,15 @@ services:
         put ":MetadataLanguages" '[{"locale":"en","title":"English"},{"locale":"hu","title":"Magyar"}]'
         echo "ARP settings applied."
 
-        # Import latest templates from child folders of CEDAR_IMPORT_FOLDER_ID.
+        # Import templates from child folders of CEDAR_IMPORT_FOLDER_ID.
+        # The server starts at the latest resource in that public folder and follows
+        # pav:derivedFrom until pav:version matches this installation.
         # Read-only CEDAR access; does not call syncMdbsWithCedar.
         if [ -z "$${ARP_CEDAR_PROXY_API_KEY}" ] || [ -z "$${CEDAR_IMPORT_FOLDER_ID}" ]; then
           echo "Skipping CEDAR template import: set ARP_CEDAR_PROXY_API_KEY and CEDAR_IMPORT_FOLDER_ID in .env."
         else
-          echo "Importing CEDAR templates from folder $${CEDAR_IMPORT_FOLDER_ID} into dataverse $${CEDAR_IMPORT_DV}..."
+          dv_version=$$(curl -sf "$${DATAVERSE_URL}/api/info/version" | jq -r '.data.version // empty')
+          echo "Importing CEDAR templates for Dataverse $${dv_version:-unknown} from folder $${CEDAR_IMPORT_FOLDER_ID} into dataverse $${CEDAR_IMPORT_DV}..."
           body=$$(jq -n --arg folderId "$${CEDAR_IMPORT_FOLDER_ID}" --arg dvIdtf "$${CEDAR_IMPORT_DV}" '{folderId:$$folderId, dvIdtf:$$dvIdtf}')
           echo "CEDAR import may take many minutes. Waiting up to $${CEDAR_IMPORT_TIMEOUT}s for it to finish."
           http_code=$$(curl -sS --connect-timeout 30 --max-time "$${CEDAR_IMPORT_TIMEOUT}" -o /tmp/cedar-import.json -w "%{http_code}" -X POST \

@@ -25,6 +25,7 @@ import edu.harvard.iq.dataverse.privateurl.PrivateUrlServiceBean;
 import edu.harvard.iq.dataverse.search.SearchFields;
 import edu.harvard.iq.dataverse.util.BundleUtil;
 import edu.harvard.iq.dataverse.util.FileUtil;
+import edu.harvard.iq.dataverse.util.SystemConfig;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import org.apache.commons.lang3.StringUtils;
@@ -111,6 +112,9 @@ public class ArpServiceBean implements java.io.Serializable {
 
     @EJB
     protected ArpConfig arpConfig;
+
+    @EJB
+    SystemConfig systemConfig;
 
     @EJB
     AuthenticationServiceBean authService;
@@ -361,7 +365,11 @@ public class ArpServiceBean implements java.io.Serializable {
 
     /**
      * Lists a hosted CEDAR folder, walks its direct child folders, and imports
-     * templates from those children as metadata blocks (published or not).
+     * the template version whose {@code pav:version} matches this Dataverse
+     * installation. Starts at the latest resource in the public folder and follows
+     * {@code pav:derivedFrom} until that version is found. ARP workflows always
+     * set that link on the new resource. Trailing {@code .0} parts are ignored,
+     * so CEDAR {@code 6.10.0} matches an installation that reports {@code 6.10}.
      * Templates that sit directly in the parent folder are ignored.
      * Per-template failures are recorded in the result; parent listing errors throw.
      */
@@ -388,6 +396,13 @@ public class ArpServiceBean implements java.io.Serializable {
         }
         assertFolderMatchesCedarDomain(folderId, cedarDomain);
 
+        String installationVersion = systemConfig == null ? null : systemConfig.getVersion();
+        if (installationVersion == null || installationVersion.isBlank()) {
+            throw new IllegalArgumentException("Dataverse version is not set");
+        }
+        final String resolvedCedarDomain = cedarDomain;
+        final String resolvedApiKey = apiKey;
+
         HttpClient client = getUnsafeHttpClient();
         ObjectMapper mapper = new ObjectMapper();
         JsonArrayBuilder templatesJson = JsonUtil.createArrayBuilder();
@@ -395,7 +410,7 @@ public class ArpServiceBean implements java.io.Serializable {
         int failed = 0;
         int childFolderCount = 0;
 
-        logger.info("Listing child folders of CEDAR folder " + folderId);
+        logger.info("Listing child folders of CEDAR folder " + folderId + " for Dataverse " + installationVersion);
         List<JsonNode> parentContents = listCedarFolderContents(client, folderId, cedarDomain, apiKey);
 
         for (JsonNode resource : parentContents) {
@@ -427,13 +442,21 @@ public class ArpServiceBean implements java.io.Serializable {
                 }
                 String templateId = nodeText(childResource, "@id");
                 String templateName = nodeText(childResource, "schema:name");
-                logger.info("Importing CEDAR template " + templateId + " (" + templateName + ") into dataverse " + dvIdtf);
+                logger.info("Selecting CEDAR template " + templateId + " (" + templateName + ") for Dataverse " + installationVersion);
                 try {
-                    String templateJson = fetchCedarTemplate(client, templateId, cedarDomain, apiKey);
-                    String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, templateJson);
+                    String latestJson = fetchCedarTemplate(client, templateId, resolvedCedarDomain, resolvedApiKey);
+                    CedarTemplateVersionSelector.Selection selection = CedarTemplateVersionSelector.select(
+                            latestJson,
+                            installationVersion,
+                            previousId -> fetchCedarTemplate(client, previousId, resolvedCedarDomain, resolvedApiKey));
+                    logger.info("Importing CEDAR template " + selection.selectedId() + " pav:version " + selection.version()
+                            + " (" + templateName + ") into dataverse " + dvIdtf);
+                    String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, selection.templateJson());
                     imported++;
                     JsonObjectBuilder entry = JsonUtil.createObjectBuilder()
                             .add("id", templateId)
+                            .add("selectedId", selection.selectedId())
+                            .add("pav:version", selection.version())
                             .add("name", templateName)
                             .add("folderId", childFolderId)
                             .add("status", "imported");
@@ -454,10 +477,12 @@ public class ArpServiceBean implements java.io.Serializable {
             }
         }
 
-        logger.info("CEDAR folder import complete: childFolders=" + childFolderCount + " imported=" + imported + " failed=" + failed);
+        logger.info("CEDAR folder import complete: childFolders=" + childFolderCount + " imported=" + imported + " failed=" + failed
+                + " installationVersion=" + installationVersion);
         return JsonUtil.createObjectBuilder()
                 .add("folderId", folderId)
                 .add("dvIdtf", dvIdtf)
+                .add("installationVersion", installationVersion)
                 .add("childFolders", childFolderCount)
                 .add("imported", imported)
                 .add("failed", failed)
