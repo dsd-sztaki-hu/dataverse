@@ -413,7 +413,7 @@ Megvárja az `/api/info/version` választ és a gyökér dataverse-t, majd PUT-t
 - `:HeaderCustomizationFile`, `:FooterCustomizationFile`, `:StyleCustomizationFile`, `:LogoCustomizationFile`
 - `:Languages`, `:MetadataLanguages` (angol + magyar)
 
-Ha az `ARP_CEDAR_PROXY_API_KEY` és a `CEDAR_IMPORT_FOLDER_ID` is meg van adva, a sablonokat is importálja CEDAR-ból az `importTemplatesFromCedarFolder` hívással. Ha bármelyik üres, a beállítások akkor is érvényesülnek, de az importálás kimarad.
+Ha az `ARP_CEDAR_PROXY_API_KEY` és a `CEDAR_IMPORT_FOLDER_ID` is meg van adva, a nyilvános mappa sablonjait importálja az `importTemplatesFromCedarFolder` hívással. Minden sablonnál a legfrissebb erőforrást veszi, ha annak `pav:version` értéke megegyezik a telepítés Dataverse-verziójával; különben a `pav:derivedFrom` láncon halad, amíg egyező verziót nem talál. A záró `.0` részeket figyelmen kívül hagyja, így a CEDAR `6.10.0` egyezik a `6.10` telepítéssel. Ha bármelyik változó üres, a beállítások akkor is érvényesülnek, de az importálás kimarad.
 
 Az `arp-setup` újrafuttatandó, ha a fenti `.env` értékek módosultak, ha az első import nem sikerült, vagy ha a navigációs sáv logójának fájlneve változott:
 

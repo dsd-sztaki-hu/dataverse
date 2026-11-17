@@ -26,7 +26,7 @@ This Docker Compose stack is made to let the users run Hunverse on their systems
 
 **dataverse** is the Hunverse application. The repository UI and API listen on port 8080, and JMX listens on 8686. AROMA, the RO-Crate editor, is served by the same application at `/aroma`. Uploaded files and language bundles are stored on the `dv_data` volume.
 
-**postgres** is PostgreSQL 16 on port 5432. It stores collections, datasets, users, and settings.
+**postgres** is PostgreSQL 17 on port 5432. It stores collections, datasets, users, and settings.
 
 **solr** is Solr 9.8 on port 8983. It holds the search index in `collection1`. 
 
@@ -322,6 +322,20 @@ DATAVERSE_DB_PASSWORD=secret  # POSTGRES_PASSWORD; must match dataverse
 
 Only applied when the `postgres_data` volume is first created.
 
+#### Upgrading from Postgres 16
+
+The one-time job `postgres_upgrade` runs before `postgres`. If `postgres_data` holds Postgres 16 data, it dumps the database to the `postgres_upgrade` volume and empties `postgres_data`. Postgres 17 then restores the dump on its first start. With 17 data or an empty volume, it does nothing.
+
+Stop the whole stack first, so no old Postgres container uses the volume during the dump:
+
+```bash
+docker compose -f hunverse-compose.yml down
+docker compose -f hunverse-compose.yml up -d
+docker logs postgres_upgrade
+```
+
+After a successful upgrade, the next start moves the dump to `backup/` in the `postgres_upgrade` volume. Delete old dumps when you no longer need them.
+
 ### Mail
 
 Hunverse sends mail when someone signs up, resets a password, or uses a contact form.
@@ -383,7 +397,7 @@ It waits for `/api/info/version` and the root dataverse, then PUTs:
 - `:HeaderCustomizationFile`, `:FooterCustomizationFile`, `:StyleCustomizationFile`, `:LogoCustomizationFile`
 - `:Languages`, `:MetadataLanguages` (English + Magyar)
 
-If `ARP_CEDAR_PROXY_API_KEY` and `CEDAR_IMPORT_FOLDER_ID` are set, it also imports the templates from CEDAR via `importTemplatesFromCedarFolder`. If either is empty, settings are still applied and the import is skipped.
+If `ARP_CEDAR_PROXY_API_KEY` and `CEDAR_IMPORT_FOLDER_ID` are set, it imports CEDAR templates from that public folder via `importTemplatesFromCedarFolder`. For each template it keeps the latest resource when `pav:version` matches this Dataverse version, and otherwise follows `pav:derivedFrom` until a match is found. Trailing `.0` parts are ignored, so CEDAR `6.10.0` matches an installation that reports `6.10`. If either variable is empty, settings are still applied and the import is skipped.
 
 Re-run after changing those `.env` values, after a failed first import, or after changing the navbar logo filename:
 
@@ -446,6 +460,7 @@ Named volumes (persist until `docker compose -f hunverse-compose.yml down -v`):
 | `dv_data` | `/dv` | uploaded files, langBundles, exporters |
 | `dv_secrets` | `/secrets` | secrets |
 | `postgres_data` | `/var/lib/postgresql/data` | database |
+| `postgres_upgrade` | `/upgrade`, `/docker-entrypoint-initdb.d` | Postgres 16 upgrade dump and its backups |
 | `solr_data` | `/var/solr` | Solr index |
 | `solr_conf` | Solr template | Solr config copied by `solr_initializer` |
 
@@ -479,7 +494,8 @@ tmpfs (wiped on container stop): Dataverse `/dumps` and `/tmp`, smtp `/mail`. `/
 | `arp-setup` | `gdcc/configbaker:6.9-noble-r6` |
 | `dv_initializer` | `gdcc/configbaker:6.9-noble-r6` |
 | `solr_initializer` | `gdcc/configbaker:6.9-noble-r6` |
-| `postgres` | `postgres:16` |
+| `postgres` | `postgres:17` |
+| `postgres_upgrade` | `postgres:16` |
 | `solr` | `solr:9.8.0` |
 | `smtp` | `maildev/maildev:2.0.5` |
 | `solr-updater` | `harbor.sztaki.hu/arp/dataverse-solr-updater:6.9` |
