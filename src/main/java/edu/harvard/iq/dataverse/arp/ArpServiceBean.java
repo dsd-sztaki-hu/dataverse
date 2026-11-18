@@ -479,7 +479,7 @@ public class ArpServiceBean implements java.io.Serializable {
 
         logger.info("CEDAR folder import complete: childFolders=" + childFolderCount + " imported=" + imported + " failed=" + failed
                 + " installationVersion=" + installationVersion);
-        return JsonUtil.createObjectBuilder()
+        return Json.createObjectBuilder()
                 .add("folderId", folderId)
                 .add("dvIdtf", dvIdtf)
                 .add("installationVersion", installationVersion)
