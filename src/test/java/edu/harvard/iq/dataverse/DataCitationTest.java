@@ -2,6 +2,7 @@ package edu.harvard.iq.dataverse;
 
 import edu.harvard.iq.dataverse.branding.BrandingUtil;
 import edu.harvard.iq.dataverse.branding.BrandingUtilTest;
+import edu.harvard.iq.dataverse.dataset.DatasetType;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
@@ -406,6 +408,27 @@ public class DataCitationTest {
         dsv.setDataset(dsv.getDataset());
         DataCitation fileCitation = new DataCitation(fileMetadata, true);
         assertEquals("First Last, 1955, \"foo.txt\", <em>Dataset Title</em>, <a href=\"https://doi.org/10.42/myFilePid\" target=\"_blank\">https://doi.org/10.42/myFilePid</a>, LibraScholar, V1", fileCitation.toString(true));
+    }
+
+    @Test
+    public void testCslJsonWithDoi() throws ParseException {
+        DatasetVersion dsv = createATestDatasetVersion("Dataset Title", true);
+        dsv.getDataset().setDatasetType(new DatasetType());
+        DataCitation dataCitation = new DataCitation(dsv);
+        assertEquals("10.5072/FK2/LK0D1H", dataCitation.getCSLJsonFormat().getString("DOI"));
+    }
+
+    @Test
+    public void testCslJsonWithHandle() throws ParseException {
+        DatasetVersion dsv = createATestDatasetVersion("Dataset Title", true);
+        Dataset dataset = dsv.getDataset();
+        dataset.setProtocol("hdl");
+        dataset.setAuthority("21.15109");
+        dataset.setIdentifier("ARP/2TOPLH");
+        dataset.setDatasetType(new DatasetType());
+        DataCitation dataCitation = new DataCitation(dsv);
+        assertFalse(dataCitation.getCSLJsonFormat().containsKey("DOI"));
+        assertEquals("https://hdl.handle.net/21.15109/ARP/2TOPLH", dataCitation.getCSLJsonFormat().getString("URL"));
     }
 
     private DatasetVersion createATestDatasetVersion(String withTitle, boolean withAuthor) throws ParseException {
