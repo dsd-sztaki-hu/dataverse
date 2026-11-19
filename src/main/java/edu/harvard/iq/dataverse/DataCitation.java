@@ -747,13 +747,19 @@ public class DataCitation {
         if (seriesTitles != null) {
             itemBuilder.containerTitle(formatString(seriesTitles.get(0), false));
         }
-        itemBuilder.version(version).DOI(persistentId.asRawIdentifier());
+        itemBuilder.version(version);
         if (keywords != null) {
             itemBuilder
                     .categories(keywords.stream().map(keyword -> formatString(keyword, false)).toArray(String[]::new));
         }
-        itemBuilder.abstrct(formatString(description, false)).publisher(formatString(publisher, false))
-                .URL(SystemConfig.getDataverseSiteUrlStatic() + "/citation?persistentId=" + persistentId.asString());
+        itemBuilder.abstrct(formatString(description, false)).publisher(formatString(publisher, false));
+        if (DOI_PROTOCOL.equals(persistentId.getProtocol())) {
+            itemBuilder.DOI(persistentId.asRawIdentifier())
+                    .URL(SystemConfig.getDataverseSiteUrlStatic() + "/citation?persistentId=" + persistentId.asString());
+        } else {
+            // Only DOIs go into the DOI field
+            itemBuilder.URL(persistentId.asURL());
+        }
         JsonBuilder b = (new StringJsonBuilderFactory()).createJsonBuilder();
         return JsonUtil.getJsonObject((String) itemBuilder.build().toJson(b));
     }
