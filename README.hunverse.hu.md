@@ -415,6 +415,8 @@ Megvárja az `/api/info/version` választ és a gyökér dataverse-t, majd PUT-t
 
 Ha az `ARP_CEDAR_PROXY_API_KEY` és a `CEDAR_IMPORT_FOLDER_ID` is meg van adva, a sablonokat is importálja CEDAR-ból az `importTemplatesFromCedarFolder` hívással. Ha bármelyik üres, a beállítások akkor is érvényesülnek, de az importálás kimarad.
 
+A kontrollált szótárak értékeit is a CEDAR-sablonok határozzák meg. Egy blokk importálása után az import törli a kontrollált szótáras mezők azon értékeit, amelyek nem szerepelnek a sablonban. Ha egy értéket adatcsomag, adatcsomag-sablon vagy gyűjtemény még használ, az megmarad. A külső szótárakat használó mezőket nem módosítja. A válasz és az `arp-setup` naplója mezőnként felsorolja, hány érték törlődött, és mely használt értékek maradtak meg. Így lesz a citation `language` mezőben a bootstrap által betöltött ~7900 ISO 639-3 nyelvből az ARP citation-sablonok 422 ISO 639-2 nyelve: új telepítésnél az első `arp-setup` futáskor, meglévőnél az image frissítése utáni első `arp-setup` futáskor.
+
 Az `arp-setup` újrafuttatandó, ha a fenti `.env` értékek módosultak, ha az első import nem sikerült, vagy ha a navigációs sáv logójának fájlneve változott:
 
 ```bash
@@ -467,6 +469,20 @@ curl -X POST 'http://localhost:8080/api/admin/arp/importTemplatesFromCedarFolder
   -H 'Content-Type: application/json' \
   -d '{"folderId":"https://repo.schema.researchdata.hu/folders/49ba90b3-86ee-45b8-a623-d4a7a7df926c","dvIdtf":"root"}'
 ```
+
+### A citation nyelvei arp-setup nélküli telepítésen
+
+Az ezzel a compose-fájllal nem futtatott telepítéseken (pl. ARP) ugyanezt az importot egyszer le kell futtatni, miután az image-et a kontrollált szótárakat tisztító változatra frissítették. Előtte a CEDAR-ban le kell futtatni az „ARP Upgrade to Dataverse versions” műveletet, hogy minden verzió citation-sablonja csak az ISO 639-2 nyelveket tartalmazza.
+
+A nyelvek száma az import előtt és után:
+
+```sql
+SELECT count(*) FROM controlledvocabularyvalue v
+  JOIN datasetfieldtype t ON t.id = v.datasetfieldtype_id
+ WHERE t.name = 'language';
+```
+
+Előtte körülbelül 7900, utána 422, valamint azok a használatban lévő, nem ISO 639-2 nyelvek, amelyeket a válasz a Citation Metadata sablonnál a `controlledVocabulary` → `keptInUse` alatt felsorol. Az import ismételt futtatása már nem töröl semmit.
 
 ## Kötetek
 

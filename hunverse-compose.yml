@@ -221,6 +221,8 @@ services:
             exit 1
           fi
           echo "CEDAR folder import complete (imported $${imported})."
+          # The import removes controlled vocabulary values that are not in the CEDAR templates, unless they are in use
+          jq -r '.data.templates[] | .controlledVocabulary[]? | "Controlled vocabulary \(.field): removed \(.removed) values that are not in the CEDAR template" + (if (.keptInUse | length) > 0 then "; kept \(.keptInUse | length) that are in use: \(.keptInUse | join(", "))" else "" end)' /tmp/cedar-import.json || true
           echo
           printf '%s\n' \
             '██╗  ██╗██╗   ██╗███╗   ██╗██╗   ██╗███████╗██████╗ ███████╗███████╗    ██████╗ ███████╗ █████╗ ██████╗ ██╗   ██╗██╗' \
