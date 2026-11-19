@@ -399,6 +399,8 @@ It waits for `/api/info/version` and the root dataverse, then PUTs:
 
 If `ARP_CEDAR_PROXY_API_KEY` and `CEDAR_IMPORT_FOLDER_ID` are set, it imports CEDAR templates from that public folder via `importTemplatesFromCedarFolder`. For each template it keeps the latest resource when `pav:version` matches this Dataverse version, and otherwise follows `pav:derivedFrom` until a match is found. Trailing `.0` parts are ignored, so CEDAR `6.10.0` matches an installation that reports `6.10`. If either variable is empty, settings are still applied and the import is skipped.
 
+The CEDAR templates are the source of truth for the controlled vocabularies, too. After importing a block, the import removes the values of its controlled vocabulary fields that are not in the template. A value that a dataset, a dataset template or a collection still uses is kept. Fields with external vocabularies are not touched. The response, and the `arp-setup` log, list per field how many values were removed and which used ones were kept. This is how the citation `language` field goes from the ~7,900 ISO 639-3 languages that the upstream bootstrap loads to the 422 ISO 639-2 languages of the ARP citation templates: on a new installation at the first `arp-setup`, on an existing one at the first `arp-setup` after updating the image.
+
 Re-run after changing those `.env` values, after a failed first import, or after changing the navbar logo filename:
 
 ```bash
@@ -449,6 +451,20 @@ curl -X POST 'http://localhost:8080/api/admin/arp/importTemplatesFromCedarFolder
   -H 'Content-Type: application/json' \
   -d '{"folderId":"https://repo.schema.researchdata.hu/folders/49ba90b3-86ee-45b8-a623-d4a7a7df926c","dvIdtf":"root"}'
 ```
+
+### Citation languages on an installation without arp-setup
+
+An installation that is not run with this compose file (e.g. ARP) needs the same import once, after its image has been updated to one that contains the controlled vocabulary cleanup. Run "ARP Upgrade to Dataverse versions" on the CEDAR first, so the citation templates of every version hold only the ISO 639-2 languages.
+
+Before and after the import, count the languages:
+
+```sql
+SELECT count(*) FROM controlledvocabularyvalue v
+  JOIN datasetfieldtype t ON t.id = v.datasetfieldtype_id
+ WHERE t.name = 'language';
+```
+
+Before it is about 7,900. After it is 422, plus the languages that are in use but not ISO 639-2: the response lists them under `controlledVocabulary` → `keptInUse` of the Citation Metadata template. Running the import again removes nothing.
 
 
 ## Volumes

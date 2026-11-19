@@ -43,6 +43,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.io.InputStream;
+import jakarta.persistence.Cache;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.io.*;
@@ -451,7 +452,8 @@ public class ArpServiceBean implements java.io.Serializable {
                             previousId -> fetchCedarTemplate(client, previousId, resolvedCedarDomain, resolvedApiKey));
                     logger.info("Importing CEDAR template " + selection.selectedId() + " pav:version " + selection.version()
                             + " (" + templateName + ") into dataverse " + dvIdtf);
-                    String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, selection.templateJson());
+                    List<ControlledVocabularyPruner.Result> prunedVocabularies = new ArrayList<>();
+                    String metadataBlockName = importCedarTemplateIntoDataverse(dvIdtf, selection.templateJson(), prunedVocabularies);
                     imported++;
                     JsonObjectBuilder entry = JsonUtil.createObjectBuilder()
                             .add("id", templateId)
@@ -463,6 +465,11 @@ public class ArpServiceBean implements java.io.Serializable {
                     if (metadataBlockName != null) {
                         entry.add("metadataBlock", metadataBlockName);
                     }
+                    JsonArrayBuilder vocabulariesJson = JsonUtil.createArrayBuilder();
+                    prunedVocabularies.stream()
+                            .filter(ControlledVocabularyPruner.Result::changedAnything)
+                            .forEach(result -> vocabulariesJson.add(result.toJson()));
+                    entry.add("controlledVocabulary", vocabulariesJson);
                     templatesJson.add(entry);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Failed to import CEDAR template " + templateId, e);
@@ -649,7 +656,16 @@ public class ArpServiceBean implements java.io.Serializable {
      * @return {@code schema:identifier} of the imported metadata block, or null
      */
     String importCedarTemplateIntoDataverse(String dvIdtf, String templateJson) throws Exception {
-        createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, false);
+        return importCedarTemplateIntoDataverse(dvIdtf, templateJson, new ArrayList<>());
+    }
+
+    /**
+     * Same as {@link #importCedarTemplateIntoDataverse(String, String)}, and adds to prunedVocabularies
+     * what was removed from the controlled vocabularies.
+     */
+    String importCedarTemplateIntoDataverse(String dvIdtf, String templateJson,
+                                            List<ControlledVocabularyPruner.Result> prunedVocabularies) throws Exception {
+        createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, false, prunedVocabularies);
         JsonNode identifierNode = new ObjectMapper().readTree(templateJson).get("schema:identifier");
         String metadataBlockName = identifierNode == null || identifierNode.isNull() ? null : identifierNode.textValue();
         if (metadataBlockName != null && !metadataBlockName.isBlank()) {
@@ -1493,9 +1509,18 @@ public class ArpServiceBean implements java.io.Serializable {
         return conversionResult;
     }
 
-    // This function is copied from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi but modified to process String lists
     public MetadataBlock loadDatasetFields(List<String> lines, String templateName, String templateJson) throws Exception {
+        return loadDatasetFields(lines, templateName, templateJson, new ArrayList<>());
+    }
+
+    // This function is copied from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi but modified to process String lists.
+    // Unlike the original, it also removes the controlled vocabulary values that are not in the template (see
+    // ControlledVocabularyPruner) and adds what it did to prunedVocabularies.
+    public MetadataBlock loadDatasetFields(List<String> lines, String templateName, String templateJson,
+                                           List<ControlledVocabularyPruner.Result> prunedVocabularies) throws Exception {
         ActionLogRecord alr = new ActionLogRecord(ActionLogRecord.ActionType.Admin, "loadDatasetFields");
+        Map<String, Set<String>> vocabularyLabels = new LinkedHashMap<>();
+        Set<String> externalValueFields = new HashSet<>();
         alr.setInfo( templateName );
         String splitBy = "\t";
         int lineNumber = 0;
@@ -1583,9 +1608,13 @@ public class ArpServiceBean implements java.io.Serializable {
                             JsonElement cedarDef = cedarFieldJsonDefs.get(fieldName).getAsJsonObject().has("items") ? cedarFieldJsonDefs.get(fieldName).getAsJsonObject().get("items") : cedarFieldJsonDefs.get(fieldName);
                             dsfArp.setHasExternalValues(hasExternalValues(cedarDef.getAsJsonObject()));
                             dsfArp = arpMetadataBlockServiceBean.save(dsfArp);
+                            if (dsfArp.isHasExternalValues()) {
+                                externalValueFields.add(fieldName);
+                            }
                             break;
 
                         case CONTROLLEDVOCABULARY:
+                            vocabularyLabels.computeIfAbsent(values[1], name -> new HashSet<>()).add(values[2]);
                             responseArr.add( JsonUtil.createObjectBuilder()
                                     .add("name", parseControlledVocabulary(values))
                                     .add("type", "Controlled Vocabulary") );
@@ -1602,11 +1631,77 @@ public class ArpServiceBean implements java.io.Serializable {
                 throw new Exception("Failed to create or retrieve metadata block: " + templateName);
             }
 
+            vocabularyLabels.forEach((fieldName, labels) -> {
+                DatasetFieldType fieldType = datasetFieldService.findByName(fieldName);
+                // Values of fields with external vocabularies come from the terminology server, not from the template
+                if (fieldType == null || externalValueFields.contains(fieldName) || fieldType.getMetadataBlock() == null
+                        || !templateName.equals(fieldType.getMetadataBlock().getName())) {
+                    return;
+                }
+                prunedVocabularies.add(pruneControlledVocabulary(fieldType, labels));
+            });
+
             return metadataBlock;
             
         } finally {
             actionLogSvc.log(alr);
         }
+    }
+
+    /**
+     * Removes the controlled vocabulary values of the field whose label is not in keptLabels, unless a dataset, a
+     * dataset template or a collection uses them. Those are kept and logged.
+     */
+    ControlledVocabularyPruner.Result pruneControlledVocabulary(DatasetFieldType fieldType, Set<String> keptLabels) {
+        String field = fieldType.getMetadataBlock().getName() + "/" + fieldType.getName();
+        // The values parseControlledVocabulary has just saved must be visible to the queries below
+        em.flush();
+        List<ControlledVocabularyPruner.Value> existing = em.createQuery(
+                        "SELECT o.id, o.strValue FROM ControlledVocabularyValue o WHERE o.datasetFieldType = :fieldType",
+                        Object[].class)
+                .setParameter("fieldType", fieldType)
+                .getResultList().stream()
+                .map(row -> new ControlledVocabularyPruner.Value((Long) row[0], (String) row[1]))
+                .collect(Collectors.toList());
+        Set<Long> usedIds = new HashSet<>();
+        List<?> usedRows = em.createNativeQuery(
+                        "SELECT j.controlledvocabularyvalues_id FROM datasetfield_controlledvocabularyvalue j"
+                                + " JOIN controlledvocabularyvalue v ON v.id = j.controlledvocabularyvalues_id WHERE v.datasetfieldtype_id = ?1"
+                                + " UNION SELECT s.controlledvocabularyvalue_id FROM dataversesubjects s"
+                                + " JOIN controlledvocabularyvalue v ON v.id = s.controlledvocabularyvalue_id WHERE v.datasetfieldtype_id = ?1")
+                .setParameter(1, fieldType.getId())
+                .getResultList();
+        usedRows.forEach(id -> usedIds.add(((Number) id).longValue()));
+
+        ControlledVocabularyPruner.Plan plan = ControlledVocabularyPruner.plan(existing, keptLabels, usedIds);
+        List<Long> remove = plan.remove();
+        for (int start = 0; start < remove.size(); start += 1000) {
+            List<Long> chunk = remove.subList(start, Math.min(start + 1000, remove.size()));
+            em.createQuery("DELETE FROM ControlledVocabAlternate a WHERE a.controlledVocabularyValue.id IN :ids")
+                    .setParameter("ids", chunk)
+                    .executeUpdate();
+            em.createQuery("DELETE FROM ControlledVocabularyValue o WHERE o.id IN :ids")
+                    .setParameter("ids", chunk)
+                    .executeUpdate();
+        }
+        if (!remove.isEmpty()) {
+            // Bulk deletes bypass the persistence context and the shared cache
+            Set<Long> removed = new HashSet<>(remove);
+            if (fieldType.getControlledVocabularyValues() != null) {
+                fieldType.getControlledVocabularyValues().removeIf(cvv -> removed.contains(cvv.getId()));
+            }
+            Cache cache = em.getEntityManagerFactory().getCache();
+            cache.evict(ControlledVocabularyValue.class);
+            cache.evict(ControlledVocabAlternate.class);
+            cache.evict(DatasetFieldType.class);
+            logger.info(field + ": removed " + remove.size() + " controlled vocabulary values that are not in the CEDAR template");
+        }
+        if (!plan.keptInUse().isEmpty()) {
+            logger.warning(field + ": kept " + plan.keptInUse().size()
+                    + " controlled vocabulary values that are not in the CEDAR template because they are in use: "
+                    + String.join("; ", plan.keptInUse()));
+        }
+        return new ControlledVocabularyPruner.Result(field, remove.size(), plan.keptInUse());
     }
 
     //region Copied functions from edu.harvard.iq.dataverse.api.DatasetFieldServiceApi to avoid modifying the base code
@@ -2140,6 +2235,12 @@ public class ArpServiceBean implements java.io.Serializable {
 
     public String createOrUpdateMdbFromCedarTemplate(String dvIdtf, String templateJson, boolean skipUpload) throws JsonProcessingException, CedarTemplateErrorsException
     {
+        return createOrUpdateMdbFromCedarTemplate(dvIdtf, templateJson, skipUpload, new ArrayList<>());
+    }
+
+    public String createOrUpdateMdbFromCedarTemplate(String dvIdtf, String templateJson, boolean skipUpload,
+                                                     List<ControlledVocabularyPruner.Result> prunedVocabularies) throws JsonProcessingException, CedarTemplateErrorsException
+    {
         String mdbTsv;
         List<String> lines;
         Set<String> overridePropNames = new HashSet<>();
@@ -2160,7 +2261,7 @@ public class ArpServiceBean implements java.io.Serializable {
             lines = List.of(mdbTsv.split("\n"));
             if (!skipUpload) {
                 // Load dataset fields
-                MetadataBlock newMdb = loadDatasetFields(lines, metadataBlockName, templateJson);
+                MetadataBlock newMdb = loadDatasetFields(lines, metadataBlockName, templateJson, prunedVocabularies);
                 
                 // Process any incompatible pairs if needed
                 if (!cedarTemplateErrors.incompatiblePairs.isEmpty()) {
