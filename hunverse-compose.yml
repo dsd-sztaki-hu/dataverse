@@ -13,7 +13,7 @@ services:
   dataverse:
     container_name: "dataverse"
     hostname: dataverse
-    image: ${DATAVERSE_IMAGE:-harbor.sztaki.hu/arp/hunverse:6.9}
+    image: ${DATAVERSE_IMAGE:-harbor.sztaki.hu/arp/hunverse:6.10.1}
     restart: on-failure
     user: payara
     environment:
@@ -99,7 +99,7 @@ services:
 
   bootstrap:
     container_name: "bootstrap"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.10.1-noble-r11
     restart: "no"
     environment:
       - TIMEOUT=20m
@@ -118,7 +118,7 @@ services:
   # Same pattern as bootstrap. `docker compose up` runs this automatically.
   arp-setup:
     container_name: "arp-setup"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.10.1-noble-r11
     restart: "no"
     environment:
       - DATAVERSE_URL=http://dataverse:8080
@@ -241,7 +241,7 @@ services:
 
   dv_initializer:
     container_name: "dv_initializer"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.10.1-noble-r11
     restart: "no"
     command:
       - sh
@@ -273,7 +273,7 @@ services:
 
   solr_initializer:
     container_name: "solr_initializer"
-    image: gdcc/configbaker:6.9-noble-r6
+    image: gdcc/configbaker:6.10.1-noble-r11
     restart: "no"
     command:
       - sh
