@@ -13,7 +13,7 @@ services:
   dataverse:
     container_name: "dataverse"
     hostname: dataverse
-    image: ${DATAVERSE_IMAGE:-harbor.sztaki.hu/arp/hunverse:6.9}
+    image: ${DATAVERSE_IMAGE:-harbor.sztaki.hu/arp/hunverse:6.12.1}
     restart: on-failure
     user: payara
     environment:
@@ -99,7 +99,7 @@ services:
 
   bootstrap:
     container_name: "bootstrap"
-    image: gdcc/configbaker:6.12-noble-r2
+    image: gdcc/configbaker:6.12.1-noble-r4
     restart: "no"
     environment:
       - TIMEOUT=20m
@@ -118,10 +118,11 @@ services:
   # Same pattern as bootstrap. `docker compose up` runs this automatically.
   arp-setup:
     container_name: "arp-setup"
-    image: gdcc/configbaker:6.12-noble-r2
+    image: gdcc/configbaker:6.12.1-noble-r4
     restart: "no"
     environment:
       - DATAVERSE_URL=http://dataverse:8080
+      - SOLR_UPDATER_URL=http://solr-updater:3000
       - TIMEOUT=20m
       - CEDAR_IMPORT_TIMEOUT=3600
       - ARP_CEDAR_DOMAIN=${ARP_CEDAR_DOMAIN:-schema.researchdata.hu}
@@ -231,6 +232,23 @@ services:
             '╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝    ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═════╝    ╚═╝   ╚═╝'
           echo
         fi
+
+        # solr_initializer replaces the Solr config when a newer version brings a new
+        # template, which drops the metadata block fields. Write them back on every run.
+        echo "Updating the Solr schema with the metadata block fields..."
+        curl -sS -f --connect-timeout 30 --max-time 600 "$${SOLR_UPDATER_URL}" >/dev/null
+        # Reindex once per Dataverse version, so an upgraded index matches the new schema.
+        dv_version=$$(curl -sf "$${DATAVERSE_URL}/api/info/version" | jq -r '.data.version // empty')
+        indexed_version=$$(curl -sf "$${DATAVERSE_URL}/api/admin/settings/arp.solr.indexedVersion" | jq -r '.data.message // empty' || true)
+        if [ -n "$${dv_version}" ] && [ "$${indexed_version}" != "$${dv_version}" ]; then
+          echo "Solr index was built for Dataverse $${indexed_version:-unknown}, now running $${dv_version}. Starting a full reindex..."
+          curl -sS -f --connect-timeout 30 --max-time 600 "$${DATAVERSE_URL}/api/admin/index/clear" >/dev/null
+          curl -sS -f --connect-timeout 30 --max-time 600 "$${DATAVERSE_URL}/api/admin/index"
+          echo
+          put "arp.solr.indexedVersion" "$${dv_version}"
+        else
+          echo "Solr index is up to date for Dataverse $${dv_version:-unknown}."
+        fi
     networks:
       - dataverse
     depends_on:
@@ -238,10 +256,12 @@ services:
         condition: service_healthy
       bootstrap:
         condition: service_completed_successfully
+      solr-updater:
+        condition: service_started
 
   dv_initializer:
     container_name: "dv_initializer"
-    image: gdcc/configbaker:6.12-noble-r2
+    image: gdcc/configbaker:6.12.1-noble-r4
     restart: "no"
     command:
       - sh
@@ -314,12 +334,30 @@ services:
 
   solr_initializer:
     container_name: "solr_initializer"
-    image: gdcc/configbaker:6.12-noble-r2
+    image: gdcc/configbaker:6.12.1-noble-r4
     restart: "no"
     command:
       - sh
       - -c
-      - "fix-fs-perms.sh solr && cp -a /template/* /solr-template"
+      - |
+        set -eu
+        # solr-precreate only uses the template for a new core, so an existing core keeps
+        # the previous version's config. Replace it whenever the template changes.
+        core_conf=/var/solr/data/collection1/conf
+        marker=/var/solr/data/.hunverse-solr-template.sha256
+        new_sum=$$(cat /template/conf/schema.xml /template/conf/solrconfig.xml | sha256sum | cut -d' ' -f1)
+        old_sum=$$(cat "$${marker}" 2>/dev/null || true)
+        if [ -d "$${core_conf}" ] && [ "$${new_sum}" != "$${old_sum}" ]; then
+          backup=/var/solr/conf-backups/$$(date +%Y%m%d%H%M%S)
+          echo "Solr config template changed; upgrading collection1 config (backup in $${backup})."
+          mkdir -p "$${backup}"
+          cp -a "$${core_conf}/." "$${backup}/"
+          cp -a /template/conf/. "$${core_conf}/"
+        fi
+        mkdir -p /var/solr/data
+        echo "$${new_sum}" > "$${marker}"
+        cp -a /template/* /solr-template
+        fix-fs-perms.sh solr
     volumes:
       - solr_data:/var/solr
       - solr_conf:/solr-template
