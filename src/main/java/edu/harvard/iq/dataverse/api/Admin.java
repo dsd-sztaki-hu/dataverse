@@ -2626,9 +2626,11 @@ public class Admin extends AbstractApiBean {
 	}
 
 	/**
-	 * Imports latest CEDAR templates from the direct child folders of
-	 * the given hosted CEDAR folder as metadata blocks. Read-only CEDAR access.
-	 * Idempotent: existing metadata blocks are updated.
+	 * Imports CEDAR templates from the direct child folders of the given
+	 * hosted CEDAR folder as metadata blocks. For each template, starts at the
+	 * latest resource and follows {@code pav:derivedFrom} until
+	 * {@code pav:version} matches this Dataverse installation. Read-only CEDAR
+	 * access. Idempotent: existing metadata blocks are updated.
 	 *
 	 * curl -X POST 'http://localhost:8080/api/admin/arp/importTemplatesFromCedarFolder' \
 	 *   -H 'Content-Type: application/json' \
